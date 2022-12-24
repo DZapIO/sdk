@@ -1,5 +1,5 @@
 {
-  "name": "@dzap/dzap-core",
+  "name": "@dzap/dzap-sdk",
   "version": "1.0.0",
   "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
   "main": "dist/index.js",
@@ -7,7 +7,7 @@
   "unpkg": "dist/index.umd.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap",
     "start": "node .",
     "dev": "nodemon",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/test/**/*.ts'"
@@ -19,22 +19,16 @@
     "dist"
   ],
   "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
     "microbundle": "^0.15.1",
     "mocha": "^10.2.0",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
     "axios": "^1.2.1",
-    "chai": "^4.3.7",
-    "chain": "^0.4.0",
-    "cross-fetch": "^3.1.5",
-    "ethers": "^5.7.2",
-    "isomorphic-unfetch": "^3.1.0",
-    "nodemon": "^2.0.20"
-  },
-  "nodemonConfig": {
-    "ext": "ts",
-    "exec": "npm run build && npm start"
+    "ethers": "^5.7.2"
   },
   "repository": {
     "type": "git",
