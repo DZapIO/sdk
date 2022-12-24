@@ -1,7 +1,7 @@
 {
-  "name": "dzap",
+  "name": "@dzap/dzap-core",
   "version": "1.0.0",
-  "description": "",
+  "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
   "main": "dist/index.js",
   "module": "dist/index.m.js",
   "unpkg": "dist/index.umd.js",
@@ -13,7 +13,7 @@
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/test/**/*.ts'"
   },
   "keywords": [],
-  "author": "",
+  "author": "hopevik",
   "license": "ISC",
   "files": [
     "dist"
@@ -35,5 +35,13 @@
   "nodemonConfig": {
     "ext": "ts",
     "exec": "npm run build && npm start"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DZapIO/dzap-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DZapIO/dzap-sdk/issues"
+  },
+  "homepage": "https://github.com/DZapIO/dzap-sdk#readme"
 }
