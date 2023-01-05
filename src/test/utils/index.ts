@@ -1,5 +1,4 @@
 import { ethers } from "ethers";
-import DZap from "../../app";
 import { registry } from "../../config/registry";
 
 export const VALID_CHAIN_ID = 137;
@@ -9,11 +8,11 @@ export const INVALID_CHAIN_ID = 111;
 
 export const getDefaultProvider = () => ethers.getDefaultProvider();
 
-export const createSDKInstance = (chainId: number) =>
-  new DZap({
-    chainId,
-    provider: getDefaultProvider(),
-  });
+// export const createSDKInstance = (chainId: number) =>
+//   new DZap({
+//     chainId,
+//     provider: getDefaultProvider(),
+//   });
 
 export const getContractAddress = () =>
   ethers.utils.getAddress("0x3af3cc4930ef88F4afe0b695Ac95C230E1A108Ec");

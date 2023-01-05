@@ -1,35 +1,27 @@
-import { providers } from "ethers";
-import { useEffect, useState } from "react";
-import DZap from "../app";
-import { Request } from "../app/api/types";
+import {
+  fetchAllSupportedChains,
+  fetchQuoteRate,
+  fetchSwapParams,
+} from "../api";
+import { Request } from "../types";
 
-function useClient({ chainId, rpc }: { chainId: number; rpc: string }) {
-  const [client, setClient] = useState<DZap>();
-
-  const init = () => {
-    const readOnlyProvider = new providers.JsonRpcProvider(rpc);
-    const dZap = new DZap({
-      chainId,
-      provider: readOnlyProvider,
-    });
-    setClient(dZap);
-  };
-  
-  useEffect(() => {
-    init();
-  }, [chainId, rpc]);
-
+function useClient({ chainId }: { chainId: number }) {
   const getQuoteRate = async (request: Request[]) => {
-    return await client.getQuoteRate(request);
+    return await fetchQuoteRate(request, chainId);
   };
 
-  const getSwapParams = async (request: Request[]) => {
-    return client.getSwapParams(request);
+  const getSwapParams = (request: Request[]) => {
+    return fetchSwapParams(request, chainId);
+  };
+
+  const getAllSupportedChains = () => {
+    return fetchAllSupportedChains(chainId);
   };
 
   return {
     getQuoteRate,
     getSwapParams,
+    getAllSupportedChains,
   };
 }
 export default useClient;

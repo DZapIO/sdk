@@ -1,46 +1,68 @@
-import { providers } from "ethers";
-import { useEffect, useState } from "react";
-import DZap from "../app";
-import { Request } from "../app/api/types";
+import { ethers, Signer } from "ethers";
+import { fetchSwapParams } from "../api";
+import { registry } from "../config/registry";
+import { Request } from "../types";
+import { getChecksumAddress } from "../utils";
+import { getNetworkFee } from "../utils/GasFee";
 
 function useContract({
   chainId,
   provider,
   clientId,
-  nftId,
 }: {
   chainId: number;
-  provider?: providers.Provider;
+  provider: Signer;
   clientId?: number;
-  nftId?: number;
 }) {
-  const [contract, setContract] = useState<DZap>();
+  const getContractAddress = (): string => {
+    try {
+      const address = registry.contractAddresses?.[chainId] || undefined;
+      return getChecksumAddress(address);
+    } catch {
+      throw new Error("Unsupported chainId");
+    }
+  };
 
-  const init = () => {
-    const dZap = new DZap({
-      chainId,
-      provider,
-      clientId,
+  const getContract = (): any => {
+    try {
+      return new ethers.Contract(getContractAddress(), registry.abi, provider);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const swap = async (
+    {
+      request,
+      recipient,
       nftId,
-    });
-    setContract(dZap);
+    }: {
+      request: Request[];
+      recipient: string;
+      nftId?: number;
+    },
+    trxSpeed?: "low" | "medium" | "high"
+  ): Promise<any> => {
+    try {
+      const method = registry.methods.batchSwap;
+      const contract = getContract();
+      const { ercSwapDetails, value } = await fetchSwapParams(request, chainId);
+      const params = [ercSwapDetails, recipient, clientId || 0, nftId || 0];
+      const networkFee = await getNetworkFee(chainId);
+      const result = await contract[method](...params, {
+        gasPrice: networkFee[trxSpeed || "medium"],
+        value,
+      });
+      const res = await result.wait();
+      return res;
+    } catch (err) {
+      throw err;
+    }
   };
-  useEffect(() => {
-    init();
-  }, [provider, clientId, nftId]);
-
-  const swap = async (request: Request[], recipient: string) => {
-    return await contract.swap(request, recipient);
-  };
-
-  const getContractAddress = () => {
-    return contract.getContractAddress();
-  };
-
   return {
-    contract,
     swap,
     getContractAddress,
+    getContract,
   };
 }
 export default useContract;
