@@ -1,8 +1,10 @@
 import { ethers } from "ethers";
-import DZap from "./../../";
+import DZap from "../../app";
 import { registry } from "../../config/registry";
 
 export const VALID_CHAIN_ID = 137;
+export const RPC =
+  "https://holy-old-sea.matic.discover.quiknode.pro/4d868853d8004aa200fff33b5054a73c60ecefd7/";
 export const INVALID_CHAIN_ID = 111;
 
 export const getDefaultProvider = () => ethers.getDefaultProvider();
@@ -29,7 +31,3 @@ export const getRequest = () => [
     toTokenAddress: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
   },
 ];
-
-export const ThrowErrorChainId = () => {
-  throw new Error("Unsupported chainId");
-};
