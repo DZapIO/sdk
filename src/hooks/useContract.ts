@@ -53,8 +53,7 @@ function useContract({
         gasPrice: networkFee[trxSpeed || "medium"],
         value,
       });
-      const res = await result.wait();
-      return res;
+      return result;
     } catch (err) {
       throw err;
     }
