@@ -1,83 +1,105 @@
-⚙️ Quick start
+### **Installation**
 
-Install Dzap core SDK using:
+To install the Dzap core SDK, use the following command:
 
+```jsx
 npm install @dzap/dzap-sdk
+```
 
 or
 
+```jsx
 yarn add @dzap/dzap-sdk
+```
 
-Initialize dzap SDK:
+### **Initialization**
 
-Make sure to pass chainId & respective write provider to enable contract call.
+To use the SDK, you need to initialize it using the **`useClient`** and **`useContract`** hooks.
+
+### **`useClient`**
+
+The **`useClient`** hook requires the **`chainId`** parameter and returns two functions:
+
+- **`getQuoteRate(request: QuoteRequest[])`**: Returns a Promise that resolves to an array of quote rates for the provided **`QuoteRequest`** objects.
+- **`getAllSupportedChains()`**: Returns a Promise that resolves to an array of all supported chains.
+
+Here's an example of how to use the **`useClient`** hook:
+
+```jsx
+import { useClient } from '@dzap/dzap-sdk';
+
+const { getQuoteRate, getAllSupportedChains } = useClient({
+    chainId,
+});
 
 ```
-import DZap from "@dzap/dzap-sdk";
 
-const provider = new ethers.providers.Web3Provider(window.ethereum);
-const chainId = 137
-const client = new DZap({
-  chainId,
-  provider,
+### **`useContract`**
+
+The **`useContract`** hook requires the **`chainId`** and **`provider`** parameters and returns three functions:
+
+- **`swap(request: SwapRequest[], recipient: string)`**: Returns a Promise that resolves to the transaction hash for the swap transaction.
+- **`getContract()`**: Returns the Dzap contract instance.
+- **`getContractAddress()`**: Returns the Dzap contract address.
+
+Here's an example of how to use the **`useContract`** hook:
+
+```jsx
+import { useContract } from '@dzap/dzap-sdk';
+
+const { swap, getContract, getContractAddress } = useContract({
+    chainId,
+    provider,
 });
 ```
 
-After initialization you may call :
+### **Usage**
 
-1. getQuoteRate
-2. swap
+### **`getQuoteRate`**
 
-Ex : getQuoteRate
+To use the **`getQuoteRate`** function, you need to pass an array of **`QuoteRequest`** objects in the following format:
 
-to call getQuoteRate you must pass request in the format given below -
-
-```
+```jsx
 const request = [
-        {
-          amount: '1000000000000000000', // in wei
-          fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-          slippage: 1,
-          toTokenAddress: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
-        },
-      ]
-
-const result = await client.getQuoteRate(request);
-
-Sample response :
-
- [
-    {
-        "status": "Success",
-        "data": {
-            "toTokenAmount": "795003",
-            "fromTokenAmount": "1000000000000000000",
-            "estimatedGas": 229386,
-            "fromToken": {
-                "symbol": "MATIC",
-                "decimals": 18,
-                "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-            },
-            "toToken": {
-                "symbol": "USDT",
-                "decimals": 6,
-                "address": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f"
-            }
-        }
-    }
+  {
+    amount: "1000000000000000000", // in wei
+    fromTokenAddress: "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+    slippage: 1,
+    toTokenAddress: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+  },
 ]
 
+const result = await client.getQuoteRate(request);
 ```
 
-Ex : swap
+This function returns a Promise that resolves to an array of quote rates.
 
-this will require to pass request & recipient address
+### **`getAllSupportedChains`**
 
-here recipient is the address on which you wish to transfer tokens after swap.
+To use the **`getAllSupportedChains`** function, simply call it like this:
 
+```jsx
+const result = await client.getAllSupportedChains();
 ```
+
+This function returns a Promise that resolves to an array of all supported chains.
+
+### **`swap`**
+
+To use the **`swap`** function, you need to pass an array of **`SwapRequest`** objects and the **`recipient`** address, like this:
+
+```jsx
 const result = await client.swap(request, recipient);
-
 ```
 
-This method will ask to sign transactions
+This function returns a Promise that resolves to the transaction hash for the swap transaction.
+
+Note that this function requires signing the transaction.
+
+### `getContract`
+
+To get DZap contract
+
+### `getContractAddress`
+
+To get DZap contract address
