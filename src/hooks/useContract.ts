@@ -17,10 +17,9 @@ function useContract({
 }) {
   const getContractAddress = (version?: string): string => {
     try {
-      const address =
-        SWAP_CONTRACTS[purgeSwapVersion(version)]?.[this.chainId] || undefined;
+      const address = SWAP_CONTRACTS[purgeSwapVersion(version)][chainId];
       return getChecksumAddress(address);
-    } catch {
+    } catch (err) {
       throw new Error("Unsupported chainId");
     }
   };
@@ -28,10 +27,9 @@ function useContract({
   const getContract = (version?: string): any => {
     try {
       const purgedVersion = purgeSwapVersion(version);
-      const abiPath = SWAP_CONTRACTS[purgedVersion].abi;
-      const { abi } = require(`../artifacts/${abiPath}`);
+      const abi = SWAP_CONTRACTS[purgedVersion].abi;
       return chainId === 324
-        ? new Contract('0x3cd8a926f8a967d315768749a38dc7c7d80c47bF', abi, provider)
+        ? new Contract(getContractAddress(purgedVersion), abi, provider)
         : new ethers.Contract(getContractAddress(purgedVersion), abi, provider);
     } catch (error) {
       throw error;
@@ -53,8 +51,7 @@ function useContract({
     trxSpeed?: "low" | "medium" | "high"
   ): Promise<any> => {
     try {
-      const method = "swapTokensToTokens";
-      const contract = this.getContract(version);
+      const contract = getContract(version);
       const { ercSwapDetails, value } = await fetchSwapParams(
         request,
         chainId,
@@ -62,7 +59,7 @@ function useContract({
       );
       const params = [ercSwapDetails, recipient, clientId || 0, nftId || 0];
       const networkFee = await getNetworkFee(chainId);
-      const result = await contract[method](...params, {
+      const result = await contract.swapTokensToTokens(...params, {
         gasPrice: networkFee[trxSpeed || "medium"],
         value,
       });

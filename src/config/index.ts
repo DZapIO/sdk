@@ -1,10 +1,12 @@
+import { ContractInterface } from "ethers";
 import { abi as swapAbiV1point2 } from "../artifacts/v1.2/DZapAggregator";
 import { abi as swapAbiV1point3 } from "../artifacts/v1.3/DZapAggregator";
 
-export const baseUrl = "https://api.dzap.io/";
+export const baseUrl = "https://api.dezap.xyz/";
+
 export interface DeFiContract {
   [key: string]: {
-    abi: Object;
+    abi: ContractInterface;
     [key: number]: string;
   };
 }
@@ -20,7 +22,7 @@ export const SWAP_CONTRACTS: DeFiContract = {
     abi: swapAbiV1point2,
   },
   "v1.3": {
-    324: "0x3cd8a926f8a967d315768749a38dc7c7d80c47bF",
+    324: "0x244C41d354F8311b68C8B934f2A43EADb93f2E2F",
     abi: swapAbiV1point3,
   },
 };

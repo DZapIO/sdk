@@ -12,5 +12,6 @@ export const JSON_RPC_PROVIDER: { [key: number]: string } = {
   137: "https://holy-old-sea.matic.discover.quiknode.pro/4d868853d8004aa200fff33b5054a73c60ecefd7/",
   42161:
     "https://arb-mainnet.g.alchemy.com/v2/8dwTIBtZDQhc_5nZhBwlegxx2EpEkZN8",
+  324: "https://mainnet.era.zksync.io",
 };
 export const HISTORICAL_BLOCK = 10;
