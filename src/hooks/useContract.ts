@@ -1,8 +1,9 @@
 import { ethers, Signer } from "ethers";
+import { SWAP_CONTRACTS } from "src/config";
+import { Contract } from "zksync-web3";
 import { fetchSwapParams } from "../api";
-import { registry } from "../config/registry";
 import { Request } from "../types";
-import { getChecksumAddress } from "../utils";
+import { getChecksumAddress, purgeSwapVersion } from "../utils";
 import { getNetworkFee } from "../utils/GasFee";
 
 function useContract({
@@ -14,18 +15,22 @@ function useContract({
   provider: Signer;
   clientId?: number;
 }) {
-  const getContractAddress = (): string => {
+  const getContractAddress = (version?: string): string => {
     try {
-      const address = registry.contractAddresses?.[chainId] || undefined;
+      const address = SWAP_CONTRACTS[purgeSwapVersion(version)][chainId];
       return getChecksumAddress(address);
-    } catch {
+    } catch (err) {
       throw new Error("Unsupported chainId");
     }
   };
 
-  const getContract = (): any => {
+  const getContract = (version?: string): any => {
     try {
-      return new ethers.Contract(getContractAddress(), registry.abi, provider);
+      const purgedVersion = purgeSwapVersion(version);
+      const abi = SWAP_CONTRACTS[purgedVersion].abi;
+      return chainId === 324
+        ? new Contract(getContractAddress(purgedVersion), abi, provider)
+        : new ethers.Contract(getContractAddress(purgedVersion), abi, provider);
     } catch (error) {
       throw error;
     }
@@ -36,20 +41,25 @@ function useContract({
       request,
       recipient,
       nftId,
+      version,
     }: {
       request: Request[];
       recipient: string;
       nftId?: number;
+      version?: string;
     },
     trxSpeed?: "low" | "medium" | "high"
   ): Promise<any> => {
     try {
-      const method = registry.methods.batchSwap;
-      const contract = getContract();
-      const { ercSwapDetails, value } = await fetchSwapParams(request, chainId);
+      const contract = getContract(version);
+      const { ercSwapDetails, value } = await fetchSwapParams(
+        request,
+        chainId,
+        purgeSwapVersion(version)
+      );
       const params = [ercSwapDetails, recipient, clientId || 0, nftId || 0];
       const networkFee = await getNetworkFee(chainId);
-      const result = await contract[method](...params, {
+      const result = await contract.swapTokensToTokens(...params, {
         gasPrice: networkFee[trxSpeed || "medium"],
         value,
       });

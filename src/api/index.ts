@@ -13,16 +13,26 @@ const invoke = (endpoint: string, data: any): Promise<any> => {
     .catch((error) => Promise.reject(error));
 };
 
-export const fetchQuoteRate = async (request: Request[], chainId: number) => {
+export const fetchQuoteRate = async (
+  request: Request[],
+  chainId: number,
+  version: string
+) => {
   return await invoke("swap/get-path", {
     chainId,
+    version,
     requests: request,
   });
 };
 
-export const fetchSwapParams = (request: Request[], chainId: number) => {
+export const fetchSwapParams = (
+  request: Request[],
+  chainId: number,
+  version: string
+) => {
   return invoke("swap/get-params", {
     chainId,
+    version,
     swapParams: request,
   });
 };
