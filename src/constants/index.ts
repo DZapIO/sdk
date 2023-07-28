@@ -13,5 +13,6 @@ export const JSON_RPC_PROVIDER: { [key: number]: string } = {
   42161:
     "https://arb-mainnet.g.alchemy.com/v2/8dwTIBtZDQhc_5nZhBwlegxx2EpEkZN8",
   324: "https://mainnet.era.zksync.io",
+  10: "https://opt-mainnet.g.alchemy.com/v2/EIR4lpoG0trQy0_qHEt6a85N2H8QfZoM",
 };
 export const HISTORICAL_BLOCK = 10;
