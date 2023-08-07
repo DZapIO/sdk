@@ -1,8 +1,8 @@
 import { ethers, Signer } from "ethers";
 import { SWAP_CONTRACTS } from "src/config";
+import { SwapParamRequest } from "src/types";
 import { Contract } from "zksync-web3";
 import { fetchSwapParams } from "../api";
-import { Request } from "../types";
 import { getChecksumAddress, purgeSwapVersion } from "../utils";
 import { getNetworkFee } from "../utils/GasFee";
 
@@ -35,7 +35,6 @@ function useContract({
       throw error;
     }
   };
-
   const swap = async (
     {
       request,
@@ -43,7 +42,7 @@ function useContract({
       nftId,
       version,
     }: {
-      request: Request[];
+      request: SwapParamRequest[];
       recipient: string;
       nftId?: number;
       version?: string;
@@ -52,14 +51,10 @@ function useContract({
   ): Promise<any> => {
     try {
       const contract = getContract(version);
-      const { ercSwapDetails, value } = await fetchSwapParams(
-        request,
-        chainId,
-        purgeSwapVersion(version)
-      );
-      const params = [ercSwapDetails, recipient, clientId || 0, nftId || 0];
+      const { ercSwapDetails, value } = await fetchSwapParams(request, chainId);
+      const params = [ercSwapDetails, recipient, clientId || 0];
       const networkFee = await getNetworkFee(chainId);
-      const result = await contract.swapTokensToTokens(...params, {
+      const result = await contract.swapTokensToTokens2(...params, {
         gasPrice: networkFee[trxSpeed || "medium"],
         value,
       });

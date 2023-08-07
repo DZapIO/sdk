@@ -1,18 +1,17 @@
-import { purgeSwapVersion } from "src/utils";
+import { QuoteRateRequest, SwapParamRequest } from "src/types";
 import {
   fetchAllSupportedChains,
   fetchQuoteRate,
   fetchSwapParams,
 } from "../api";
-import { Request } from "../types";
-
+  
 function useClient({ chainId }: { chainId: number }) {
-  const getQuoteRate = async (request: Request[], version?: string) => {
-    return await fetchQuoteRate(request, chainId, purgeSwapVersion(version));
+  const getQuoteRate = async (request: QuoteRateRequest[]) => {
+    return await fetchQuoteRate(request, chainId);
   };
 
-  const getSwapParams = (request: Request[], version?: string) => {
-    return fetchSwapParams(request, chainId, purgeSwapVersion(version));
+  const getSwapParams = (request: SwapParamRequest[]) => {
+    return fetchSwapParams(request, chainId);
   };
 
   const getAllSupportedChains = () => {

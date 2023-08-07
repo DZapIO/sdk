@@ -1,6 +1,6 @@
 import Axios from "axios";
 import { baseUrl } from "../config";
-import { Request } from "../types";
+import { QuoteRateRequest, SwapParamRequest } from "../types";
 
 const invoke = (endpoint: string, data: any): Promise<any> => {
   const url = `${baseUrl}${endpoint}`;
@@ -14,26 +14,22 @@ const invoke = (endpoint: string, data: any): Promise<any> => {
 };
 
 export const fetchQuoteRate = async (
-  request: Request[],
-  chainId: number,
-  version: string
+  request: QuoteRateRequest[],
+  chainId: number
 ) => {
-  return await invoke("swap/get-path", {
+  return await invoke("swap/get-quote", {
     chainId,
-    version,
-    requests: request,
+    request,
   });
 };
 
 export const fetchSwapParams = (
-  request: Request[],
-  chainId: number,
-  version: string
+  request: SwapParamRequest[],
+  chainId: number
 ) => {
-  return invoke("swap/get-params", {
+  return invoke("swap/get-params/v2", {
     chainId,
-    version,
-    swapParams: request,
+    request,
   });
 };
 
