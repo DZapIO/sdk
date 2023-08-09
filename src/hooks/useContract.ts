@@ -51,8 +51,8 @@ function useContract({
   ): Promise<any> => {
     try {
       const contract = getContract(version);
-      const { ercSwapDetails, value } = await fetchSwapParams(request, chainId);
-      const params = [ercSwapDetails, recipient, clientId || 0];
+      const { swapDetails, value } = await fetchSwapParams(request, chainId);
+      const params = [swapDetails, recipient, clientId || 0];
       const networkFee = await getNetworkFee(chainId);
       const result = await contract.swapTokensToTokens2(...params, {
         gasPrice: networkFee[trxSpeed || "medium"],
