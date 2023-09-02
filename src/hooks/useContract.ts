@@ -3,7 +3,11 @@ import { SWAP_CONTRACTS } from "src/config";
 import { SwapParamRequest } from "src/types";
 import { Contract } from "zksync-web3";
 import { fetchSwapParams } from "../api";
-import { getChecksumAddress, purgeSwapVersion } from "../utils";
+import {
+  getChecksumAddress,
+  getIntegratorInfo,
+  purgeSwapVersion,
+} from "../utils";
 import { getNetworkFee } from "../utils/GasFee";
 
 function useContract({
@@ -39,22 +43,27 @@ function useContract({
     {
       request,
       recipient,
-      nftId,
+      integrator,
       version,
     }: {
       request: SwapParamRequest[];
       recipient: string;
-      nftId?: number;
+      integrator?: string;
       version?: string;
     },
     trxSpeed?: "low" | "medium" | "high"
   ): Promise<any> => {
     try {
+      const integratorInfo = getIntegratorInfo(integrator);
       const contract = getContract(version);
-      const { swapDetails, value } = await fetchSwapParams(request, chainId);
-      const params = [swapDetails, recipient, clientId || 0];
+      const { swapDetails, value } = await fetchSwapParams(
+        request,
+        chainId,
+        integrator
+      );
+      const params = [swapDetails, recipient, integratorInfo.contract];
       const networkFee = await getNetworkFee(chainId);
-      const result = await contract.swapTokensToTokens2(...params, {
+      const result = await contract.multiSwap(...params, {
         gasPrice: networkFee[trxSpeed || "medium"],
         value,
       });

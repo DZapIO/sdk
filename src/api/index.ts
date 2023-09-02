@@ -25,11 +25,13 @@ export const fetchQuoteRate = async (
 
 export const fetchSwapParams = (
   request: SwapParamRequest[],
-  chainId: number
+  chainId: number,
+  via?: string
 ) => {
   return invoke("swap/get-params/v2", {
     chainId,
     request,
+    via,
   });
 };
 

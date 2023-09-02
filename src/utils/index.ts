@@ -1,5 +1,5 @@
 import { ethers, providers } from "ethers";
-import { defaultSwapVersion } from "src/config";
+import { batchSwapIntegrators, defaultSwapVersion } from "src/config";
 import { JSON_RPC_PROVIDER } from "src/constants";
 import { Provider } from "zksync-web3";
 
@@ -18,3 +18,6 @@ export const initializeReadOnlyProvider = (chainId: number) => {
   }
   return providers.getDefaultProvider();
 };
+
+export const getIntegratorInfo = (integrator?: string) =>
+  batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
