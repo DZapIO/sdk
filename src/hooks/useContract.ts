@@ -6,6 +6,7 @@ import { fetchSwapParams } from "../api";
 import {
   getChecksumAddress,
   getIntegratorInfo,
+  getTrxId,
   purgeSwapVersion,
 } from "../utils";
 import { getNetworkFee } from "../utils/GasFee";
@@ -61,7 +62,14 @@ function useContract({
         chainId,
         integrator
       );
-      const params = [swapDetails, recipient, integratorInfo.contract];
+      const uuid = getTrxId(recipient);
+      const params = [
+        uuid,
+        integratorInfo.contract,
+        recipient,
+        recipient,
+        swapDetails,
+      ];
       const networkFee = await getNetworkFee(chainId);
       const result = await contract.multiSwap(...params, {
         gasPrice: networkFee[trxSpeed || "medium"],

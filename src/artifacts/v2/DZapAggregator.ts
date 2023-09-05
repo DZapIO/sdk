@@ -36,19 +36,13 @@ export const abi = [
     type: "error",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "minAmount",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "returnAmount",
-        type: "uint256",
-      },
-    ],
-    name: "InvalidMinAmount",
+    inputs: [],
+    name: "InvalidPermit",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidPermitData",
     type: "error",
   },
   {
@@ -77,6 +71,17 @@ export const abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "leftOverAmount",
+        type: "uint256",
+      },
+    ],
+    name: "PartialSwap",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "ReentrancyError",
     type: "error",
@@ -94,9 +99,25 @@ export const abi = [
   {
     inputs: [
       {
-        internalType: "string",
+        internalType: "uint256",
+        name: "minAmount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "returnAmount",
+        type: "uint256",
+      },
+    ],
+    name: "SlippageTooHigh",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes",
         name: "reason",
-        type: "string",
+        type: "bytes",
       },
     ],
     name: "SwapCallFailed",
@@ -110,6 +131,12 @@ export const abi = [
   {
     anonymous: false,
     inputs: [
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "transactionId",
+        type: "bytes32",
+      },
       {
         indexed: true,
         internalType: "address",
@@ -125,14 +152,14 @@ export const abi = [
       {
         indexed: false,
         internalType: "address",
-        name: "recipient",
+        name: "refundee",
         type: "address",
       },
       {
         indexed: false,
-        internalType: "uint256",
-        name: "fixedNativeFee",
-        type: "uint256",
+        internalType: "address",
+        name: "recipient",
+        type: "address",
       },
       {
         components: [
@@ -164,11 +191,6 @@ export const abi = [
           {
             internalType: "uint256",
             name: "returnToAmount",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "totalFee",
             type: "uint256",
           },
         ],
@@ -185,6 +207,12 @@ export const abi = [
     anonymous: false,
     inputs: [
       {
+        indexed: false,
+        internalType: "bytes32",
+        name: "transactionId",
+        type: "bytes32",
+      },
+      {
         indexed: true,
         internalType: "address",
         name: "integrator",
@@ -199,14 +227,14 @@ export const abi = [
       {
         indexed: false,
         internalType: "address",
-        name: "recipient",
+        name: "refundee",
         type: "address",
       },
       {
         indexed: false,
-        internalType: "uint256",
-        name: "fixedNativeFee",
-        type: "uint256",
+        internalType: "address",
+        name: "recipient",
+        type: "address",
       },
       {
         components: [
@@ -240,11 +268,6 @@ export const abi = [
             name: "returnToAmount",
             type: "uint256",
           },
-          {
-            internalType: "uint256",
-            name: "totalFee",
-            type: "uint256",
-          },
         ],
         indexed: false,
         internalType: "struct SwapInfo",
@@ -256,7 +279,82 @@ export const abi = [
     type: "event",
   },
   {
+    anonymous: false,
     inputs: [
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "transactionId",
+        type: "bytes32",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "dex",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "fromAssetId",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "toAssetId",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "fromAmount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "toAmount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "leftoverFromAmount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "timestamp",
+        type: "uint256",
+      },
+    ],
+    name: "SwappedTokens",
+    type: "event",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "_transactionId",
+        type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "_integrator",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_refundee",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
       {
         components: [
           {
@@ -303,16 +401,6 @@ export const abi = [
         internalType: "struct SwapData[]",
         name: "_data",
         type: "tuple[]",
-      },
-      {
-        internalType: "address",
-        name: "_recipient",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_integrator",
-        type: "address",
       },
     ],
     name: "multiSwap",
@@ -323,6 +411,26 @@ export const abi = [
   {
     inputs: [
       {
+        internalType: "bytes32",
+        name: "_transactionId",
+        type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "_integrator",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_refundee",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
+      {
         components: [
           {
             internalType: "address",
@@ -369,16 +477,6 @@ export const abi = [
         name: "_data",
         type: "tuple[]",
       },
-      {
-        internalType: "address",
-        name: "_recipient",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_integrator",
-        type: "address",
-      },
     ],
     name: "multiSwapWithoutRevert",
     outputs: [],
@@ -387,6 +485,26 @@ export const abi = [
   },
   {
     inputs: [
+      {
+        internalType: "bytes32",
+        name: "_transactionId",
+        type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "_integrator",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_refundee",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
       {
         components: [
           {
@@ -433,16 +551,6 @@ export const abi = [
         internalType: "struct SwapData",
         name: "_data",
         type: "tuple",
-      },
-      {
-        internalType: "address",
-        name: "_recipient",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_integrator",
-        type: "address",
       },
     ],
     name: "swap",
