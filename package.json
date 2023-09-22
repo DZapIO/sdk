@@ -1,6 +1,6 @@
 {
   "name": "@hopevik/dzap-sdk",
-  "version": "2.0.3",
+  "version": "2.0.6",
   "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
   "main": "dist/index.js",
   "module": "dist/index.m.js",
@@ -8,6 +8,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "node .",
+    "yalcPublish": "yarn build && yalc publish",
+    "npmPublish": "yarn build && npm publish --access public",
     "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap",
     "dev": "nodemon",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/test/**/*.ts'"

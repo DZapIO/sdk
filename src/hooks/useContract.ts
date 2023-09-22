@@ -1,4 +1,4 @@
-import { ethers, Signer } from "ethers";
+import { BigNumber, ethers, Signer } from "ethers";
 import { SWAP_CONTRACTS } from "src/config";
 import { SwapParamRequest } from "src/types";
 import { Contract } from "zksync-web3";
@@ -9,7 +9,8 @@ import {
   getTrxId,
   purgeSwapVersion,
 } from "../utils";
-import { getNetworkFee } from "../utils/GasFee";
+
+export const estimateGasMultiplier = BigNumber.from(15).div(10);
 
 function useContract({
   chainId,
@@ -70,14 +71,21 @@ function useContract({
         recipient,
         swapDetails,
       ];
-      const networkFee = await getNetworkFee(chainId);
-      const result = await contract.multiSwap(...params, {
-        gasPrice: networkFee[trxSpeed || "medium"],
-        value,
-      });
-      return result;
+      try {
+        // const networkFee = await getNetworkFee(chainId);
+        console.log("swap params", params);
+        const estimatedGas = await contract.estimateGas.multiSwap(...params);
+        const result = await contract.multiSwap(...params, {
+          //   gasPrice: networkFee[trxSpeed || "medium"],
+          gasLimit: estimatedGas.mul(estimateGasMultiplier),
+          value,
+        });
+        return result;
+      } catch (error) {
+        throw { params, error };
+      }
     } catch (err) {
-      throw err;
+      throw { error: err };
     }
   };
   return {
