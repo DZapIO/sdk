@@ -74,10 +74,10 @@ function useContract({
       try {
         // const networkFee = await getNetworkFee(chainId);
         console.log("swap params", params);
-        const estimatedGas = await contract.estimateGas.multiSwap(...params, {
+        const estimatedGas = await contract.estimateGas.multiSwapWithoutRevert(...params, {
           value,
         });
-        const result = await contract.multiSwap(...params, {
+        const result = await contract.multiSwapWithoutRevert(...params, {
           //   gasPrice: networkFee[trxSpeed || "medium"],
           gasLimit: estimatedGas.mul(estimateGasMultiplier),
           value,
