@@ -2,10 +2,10 @@ import Axios from "axios";
 import { baseUrl } from "../config";
 import { QuoteRateRequest, SwapParamRequest } from "../types";
 
-const invoke = (endpoint: string, data: any): Promise<any> => {
+const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
   const url = `${baseUrl}${endpoint}`;
   return Axios({
-    method: "put",
+    method: !!method ? method : "put",
     url,
     data,
   })
@@ -17,10 +17,11 @@ export const fetchQuoteRate = async (
   request: QuoteRateRequest[],
   chainId: number
 ) => {
-  return await invoke("swap/get-quote", {
+  const resp = await invoke("batch-swap/get-quote", {
     chainId,
     request,
   });
+  return resp;
 };
 
 export const fetchSwapParams = (
