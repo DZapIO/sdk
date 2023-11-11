@@ -6,13 +6,16 @@ export const STATUS = {
   error: "error",
 };
 
+const ALCHEMY_KEY = '1YcxSmzXByFGQtW4ZNuTRVyLNm-1z7CN';
+
 export const JSON_RPC_PROVIDER: { [key: number]: string } = {
-  1: "https://eth-mainnet.alchemyapi.io/v2/1tU4pDdv8o6LdwbQvYLyXDhj-49LQNuo",
-  56: "https://bsc-dataseed.binance.org",
-  137: "https://holy-old-sea.matic.discover.quiknode.pro/4d868853d8004aa200fff33b5054a73c60ecefd7/",
+  1: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
+  56: `wss://bsc.publicnode.com`,
+  137: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   42161:
-    "https://arb-mainnet.g.alchemy.com/v2/8dwTIBtZDQhc_5nZhBwlegxx2EpEkZN8",
-  324: "https://mainnet.era.zksync.io",
-  10: "https://opt-mainnet.g.alchemy.com/v2/EIR4lpoG0trQy0_qHEt6a85N2H8QfZoM",
+    `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+  324: `https://mainnet.era.zksync.io`,
+  10: `https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
 };
+
 export const HISTORICAL_BLOCK = 10;
