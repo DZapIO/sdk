@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { registry } from "../../config/registry";
+import { abi } from "src/artifacts/v2/DZapAggregator";
 
 export const VALID_CHAIN_ID = 137;
 export const RPC =
@@ -20,7 +20,7 @@ export const getContractAddress = () =>
 export const getAccount = () => "0x2CB99F193549681e06C6770dDD5543812B4FaFE8";
 
 export const getContract = () =>
-  new ethers.Contract(getContractAddress(), registry.abi, getDefaultProvider());
+  new ethers.Contract(getContractAddress(), abi, getDefaultProvider());
 
 export const getRequest = () => [
   {
