@@ -5,7 +5,7 @@ import { QuoteRateRequest, SwapParamRequest } from "../types";
 const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
   const url = `${baseUrl}${endpoint}`;
   return Axios({
-    method: !!method ? method : "put",
+    method: !!method ? method : "post",
     url,
     data,
   })
@@ -13,15 +13,14 @@ const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
     .catch((error) => Promise.reject(error));
 };
 
-export const fetchQuoteRate = async (
+export const fetchQuoteRate = (
   request: QuoteRateRequest[],
   chainId: number
 ) => {
-  const resp = await invoke("batch-swap/get-quote", {
+  return invoke("swap/quote", {
     chainId,
     request,
   });
-  return resp;
 };
 
 export const fetchSwapParams = (
@@ -29,7 +28,7 @@ export const fetchSwapParams = (
   chainId: number,
   via?: string
 ) => {
-  return invoke("swap/get-params/v2", {
+  return invoke("swap/params", {
     chainId,
     request,
     via,
