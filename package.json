@@ -1,5 +1,5 @@
 {
-  "name": "@dzap/dzap-sdk",
+  "name": "@dzapio/dzap-sdk",
   "version": "2.0.8",
   "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
   "main": "dist/index.js",
@@ -14,7 +14,7 @@
     "dev:debug": "ts-node-dev --respawn --pretty --transpile-only ./src/index.ts",
     "yalcPublish": "yarn build && yalc publish",
     "pack": "yarn build && npm pack",
-    "publish": "yarn build && npm publish --access public",
+    "npmPublish": "yarn build && npm publish --access public",
     "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap",
     "dev": "nodemon",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/test/**/*.ts'"
@@ -42,10 +42,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DZapIO/dzap-sdk.git"
+    "url": "git+https://github.com/dzapio/dzap-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/DZapIO/dzap-sdk/issues"
+    "url": "https://github.com/dzapio/dzap-sdk/issues"
   },
-  "homepage": "https://github.com/DZapIO/dzap-sdk#readme"
+  "homepage": "https://github.com/dzapio/dzap-sdk#readme"
 }
