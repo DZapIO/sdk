@@ -1,5 +1,4 @@
 import useClient from "../hooks/useClient";
-import useContract from "../hooks/useContract";
 
 const TEST_CHAIN_ID = {
     chainId: 137
