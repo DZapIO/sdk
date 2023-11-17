@@ -5,11 +5,11 @@ yarn-error.log
 .env
 .eslintcache
 /.idea
-dist
+dist/
 electron-builder.yml
 /.yalc
 yalc.lock
-# yarn.lock
+yarn.lock
 # testing
 /coverage/
 src/types/contracts/

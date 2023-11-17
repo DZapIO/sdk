@@ -14,6 +14,7 @@
     "dev:debug": "ts-node-dev --respawn --pretty --transpile-only ./src/index.ts",
     "yalcPublish": "yarn build && yalc publish",
     "pack": "yarn build && npm pack",
+    "githubPublish": "npm run build && npm publish",
     "npmPublish": "yarn build && npm publish --access public",
     "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap",
     "dev": "nodemon",
