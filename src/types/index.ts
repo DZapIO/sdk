@@ -17,7 +17,7 @@ export type QuoteRateRequest = {
   slippage: number;
 };
 
-export interface GetSwapParamsResponse {
+export type GetSwapParamsResponse = {
   value: string;
   ercSwapDetails: {
     executor: string;
@@ -35,4 +35,4 @@ export interface GetSwapParamsResponse {
     permit: string;
     minReturnAmount: number;
   }[];
-}
+};
