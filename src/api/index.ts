@@ -13,26 +13,12 @@ const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
     .catch((error) => Promise.reject(error));
 };
 
-export const fetchQuoteRate = (
-  request: QuoteRateRequest[],
-  chainId: number,
-) => {
-  return invoke('swap/quote', {
-    chainId,
-    request,
-  });
+export const fetchQuoteRate = (request: QuoteRateRequest) => {
+  return invoke('swap/quote', request);
 };
 
-export const fetchSwapParams = (
-  request: SwapParamRequest[],
-  chainId: number,
-  via?: string,
-) => {
-  return invoke('swap/params', {
-    chainId,
-    request,
-    via,
-  });
+export const fetchSwapParams = (request: SwapParamRequest) => {
+  return invoke('swap/params', request);
 };
 
 export const fetchAllSupportedChains = (chainId: number) => {

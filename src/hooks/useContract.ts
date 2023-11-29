@@ -3,12 +3,7 @@ import { SWAP_CONTRACTS } from 'src/config';
 import { SwapParamRequest } from 'src/types';
 import { Contract } from 'zksync-web3';
 import { fetchSwapParams } from '../api';
-import {
-  getChecksumAddress,
-  getIntegratorInfo,
-  getTrxId,
-  purgeSwapVersion,
-} from '../utils';
+import { getChecksumAddress, purgeSwapVersion } from '../utils';
 
 export const estimateGasMultiplier = BigNumber.from(15).div(10);
 
@@ -38,50 +33,22 @@ function useContract({
   };
   const swap = async ({
     request,
-    recipient,
-    integrator,
-    version,
   }: {
-    request: SwapParamRequest[];
-    recipient: string;
-    integrator?: string;
-    version?: string;
-    trxSpeed?: 'low' | 'medium' | 'high';
+    request: SwapParamRequest;
   }): Promise<any> => {
     try {
-      const integratorInfo = getIntegratorInfo(integrator);
-      const contract = getContract(version);
-      const { swapDetails, value } = await fetchSwapParams(
-        request,
-        chainId,
-        integrator,
-      );
-      const uuid = getTrxId(recipient);
-      const params = [
-        uuid,
-        integratorInfo.contract,
-        recipient,
-        recipient,
-        swapDetails,
-      ];
-      try {
-        // const networkFee = await getNetworkFee(chainId);
-        console.log('swap params', params);
-        const estimatedGas = await contract.estimateGas.multiSwapWithoutRevert(
-          ...params,
-          {
-            value,
-          },
-        );
-        const result = await contract.multiSwapWithoutRevert(...params, {
-          //   gasPrice: networkFee[trxSpeed || "medium"],
-          gasLimit: estimatedGas.mul(estimateGasMultiplier),
-          value,
-        });
-        return result;
-      } catch (error) {
-        throw { params, error };
-      }
+      const {
+        transactionRequest: { data, from, to, value, gasLimit },
+      } = await fetchSwapParams(request);
+
+      // Add gasPrice : fast, medium, slow
+      return await provider.sendTransaction({
+        from,
+        to,
+        data,
+        value,
+        gasLimit,
+      });
     } catch (err) {
       throw { error: err };
     }
