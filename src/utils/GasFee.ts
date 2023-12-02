@@ -1,5 +1,5 @@
-import Web3 from "web3";
-import { HISTORICAL_BLOCK, JSON_RPC_PROVIDER } from "./../constants";
+import Web3 from 'web3';
+import { HISTORICAL_BLOCK, JSON_RPC_PROVIDER } from './../constants';
 
 const meanGasFee = (arr: any) => {
   const sum = arr.reduce((a: number, b: number) => a + b);
@@ -31,13 +31,13 @@ export const formatFeeHistory = (result: any) => {
 
 export const getNetworkFee = async (chainId: number) => {
   const web3 = new Web3(
-    new Web3.providers.HttpProvider(JSON_RPC_PROVIDER[chainId])
+    new Web3.providers.HttpProvider(JSON_RPC_PROVIDER[chainId]),
   );
   try {
     const feeHistory = await web3.eth.getFeeHistory(
       HISTORICAL_BLOCK,
-      "latest",
-      [1, 50, 99]
+      'latest',
+      [1, 50, 99],
     );
 
     const lowIndex = 0;
@@ -47,17 +47,17 @@ export const getNetworkFee = async (chainId: number) => {
     const formattedFeeHistory = formatFeeHistory(feeHistory);
 
     const low = meanGasFee(
-      formattedFeeHistory.map((item) => item.priorityFeePerGas[lowIndex])
+      formattedFeeHistory.map((item) => item.priorityFeePerGas[lowIndex]),
     );
     const medium = meanGasFee(
-      formattedFeeHistory.map((item) => item.priorityFeePerGas[avgIndex])
+      formattedFeeHistory.map((item) => item.priorityFeePerGas[avgIndex]),
     );
     const high = meanGasFee(
-      formattedFeeHistory.map((item) => item.priorityFeePerGas[highIndex])
+      formattedFeeHistory.map((item) => item.priorityFeePerGas[highIndex]),
     );
-    const blockData = await web3.eth.getBlock("pending");
+    const blockData = await web3.eth.getBlock('pending');
     const baseFeePerGas = Number(
-      blockData.baseFeePerGas || (await web3.eth.getGasPrice())
+      blockData.baseFeePerGas || (await web3.eth.getGasPrice()),
     );
 
     return {

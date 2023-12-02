@@ -1,11 +1,11 @@
-import Axios from "axios";
-import { baseUrl } from "../config";
-import { QuoteRateRequest, SwapParamRequest } from "../types";
+import Axios from 'axios';
+import { baseUrl } from '../config';
+import { QuoteRateRequest, SwapParamRequest } from '../types';
 
 const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
   const url = `${baseUrl}${endpoint}`;
   return Axios({
-    method: !!method ? method : "post",
+    method: method ? method : 'post',
     url,
     data,
   })
@@ -13,30 +13,16 @@ const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
     .catch((error) => Promise.reject(error));
 };
 
-export const fetchQuoteRate = (
-  request: QuoteRateRequest[],
-  chainId: number
-) => {
-  return invoke("swap/quote", {
-    chainId,
-    request,
-  });
+export const fetchQuoteRate = (request: QuoteRateRequest) => {
+  return invoke('swap/quote', request);
 };
 
-export const fetchSwapParams = (
-  request: SwapParamRequest[],
-  chainId: number,
-  via?: string
-) => {
-  return invoke("swap/params", {
-    chainId,
-    request,
-    via,
-  });
+export const fetchSwapParams = (request: SwapParamRequest) => {
+  return invoke('swap/params', request);
 };
 
 export const fetchAllSupportedChains = (chainId: number) => {
-  return invoke("config/supported-chains", {
+  return invoke('config/supported-chains', {
     chainId,
   });
 };

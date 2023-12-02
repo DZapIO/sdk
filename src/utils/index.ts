@@ -1,7 +1,7 @@
-import { ethers, providers, utils } from "ethers";
-import { batchSwapIntegrators, defaultSwapVersion } from "src/config";
-import { JSON_RPC_PROVIDER } from "src/constants";
-import { Provider } from "zksync-web3";
+import { ethers, providers, utils } from 'ethers';
+import { batchSwapIntegrators, defaultSwapVersion } from 'src/config';
+import { JSON_RPC_PROVIDER } from 'src/constants';
+import { Provider } from 'zksync-web3';
 
 export const getChecksumAddress = (address: string) =>
   ethers.utils.getAddress(address);
@@ -25,12 +25,12 @@ export const getIntegratorInfo = (integrator?: string) =>
 export const generateUUID = () => {
   let d = new Date().getTime();
   let d2 =
-    (typeof performance !== "undefined" &&
+    (typeof performance !== 'undefined' &&
       performance.now &&
       performance.now() * 1000) ||
     0;
   const uuid =
-    "xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx".replace(
+    'xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx'.replace(
       /[xy]/g,
       (c) => {
         let r = Math.random() * 16;
@@ -41,8 +41,8 @@ export const generateUUID = () => {
           r = (d2 + r) % 16 | 0;
           d2 = Math.floor(d2 / 16);
         }
-        return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-      }
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      },
     );
   const uuidInBytes = utils.formatBytes32String(uuid);
   return uuidInBytes;
@@ -51,7 +51,7 @@ export const generateUUID = () => {
 export const getTrxId = (account: string) => {
   const uuid = `${account.slice(0, 6)}...${account.slice(
     36,
-    42
+    42,
   )}-${Date.now()}`;
   console.log(uuid);
 

@@ -1,17 +1,17 @@
-import { QuoteRateRequest, SwapParamRequest } from "src/types";
+import { QuoteRateRequest, SwapParamRequest } from 'src/types';
 import {
   fetchAllSupportedChains,
   fetchQuoteRate,
   fetchSwapParams,
-} from "../api";
+} from '../api';
 
 function useClient({ chainId }: { chainId: number }) {
-  const getQuoteRate = async (request: QuoteRateRequest[]) => {
-    return await fetchQuoteRate(request, chainId);
+  const getQuoteRate = async (request: QuoteRateRequest) => {
+    return await fetchQuoteRate(request);
   };
 
-  const getSwapParams = (request: SwapParamRequest[], via?: string) => {
-    return fetchSwapParams(request, chainId, via);
+  const getSwapParams = (request: SwapParamRequest) => {
+    return fetchSwapParams(request);
   };
 
   const getAllSupportedChains = () => {

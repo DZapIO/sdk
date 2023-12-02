@@ -1,23 +1,40 @@
-export type SwapParamRequest = {
+type SwapData = {
+  sourceId?: string;
+  srcToken: string;
+  dstToken: string;
   amount: string;
+  slippage: number;
+  gasPrice?: number;
+};
+
+export type SwapParamRequest = {
+  chainId: number;
+  integratorId: string;
+  sender: string;
+  refundee: string;
+  recipient: string;
+  data: Array<SwapData>;
+};
+
+type SwapRequest = {
+  amount: string;
+  srcAmount?: string;
   globalAmount: string;
+  account: string;
   fromTokenAddress: string;
   toTokenAddress: string;
-  account: string;
-  exchange: string;
   slippage: number;
 };
 
 export type QuoteRateRequest = {
-  amount: string;
-  globalAmount: string;
-  fromTokenAddress: string;
-  toTokenAddress: string;
-  account: string;
-  slippage: number;
+  request: SwapRequest[];
+  chainId: number;
+  integrator: string;
+  allowedSources?: string[];
+  notAllowedSources?: string[];
 };
 
-export interface GetSwapParamsResponse {
+export type GetSwapParamsResponse = {
   value: string;
   ercSwapDetails: {
     executor: string;
@@ -35,4 +52,4 @@ export interface GetSwapParamsResponse {
     permit: string;
     minReturnAmount: number;
   }[];
-}
+};
