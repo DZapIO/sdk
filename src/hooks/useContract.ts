@@ -37,9 +37,10 @@ function useContract({
     request: SwapParamRequest;
   }): Promise<any> => {
     try {
+      const { data: paramResponseData } = await fetchSwapParams(request);
       const {
         transactionRequest: { data, from, to, value, gasLimit },
-      } = await fetchSwapParams(request);
+      } = paramResponseData;
 
       // Add gasPrice : fast, medium, slow
       return await provider.sendTransaction({
