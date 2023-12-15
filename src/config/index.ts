@@ -2,7 +2,7 @@ import { ContractInterface } from 'ethers';
 import { abi as swapAbiV1point2 } from '../artifacts/v1.2/DZapAggregator';
 import { abi as swapAbiV2 } from '../artifacts/v2/DZapAggregator';
 
-export const baseUrl = 'https://dzap-staging-v2-1-lqtpzlbt3q-lz.a.run.app/';
+export const baseUrl = 'https://api.dezap.xyz/';
 // export const baseUrl = 'http://localhost:8080/';
 // export const baseUrl = "https://api.dzap.io/";
 
