@@ -1,3 +1,4 @@
+import UseClientSingleton from './client';
 import useClient from './hooks/useClient';
 import useContract from './hooks/useContract';
 // Test Scripts
@@ -5,5 +6,6 @@ import useContract from './hooks/useContract';
 
 // TestGetQuoteRate();
 // TestGetSwapParams();
+export default UseClientSingleton;
 
 export { useClient, useContract };

@@ -1,21 +1,31 @@
-import Axios from 'axios';
+import Axios, { CancelToken, CancelTokenSource } from 'axios';
 import { baseUrl } from '../config';
 import { QuoteRateRequest, SwapParamRequest } from '../types';
 
-const invoke = (endpoint: string, data: any, method?: any ): Promise<any> => {
+const invoke = (endpoint: string, data: any, method?: any, cancelToken ? : CancelToken): Promise<any> => {
   const url = `${baseUrl}${endpoint}`;
   return Axios({
-    method: method ? method : 'post',
+    method: method || 'post',
     url,
     data,
+    cancelToken
   })
-    .then(({ data }) => data)
-    .catch((error) => Promise.reject(error));
+
+  .then(({ data }) => data)
+  .catch((error) => {
+    if (Axios.isCancel(error)) {
+      return Promise.resolve({});
+    } 
+      return Promise.reject(error);
+    
+  });
 };
 
-export const fetchQuoteRate = (request: QuoteRateRequest) => {
-  return invoke('swap/quote', request);
-};
+export const fetchQuoteRate = (request: QuoteRateRequest, cancelToken : CancelToken) =>
+  invoke('swap/quote', request, 'post', cancelToken);
+
+
+
 
 export const fetchSwapParams = (request: SwapParamRequest) => {
   return invoke('swap/params', request);
