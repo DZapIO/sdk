@@ -6,18 +6,18 @@ import {
   fetchSwapParams,
 } from '../api';
 
-class UseClientSingleton {
-  private static instance: UseClientSingleton;
+class DzapClient {
+  private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
 
   private constructor() {}
 
   // Static method to control the access to the singleton instance.
-  public static getInstance(): UseClientSingleton {
-    if (!UseClientSingleton.instance) {
-      UseClientSingleton.instance = new UseClientSingleton();
+  public static getInstance(): DzapClient {
+    if (!DzapClient.instance) {
+      DzapClient.instance = new DzapClient();
     }
-    return UseClientSingleton.instance;
+    return DzapClient.instance;
   }
 
   public async getQuoteRate(request: QuoteRateRequest) {
@@ -38,4 +38,4 @@ class UseClientSingleton {
   }
 }
 
-export default UseClientSingleton;
+export default DzapClient;
