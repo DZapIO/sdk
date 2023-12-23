@@ -2,7 +2,7 @@ import { ContractInterface } from 'ethers';
 import { abi as swapAbiV1point2 } from '../artifacts/v1.2/DZapAggregator';
 import { abi as swapAbiV2 } from '../artifacts/v2/DZapAggregator';
 
-export const baseUrl = 'https://api.dezap.xyz/';
+export const baseUrl = 'https://staging.dzap.io/';
 // export const baseUrl = 'http://localhost:8080/';
 // export const baseUrl = "https://api.dzap.io/";
 
@@ -24,10 +24,10 @@ export const SWAP_CONTRACTS: DeFiContract = {
     abi: swapAbiV1point2,
   },
   v2: {
-    137: '0x8cC264e741040a574f972b6688769584320bbb36',
-    56: '0x8cC264e741040a574f972b6688769584320bbb36',
-    10: '0x8cC264e741040a574f972b6688769584320bbb36',
-    42161: '0x8cC264e741040a574f972b6688769584320bbb36',
+    137: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    56: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    10: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    42161: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
     abi: swapAbiV2,
   },
 };
