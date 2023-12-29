@@ -1,5 +1,4 @@
 import DzapClient from './client';
-import useClient from './hooks/useClient';
 import useContract from './hooks/useContract';
 // Test Scripts
 // import { TestGetQuoteRate, TestGetSwapParams } from './test';
@@ -8,4 +7,4 @@ import useContract from './hooks/useContract';
 // TestGetSwapParams();
 export default DzapClient;
 
-export { useClient, useContract };
+export { useContract };
