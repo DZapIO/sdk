@@ -64,7 +64,7 @@ export async function TestGetQuoteRate() {
 
   console.log(response);
 }
-
+TestGetQuoteRate();
 export async function TestGetSwapParams() {
   let response;
   console.log('TestGetSwapParams');

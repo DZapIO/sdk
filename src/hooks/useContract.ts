@@ -1,21 +1,21 @@
-import { BigNumber, ethers, Signer } from 'ethers';
-import { SWAP_CONTRACTS } from 'src/config';
-import { SwapParamRequest } from 'src/types';
-import { Contract } from 'zksync-web3';
+import { SWAP_CONTRACTS, ViemChains } from 'src/config';
+import { HexString, SwapParamRequest } from 'src/types';
 import { fetchSwapParams } from '../api';
 import { getChecksumAddress, purgeSwapVersion } from '../utils';
+import { Client, WalletClient, getContract as fetchContract } from 'viem';
+import BigNumber from 'bignumber.js';
 
-export const estimateGasMultiplier = BigNumber.from(15).div(10);
+export const estimateGasMultiplier = BigNumber(15).dividedBy(10); // .toFixed(0);
 
 function useContract({
   chainId,
-  provider,
+  walletClient,
 }: {
   chainId: number;
-  provider: Signer;
+  walletClient: WalletClient;
   clientId?: number;
 }) {
-  const getContractAddress = (version?: string): string => {
+  const getContractAddress = (version?: string): HexString => {
     try {
       const address = SWAP_CONTRACTS[purgeSwapVersion(version)][chainId];
       return getChecksumAddress(address);
@@ -27,9 +27,14 @@ function useContract({
   const getContract = (version?: string): any => {
     const purgedVersion = purgeSwapVersion(version);
     const abi = SWAP_CONTRACTS[purgedVersion].abi;
-    return chainId === 324
-      ? new Contract(getContractAddress(purgedVersion), abi, provider)
-      : new ethers.Contract(getContractAddress(purgedVersion), abi, provider);
+    const contractAddress = getContractAddress(purgedVersion);
+    const contract = fetchContract({
+      abi,
+      address: contractAddress,
+      client: walletClient as Client,
+    });
+
+    return contract;
   };
   const swap = async ({
     request,
@@ -39,17 +44,19 @@ function useContract({
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
       const {
-        transactionRequest: { data, from, to, value, gasLimit },
+        transactionRequest: { data, from, to, value }, // gasLimit
       } = paramResponseData;
 
       // Add gasPrice : fast, medium, slow
-      return await provider.sendTransaction({
-        from,
-        to,
-        data,
-        value,
-        gasLimit,
+      const hash = await walletClient.sendTransaction({
+        chain: ViemChains[chainId],
+        account: from as HexString,
+        to: to as HexString,
+        data: data as HexString,
+        value: value as bigint,
+        // gasLimit,
       });
+      return hash;
     } catch (err) {
       throw { error: err };
     }
