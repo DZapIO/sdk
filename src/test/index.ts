@@ -6,7 +6,7 @@ const TEST_CHAIN_ID = {
 
 const quoteRequests = {
   chainId: 137,
-  integrator: 'dZap',
+  integrator: 'dzap',
   request: [
     {
       amount: '200000000000000000',
@@ -29,7 +29,7 @@ const quoteRequests = {
 
 const paramRequest = {
   chainId: 137,
-  integratorId: 'dZap',
+  integratorId: 'dzap',
   sender: '0x12480616436dd6d555f88b8d94bb5156e28825b1',
   refundee: '0x12480616436dd6d555f88b8d94bb5156e28825b1',
   recipient: '0x12480616436dd6d555f88b8d94bb5156e28825b1',
@@ -54,23 +54,23 @@ const paramRequest = {
 export async function TestGetQuoteRate() {
   let response;
   console.log('TestGetQuoteRate');
-  const { getQuoteRate: getQuoteRateUsingDZapClient } =
+  const { getQuoteRate: getQuoteRateUsingdzapClient } =
     useClient(TEST_CHAIN_ID);
   try {
-    response = await getQuoteRateUsingDZapClient(quoteRequests);
+    response = await getQuoteRateUsingdzapClient(quoteRequests);
   } catch (e) {
     console.log(e, 'request error ');
   }
 
   console.log(response);
 }
-TestGetQuoteRate();
+
 export async function TestGetSwapParams() {
   let response;
   console.log('TestGetSwapParams');
-  const { getSwapParams: getParamUsingDZapClient } = useClient(TEST_CHAIN_ID);
+  const { getSwapParams: getParamUsingdzapClient } = useClient(TEST_CHAIN_ID);
   try {
-    response = await getParamUsingDZapClient(paramRequest);
+    response = await getParamUsingdzapClient(paramRequest);
   } catch (e) {
     console.log(e, 'request error ');
   }

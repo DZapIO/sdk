@@ -1,9 +1,9 @@
 import useClient from './hooks/useClient';
 import useContract from './hooks/useContract';
 // Test Scripts
-// import { TestGetQuoteRate, TestGetSwapParams } from './test';
+import { TestGetSwapParams } from './test';
 
 // TestGetQuoteRate();
-// TestGetSwapParams();
+TestGetSwapParams();
 
 export { useClient, useContract };
