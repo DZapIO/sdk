@@ -10,10 +10,7 @@ const invoke = (endpoint: string, data: any, method?: any): Promise<any> => {
     data,
   })
     .then(({ data }) => data)
-    .catch((error) => {
-      console.log('Error is here: ', JSON.stringify(error.response.data));
-      return Promise.reject(error);
-    });
+    .catch((error) => Promise.reject(error));
 };
 
 export const fetchQuoteRate = (request: QuoteRateRequest) => {
