@@ -35,7 +35,7 @@ export const batchSwapIntegrators: {
   },
 };
 
-export const ViemChains: { [key: number]: Chain } = {
+export const Chains: { [key: number]: Chain } = {
   10: optimism,
   56: bsc,
   137: polygon,

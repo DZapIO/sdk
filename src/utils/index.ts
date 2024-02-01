@@ -1,5 +1,5 @@
 import {
-  ViemChains,
+  Chains,
   batchSwapIntegrators,
   defaultSwapVersion,
 } from 'src/config';
@@ -16,7 +16,7 @@ export const purgeSwapVersion = (version?: string) =>
 export const initializeReadOnlyProvider = (chainId: number) => {
   if (JSON_RPC_PROVIDER[chainId]) {
     return createPublicClient({
-      chain: ViemChains[chainId],
+      chain: Chains[chainId],
       transport: http(JSON_RPC_PROVIDER[chainId]),
     });
   }

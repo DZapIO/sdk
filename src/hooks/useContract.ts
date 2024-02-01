@@ -1,4 +1,4 @@
-import { SWAP_CONTRACTS, ViemChains } from 'src/config';
+import { SWAP_CONTRACTS, Chains } from 'src/config';
 import { HexString, SwapParamRequest } from 'src/types';
 import { fetchSwapParams } from '../api';
 import { getChecksumAddress, purgeSwapVersion } from '../utils';
@@ -49,7 +49,7 @@ function useContract({
 
       // Add gasPrice : fast, medium, slow
       const hash = await walletClient.sendTransaction({
-        chain: ViemChains[chainId],
+        chain: Chains[chainId],
         account: from as HexString,
         to: to as HexString,
         data: data as HexString,

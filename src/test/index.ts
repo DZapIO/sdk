@@ -54,10 +54,10 @@ const paramRequest = {
 export async function TestGetQuoteRate() {
   let response;
   console.log('TestGetQuoteRate');
-  const { getQuoteRate: getQuoteRateUsingdzapClient } =
+  const { getQuoteRate: getQuoteRateUsingDZapClient } =
     useClient(TEST_CHAIN_ID);
   try {
-    response = await getQuoteRateUsingdzapClient(quoteRequests);
+    response = await getQuoteRateUsingDZapClient(quoteRequests);
   } catch (e) {
     console.log(e, 'request error ');
   }
@@ -68,9 +68,9 @@ export async function TestGetQuoteRate() {
 export async function TestGetSwapParams() {
   let response;
   console.log('TestGetSwapParams');
-  const { getSwapParams: getParamUsingdzapClient } = useClient(TEST_CHAIN_ID);
+  const { getSwapParams: getParamUsingDZapClient } = useClient(TEST_CHAIN_ID);
   try {
-    response = await getParamUsingdzapClient(paramRequest);
+    response = await getParamUsingDZapClient(paramRequest);
   } catch (e) {
     console.log(e, 'request error ');
   }
