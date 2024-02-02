@@ -42,14 +42,17 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
       } = paramResponseData;
       if (isTypeSigner(signer)) {
         // Add gasPrice : fast, medium, slow
-        return await signer.sendTransaction({
+        console.log('In ethers signer.');
+        const response = await signer.sendTransaction({
           from,
           to,
           data,
           value,
           gasLimit,
         });
+        return response.hash;
       } else {
+        console.log('In viem walletClient.');
         const hash = await signer.sendTransaction({
           chain: Chains[chainId],
           account: from as HexString,

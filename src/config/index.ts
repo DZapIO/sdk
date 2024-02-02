@@ -1,6 +1,6 @@
 import { abi as swapAbiV2 } from '../artifacts/v2/DZapAggregator';
 import { Abi, Chain } from 'viem';
-import { arbitrum, bsc, mainnet, optimism, polygon, zkSync } from 'viem/chains';
+import { arbitrum, bsc, optimism, polygon, zkSync } from 'viem/chains';
 
 export const baseUrl = 'https://staging.dzap.io/';
 // export const baseUrl = 'http://localhost:8080/';
