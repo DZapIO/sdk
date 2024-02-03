@@ -75,7 +75,7 @@ const paramRequest = {
 //   console.log(response);
 // }
 
-const PRIVATE_KEY: string = '6dcb711b873060fe88bffaf6248d67ab6f360af35781e30003b98e395ba243fd';
+const PRIVATE_KEY: string = '';
 
 export async function TestHook() {
   console.log('Testing now...');
