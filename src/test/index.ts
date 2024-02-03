@@ -1,4 +1,4 @@
-import useContract from 'src/hooks/useContract';
+import useContract from '../hooks/useContract';
 import { ethers } from 'ethers';
 const TEST_CHAIN_ID = {
   chainId: 42161,
@@ -44,36 +44,38 @@ const paramRequest = {
   integratorId: 'dzap',
   refundee: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
   sender: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
+  includeSwapCallData: true,
+  includeTxData: true,
 };
 
-export async function TestGetQuoteRate() {
-  let response;
-  console.log('TestGetQuoteRate');
-  const { getQuoteRate: getQuoteRateUsingDZapClient } =
-    useClient(TEST_CHAIN_ID);
-  try {
-    response = await getQuoteRateUsingDZapClient(quoteRequests);
-  } catch (e) {
-    console.log(e, 'request error ');
-  }
+// export async function TestGetQuoteRate() {
+//   let response;
+//   console.log('TestGetQuoteRate');
+//   const { getQuoteRate: getQuoteRateUsingDZapClient } =
+//     useClient(TEST_CHAIN_ID);
+//   try {
+//     response = await getQuoteRateUsingDZapClient(quoteRequests);
+//   } catch (e) {
+//     console.log(e, 'request error ');
+//   }
 
-  console.log(response);
-}
+//   console.log(response);
+// }
 
-export async function TestGetSwapParams() {
-  let response;
-  console.log('TestGetSwapParams');
-  const { getSwapParams: getParamUsingDZapClient } = useClient(TEST_CHAIN_ID);
-  try {
-    response = await getParamUsingDZapClient(paramRequest);
-  } catch (e) {
-    console.log(e, 'request error ');
-  }
+// export async function TestGetSwapParams() {
+//   let response;
+//   console.log('TestGetSwapParams');
+//   const { getSwapParams: getParamUsingDZapClient } = useClient(TEST_CHAIN_ID);
+//   try {
+//     response = await getParamUsingDZapClient(paramRequest);
+//   } catch (e) {
+//     console.log(e, 'request error ');
+//   }
 
-  console.log(response);
-}
+//   console.log(response);
+// }
 
-const PRIVATE_KEY: string = '';
+const PRIVATE_KEY: string = '6dcb711b873060fe88bffaf6248d67ab6f360af35781e30003b98e395ba243fd';
 
 export async function TestHook() {
   console.log('Testing now...');
