@@ -16,7 +16,7 @@ export const CHAINS_IDS = {
 
 export type ChainIds = (typeof CHAINS_IDS)[keyof typeof CHAINS_IDS];
 
-type SwapData = {
+export type SwapData = {
   sourceId?: string;
   srcToken: string;
   destToken: string;
@@ -36,7 +36,7 @@ export type SwapParamRequest = {
   data: Array<SwapData>;
 };
 
-type SwapRequest = {
+export type SwapRequest = {
   amount: string;
   srcAmount?: string;
   globalAmount: string;
@@ -73,3 +73,5 @@ export type GetSwapParamsResponse = {
     minReturnAmount: number;
   }[];
 };
+
+export {} 
