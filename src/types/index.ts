@@ -1,3 +1,5 @@
+export type HexString = `0x${string}`;
+
 type SwapData = {
   sourceId?: string;
   srcToken: string;

@@ -1,12 +1,12 @@
-import useClient from '../hooks/useClient';
-
+import useContract from 'src/hooks/useContract';
+import { ethers } from 'ethers';
 const TEST_CHAIN_ID = {
-  chainId: 137,
+  chainId: 42161,
 };
 
 const quoteRequests = {
   chainId: 137,
-  integrator: 'dZap',
+  integrator: 'dzap',
   request: [
     {
       amount: '200000000000000000',
@@ -28,27 +28,22 @@ const quoteRequests = {
 };
 
 const paramRequest = {
-  chainId: 137,
-  integratorId: 'dZap',
-  sender: '0x12480616436dd6d555f88b8d94bb5156e28825b1',
-  refundee: '0x12480616436dd6d555f88b8d94bb5156e28825b1',
-  recipient: '0x12480616436dd6d555f88b8d94bb5156e28825b1',
+  chainId: 42161,
   data: [
     {
+      account: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
       sourceId: 'paraSwap',
-      amount: '100000',
-      srcToken: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-      dstToken: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-      slippage: 1,
-    },
-    {
-      sourceId: 'oneInch',
-      amount: '1000000000000000',
+      globalAmount: '0.000015',
+      amount: '15000000000000',
       srcToken: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-      dstToken: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+      dstToken: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1',
       slippage: 1,
     },
   ],
+  recipient: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
+  integratorId: 'dzap',
+  refundee: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
+  sender: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
 };
 
 export async function TestGetQuoteRate() {
@@ -76,4 +71,21 @@ export async function TestGetSwapParams() {
   }
 
   console.log(response);
+}
+
+const PRIVATE_KEY: string = '';
+
+export async function TestHook() {
+  console.log('Testing now...');
+  const provider = new ethers.providers.JsonRpcProvider(
+    'https://arb-mainnet.g.alchemy.com/v2/HxHVTDRB9UrZQNXBHC2tigcAAk03i7bb', //Arbitrum
+  );
+  const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+  const { swap } = useContract({ chainId: 42161, signer: signer });
+  try {
+    const resp = await swap({ request: paramRequest });
+    console.log(resp);
+  } catch (e) {
+    console.log(e);
+  }
 }
