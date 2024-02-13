@@ -1,7 +1,18 @@
 {
+  "arrowParens": "always",
+  "printWidth": 80,
   "tabWidth": 2,
-  "printWidth": 120,
-  "trailingComma": "all",
+  "semi": true,
+  "bracketSpacing": true,
   "singleQuote": true,
-  "semi": true
+  "trailingComma": "all",
+  "endOfLine": "auto",
+  "overrides": [
+    {
+      "files": ["*.json", ".eslintrc", ".prettierrc"],
+      "options": {
+        "trailingComma": "none"
+      }
+    }
+  ]
 }

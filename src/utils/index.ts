@@ -1,8 +1,4 @@
-import {
-  Chains,
-  batchSwapIntegrators,
-  defaultSwapVersion,
-} from 'src/config';
+import { Chains, batchSwapIntegrators, defaultSwapVersion } from 'src/config';
 import { JSON_RPC_PROVIDER } from 'src/constants';
 import { HexString } from 'src/types';
 import { createPublicClient, getAddress, http, stringToHex } from 'viem';

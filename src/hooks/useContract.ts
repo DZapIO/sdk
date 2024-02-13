@@ -1,7 +1,11 @@
 import { Chains, SWAP_CONTRACTS } from 'src/config';
 import { HexString, SwapParamRequest } from 'src/types';
 import { fetchSwapParams } from '../api';
-import { getChecksumAddress, initializeReadOnlyProvider, purgeSwapVersion } from '../utils';
+import {
+  getChecksumAddress,
+  initializeReadOnlyProvider,
+  purgeSwapVersion,
+} from '../utils';
 import {
   BaseError,
   Client,
@@ -19,7 +23,14 @@ function isTypeSigner(variable: any): variable is Signer {
   return variable instanceof Signer;
 }
 
-function useContract({ chainId, signer }: { chainId: number; signer: WalletClient | Signer; clientId?: number }) {
+function useContract({
+  chainId,
+  signer,
+}: {
+  chainId: number;
+  signer: WalletClient | Signer;
+  clientId?: number;
+}) {
   const getContractAddress = (version?: string): HexString => {
     try {
       const address = SWAP_CONTRACTS[purgeSwapVersion(version)][chainId];
@@ -41,7 +52,8 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
 
     return contract;
   };
-  const swap = async ({ request }: { request: SwapParamRequest }): Promise<any> => {
+
+  const swap = async ({ request }: { request: SwapParamRequest }) => {
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
       const {
@@ -87,14 +99,16 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
       }
     } catch (err) {
       if (err instanceof BaseError) {
-        const revertError = err.walk((err) => err instanceof ContractFunctionRevertedError);
+        const revertError = err.walk(
+          (error) => error instanceof ContractFunctionRevertedError,
+        );
         if (revertError instanceof ContractFunctionRevertedError) {
           const errorName = revertError.data?.errorName ?? '';
           // do something with `errorName`
           console.log('Error Name:', errorName);
         }
       }
-      throw { error: err };
+      throw new Error(err);
     }
   };
   return {

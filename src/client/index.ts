@@ -1,6 +1,12 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { QuoteRateRequest, SwapParamRequest } from 'src/types';
-import { fetchAllSupportedChains, fetchAllTokens, fetchQuoteRate, fetchSwapParams, swapTokensApi } from '../api';
+import {
+  fetchAllSupportedChains,
+  fetchAllTokens,
+  fetchQuoteRate,
+  fetchSwapParams,
+  swapTokensApi,
+} from '../api';
 import { Signer } from 'ethers';
 
 class DzapClient {
@@ -8,7 +14,7 @@ class DzapClient {
   private cancelTokenSource: CancelTokenSource | null = null;
   private provider: Signer = null;
 
-  private constructor() {}
+  // private constructor() {}
 
   // Static method to control the access to the singleton instance.
   public static getInstance(): DzapClient {
@@ -35,11 +41,21 @@ class DzapClient {
     return fetchAllSupportedChains(chainId);
   }
 
-  public getAllTokens = (chainId: number, source?: string, account?: string) => {
+  public getAllTokens = (
+    chainId: number,
+    source?: string,
+    account?: string,
+  ) => {
     return fetchAllTokens(chainId, source, account);
   };
 
-  public swapTokens = ({ request, provider }: { request: SwapParamRequest; provider: Signer }) => {
+  public swapTokens = ({
+    request,
+    provider,
+  }: {
+    request: SwapParamRequest;
+    provider: Signer;
+  }) => {
     return swapTokensApi({ request, provider });
   };
 }
