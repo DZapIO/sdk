@@ -1,19 +1,8 @@
 import { Chains, SWAP_CONTRACTS } from 'src/config';
 import { HexString, SwapParamRequest } from 'src/types';
 import { fetchSwapParams } from '../api';
-import {
-  getChecksumAddress,
-  initializeReadOnlyProvider,
-  purgeSwapVersion,
-} from '../utils';
-import {
-  BaseError,
-  Client,
-  ContractFunctionRevertedError,
-  WalletClient,
-  decodeFunctionData,
-  getContract as fetchContract,
-} from 'viem';
+import { getChecksumAddress, initializeReadOnlyProvider, purgeSwapVersion } from '../utils';
+import { BaseError, Client, ContractFunctionRevertedError, WalletClient, decodeFunctionData, getContract as fetchContract } from 'viem';
 import BigNumber from 'bignumber.js';
 import { Signer } from 'ethers';
 
@@ -23,14 +12,7 @@ function isTypeSigner(variable: any): variable is Signer {
   return variable instanceof Signer;
 }
 
-function useContract({
-  chainId,
-  signer,
-}: {
-  chainId: number;
-  signer: WalletClient | Signer;
-  clientId?: number;
-}) {
+function useContract({ chainId, signer }: { chainId: number; signer: WalletClient | Signer; clientId?: number }) {
   const getContractAddress = (version?: string): HexString => {
     try {
       const address = SWAP_CONTRACTS[purgeSwapVersion(version)][chainId];
@@ -99,9 +81,7 @@ function useContract({
       }
     } catch (err) {
       if (err instanceof BaseError) {
-        const revertError = err.walk(
-          (error) => error instanceof ContractFunctionRevertedError,
-        );
+        const revertError = err.walk((error) => error instanceof ContractFunctionRevertedError);
         if (revertError instanceof ContractFunctionRevertedError) {
           const errorName = revertError.data?.errorName ?? '';
           // do something with `errorName`
