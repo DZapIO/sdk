@@ -8,7 +8,7 @@ class DzapClient {
   private cancelTokenSource: CancelTokenSource | null = null;
   private provider: Signer = null;
 
-  private constructor() {}
+  // private constructor() {}
 
   // Static method to control the access to the singleton instance.
   public static getInstance(): DzapClient {

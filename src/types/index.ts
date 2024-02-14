@@ -74,4 +74,4 @@ export type GetSwapParamsResponse = {
   }[];
 };
 
-export {} 
+export {};
