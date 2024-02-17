@@ -24,7 +24,7 @@
     "pretty": "prettier --write --ignore-unknown src/**/*.ts",
     "prepush": "tsc --build",
     "prepare": "husky install && yarn run fix-permissions",
-    "fix-permissions": "chmod ug+x .husky/* && chmod ug+x .git/hooks/*"
+    "fix-permissions": "node ./scripts/fixPermissions.js"
   },
   "husky": {
     "hooks": {

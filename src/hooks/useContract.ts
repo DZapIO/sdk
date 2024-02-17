@@ -1,5 +1,5 @@
 import { Chains, SWAP_CONTRACTS } from 'src/config';
-import { HexString, SwapParamRequest } from 'src/types';
+import { SwapParamsRequest, HexString } from 'src/types';
 import { fetchSwapParams } from '../api';
 import { getChecksumAddress, initializeReadOnlyProvider, purgeSwapVersion } from '../utils';
 import { BaseError, Client, ContractFunctionRevertedError, WalletClient, decodeFunctionData, getContract as fetchContract } from 'viem';
@@ -35,7 +35,7 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
     return contract;
   };
 
-  const swap = async ({ request }: { request: SwapParamRequest }) => {
+  const swap = async ({ request }: { request: SwapParamsRequest }) => {
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
       const {
@@ -59,25 +59,23 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
       });
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
-        const response = await signer.sendTransaction({
+        return await signer.sendTransaction({
           from,
           to,
           data,
           value,
           gasLimit,
         });
-        return response.hash;
       } else {
         console.log('Using viem walletClient.');
-        const hash = await signer.sendTransaction({
+        return await signer.sendTransaction({
           chain: Chains[chainId],
           account: from as HexString,
           to: to as HexString,
           data: data as HexString,
           value: value as bigint,
-          // gasLimit,
+          gasLimit,
         });
-        return hash;
       }
     } catch (err) {
       if (err instanceof BaseError) {
@@ -88,7 +86,7 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
           console.log('Error Name:', errorName);
         }
       }
-      throw new Error(err);
+      // throw new Error(err);
     }
   };
   return {

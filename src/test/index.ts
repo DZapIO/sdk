@@ -2,6 +2,7 @@ import { createWalletClient, http } from 'viem';
 import useContract from '../hooks/useContract';
 // import { ethers } from 'ethers';
 import { privateKeyToAccount } from 'viem/accounts';
+import { SwapParamsRequest } from 'src/types';
 // Uncomment the following imports to test the getQuoteRate and getSwapParams functions
 
 // const TEST_CHAIN_ID = {
@@ -31,15 +32,17 @@ import { privateKeyToAccount } from 'viem/accounts';
 //   ],
 // };
 
-const paramRequest = {
+const paramRequest: SwapParamsRequest = {
   chainId: 42161,
   data: [
     {
       sourceId: 'paraSwap',
-      srcToken: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+      srcToken: '0x912ce59144191c1204e64559fe8253a0e49e6548',
       destToken: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1',
       amount: '15000000000000',
       slippage: 1,
+      srcDecimals: 18,
+      destDecimals: 18,
       // account: '0x5cab52349c051908c1dc621d15eb7f608dc80634',
     },
   ],

@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { QuoteRateRequest, SwapParamRequest } from 'src/types';
+import { SwapQuoteRequest, SwapParamsRequest } from 'src/types';
 import { fetchAllSupportedChains, fetchAllTokens, fetchQuoteRate, fetchSwapParams, swapTokensApi } from '../api';
 import { Signer } from 'ethers';
 
@@ -18,7 +18,7 @@ class DzapClient {
     return DzapClient.instance;
   }
 
-  public async getQuoteRate(request: QuoteRateRequest) {
+  public async getQuoteRate(request: SwapQuoteRequest) {
     if (this.cancelTokenSource) {
       this.cancelTokenSource.cancel('Cancelled due to new request');
     }
@@ -27,7 +27,7 @@ class DzapClient {
     return await fetchQuoteRate(request, this.cancelTokenSource.token);
   }
 
-  public getSwapParams(request: SwapParamRequest) {
+  public getSwapParams(request: SwapParamsRequest) {
     return fetchSwapParams(request);
   }
 
@@ -39,7 +39,7 @@ class DzapClient {
     return fetchAllTokens(chainId, source, account);
   };
 
-  public swapTokens = ({ request, provider }: { request: SwapParamRequest; provider: Signer }) => {
+  public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
     return swapTokensApi({ request, provider });
   };
 }

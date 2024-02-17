@@ -1,6 +1,6 @@
-import { Chains, batchSwapIntegrators, defaultSwapVersion } from 'src/config';
-import { JSON_RPC_PROVIDER } from 'src/constants';
-import { HexString } from 'src/types';
+import { Chains, batchSwapIntegrators, defaultSwapVersion } from '../config';
+import { JSON_RPC_PROVIDER } from '../constants';
+import { HexString } from '../types';
 import { createPublicClient, getAddress, http, stringToHex } from 'viem';
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
