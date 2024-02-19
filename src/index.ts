@@ -1,6 +1,6 @@
 import DzapClient from './client';
 import useContract from './hooks/useContract';
-import { GetSwapParamsResponse, HexString, ChainIds, SwapParamRequest, SwapData, SwapRequest, QuoteRateRequest } from './types';
+import { GetSwapParamsResponse, ChainIds, SwapParamsRequest, SwapData, SwapQuoteData, SwapQuoteRequest, SwapQuoteResponse, HexString } from './types';
 // import { TestHook } from './test';
 // Test Scripts
 // import { TestGetQuoteRate, TestGetSwapParams } from './test';
@@ -9,4 +9,4 @@ import { GetSwapParamsResponse, HexString, ChainIds, SwapParamRequest, SwapData,
 // TestGetSwapParams();
 export default DzapClient;
 
-export { useContract, HexString, ChainIds, GetSwapParamsResponse, SwapParamRequest, SwapData, SwapRequest, QuoteRateRequest };
+export { HexString, useContract, ChainIds, GetSwapParamsResponse, SwapParamsRequest, SwapData, SwapQuoteData, SwapQuoteRequest, SwapQuoteResponse };

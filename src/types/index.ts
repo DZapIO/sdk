@@ -17,39 +17,42 @@ export const CHAINS_IDS = {
 export type ChainIds = (typeof CHAINS_IDS)[keyof typeof CHAINS_IDS];
 
 export type SwapData = {
-  sourceId?: string;
+  sourceId: string;
   srcToken: string;
   destToken: string;
   amount: string;
   slippage: number;
   gasPrice?: number;
-  srcDecimals?: number;
-  destDecimals?: number;
+  srcDecimals: number;
+  destDecimals: number;
 };
 
-export type SwapParamRequest = {
-  chainId: number;
+export type SwapParamsRequest = {
+  chainId: ChainIds;
   integratorId: string;
   sender: string;
   refundee: string;
   recipient: string;
+  withOutRevert?: boolean; // default true
+  includeSwapCallData?: boolean; // default false
+  includeTxData?: boolean; // default true
   data: Array<SwapData>;
 };
 
-export type SwapRequest = {
+export type SwapQuoteData = {
   amount: string;
-  srcAmount?: string;
-  globalAmount: string;
   account: string;
-  fromTokenAddress: string;
-  toTokenAddress: string;
+  srcToken: string;
+  srcDecimals: number;
+  destToken: string;
+  destDecimals: number;
   slippage: number;
 };
 
-export type QuoteRateRequest = {
-  request: SwapRequest[];
-  chainId: number;
-  integrator: string;
+export type SwapQuoteRequest = {
+  chainId: ChainIds;
+  integratorId: string;
+  data: Array<SwapQuoteData>;
   allowedSources?: string[];
   notAllowedSources?: string[];
 };
@@ -72,6 +75,24 @@ export type GetSwapParamsResponse = {
     permit: string;
     minReturnAmount: number;
   }[];
+};
+
+export type SwapQuoteResponse = {
+  [key: string]: {
+    recommendedSourceByAmount: string;
+    recommendedSourceByGas: string;
+    quoteRates: {
+      [key: string]: {
+        data: {
+          srcToken: string;
+          srcAmount: string;
+          destToken: string;
+          destAmount: string;
+          estimatedGas: string;
+        };
+      };
+    };
+  };
 };
 
 export {};
