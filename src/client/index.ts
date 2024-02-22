@@ -1,6 +1,6 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { SwapQuoteRequest, SwapParamsRequest } from 'src/types';
-import { fetchAllSupportedChains, fetchAllTokens, fetchQuoteRate, fetchSwapParams, swapTokensApi } from '../api';
+import { fetchAllSupportedChains, fetchAllTokens, fetchQuoteRate, fetchSwapParams, fetchTokenDetails, fetchTokenPrice, swapTokensApi } from '../api';
 import { Signer } from 'ethers';
 
 class DzapClient {
@@ -35,9 +35,17 @@ class DzapClient {
     return fetchAllSupportedChains(chainId);
   }
 
-  public getAllTokens = (chainId: number, source?: string, account?: string) => {
-    return fetchAllTokens(chainId, source, account);
-  };
+  public async getAllTokens(chainId: number, source?: string, account?: string) {
+    return await fetchAllTokens(chainId, source, account);
+  }
+
+  public async getTokenDetails(tokenAddress: string, chainId: number) {
+    return await fetchTokenDetails(tokenAddress, chainId)
+  }
+
+  public async getTokenPrice(tokenAddresses: string[], chainId: number) {
+    return await fetchTokenPrice(tokenAddresses, chainId)
+  }
 
   public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
     return swapTokensApi({ request, provider });
