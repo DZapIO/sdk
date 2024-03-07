@@ -3,10 +3,9 @@ import { SwapParamsRequest, HexString } from 'src/types';
 import { fetchSwapParams } from '../api';
 import { getChecksumAddress, initializeReadOnlyProvider, purgeSwapVersion } from '../utils';
 import { BaseError, Client, ContractFunctionRevertedError, WalletClient, decodeFunctionData, getContract as fetchContract } from 'viem';
-import BigNumber from 'bignumber.js';
 import { Signer } from 'ethers';
 
-export const estimateGasMultiplier = BigNumber(15).dividedBy(10); // .toFixed(0);
+export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
 function isTypeSigner(variable: any): variable is Signer {
   return variable instanceof Signer;
