@@ -41,6 +41,7 @@ export type SwapParamsRequest = {
 
 export type SwapQuoteData = {
   amount: string;
+  selectedSource?: string;
   account: string;
   srcToken: string;
   srcDecimals: number;
