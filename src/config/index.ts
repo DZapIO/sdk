@@ -9,12 +9,12 @@ const stagingUrl = 'https://staging.dzap.io/';
 // const localhostUrl = 'http://localhost:8080/';
 export const appEnv = REACT_APP_ENV || AppEnv.development;
 export const isProd = appEnv === AppEnv.production;
-
+export const versionPostfix = 'v1/';
 export const getBaseUrl = (): string => {
   if (!isProd) {
     baseUrl = stagingUrl;
   }
-  return baseUrl;
+  return `${baseUrl}${versionPostfix}`;
 };
 
 export type DeFiContract = {

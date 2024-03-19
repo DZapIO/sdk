@@ -40,11 +40,11 @@ class DzapClient {
   }
 
   public async getTokenDetails(tokenAddress: string, chainId: number) {
-    return await fetchTokenDetails(tokenAddress, chainId)
+    return await fetchTokenDetails(tokenAddress, chainId);
   }
 
   public async getTokenPrice(tokenAddresses: string[], chainId: number) {
-    return await fetchTokenPrice(tokenAddresses, chainId)
+    return await fetchTokenPrice(tokenAddresses, chainId);
   }
 
   public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
