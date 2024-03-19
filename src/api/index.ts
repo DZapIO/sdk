@@ -1,6 +1,13 @@
 import { CancelToken } from 'axios';
 import { SwapQuoteRequest, SwapParamsRequest } from '../types';
-import { BATCH_SWAP_PARAMS_URL, BATCH_SWAP_QUOTE_URL, BATCH_SWAP_SUPPORTED_CHAINS_URL, GET_ALL_TOKENS_URL, GET_TOKEN_DETAILS_URL, GET_TOKEN_PRICE } from 'src/constants/urlConstants';
+import {
+  BATCH_SWAP_PARAMS_URL,
+  BATCH_SWAP_QUOTE_URL,
+  BATCH_SWAP_SUPPORTED_CHAINS_URL,
+  GET_ALL_TOKENS_URL,
+  GET_TOKEN_DETAILS_URL,
+  GET_TOKEN_PRICE,
+} from 'src/constants/urlConstants';
 import { GET, POST } from 'src/constants/httpMethods';
 import { invoke } from 'src/utils/axios';
 import { Signer } from 'ethers';
@@ -19,13 +26,13 @@ export const fetchAllTokens = (chainId: number, source?: string, account?: strin
   return invoke(GET_ALL_TOKENS_URL, { chainId, source, account }, GET);
 };
 
-export const fetchTokenDetails = (tokenAddress: string,chainId:number) => {
-  return invoke(GET_TOKEN_DETAILS_URL, { tokenAddress,chainId}, GET);
-}
+export const fetchTokenDetails = (tokenAddress: string, chainId: number) => {
+  return invoke(GET_TOKEN_DETAILS_URL, { tokenAddress, chainId }, GET);
+};
 
-export const fetchTokenPrice = (tokenAddresses: string[],chainId:number) => {
-  return invoke(GET_TOKEN_PRICE,{tokenAddresses,chainId},GET)
-}
+export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) => {
+  return invoke(GET_TOKEN_PRICE, { tokenAddresses, chainId }, GET);
+};
 
 export const swapTokensApi = async ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
   try {
