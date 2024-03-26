@@ -1,9 +1,11 @@
 import { CancelToken } from 'axios';
-import { SwapQuoteRequest, SwapParamsRequest } from '../types';
+import { SwapQuoteRequest, SwapParamsRequest, BridgeQuoteRequest, BridgeParamsRequest } from '../types';
 import {
   BATCH_SWAP_PARAMS_URL,
   BATCH_SWAP_QUOTE_URL,
   BATCH_SWAP_SUPPORTED_CHAINS_URL,
+  BRIDGE_QUOTE_URL,
+  BRIDGE_PARAMS_URL,
   GET_ALL_TOKENS_URL,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
@@ -13,6 +15,10 @@ import { invoke } from 'src/utils/axios';
 import { Signer } from 'ethers';
 
 export const fetchQuoteRate = (request: SwapQuoteRequest, cancelToken: CancelToken) => invoke(BATCH_SWAP_QUOTE_URL, request, POST, cancelToken);
+
+export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest[], cancelToken: CancelToken) => invoke(BRIDGE_QUOTE_URL, request, POST, cancelToken);
+
+export const fetchBridgeParams = (request: BridgeParamsRequest[]) => invoke(BRIDGE_PARAMS_URL, request, POST);
 
 export const fetchSwapParams = (request: SwapParamsRequest) => {
   return invoke(BATCH_SWAP_PARAMS_URL, request);

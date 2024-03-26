@@ -1,6 +1,16 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { SwapQuoteRequest, SwapParamsRequest } from 'src/types';
-import { fetchAllSupportedChains, fetchAllTokens, fetchQuoteRate, fetchSwapParams, fetchTokenDetails, fetchTokenPrice, swapTokensApi } from '../api';
+import { SwapQuoteRequest, SwapParamsRequest, BridgeQuoteRequest, BridgeQuoteResponse, BridgeParamsRequest, BridgeParamsResponse } from 'src/types';
+import {
+  fetchAllSupportedChains,
+  fetchAllTokens,
+  fetchBridgeParams,
+  fetchBridgeQuoteRate,
+  fetchQuoteRate,
+  fetchSwapParams,
+  fetchTokenDetails,
+  fetchTokenPrice,
+  swapTokensApi,
+} from '../api';
 import { Signer } from 'ethers';
 
 class DzapClient {
@@ -25,6 +35,18 @@ class DzapClient {
 
     this.cancelTokenSource = Axios.CancelToken.source();
     return await fetchQuoteRate(request, this.cancelTokenSource.token);
+  }
+
+  public async getBridgeQuoteRate(request: BridgeQuoteRequest[]): Promise<BridgeQuoteResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    return await fetchBridgeQuoteRate(request, this.cancelTokenSource.token);
+  }
+
+  public async getBridgeParams(request: BridgeParamsRequest[]): Promise<BridgeParamsResponse> {
+    return await fetchBridgeParams(request);
   }
 
   public getSwapParams(request: SwapParamsRequest) {
