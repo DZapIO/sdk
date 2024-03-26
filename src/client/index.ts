@@ -1,5 +1,13 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { SwapQuoteRequest, SwapParamsRequest, BridgeQuoteRequest, BridgeQuoteResponse, BridgeParamsRequest, BridgeParamsResponse } from 'src/types';
+import {
+  SwapQuoteRequest,
+  SwapParamsRequest,
+  BridgeQuoteRequest,
+  BridgeQuoteResponse,
+  BridgeParamsRequest,
+  BridgeParamsResponse,
+  ChainData,
+} from 'src/types';
 import {
   fetchAllSupportedChains,
   fetchAllTokens,
@@ -53,8 +61,8 @@ class DzapClient {
     return fetchSwapParams(request);
   }
 
-  public getAllSupportedChains(chainId: number) {
-    return fetchAllSupportedChains(chainId);
+  public getAllSupportedChains(): Promise<ChainData> {
+    return fetchAllSupportedChains();
   }
 
   public async getAllTokens(chainId: number, source?: string, account?: string) {
@@ -65,7 +73,7 @@ class DzapClient {
     return await fetchTokenDetails(tokenAddress, chainId);
   }
 
-  public async getTokenPrice(tokenAddresses: string[], chainId: number) {
+  public async getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string>> {
     return await fetchTokenPrice(tokenAddresses, chainId);
   }
 

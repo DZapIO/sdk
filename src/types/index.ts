@@ -16,6 +16,43 @@ export const CHAINS_IDS = {
 
 export type ChainIds = (typeof CHAINS_IDS)[keyof typeof CHAINS_IDS];
 
+export type ChainData = {
+  [key in number]: Chain;
+};
+
+export type NativeTokenInfo = {
+  contract: string;
+  symbol: string;
+  decimals: number;
+  name: string;
+  balance: string;
+  price?: string;
+};
+
+export type Chain = {
+  coinKey: string;
+  chainId: number;
+  chainType: string;
+  name: string;
+  coin: string;
+  dcaContract: string;
+  swapBridgeContract: string;
+  logo: string;
+  tokenlistUrl?: string;
+  multicallAddress: string;
+  blockExplorerUrl: string;
+  nativeToken: NativeTokenInfo;
+  rpcProvider: ApiRpcResponse;
+};
+
+export type ApiRpcResponse = {
+  url: string;
+  keyRequired: boolean;
+  keyType?: 'ALCHEMY_KEY';
+};
+
+// Swap
+
 export type SwapData = {
   sourceId: string;
   srcToken: string;
