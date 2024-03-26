@@ -96,4 +96,115 @@ export type SwapQuoteResponse = {
   };
 };
 
-export {};
+// Bridge
+
+export type BridgeQuoteRequest = {
+  amount: string;
+  account?: string;
+  srcToken: string;
+  destToken: string;
+  slippage: number;
+  fromChain: ChainIds;
+  toChain: ChainIds;
+};
+
+export type Step = {
+  type: string;
+  exchange: {
+    logo: string;
+    name: string;
+  };
+};
+
+export type Fee = {
+  token: {
+    address: string;
+    decimals: number;
+    chainId: number;
+    symbol: string;
+    logo: string;
+  };
+  amount: string;
+  amountUSD: string;
+};
+
+export type BridgeQuoteResponse = {
+  [pair: string]: {
+    recommendedSourceByAmount?: BridgeSource;
+    quoteRates?: {
+      [provider: string]: BridgeQuoteRate;
+    };
+  };
+};
+
+export type BridgeSource = {
+  provider: string;
+  bridge: string;
+};
+
+export type BridgeAdditionalInfo = {
+  routePath?: string;
+  bridgeInputAddress?: string;
+};
+
+export type BridgeQuoteRate = {
+  [bridge: string]: {
+    bridgeDetails: {
+      name: string;
+      logo: string;
+    };
+    srcToken: string;
+    srcChainId: ChainIds;
+    srcDecimals: number;
+    srcAmount: string;
+    destToken: string;
+    destChainId: ChainIds;
+    destDecimals: number;
+    destAmount: string;
+    gasFee: Fee;
+    protocolFee: Fee;
+    duration: string;
+    steps: Step[];
+    additionalInfo?: BridgeAdditionalInfo;
+  };
+};
+
+// Bridge Params
+
+export type BridgeParamsRequest = {
+  amount: string;
+  account: string;
+  srcToken: string;
+  destToken: string;
+  slippage: number;
+  fromChain: ChainIds;
+  toChain: ChainIds;
+  selectedRoute: BridgeSource;
+  additionalInfo?: BridgeAdditionalInfo;
+};
+
+export type BridgeData = {
+  bridge: string;
+  from: string;
+  to: string;
+  receiver: string;
+  minAmount: string;
+  destinationChainId: number;
+  hasSourceSwaps: boolean;
+  hasDestinationCall: boolean;
+};
+
+export type GenericData = {
+  callTo: string;
+  approveTo: string;
+  extraNative: string;
+  permit: string;
+  callData: string;
+};
+
+export type BridgeParamsResponse = {
+  bridgeData: BridgeData[];
+  genericData: GenericData[];
+  value: string;
+  gasLimit: string;
+};
