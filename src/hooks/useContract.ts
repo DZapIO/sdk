@@ -1,7 +1,7 @@
-import { Chains, SWAP_CONTRACTS } from 'src/config';
-import { SwapParamsRequest, HexString } from 'src/types';
-import { fetchSwapParams } from '../api';
-import { getChecksumAddress, initializeReadOnlyProvider, purgeSwapVersion } from '../utils';
+import { BRIDGE_CONTRACTS, Chains, SWAP_CONTRACTS } from 'src/config';
+import { SwapParamsRequest, HexString, BridgeParamsRequest, BridgeParamsResponse } from 'src/types';
+import { fetchBridgeParams, fetchSwapParams } from '../api';
+import { getChecksumAddress, initializeReadOnlyProvider, purgeBridgeVersion, purgeSwapVersion } from '../utils';
 import { BaseError, Client, ContractFunctionRevertedError, WalletClient, decodeFunctionData, getContract as fetchContract } from 'viem';
 import { Signer } from 'ethers';
 
@@ -88,8 +88,62 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
       // throw new Error(err);
     }
   };
+
+  const bridge = async ({ request }: { request: BridgeParamsRequest[] }) => {
+    try {
+      const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
+      const { data, from, to, value, gasLimit } = paramResponseData;
+      //simulate transaction
+      const publicClient = initializeReadOnlyProvider(chainId);
+      const purgedVersion = purgeBridgeVersion();
+      const abi = BRIDGE_CONTRACTS[purgedVersion].abi;
+      const { functionName, args } = decodeFunctionData({
+        abi: abi,
+        data: data,
+      });
+      await publicClient.simulateContract({
+        address: to,
+        abi: abi,
+        account: from,
+        value: value,
+        functionName: functionName,
+        args: args,
+      });
+      if (isTypeSigner(signer)) {
+        console.log('Using ethers signer.');
+        return await signer.sendTransaction({
+          from,
+          to,
+          data,
+          value,
+          gasLimit,
+        });
+      } else {
+        console.log('Using viem walletClient.');
+        return await signer.sendTransaction({
+          chain: Chains[chainId],
+          account: from as HexString,
+          to: to as HexString,
+          data: data as HexString,
+          value: BigInt(value),
+          gasLimit,
+        });
+      }
+    } catch (err) {
+      if (err instanceof BaseError) {
+        const revertError = err.walk((error) => error instanceof ContractFunctionRevertedError);
+        if (revertError instanceof ContractFunctionRevertedError) {
+          const errorName = revertError.data?.errorName ?? '';
+          // do something with `errorName`
+          console.log('Error Name:', errorName);
+        }
+      }
+      // throw new Error(err);
+    }
+  };
   return {
     swap,
+    bridge,
     getContractAddress,
     getContract,
   };

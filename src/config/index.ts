@@ -1,4 +1,5 @@
 import { abi as swapAbiV2 } from '../artifacts/v2/DZapAggregator';
+import { abi as bridgeAbiV2 } from '../artifacts/v2/DZapCore';
 import { Abi, Chain } from 'viem';
 import { mainnet, arbitrum, bsc, optimism, polygon, zkSync } from 'viem/chains';
 import { AppEnv } from './AppEnv';
@@ -35,6 +36,19 @@ export const SWAP_CONTRACTS: DeFiContract = {
     42161: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
     534352: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
     abi: swapAbiV2 as Abi,
+  },
+};
+
+export const defaultBridgeVersion = 'v2';
+
+export const BRIDGE_CONTRACTS: DeFiContract = {
+  v2: {
+    1: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    137: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    56: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    42161: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    10: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
+    abi: bridgeAbiV2 as Abi,
   },
 };
 
