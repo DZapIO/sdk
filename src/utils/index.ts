@@ -1,5 +1,4 @@
 import { Chains, batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
-import { JSON_RPC_PROVIDER } from '../constants';
 import { HexString } from '../types';
 import { createPublicClient, getAddress, http, stringToHex } from 'viem';
 
@@ -9,17 +8,11 @@ export const purgeSwapVersion = (version?: string) => version || defaultSwapVers
 
 export const purgeBridgeVersion = (version?: string) => version || defaultBridgeVersion;
 
-export const initializeReadOnlyProvider = (chainId: number) => {
-  if (JSON_RPC_PROVIDER[chainId]) {
-    return createPublicClient({
-      chain: Chains[chainId],
-      transport: http(JSON_RPC_PROVIDER[chainId]),
-    });
-  }
-  const client = createPublicClient({
-    transport: http(),
+export const initializeReadOnlyProvider = ({ chainId, rpcProvider }: { rpcProvider: string; chainId: number }) => {
+  return createPublicClient({
+    chain: Chains[chainId],
+    transport: http(rpcProvider),
   });
-  return client;
 };
 
 export const getIntegratorInfo = (integrator?: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;

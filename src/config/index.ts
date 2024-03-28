@@ -27,27 +27,16 @@ export type DeFiContract = {
 
 export const defaultSwapVersion = 'v2';
 
-export const SWAP_CONTRACTS: DeFiContract = {
+export const SWAP_ABIS: DeFiContract = {
   v2: {
-    1: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    137: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    56: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    10: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    42161: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    534352: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
     abi: swapAbiV2 as Abi,
   },
 };
 
 export const defaultBridgeVersion = 'v2';
 
-export const BRIDGE_CONTRACTS: DeFiContract = {
+export const BRIDGE_ABIS: DeFiContract = {
   v2: {
-    1: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    137: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    56: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    42161: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-    10: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
     abi: bridgeAbiV2 as Abi,
   },
 };
