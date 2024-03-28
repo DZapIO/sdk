@@ -1,21 +1,5 @@
 export type HexString = `0x${string}`;
 
-export const CHAINS_IDS = {
-  ethereum: 1,
-  polygon: 137,
-  bsc: 56,
-  dai: 100,
-  fantom: 250,
-  avalanche: 43114,
-  arbitrum: 42161,
-  optimism: 10,
-  zkSync: 324,
-  base: 8453,
-  scroll: 534352,
-} as const;
-
-export type ChainIds = (typeof CHAINS_IDS)[keyof typeof CHAINS_IDS];
-
 export type ChainData = {
   [key in number]: Chain;
 };
@@ -43,6 +27,7 @@ export type Chain = {
   blockExplorerUrl: string;
   nativeToken: NativeTokenInfo;
   rpcProvider: ApiRpcResponse;
+  pricingAvailable: boolean;
 };
 
 export type ApiRpcResponse = {
@@ -65,7 +50,7 @@ export type SwapData = {
 };
 
 export type SwapParamsRequest = {
-  chainId: ChainIds;
+  chainId: number;
   integratorId: string;
   sender: string;
   refundee: string;
@@ -88,7 +73,7 @@ export type SwapQuoteData = {
 };
 
 export type SwapQuoteRequest = {
-  chainId: ChainIds;
+  chainId: number;
   integratorId: string;
   data: Array<SwapQuoteData>;
   allowedSources?: string[];
@@ -141,8 +126,8 @@ export type BridgeQuoteRequest = {
   srcToken: string;
   destToken: string;
   slippage: number;
-  fromChain: ChainIds;
-  toChain: ChainIds;
+  fromChain: number;
+  toChain: number;
 };
 
 export type Step = {
@@ -180,14 +165,15 @@ export type BridgeSource = {
 };
 
 export type BridgeAdditionalInfo = {
-  routePath?: string;
-  bridgeInputAddress?: string;
+  routePath: string;
+  bridgeInputAddress: string;
+  toAmount: string;
 };
 
 export type Token = {
   address: HexString;
   decimals: number;
-  chainId: ChainIds;
+  chainId: number;
   logo: string;
   symbol: string;
   price?: string;
@@ -226,8 +212,8 @@ export type BridgeParamsRequest = {
   srcToken: string;
   destToken: string;
   slippage: number;
-  fromChain: ChainIds;
-  toChain: ChainIds;
+  fromChain: number;
+  toChain: number;
   selectedRoute: BridgeSource;
   additionalInfo?: BridgeAdditionalInfo;
 };
@@ -236,7 +222,7 @@ export type BridgeParamsResponse = {
   data: HexString;
   to: HexString;
   from: HexString;
-  chainId: ChainIds;
+  chainId: number;
   value: string;
   gasLimit: string;
 };

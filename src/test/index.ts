@@ -84,11 +84,12 @@ const paramRequest: SwapParamsRequest = {
 const PRIVATE_KEY: string = '';
 const account = privateKeyToAccount(`0x${PRIVATE_KEY}`);
 export async function TestHook() {
+  const rpcProvider = 'https://arb1.arbitrum.io/rpc';
   const client = createWalletClient({
     account: account,
-    transport: http('https://arb1.arbitrum.io/rpc'),
+    transport: http(rpcProvider),
   });
-  const { swap } = useContract({ chainId: 42161, signer: client });
+  const { swap } = useContract({ chainId: 42161, rpcProvider, signer: client });
   try {
     const resp = await swap({ request: paramRequest });
     console.log(resp);
