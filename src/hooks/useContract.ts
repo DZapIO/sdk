@@ -1,9 +1,10 @@
-import { BRIDGE_CONTRACTS, Chains, SWAP_CONTRACTS } from 'src/config';
+import { BRIDGE_ABIS, Chains, SWAP_ABIS } from 'src/config';
 import { SwapParamsRequest, HexString, BridgeParamsRequest, BridgeParamsResponse } from 'src/types';
 import { fetchBridgeParams, fetchSwapParams } from '../api';
-import { getChecksumAddress, initializeReadOnlyProvider, purgeBridgeVersion, purgeSwapVersion } from '../utils';
-import { BaseError, Client, ContractFunctionRevertedError, WalletClient, decodeFunctionData, getContract as fetchContract } from 'viem';
+import { initializeReadOnlyProvider, purgeBridgeVersion, purgeSwapVersion } from '../utils';
+import { WalletClient, decodeFunctionData } from 'viem';
 import { Signer } from 'ethers';
+import { handleTransactionError } from 'src/utils/errors';
 
 export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
@@ -11,39 +12,20 @@ function isTypeSigner(variable: any): variable is Signer {
   return variable instanceof Signer;
 }
 
-function useContract({ chainId, signer }: { chainId: number; signer: WalletClient | Signer; clientId?: number }) {
-  const getContractAddress = (version?: string): HexString => {
-    try {
-      const address = SWAP_CONTRACTS[purgeSwapVersion(version)][chainId];
-      return getChecksumAddress(address);
-    } catch (err) {
-      throw new Error('Unsupported chainId');
-    }
-  };
-
-  const getContract = (version?: string): any => {
-    const purgedVersion = purgeSwapVersion(version);
-    const abi = SWAP_CONTRACTS[purgedVersion].abi;
-    const contractAddress = getContractAddress(purgedVersion);
-    const contract = fetchContract({
-      abi,
-      address: contractAddress,
-      client: signer as Client,
-    });
-
-    return contract;
-  };
-
+function useContract({ chainId, rpcProvider, signer }: { chainId: number; rpcProvider: string; signer: WalletClient | Signer; clientId?: number }) {
   const swap = async ({ request }: { request: SwapParamsRequest }) => {
+    const purgedVersion = purgeSwapVersion();
+    const abi = SWAP_ABIS[purgedVersion].abi;
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
       const {
         transactionRequest: { data, from, to, value, gasLimit },
       } = paramResponseData;
       //simulate transaction
-      const publicClient = initializeReadOnlyProvider(chainId);
-      const purgedVersion = purgeSwapVersion();
-      const abi = SWAP_CONTRACTS[purgedVersion].abi;
+      const publicClient = initializeReadOnlyProvider({
+        chainId,
+        rpcProvider,
+      });
       const { functionName, args } = decodeFunctionData({
         abi: abi,
         data: data,
@@ -76,27 +58,22 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
           gasLimit,
         });
       }
-    } catch (err) {
-      if (err instanceof BaseError) {
-        const revertError = err.walk((error) => error instanceof ContractFunctionRevertedError);
-        if (revertError instanceof ContractFunctionRevertedError) {
-          const errorName = revertError.data?.errorName ?? '';
-          // do something with `errorName`
-          console.log('Error Name:', errorName);
-        }
-      }
-      // throw new Error(err);
+    } catch (error: any) {
+      handleTransactionError({ abi, error });
     }
   };
 
   const bridge = async ({ request }: { request: BridgeParamsRequest[] }) => {
+    const purgedVersion = purgeBridgeVersion();
+    const abi = BRIDGE_ABIS[purgedVersion].abi;
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
       const { data, from, to, value, gasLimit } = paramResponseData;
       //simulate transaction
-      const publicClient = initializeReadOnlyProvider(chainId);
-      const purgedVersion = purgeBridgeVersion();
-      const abi = BRIDGE_CONTRACTS[purgedVersion].abi;
+      const publicClient = initializeReadOnlyProvider({
+        chainId,
+        rpcProvider,
+      });
       const { functionName, args } = decodeFunctionData({
         abi: abi,
         data: data,
@@ -129,23 +106,13 @@ function useContract({ chainId, signer }: { chainId: number; signer: WalletClien
           gasLimit,
         });
       }
-    } catch (err) {
-      if (err instanceof BaseError) {
-        const revertError = err.walk((error) => error instanceof ContractFunctionRevertedError);
-        if (revertError instanceof ContractFunctionRevertedError) {
-          const errorName = revertError.data?.errorName ?? '';
-          // do something with `errorName`
-          console.log('Error Name:', errorName);
-        }
-      }
-      // throw new Error(err);
+    } catch (error: any) {
+      handleTransactionError({ abi, error });
     }
   };
   return {
     swap,
     bridge,
-    getContractAddress,
-    getContract,
   };
 }
 export default useContract;
