@@ -165,8 +165,9 @@ export type BridgeSource = {
 };
 
 export type BridgeAdditionalInfo = {
-  routePath?: string;
-  bridgeInputAddress?: string;
+  routePath: string;
+  bridgeInputAddress: string;
+  toAmount: string;
 };
 
 export type Token = {
