@@ -165,9 +165,10 @@ export type BridgeSource = {
 };
 
 export type BridgeAdditionalInfo = {
-  routePath: string;
+  routePath?: string;
   bridgeInputAddress: string;
-  toAmount: string;
+  toAmount?: string;
+  bridgeOutputAddress: string;
 };
 
 export type Token = {
@@ -196,7 +197,7 @@ export type BridgeQuoteRate = {
   protocolFee: Fee;
   duration: string;
   steps: Step[];
-  additionalInfo?: BridgeAdditionalInfo;
+  additionalInfo: BridgeAdditionalInfo;
 };
 
 export type BridgeQuotes = {
