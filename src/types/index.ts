@@ -100,19 +100,27 @@ export type GetSwapParamsResponse = {
   }[];
 };
 
+export type SwapQuoteResponseData = {
+  srcToken: string;
+  srcAmount: string;
+  destToken: string;
+  destAmount: string;
+  estimatedGas: string;
+  priceImpactPercent: string;
+  srcAmountUSD: string;
+  destAmountUSD: string;
+};
+
 export type SwapQuoteResponse = {
   [key: string]: {
+    status: string;
+    errorMessage?: string;
+    recommendedSource: string;
     recommendedSourceByAmount: string;
     recommendedSourceByGas: string;
     quoteRates: {
       [key: string]: {
-        data: {
-          srcToken: string;
-          srcAmount: string;
-          destToken: string;
-          destAmount: string;
-          estimatedGas: string;
-        };
+        data: SwapQuoteResponseData;
       };
     };
   };
@@ -152,7 +160,7 @@ export type Fee = {
 
 export type BridgeQuoteResponse = {
   [pair: string]: {
-    recommendedSourceByAmount?: BridgeSource;
+    recommendedSource?: BridgeSource;
     quoteRates?: {
       [provider: string]: BridgeQuotes;
     };
@@ -165,10 +173,7 @@ export type BridgeSource = {
 };
 
 export type BridgeAdditionalInfo = {
-  routePath?: string;
-  bridgeInputAddress: string;
-  toAmount?: string;
-  bridgeOutputAddress: string;
+  [key: string]: string;
 };
 
 export type Token = {
