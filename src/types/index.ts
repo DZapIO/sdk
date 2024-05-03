@@ -104,15 +104,21 @@ export type GetSwapParamsResponse = {
   }[];
 };
 
+export type ProviderDetails = {
+  name: string;
+  icon: string;
+};
+
 export type SwapQuoteResponseData = {
   srcToken: string;
   srcAmount: string;
   destToken: string;
   destAmount: string;
   estimatedGas: string;
-  priceImpactPercent: string;
-  srcAmountUSD: string;
-  destAmountUSD: string;
+  priceImpactPercent: string | null;
+  srcAmountUSD: string | null;
+  destAmountUSD: string | null;
+  providerDetails: ProviderDetails;
 };
 
 export type SwapQuoteResponse = {
@@ -202,7 +208,7 @@ export type BridgeSource = {
 };
 
 export type BridgeAdditionalInfo = {
-  [key: string]: string;
+  [key: string]: unknown;
 };
 
 export type Token = {
