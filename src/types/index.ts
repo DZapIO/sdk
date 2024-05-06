@@ -242,4 +242,5 @@ export type BridgeParamsResponse = {
   chainId: number;
   value: string;
   gasLimit: string;
+  additionalInfo?: BridgeAdditionalInfo;
 };
