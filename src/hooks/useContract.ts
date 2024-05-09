@@ -37,6 +37,7 @@ function useContract({ chainId, rpcProvider, signer }: { chainId: number; rpcPro
         value: value,
         functionName: functionName,
         args: args, //Are compulsory... if input is there.
+        gas: gasLimit,
       });
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
@@ -85,6 +86,7 @@ function useContract({ chainId, rpcProvider, signer }: { chainId: number; rpcPro
         value: value,
         functionName: functionName,
         args: args,
+        gas: gasLimit,
       });
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
