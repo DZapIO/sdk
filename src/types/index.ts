@@ -28,6 +28,11 @@ export type Chain = {
   nativeToken: NativeTokenInfo;
   rpcProvider: ApiRpcResponse;
   pricingAvailable: boolean;
+  balanceAvailable: boolean;
+  supportedAs: {
+    source: boolean;
+    destination: boolean;
+  };
 };
 
 export type ApiRpcResponse = {

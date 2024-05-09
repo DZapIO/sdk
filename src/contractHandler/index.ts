@@ -52,6 +52,7 @@ class ContractHandler {
         value: value,
         functionName: functionName,
         args: args, //Are compulsory... if input is there.
+        gas: gasLimit,
       });
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
@@ -111,6 +112,7 @@ class ContractHandler {
         value: value,
         functionName: functionName,
         args: args,
+        gas: gasLimit,
       });
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
