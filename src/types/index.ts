@@ -168,13 +168,10 @@ export type Fee = {
   amount: string;
   amountUSD: string;
 };
-export type BridgeDetails = {
-  name: string;
-  logo: string;
-};
 
 export type BridgeQuoteRate = {
-  bridgeDetails: BridgeDetails;
+  bridgeDetails?: ProviderDetails;
+  providerDetails: ProviderDetails;
   srcAmount: string;
   srcAmountUSD: string;
   destAmount: string;
