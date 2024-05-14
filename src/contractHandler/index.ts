@@ -95,7 +95,7 @@ class ContractHandler {
     const abi = BRIDGE_ABIS[purgedVersion].abi;
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
-      const { data, from, to, value, gasLimit } = paramResponseData;
+      const { data, from, to, value, gasLimit, additionalInfo } = paramResponseData;
       //simulate transaction
       const publicClient = initializeReadOnlyProvider({
         chainId,
@@ -116,16 +116,20 @@ class ContractHandler {
       });
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
-        return await signer.sendTransaction({
+        const txnRes = await signer.sendTransaction({
           from,
           to,
           data,
           value,
           gasLimit,
         });
+        return {
+          txnHash: txnRes.hash,
+          additionalInfo,
+        };
       } else {
         console.log('Using viem walletClient.');
-        return await signer.sendTransaction({
+        const txnHash = await signer.sendTransaction({
           chain: Chains[chainId],
           account: from as HexString,
           to: to as HexString,
@@ -133,6 +137,10 @@ class ContractHandler {
           value: BigInt(value),
           gasLimit,
         });
+        return {
+          txnHash,
+          additionalInfo,
+        };
       }
     } catch (error: any) {
       handleTransactionError({ abi, error });

@@ -169,12 +169,34 @@ export type Fee = {
   amountUSD: string;
 };
 
+export type BridgeQuoteRate = {
+  bridgeDetails?: ProviderDetails;
+  providerDetails: ProviderDetails;
+  srcAmount: string;
+  srcAmountUSD: string;
+  destAmount: string;
+  destAmountUSD: string;
+  minDestAmount: string;
+  swapPerUnit: string;
+  srcToken: Token;
+  destToken: Token;
+  gasFee: Fee;
+  protocolFee: Fee;
+  duration: string;
+  steps: Step[];
+  additionalInfo?: BridgeAdditionalInfo;
+};
+
+export type BridgeQuotes = {
+  [providerAndBridge: string]: BridgeQuoteRate;
+};
+
 export type BridgeQuoteResponse = {
   [pair: string]: {
-    recommendedSource?: BridgeSource;
-    quoteRates?: {
-      [provider: string]: BridgeQuotes;
-    };
+    status?: string;
+    message?: string;
+    recommendedSource?: string;
+    quoteRates?: BridgeQuotes;
   };
 };
 
@@ -196,30 +218,6 @@ export type Token = {
   price?: string;
 };
 
-export type BridgeQuoteRate = {
-  bridgeDetails: {
-    name: string;
-    logo: string;
-  };
-  srcAmount: string;
-  srcAmountUSD: string;
-  destAmount: string;
-  destAmountUSD: string;
-  minDestAmount: string;
-  swapPerUnit: string;
-  srcToken: Token;
-  destToken: Token;
-  gasFee: Fee;
-  protocolFee: Fee;
-  duration: string;
-  steps: Step[];
-  additionalInfo: BridgeAdditionalInfo;
-};
-
-export type BridgeQuotes = {
-  [bridge: string]: BridgeQuoteRate;
-};
-
 // Bridge Params
 
 export type BridgeParamsRequest = {
@@ -231,7 +229,7 @@ export type BridgeParamsRequest = {
   slippage: number;
   fromChain: number;
   toChain: number;
-  selectedRoute: BridgeSource;
+  selectedRoute: string;
   additionalInfo?: BridgeAdditionalInfo;
 };
 
@@ -242,4 +240,5 @@ export type BridgeParamsResponse = {
   chainId: number;
   value: string;
   gasLimit: string;
+  additionalInfo?: BridgeAdditionalInfo;
 };
