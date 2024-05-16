@@ -1,19 +1,20 @@
 import DzapClient from './client';
+import { ConnectorType } from './enums';
 import {
-  GetSwapParamsResponse,
-  ChainData,
-  Chain,
   ApiRpcResponse,
-  SwapParamsRequest,
+  BridgeParamsRequest,
+  BridgeParamsResponse,
+  BridgeQuoteRequest,
+  BridgeQuoteResponse,
+  Chain,
+  ChainData,
+  GetSwapParamsResponse,
+  HexString,
   SwapData,
+  SwapParamsRequest,
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
-  HexString,
-  BridgeQuoteRequest,
-  BridgeParamsRequest,
-  BridgeQuoteResponse,
-  BridgeParamsResponse,
 } from './types';
 // import { TestHook } from './test';
 // Test Scripts
@@ -24,18 +25,19 @@ import {
 export default DzapClient;
 
 export {
-  HexString,
-  ChainData,
-  Chain,
   ApiRpcResponse,
+  BridgeParamsRequest,
+  BridgeParamsResponse,
+  BridgeQuoteRequest,
+  BridgeQuoteResponse,
+  Chain,
+  ChainData,
+  ConnectorType,
   GetSwapParamsResponse,
-  SwapParamsRequest,
+  HexString,
   SwapData,
+  SwapParamsRequest,
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
-  BridgeQuoteRequest,
-  BridgeParamsRequest,
-  BridgeQuoteResponse,
-  BridgeParamsResponse,
 };
