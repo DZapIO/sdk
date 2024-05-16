@@ -1,12 +1,15 @@
 import Axios, { CancelTokenSource } from 'axios';
+import { Signer } from 'ethers';
+import ContractHandler from 'src/contractHandler';
+import { ConnectorType } from 'src/enums';
 import {
-  SwapQuoteRequest,
-  SwapParamsRequest,
-  BridgeQuoteRequest,
-  BridgeQuoteResponse,
   BridgeParamsRequest,
   BridgeParamsResponse,
+  BridgeQuoteRequest,
+  BridgeQuoteResponse,
   ChainData,
+  SwapParamsRequest,
+  SwapQuoteRequest,
 } from 'src/types';
 import {
   fetchAllSupportedChains,
@@ -19,23 +22,20 @@ import {
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
-import { Signer } from 'ethers';
-import { WalletClient } from 'viem';
-import ContractHandler from 'src/contractHandler';
 
 class DzapClient {
   private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
 
-  private constructor() {
-    this.contractHandler = ContractHandler.getInstance();
+  private constructor(wcProjectId: string = '') {
+    this.contractHandler = ContractHandler.getInstance(wcProjectId);
   }
 
   // Static method to control the access to the singleton instance.
-  public static getInstance(): DzapClient {
+  public static getInstance(wcProjectId: string = ''): DzapClient {
     if (!DzapClient.instance) {
-      DzapClient.instance = new DzapClient();
+      DzapClient.instance = new DzapClient(wcProjectId);
     }
     return DzapClient.instance;
   }
@@ -88,29 +88,29 @@ class DzapClient {
   public async swap({
     chainId,
     rpcProvider,
-    signer,
     request,
+    connectorType = ConnectorType.injected,
   }: {
     chainId: number;
     rpcProvider: string;
-    signer: WalletClient | Signer;
     request: SwapParamsRequest;
+    connectorType?: ConnectorType;
   }) {
-    return await this.contractHandler.handleSwap({ chainId, rpcProvider, signer, request });
+    return await this.contractHandler.handleSwap({ chainId, rpcProvider, request, connectorType });
   }
 
   public async bridge({
     chainId,
     rpcProvider,
-    signer,
     request,
+    connectorType = ConnectorType.injected,
   }: {
     chainId: number;
     rpcProvider: string;
-    signer: WalletClient | Signer;
     request: BridgeParamsRequest[];
+    connectorType?: ConnectorType;
   }) {
-    return await this.contractHandler.handleBridge({ chainId, rpcProvider, signer, request });
+    return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, connectorType });
   }
 }
 

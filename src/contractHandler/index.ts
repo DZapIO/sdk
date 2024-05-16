@@ -1,19 +1,20 @@
-import { initializeReadOnlyProvider, isTypeSigner, purgeBridgeVersion, purgeSwapVersion } from '../utils';
-import { handleTransactionError } from '../utils/errors';
-import { decodeFunctionData, WalletClient } from 'viem';
-import { SwapParamsRequest, BridgeParamsRequest, HexString, BridgeParamsResponse } from '../types';
-import { BRIDGE_ABIS, Chains, SWAP_ABIS } from 'src/config';
-import { Signer } from 'ethers';
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
+import { BRIDGE_ABIS, Chains, SWAP_ABIS } from 'src/config';
+import { ConnectorType } from 'src/enums';
+import { decodeFunctionData } from 'viem';
+import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest } from '../types';
+import { getWalletClient, initializeReadOnlyProvider, purgeBridgeVersion, purgeSwapVersion } from '../utils';
+import { handleTransactionError } from '../utils/errors';
 
 class ContractHandler {
   private static instance: ContractHandler;
-
+  private wcProjectId: string;
   // private constructor() {}
 
-  public static getInstance(): ContractHandler {
+  public static getInstance(wcProjectId: string = ''): ContractHandler {
     if (!ContractHandler.instance) {
       ContractHandler.instance = new ContractHandler();
+      this.instance.wcProjectId = wcProjectId;
     }
     return ContractHandler.instance;
   }
@@ -21,13 +22,13 @@ class ContractHandler {
   public async handleSwap({
     chainId,
     rpcProvider,
-    signer,
     request,
+    connectorType = ConnectorType.injected,
   }: {
     chainId: number;
     rpcProvider: string;
-    signer: WalletClient | Signer;
     request: SwapParamsRequest;
+    connectorType: ConnectorType;
   }) {
     const purgedVersion = purgeSwapVersion();
     const abi = SWAP_ABIS[purgedVersion].abi;
@@ -54,26 +55,20 @@ class ContractHandler {
         args: args, //Are compulsory... if input is there.
         gas: gasLimit,
       });
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        return await signer.sendTransaction({
-          from,
-          to,
-          data,
-          value,
-          gasLimit,
-        });
-      } else {
-        console.log('Using viem walletClient.');
-        return await signer.sendTransaction({
-          chain: Chains[chainId],
-          account: from as HexString,
-          to: to as HexString,
-          data: data as HexString,
-          value: value as bigint,
-          gasLimit,
-        });
-      }
+      const walletClient = await getWalletClient({
+        chainId,
+        account: from as HexString,
+        connectorType,
+        wcProjectId: this.wcProjectId,
+      });
+      return await walletClient.sendTransaction({
+        chain: Chains[chainId],
+        account: from as HexString,
+        to: to as HexString,
+        data: data as HexString,
+        value: value as bigint,
+        gasLimit,
+      });
     } catch (error: any) {
       console.log({ error });
       handleTransactionError({ abi, error });
@@ -83,13 +78,13 @@ class ContractHandler {
   public async handleBridge({
     chainId,
     rpcProvider,
-    signer,
     request,
+    connectorType,
   }: {
     chainId: number;
     rpcProvider: string;
-    signer: WalletClient | Signer;
     request: BridgeParamsRequest[];
+    connectorType: ConnectorType;
   }) {
     const purgedVersion = purgeBridgeVersion();
     const abi = BRIDGE_ABIS[purgedVersion].abi;
@@ -114,35 +109,27 @@ class ContractHandler {
         args: args,
         gas: gasLimit,
       });
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        const txnRes = await signer.sendTransaction({
-          from,
-          to,
-          data,
-          value,
-          gasLimit,
-        });
-        return {
-          txnHash: txnRes.hash,
-          additionalInfo,
-        };
-      } else {
-        console.log('Using viem walletClient.');
-        const txnHash = await signer.sendTransaction({
-          chain: Chains[chainId],
-          account: from as HexString,
-          to: to as HexString,
-          data: data as HexString,
-          value: BigInt(value),
-          gasLimit,
-        });
-        return {
-          txnHash,
-          additionalInfo,
-        };
-      }
+      console.log('Creating viem walletClient.');
+      const walletClient = await getWalletClient({
+        chainId,
+        account: from as HexString,
+        connectorType,
+        wcProjectId: this.wcProjectId,
+      });
+      const txnHash = await walletClient.sendTransaction({
+        chain: Chains[chainId],
+        account: from as HexString,
+        to: to as HexString,
+        data: data as HexString,
+        value: BigInt(value),
+        gasLimit,
+      });
+      return {
+        txnHash,
+        additionalInfo,
+      };
     } catch (error: any) {
+      console.log({ error });
       handleTransactionError({ abi, error });
     }
   }

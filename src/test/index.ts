@@ -1,7 +1,7 @@
-import { createWalletClient, http } from 'viem';
+// import { createWalletClient, http } from 'viem';
 import DzapClient from 'src/client';
 // import { ethers } from 'ethers';
-import { privateKeyToAccount } from 'viem/accounts';
+// import { privateKeyToAccount } from 'viem/accounts';
 import { SwapParamsRequest } from 'src/types';
 // Uncomment the following imports to test the getQuoteRate and getSwapParams functions
 
@@ -81,17 +81,13 @@ const paramRequest: SwapParamsRequest = {
 //   console.log(response);
 // }
 
-const PRIVATE_KEY: string = '';
-const account = privateKeyToAccount(`0x${PRIVATE_KEY}`);
+// const PRIVATE_KEY: string = '';
+// const account = privateKeyToAccount(`0x${PRIVATE_KEY}`);
 export async function TestHook() {
   const rpcProvider = 'https://arb1.arbitrum.io/rpc';
-  const client = createWalletClient({
-    account: account,
-    transport: http(rpcProvider),
-  });
   const dzapClient = DzapClient.getInstance();
   try {
-    const resp = await dzapClient.swap({ chainId: 42161, rpcProvider, signer: client, request: paramRequest });
+    const resp = await dzapClient.swap({ chainId: 42161, rpcProvider, request: paramRequest });
     console.log(resp);
   } catch (e) {
     console.log('Test Error');

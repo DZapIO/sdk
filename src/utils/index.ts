@@ -1,7 +1,23 @@
+import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import { Signer } from 'ethers';
+import { ConnectorType } from 'src/enums';
+import { createPublicClient, createWalletClient, custom, getAddress, http, stringToHex } from 'viem';
+import * as allWagmiChains from 'viem/chains';
 import { Chains, batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
 import { HexString } from '../types';
-import { createPublicClient, getAddress, http, stringToHex } from 'viem';
+
+type Window = {
+  ethereum: any;
+};
+
+export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
+  return chainData.id
+    ? {
+        ...acc,
+        [chainData.id]: chainData,
+      }
+    : acc;
+}, {});
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 
@@ -14,6 +30,40 @@ export const initializeReadOnlyProvider = ({ chainId, rpcProvider }: { rpcProvid
     chain: Chains[chainId],
     transport: http(rpcProvider),
   });
+};
+
+const getEthereumProvider = async (connectorType: ConnectorType, chainId: number, wcProjectId: string) => {
+  if (connectorType === ConnectorType.walletConnect && wcProjectId) {
+    return await EthereumProvider.init({
+      projectId: wcProjectId,
+      showQrModal: true,
+      optionalChains: [chainId],
+    });
+  }
+  return (window as unknown as Window).ethereum!;
+};
+export const getWalletClient = async ({
+  chainId,
+  account,
+  connectorType,
+  wcProjectId,
+}: {
+  chainId: number;
+  account: HexString;
+  connectorType: ConnectorType;
+  wcProjectId: string;
+}) => {
+  try {
+    const provider = await getEthereumProvider(connectorType, chainId, wcProjectId);
+    return createWalletClient({
+      chain: wagmiChainsById[chainId],
+      transport: custom(provider),
+      account,
+    });
+  } catch (error) {
+    console.log(error);
+    throw new Error('Error creating Wallet Client');
+  }
 };
 
 export const getIntegratorInfo = (integrator?: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
