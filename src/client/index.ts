@@ -11,7 +11,6 @@ import {
   SwapParamsRequest,
   SwapQuoteRequest,
 } from 'src/types';
-import { WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
   fetchAllTokens,
@@ -108,7 +107,6 @@ class DzapClient {
   }: {
     chainId: number;
     rpcProvider: string;
-    signer: WalletClient | Signer;
     request: BridgeParamsRequest[];
     connectorType?: ConnectorType;
   }) {

@@ -116,7 +116,7 @@ class ContractHandler {
         connectorType,
         wcProjectId: this.wcProjectId,
       });
-      const txHash = await walletClient.sendTransaction({
+      const txnHash = await walletClient.sendTransaction({
         chain: Chains[chainId],
         account: from as HexString,
         to: to as HexString,
@@ -125,7 +125,7 @@ class ContractHandler {
         gasLimit,
       });
       return {
-        txHash,
+        txnHash,
         additionalInfo,
       };
     } catch (error: any) {
