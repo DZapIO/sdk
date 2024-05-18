@@ -3,14 +3,14 @@ import { Signer } from 'ethers';
 import { ConnectorType } from 'src/enums';
 import { createPublicClient, createWalletClient, custom, getAddress, http, stringToHex } from 'viem';
 import * as allWagmiChains from 'viem/chains';
-import { Chains, batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
+import { batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
 import { HexString } from '../types';
 
 type Window = {
   ethereum: any;
 };
 
-export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
+export const viemchainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
     ? {
         ...acc,
@@ -27,7 +27,7 @@ export const purgeBridgeVersion = (version?: string) => version || defaultBridge
 
 export const initializeReadOnlyProvider = ({ chainId, rpcProvider }: { rpcProvider: string; chainId: number }) => {
   return createPublicClient({
-    chain: Chains[chainId],
+    chain: viemchainsById[chainId],
     transport: http(rpcProvider),
   });
 };
@@ -56,7 +56,7 @@ export const getWalletClient = async ({
   try {
     const provider = await getEthereumProvider(connectorType, chainId, wcProjectId);
     return createWalletClient({
-      chain: wagmiChainsById[chainId],
+      chain: viemchainsById[chainId],
       transport: custom(provider),
       account,
     });

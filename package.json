@@ -57,6 +57,7 @@
     "typescript": "^5.3.2"
   },
   "dependencies": {
+    "@uniswap/permit2-sdk": "^1.2.1",
     "@walletconnect/ethereum-provider": "^2.13.0",
     "axios": "^1.2.1",
     "eslint-config-airbnb-base": "^15.0.0",
