@@ -1,7 +1,7 @@
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import { Signer } from 'ethers';
-import { ConnectorType } from 'src/enums';
-import { createPublicClient, createWalletClient, custom, getAddress, http, stringToHex } from 'viem';
+import { ConnectorType, StatusCodes, TxnStatus } from 'src/enums';
+import { Abi, createPublicClient, createWalletClient, custom, getAddress, http, stringToHex } from 'viem';
 import * as allWagmiChains from 'viem/chains';
 import { batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
 import { HexString } from '../types';
@@ -63,6 +63,80 @@ export const getWalletClient = async ({
   } catch (error) {
     console.log(error);
     throw new Error('Error creating Wallet Client');
+  }
+};
+
+export const readContract = async ({
+  chainId,
+  contractAddress,
+  abi,
+  functionName,
+  rpcProvider,
+  args = [],
+}: {
+  chainId: number;
+  contractAddress: HexString;
+  abi: Abi;
+  functionName: string;
+  rpcProvider: string;
+  args?: unknown[];
+}) => {
+  try {
+    return await initializeReadOnlyProvider({ chainId, rpcProvider }).readContract({
+      address: contractAddress,
+      abi,
+      functionName,
+      args,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const writeContract = async ({
+  chainId,
+  contractAddress,
+  abi,
+  functionName,
+  args = [],
+  userAddress,
+  value = '0',
+  rpcProvider,
+  connectorType,
+  wcProjectId,
+}: {
+  chainId: number;
+  contractAddress: HexString;
+  abi: Abi;
+  functionName: string;
+  args?: unknown[];
+  userAddress: HexString;
+  value?: string;
+  rpcProvider: string;
+  connectorType: ConnectorType;
+  wcProjectId: string;
+}) => {
+  const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
+  try {
+    const { request } = await publicClient.simulateContract({
+      address: contractAddress,
+      abi,
+      functionName,
+      args,
+      account: userAddress,
+      value,
+    });
+    const walletClient = await getWalletClient({ chainId, account: userAddress, connectorType, wcProjectId });
+    const hash = await walletClient.writeContract(request);
+    // wait for block confirmation and return transaction receipt
+    const txReceipt = await publicClient.waitForTransactionReceipt({ hash });
+    return { ...txReceipt, code: StatusCodes.Success };
+  } catch (e: any) {
+    console.log({ e });
+    if (e?.code === StatusCodes.UserRejectedRequest) {
+      return { status: TxnStatus.rejected, code: e?.code };
+    }
+    return { status: TxnStatus.error, code: e?.code };
   }
 };
 

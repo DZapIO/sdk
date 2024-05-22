@@ -1,83 +1,94 @@
 import { MaxSigDeadline, MaxUint256, SignatureTransfer, TokenPermissions } from '@uniswap/permit2-sdk';
-import { ConnectorType, Erc20Functions, Erc20PermitFunctions, PermitType, TxnStatus } from 'src/enums';
+import { DEFAULT_PERMIT1_DATA, NATIVE_TOKEN_ADDRESS, PERMIT2_ADDRESS, PERMIT_TYPEHASH_CONST } from 'src/constants';
+import { ConnectorType, Erc20Functions, Erc20PermitFunctions, PermitFunctionSelectorCases, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { Abi, TransactionReceipt, encodeAbiParameters, erc20Abi, hexToNumber, parseAbiParameters, parseUnits, slice } from 'viem';
-import { getWalletClient, initializeReadOnlyProvider } from '.';
+import { Abi, encodeAbiParameters, erc20Abi, hexToNumber, parseAbiParameters, slice } from 'viem';
 import { abi as PermitAbi } from '../artifacts/ERC20Permit';
-import { NATIVE_TOKEN_ADDRESS, PERMIT_TYPEHASH_CONST } from 'src/constants';
+import { getWalletClient, initializeReadOnlyProvider, readContract, writeContract } from './index';
 
-export const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3' as HexString;
-export const deadline = MaxSigDeadline;
-
-export const readContract = async ({
+export const getPermitSignature = async ({
   chainId,
-  contractAddress,
-  abi,
-  functionName,
-  rpcProvider,
-  args = [],
-}: {
-  chainId: number;
-  contractAddress: HexString;
-  abi: Abi;
-  functionName: string;
-  rpcProvider: string;
-  args?: unknown[];
-}) => {
-  try {
-    return await initializeReadOnlyProvider({ chainId, rpcProvider }).readContract({
-      address: contractAddress,
-      abi,
-      functionName,
-      args,
-    });
-  } catch (e) {
-    console.log(e);
-  }
-};
-
-export const writeContract = async ({
-  chainId,
-  contractAddress,
-  abi,
-  functionName,
-  args = [],
-  userAddress,
-  value = '0',
-  rpcProvider,
+  account,
+  token,
+  dzapContractAddress,
+  amount,
+  name,
   connectorType,
   wcProjectId,
+  rpcProvider,
 }: {
   chainId: number;
-  contractAddress: HexString;
-  abi: Abi;
-  functionName: string;
-  args?: unknown[];
-  userAddress: HexString;
-  value?: string;
-  rpcProvider: string;
+  account: HexString;
+  token: HexString;
+  amount: string;
+  name: string;
   connectorType: ConnectorType;
   wcProjectId: string;
-}): Promise<TransactionReceipt | { status: string }> => {
-  const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
+  rpcProvider: string;
+  dzapContractAddress: HexString;
+}): Promise<{ data: HexString }> => {
+  const userNonce = (await readContract({
+    chainId,
+    contractAddress: token,
+    abi: PermitAbi as Abi,
+    functionName: Erc20PermitFunctions.nonces,
+    rpcProvider,
+    args: [account],
+  })) as string;
+  let version: string;
   try {
-    const { request } = await publicClient.simulateContract({
-      address: contractAddress,
-      abi,
-      functionName,
-      args,
-      account: userAddress,
-      value,
-    });
-    console.log(request);
-    const walletClient = await getWalletClient({ chainId, account: userAddress, connectorType, wcProjectId });
-    const hash = await walletClient.writeContract(request);
-    // wait for block confirmation and return transaction receipt
-    return await publicClient.waitForTransactionReceipt({ hash });
-  } catch (e: unknown) {
+    version = (await readContract({
+      chainId,
+      contractAddress: token,
+      abi: PermitAbi as Abi,
+      functionName: Erc20PermitFunctions.version,
+      rpcProvider,
+    })) as string;
+  } catch (e) {
     console.log({ e });
-    return { status: 'failed' };
+    version = '1';
   }
+  const domain = { name: name, version: version, chainId, verifyingContract: token };
+  const types = {
+    Permit: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+      { name: 'value', type: 'uint256' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  };
+  const value = {
+    owner: account,
+    spender: dzapContractAddress,
+    value: BigInt(amount),
+    nonce: userNonce,
+    deadline: BigInt(MaxSigDeadline.toString()),
+  };
+
+  const walletClient = await getWalletClient({ chainId, account, connectorType, wcProjectId });
+  console.log({ domain, types, value });
+  const signature = await walletClient.signTypedData({
+    account: account,
+    domain,
+    types,
+    primaryType: 'Permit',
+    message: value,
+  });
+
+  const [r, s, v] = [slice(signature, 0, 32), slice(signature, 32, 64), hexToNumber(slice(signature, 64, 65))];
+  console.log(signature, v, r, s);
+  const data = encodeAbiParameters(parseAbiParameters('address, address, uint256, uint256, uint8, bytes32, bytes32'), [
+    account,
+    dzapContractAddress,
+    BigInt(amount),
+    BigInt(MaxSigDeadline.toString()),
+    v,
+    r,
+    s,
+  ]);
+  console.log({ data });
+  return { data };
 };
 
 export async function getPermit2SignatureAndCalldataForTransfer({
@@ -106,7 +117,7 @@ export async function getPermit2SignatureAndCalldataForTransfer({
     },
     spender: dzapContractAddress,
     nonce,
-    deadline,
+    deadline: MaxSigDeadline,
   };
 
   const permitInfo = SignatureTransfer.getPermitData(permit, PERMIT2_ADDRESS, chainId);
@@ -134,183 +145,111 @@ export async function getPermit2SignatureAndCalldataForTransfer({
       deadline: BigInt(permitInfo.values.deadline.toString()),
     },
   });
-  const msgHash = SignatureTransfer.hash(permit, dzapContractAddress, chainId);
+  // const msgHash = SignatureTransfer.hash(permit, dzapContractAddress, chainId);
   const permitDetails = {
     permitted: {
       token: contributionTokenAddress,
       amount: BigInt(amount),
     },
     nonce,
-    deadline,
+    deadline: MaxSigDeadline,
   };
-  const transferDetails = {
-    to: dzapContractAddress,
-    requestedAmount: BigInt(amount),
-  };
-
-  const data = encodeAbiParameters(
-    parseAbiParameters(
-      '(address token, uint256 amount) permitted, uint256 nonce,  uint256 deadline, (address to, uint256 requestedAmount) transferDetails, address owner, bytes signature',
-    ),
-    [permitDetails.permitted, BigInt(permitDetails.nonce), BigInt(permitDetails.deadline.toString()), transferDetails, userAddress, signature],
-  );
   const customPermitDataForTransfer = encodeAbiParameters(parseAbiParameters('uint256 nonce, uint256 deadline, bytes signature'), [
     BigInt(permitDetails.nonce),
     BigInt(permitDetails.deadline.toString()),
     signature,
   ]);
-  return { signature, msgHash, data, customPermitDataForTransfer };
+  return encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_APPROVE, customPermitDataForTransfer]);
 }
 
-export const getPermitSignature = async ({
-  chainId,
-  account,
-  token,
+export const nativeTokenAndAllowanceChecker = async ({
+  srcToken,
   dzapContractAddress,
-  amount,
-  name,
-  connectorType,
-  wcProjectId,
+  userAddress,
+  chainId,
   rpcProvider,
+  amount,
 }: {
+  srcToken: string;
+  dzapContractAddress: HexString;
+  userAddress: string;
   chainId: number;
-  account: HexString;
-  token: HexString;
+  rpcProvider: string;
   amount: string;
-  name: string;
   connectorType: ConnectorType;
   wcProjectId: string;
-  rpcProvider: string;
-  dzapContractAddress: HexString;
-}): Promise<{ data: any }> => {
-  const userNonce = (await readContract({
-    chainId,
-    contractAddress: token,
-    abi: PermitAbi as Abi,
-    functionName: Erc20PermitFunctions.NONCES,
-    rpcProvider,
-    args: [account],
-  })) as string;
-  let version: string;
-  try {
-    version = (await readContract({
-      chainId,
-      contractAddress: token,
-      abi: PermitAbi as Abi,
-      functionName: Erc20PermitFunctions.VERSION,
-      rpcProvider,
-    })) as string;
-  } catch (e) {
-    console.log(e);
-    version = '1';
+}) => {
+  const permitData = DEFAULT_PERMIT1_DATA;
+  if (srcToken === NATIVE_TOKEN_ADDRESS.toLowerCase()) {
+    return { status: TxnStatus.success, permitData };
   }
-  const domain = { name: name, version: version, chainId, verifyingContract: token };
-  const types = {
-    Permit: [
-      { name: 'owner', type: 'address' },
-      { name: 'spender', type: 'address' },
-      { name: 'value', type: 'uint256' },
-      { name: 'nonce', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' },
-    ],
-  };
-  const value = {
-    owner: account,
-    spender: dzapContractAddress,
-    value: BigInt(amount),
-    nonce: userNonce,
-    deadline: BigInt(deadline.toString()),
-  };
-
-  const walletClient = await getWalletClient({ chainId, account, connectorType, wcProjectId });
-  console.log({ domain, types, value });
-  const signature = await walletClient.signTypedData({
-    account: account,
-    domain,
-    types,
-    primaryType: 'Permit',
-    message: value,
-  });
-
-  const [r, s, v] = [slice(signature, 0, 32), slice(signature, 32, 64), hexToNumber(slice(signature, 64, 65))];
-  console.log(signature, v, r, s);
-  const data = encodeAbiParameters(parseAbiParameters('address, address, uint256, uint256, uint8, bytes32, bytes32'), [
-    account,
-    dzapContractAddress,
-    BigInt(amount),
-    BigInt(deadline.toString()),
-    v,
-    r,
-    s,
-  ]);
-  console.log({ data });
-  return { data };
+  try {
+    const allowance = await readContract({
+      chainId,
+      contractAddress: srcToken as HexString,
+      abi: erc20Abi,
+      functionName: Erc20Functions.allowance,
+      args: [userAddress, dzapContractAddress],
+      rpcProvider,
+    });
+    // @dev allowance is more than required amount, so transact
+    if ((allowance as bigint) > BigInt(amount)) {
+      return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
+    }
+    return { status: TxnStatus.checkOtherPermit, permitData, code: StatusCodes.CheckOtherPermit };
+  } catch (e) {
+    console.log({ e });
+    return { status: TxnStatus.error, code: e?.code, permitData: null };
+  }
 };
 
-export const permitHandler = async ({
-  chainId,
+export const checkPermit1 = async ({
+  srcToken,
+  dzapContractAddress,
   userAddress,
-  contributionTokenAddress,
+  chainId,
+  rpcProvider,
   amount,
   connectorType,
   wcProjectId,
-  rpcProvider,
-  dzapContractAddress,
 }: {
+  srcToken: string;
+  dzapContractAddress: HexString;
+  userAddress: string;
   chainId: number;
-  userAddress: HexString;
-  contributionTokenAddress: HexString;
+  rpcProvider: string;
   amount: string;
   connectorType: ConnectorType;
   wcProjectId: string;
-  rpcProvider: string;
-  dzapContractAddress: HexString;
 }) => {
-  let permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, '0x']);
-  if (contributionTokenAddress === NATIVE_TOKEN_ADDRESS.toLowerCase()) {
-    return { status: 'success' };
-  }
-  const allowance = await readContract({
-    chainId,
-    contractAddress: contributionTokenAddress,
-    abi: erc20Abi,
-    functionName: Erc20Functions.ALLOWANCE,
-    args: [userAddress, dzapContractAddress],
-    rpcProvider,
-  });
-  // @dev allowance is more than required amount, so transact
-  if ((allowance as bigint) > parseUnits(amount.toString(), 18)) {
-    //@TODo update 18 to decimals
-    permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, '0x']);
-    return { status: 'success', permitData };
-  }
-  const name = (await readContract({
-    chainId,
-    contractAddress: contributionTokenAddress,
-    abi: erc20Abi,
-    functionName: Erc20Functions.NAME,
-    rpcProvider,
-  })) as string;
-  let isSigned = true;
-  let checkPermit2 = false;
-  // @dev allowance is less than required amount, so check if token supports permit
+  console.log('checking with permit1');
   try {
-    // @dev with erc20 permit
-    console.log('checking with erc20 permit');
     const PERMIT_TYPEHASH = (await initializeReadOnlyProvider({ chainId, rpcProvider }).readContract({
-      address: contributionTokenAddress,
+      address: srcToken as HexString,
       abi: PermitAbi as Abi,
       functionName: Erc20PermitFunctions.PERMIT_TYPEHASH,
     })) as string;
     if (PERMIT_TYPEHASH.toLowerCase() !== PERMIT_TYPEHASH_CONST.toLowerCase()) {
       // eip712 type hash
-      throw new Error('PERMIT_TYPEHASH not found');
+      throw new Error('Permit type hash is incorrect');
     }
+  } catch (e) {
+    console.log({ e });
+    return { status: TxnStatus.checkOtherPermit, code: StatusCodes.FunctionNotFound, permitData: null };
+  }
+  try {
+    const name = (await readContract({
+      chainId,
+      contractAddress: srcToken as HexString,
+      abi: erc20Abi,
+      functionName: Erc20Functions.name,
+      rpcProvider,
+    })) as string;
 
     const signatureData = await getPermitSignature({
       chainId,
-      account: userAddress,
-      token: contributionTokenAddress,
+      account: userAddress as HexString,
+      token: srcToken as HexString,
       dzapContractAddress,
       amount,
       name,
@@ -318,61 +257,148 @@ export const permitHandler = async ({
       wcProjectId,
       rpcProvider,
     });
-    permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, signatureData.data]);
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, signatureData.data]);
+    return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
   } catch (e: any) {
-    // @dev with permit2
-    if (e?.code === 4001) {
-      isSigned = false;
-    } else {
-      checkPermit2 = true;
+    console.log({ e });
+    if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
+      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, permitData: null };
     }
+    return { status: TxnStatus.checkOtherPermit, code: StatusCodes.CheckOtherPermit, permitData: null };
   }
-  if (checkPermit2) {
-    try {
-      console.log('checking with permit2');
-      const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
-      const nonce = await publicClient.getTransactionCount({
-        address: userAddress,
-      });
-      const permitAllowance = (await readContract({
+};
+
+export const checkPermit2 = async ({
+  srcToken,
+  dzapContractAddress,
+  userAddress,
+  chainId,
+  rpcProvider,
+  amount,
+  connectorType,
+  wcProjectId,
+}: {
+  srcToken: string;
+  dzapContractAddress: HexString;
+  userAddress: string;
+  chainId: number;
+  rpcProvider: string;
+  amount: string;
+  connectorType: ConnectorType;
+  wcProjectId: string;
+}) => {
+  try {
+    console.log('checking with permit2');
+    const permitAllowance = (await readContract({
+      chainId,
+      contractAddress: srcToken as HexString,
+      abi: erc20Abi,
+      functionName: Erc20Functions.allowance,
+      args: [userAddress, PERMIT2_ADDRESS],
+      rpcProvider,
+    })) as bigint;
+    console.log({ permitAllowance, amount });
+    if (permitAllowance < BigInt(amount)) {
+      const txReceipt = await writeContract({
         chainId,
-        contractAddress: contributionTokenAddress,
+        contractAddress: srcToken as HexString,
         abi: erc20Abi,
-        functionName: Erc20Functions.ALLOWANCE,
-        args: [userAddress, PERMIT2_ADDRESS],
+        functionName: Erc20Functions.approve,
+        args: [PERMIT2_ADDRESS, MaxUint256],
+        userAddress: userAddress as HexString,
         rpcProvider,
-      })) as bigint;
-      if (permitAllowance < parseUnits(amount, 18)) {
-        //@TODo update 18 to decimals
-        const txReceipt = await writeContract({
-          chainId,
-          contractAddress: contributionTokenAddress,
-          abi: erc20Abi,
-          functionName: Erc20Functions.APPROVE,
-          args: [PERMIT2_ADDRESS, MaxUint256],
-          userAddress,
-          rpcProvider,
-          connectorType,
-          wcProjectId,
-        });
-        if (txReceipt.status === TxnStatus.success) {
-          const signatureData = await getPermit2SignatureAndCalldataForTransfer({
-            chainId,
-            dzapContractAddress,
-            userAddress,
-            contributionTokenAddress,
-            nonce: nonce.toString(), //pass the nonce
-            amount: amount.toString(),
-            connectorType,
-            wcProjectId,
-          });
-          permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2, signatureData.customPermitDataForTransfer]);
-        } else return { status: 'rejected' };
+        connectorType,
+        wcProjectId,
+      });
+      if (txReceipt.status !== TxnStatus.success) {
+        return {
+          status: txReceipt.status,
+          permitData: null,
+          code: txReceipt?.code || StatusCodes.FunctionNotFound,
+        };
       }
-    } catch (e) {
-      isSigned = false;
+    }
+    console.log('in permit 2 without contract');
+    const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
+    const nonce = await publicClient.getTransactionCount({
+      address: userAddress as HexString,
+    });
+    const permitData = await getPermit2SignatureAndCalldataForTransfer({
+      chainId,
+      dzapContractAddress,
+      userAddress: userAddress as HexString,
+      contributionTokenAddress: srcToken as HexString,
+      nonce: nonce.toString(),
+      amount: amount.toString(),
+      connectorType,
+      wcProjectId,
+    });
+
+    return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
+  } catch (e) {
+    console.log({ e });
+    if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
+      return { status: TxnStatus.rejected, errorCode: StatusCodes.UserRejectedRequest, permitdata: null };
+    }
+    return { status: TxnStatus.error, code: e.code, permitData: null };
+  }
+};
+
+export const permitFunctionSelector = (functionSelector: number) => {
+  switch (functionSelector) {
+    case PermitFunctionSelectorCases.nativeTokenAndAllowanceCheck:
+      return nativeTokenAndAllowanceChecker;
+    case PermitFunctionSelectorCases.checkPermit1:
+      return checkPermit1;
+    case PermitFunctionSelectorCases.checkPermit2:
+      return checkPermit2;
+  }
+};
+
+export const getPermitdata = async ({
+  srcToken,
+  dzapContractAddress,
+  userAddress,
+  chainId,
+  rpcProvider,
+  amount,
+  wcProjectId,
+  connectorType,
+}: {
+  srcToken: string;
+  dzapContractAddress: HexString;
+  userAddress: string;
+  chainId: number;
+  rpcProvider: string;
+  amount: string;
+  connectorType: ConnectorType;
+  wcProjectId: string;
+}) => {
+  for (let functionSelector = 0; functionSelector <= 2; functionSelector++) {
+    const { status, permitData, code } = await permitFunctionSelector(functionSelector)({
+      chainId,
+      srcToken,
+      amount,
+      rpcProvider,
+      userAddress: userAddress as HexString,
+      dzapContractAddress,
+      connectorType,
+      wcProjectId,
+    });
+    console.log({ functionSelector, permitData, status, code });
+    if (status === TxnStatus.success) {
+      // permit was found, so now move to next srcToken
+      return { status, code, permitData };
+    } else if (status === TxnStatus.checkOtherPermit) {
+      // Failed status is when the permit function is not found.
+      // So, we move to next functionSelector.
+      continue;
+    } else {
+      // Rejected status is only when the user has rejected the transaction
+      // Or the permit2 transaction is rejected by the chain.
+      // Else there is some other error, possibly couldn't generate signature.
+      // Or RPC down.
+      return { status, code, permitData: null };
     }
   }
-  if (!isSigned) return { status: 'rejected' };
-  return { status: 'success', permitData };
 };

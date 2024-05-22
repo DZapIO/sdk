@@ -52,6 +52,7 @@ export type SwapData = {
   gasPrice?: number;
   srcDecimals: number;
   destDecimals: number;
+  permitData?: string;
 };
 
 export type SwapParamsRequest = {
@@ -231,6 +232,7 @@ export type BridgeParamsRequest = {
   toChain: number;
   selectedRoute: string;
   additionalInfo?: BridgeAdditionalInfo;
+  permitData?: string;
 };
 
 export type BridgeParamsResponse = {

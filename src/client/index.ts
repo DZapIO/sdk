@@ -1,13 +1,14 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
-import { ConnectorType } from 'src/enums';
+import { ConnectorType, Services } from 'src/enums';
 import {
   BridgeParamsRequest,
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
+  SwapData,
   SwapParamsRequest,
   SwapQuoteRequest,
 } from 'src/types';
@@ -111,6 +112,24 @@ class DzapClient {
     connectorType?: ConnectorType;
   }) {
     return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, connectorType });
+  }
+
+  public async permit({
+    chainId,
+    sender,
+    data,
+    rpcProvider,
+    connectorType,
+    service,
+  }: {
+    chainId: number;
+    sender: string;
+    data: SwapData[] | BridgeParamsRequest[];
+    rpcProvider: string;
+    connectorType: ConnectorType;
+    service: Services;
+  }) {
+    return await this.contractHandler.handlePermit({ chainId, sender, data, rpcProvider, connectorType, service });
   }
 }
 

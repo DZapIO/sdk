@@ -5,8 +5,8 @@ import { AppEnv } from './AppEnv';
 const { REACT_APP_ENV, REACT_APP_BASE_API_URL } = process.env;
 
 let baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
-const stagingUrl = 'https://staging.dzap.io/';
-// const localhostUrl = 'http://localhost:8080/';
+// const stagingUrl = 'https://staging.dzap.io/';
+const stagingUrl = 'http://localhost:8080/';
 export const appEnv = REACT_APP_ENV || AppEnv.development;
 export const isProd = appEnv === AppEnv.production;
 export const versionPostfix = 'v1/';

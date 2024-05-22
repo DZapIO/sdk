@@ -4,50 +4,37 @@ export enum ConnectorType {
 }
 
 export enum Erc20PermitFunctions {
-  NONCES = 'nonces',
-  VERSION = 'version',
+  nonces = 'nonces',
+  version = 'version',
   PERMIT_TYPEHASH = 'PERMIT_TYPEHASH',
 }
 
 export enum Erc20Functions {
-  NAME = 'name',
-  ALLOWANCE = 'allowance',
-  APPROVE = 'approve',
-  TRANSFER = 'transfer',
-  TRANSFER_FROM = 'transferFrom',
-  BALANCE_OF = 'balanceOf',
-  DECIMALS = 'decimals',
-  SYMBOL = 'symbol',
+  name = 'name',
+  allowance = 'allowance',
+  approve = 'approve',
+  transfer = 'transfer',
+  transferFrom = 'transferFrom',
+  balanceof = 'balanceOf',
+  decimals = 'decimals',
+  symbol = 'symbol',
 }
 
 export enum PermitType {
   PERMIT,
-  PERMIT2,
+  PERMIT2_TRANSFER_FROM,
+  PERMIT2_APPROVE,
 }
 
-export const TxnStatus = {
-  pending: 'pending',
-  inProgress: 'in-progress',
-  success: 'success',
-  rejected: 'rejected',
-  error: 'error',
-  reverted: 'reverted',
-};
-
-export const CHAINS_IDS = {
-  ethereum: 1,
-  polygon: 137,
-  bsc: 56,
-  gnosis: 100,
-  fantom: 250,
-  avalanche: 43114,
-  arbitrum: 42161,
-  optimism: 10,
-  zkSync: 324,
-  base: 8453,
-  scroll: 534352,
-  manta: 169,
-} as const;
+export enum TxnStatus {
+  pending = 'pending',
+  inProgress = 'in-progress',
+  success = 'success',
+  rejected = 'rejected',
+  error = 'error',
+  reverted = 'reverted',
+  checkOtherPermit = 'checkOtherPermit',
+}
 
 export enum Versions {
   V1 = 'v1',
@@ -59,4 +46,17 @@ export enum Services {
   BatchSwap = 'batchSwap',
   CrossChain = 'crossChain',
   Dca = 'dca',
+}
+
+export enum StatusCodes {
+  UserRejectedRequest = 4001,
+  Success = 200,
+  FunctionNotFound = 32771, // 0x8003
+  CheckOtherPermit = 10801, // Depicts Current Permit Function Selector Failed
+}
+
+export enum PermitFunctionSelectorCases {
+  nativeTokenAndAllowanceCheck = 0,
+  checkPermit1 = 1,
+  checkPermit2 = 2,
 }
