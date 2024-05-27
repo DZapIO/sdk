@@ -1,4 +1,4 @@
-import { MaxSigDeadline, MaxUint256, SignatureTransfer, TokenPermissions } from '@uniswap/permit2-sdk';
+import { MaxAllowanceExpiration, MaxAllowanceTransferAmount, MaxSigDeadline, MaxUint256, PermitSingle } from '@uniswap/permit2-sdk';
 import { DEFAULT_PERMIT1_DATA, NATIVE_TOKEN_ADDRESS, PERMIT2_ADDRESS, PERMIT_TYPEHASH_CONST } from 'src/constants';
 import { ConnectorType, Erc20Functions, Erc20PermitFunctions, PermitFunctionSelectorCases, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
@@ -91,75 +91,97 @@ export const getPermitSignature = async ({
   return { data };
 };
 
-export async function getPermit2SignatureAndCalldataForTransfer({
+export async function getPermit2SignatureAndCalldataForApprove({
   chainId,
   dzapContractAddress,
   userAddress,
-  contributionTokenAddress,
-  nonce,
-  amount,
+  token,
   connectorType,
   wcProjectId,
+  rpcProvider,
+  amount = BigInt(MaxAllowanceTransferAmount.toString()),
+  sigDeadline = BigInt(MaxSigDeadline.toString()),
+  expiration = BigInt(MaxAllowanceExpiration.toString()),
 }: {
   chainId: number;
-  dzapContractAddress: HexString;
-  userAddress: HexString;
-  contributionTokenAddress: HexString;
-  nonce: string;
-  amount: string;
-  connectorType: ConnectorType;
+  userAddress: string;
+  token: string;
+  dzapContractAddress: string;
   wcProjectId: string;
+  connectorType: ConnectorType;
+  rpcProvider: string;
+  sigDeadline?: bigint;
+  amount?: bigint;
+  expiration?: bigint;
 }) {
-  const permit = {
-    permitted: {
-      token: contributionTokenAddress,
+  const nonce = (
+    (await readContract({
+      chainId,
+      contractAddress: token as HexString,
+      abi: PermitAbi as Abi,
+      functionName: Erc20PermitFunctions.nonces,
+      args: [userAddress],
+      rpcProvider,
+    })) as { nonce: bigint }
+  ).nonce;
+  console.log({ nonce });
+  const PERMIT2_DOMAIN_NAME = 'Permit2';
+  const domain = { chainId, name: PERMIT2_DOMAIN_NAME, verifyingContract: PERMIT2_ADDRESS as `0x${string}` };
+
+  const permitApprove = {
+    details: {
+      token,
       amount,
+      expiration,
+      nonce,
     },
     spender: dzapContractAddress,
-    nonce,
-    deadline: MaxSigDeadline,
+    sigDeadline,
   };
-
-  const permitInfo = SignatureTransfer.getPermitData(permit, PERMIT2_ADDRESS, chainId);
-
-  const domain = {
-    name: permitInfo.domain.name,
-    chainId: parseInt(permitInfo.domain.chainId?.toString() || '0', 10),
-    verifyingContract: permitInfo.domain.verifyingContract as HexString,
+  const permit: PermitSingle = {
+    details: {
+      token,
+      amount,
+      expiration,
+      nonce,
+    },
+    spender: dzapContractAddress,
+    sigDeadline,
   };
-  const walletClient = await getWalletClient({ chainId, account: userAddress, connectorType: connectorType, wcProjectId });
-  const types = permitInfo.types;
-  const permitted = permitInfo.values.permitted as TokenPermissions;
+  const types = {
+    PermitSingle: [
+      { name: 'details', type: 'PermitDetails' },
+      { name: 'spender', type: 'address' },
+      { name: 'sigDeadline', type: 'uint256' },
+    ],
+    PermitDetails: [
+      { name: 'token', type: 'address' },
+      { name: 'amount', type: 'uint160' },
+      { name: 'expiration', type: 'uint48' },
+      { name: 'nonce', type: 'uint48' },
+    ],
+  };
+  const values = permitApprove;
+  const walletClient = await getWalletClient({ chainId, account: userAddress as HexString, connectorType: connectorType, wcProjectId });
   const signature = await walletClient.signTypedData({
-    account: userAddress,
-    domain: domain,
+    account: userAddress as HexString,
+    domain,
+    message: values,
+    primaryType: 'PermitSingle',
     types,
-    primaryType: 'PermitTransferFrom',
-    message: {
-      permitted: {
-        token: permitted.token,
-        amount: BigInt(permitted.amount.toString()),
-      },
-      spender: dzapContractAddress,
-      nonce: BigInt(permitInfo.values.nonce.toString()),
-      deadline: BigInt(permitInfo.values.deadline.toString()),
-    },
   });
-  // const msgHash = SignatureTransfer.hash(permit, dzapContractAddress, chainId);
-  const permitDetails = {
-    permitted: {
-      token: contributionTokenAddress,
-      amount: BigInt(amount),
-    },
-    nonce,
-    deadline: MaxSigDeadline,
-  };
-  const customPermitDataForTransfer = encodeAbiParameters(parseAbiParameters('uint256 nonce, uint256 deadline, bytes signature'), [
-    BigInt(permitDetails.nonce),
-    BigInt(permitDetails.deadline.toString()),
-    signature,
-  ]);
-  return encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_APPROVE, customPermitDataForTransfer]);
+  const customPermitDataForTransfer = encodeAbiParameters(
+    parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
+    [
+      BigInt(permit.details.amount.toString()),
+      Number(permit.details.nonce.toString()),
+      Number(permit.details.expiration.toString()),
+      BigInt(permit.sigDeadline.toString()),
+      signature,
+    ],
+  );
+  const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_TRANSFER_FROM, customPermitDataForTransfer]);
+  return permitData;
 }
 
 export const nativeTokenAndAllowanceChecker = async ({
@@ -319,19 +341,18 @@ export const checkPermit2 = async ({
       }
     }
     console.log('in permit 2 without contract');
-    const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
-    const nonce = await publicClient.getTransactionCount({
-      address: userAddress as HexString,
-    });
-    const permitData = await getPermit2SignatureAndCalldataForTransfer({
+    // const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
+    // const nonce = await publicClient.getTransactionCount({
+    //   address: userAddress as HexString,
+    // });
+    const permitData = await getPermit2SignatureAndCalldataForApprove({
       chainId,
       dzapContractAddress,
       userAddress: userAddress as HexString,
-      contributionTokenAddress: srcToken as HexString,
-      nonce: nonce.toString(),
-      amount: amount.toString(),
+      token: srcToken as HexString,
       connectorType,
       wcProjectId,
+      rpcProvider,
     });
 
     return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
