@@ -1,7 +1,7 @@
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
 import { BRIDGE_ABIS, SWAP_ABIS } from 'src/config';
-import { DEFAULT_PERMIT2_DATA, NATIVE_TOKEN_ADDRESS } from 'src/constants';
-import { ConnectorType, Services, TxnStatus } from 'src/enums';
+import { DEFAULT_PERMIT1_DATA, DEFAULT_PERMIT2_APPROVE_DATA, NATIVE_TOKEN_ADDRESS } from 'src/constants';
+import { ConnectorType, PermitFunctionSelectorCases, Services, TxnStatus } from 'src/enums';
 import { getDZapContractAddress } from 'src/utils/contract';
 import { getPermitdata } from 'src/utils/permit';
 import { decodeFunctionData } from 'viem';
@@ -160,10 +160,9 @@ class ContractHandler {
     ) {
       // handle one to many in case of same non-native srcToken
       const sum = data.reduce((acc, obj) => {
-        obj.permitData = DEFAULT_PERMIT2_DATA;
         return acc + BigInt(obj.amount);
       }, BigInt(0));
-      const { status, permitData, code } = await getPermitdata({
+      const { status, permitData, code, permitUsed } = await getPermitdata({
         chainId,
         srcToken: data[0].srcToken,
         amount: sum.toString(),
@@ -173,6 +172,15 @@ class ContractHandler {
         connectorType,
         wcProjectId: this.wcProjectId,
       });
+      if (permitUsed === PermitFunctionSelectorCases.checkPermit1) {
+        data.forEach((obj: SwapData | BridgeParamsRequest) => {
+          obj.permitData = DEFAULT_PERMIT1_DATA;
+        });
+      } else {
+        data.forEach((obj: SwapData | BridgeParamsRequest) => {
+          obj.permitData = DEFAULT_PERMIT2_APPROVE_DATA;
+        });
+      }
       if (status === TxnStatus.success) {
         data[0].permitData = permitData;
       } else {

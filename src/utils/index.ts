@@ -89,7 +89,7 @@ export const readContract = async ({
       args,
     });
   } catch (e) {
-    console.log(e);
+    console.log({ e });
   }
 };
 

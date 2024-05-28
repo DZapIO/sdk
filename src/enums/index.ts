@@ -7,6 +7,7 @@ export enum Erc20PermitFunctions {
   nonces = 'nonces',
   version = 'version',
   PERMIT_TYPEHASH = 'PERMIT_TYPEHASH',
+  allowance = 'allowance',
 }
 
 export enum Erc20Functions {
