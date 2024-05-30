@@ -54,10 +54,18 @@ export enum StatusCodes {
   Success = 200,
   FunctionNotFound = 32771, // 0x8003
   CheckOtherPermit = 10801, // Depicts Current Permit Function Selector Failed
+  Error = 101, // @TODO update as per need
 }
 
-export enum PermitFunctionSelectorCases {
+export enum PermitFunctionSelector {
   nativeTokenAndAllowanceCheck = 0,
   checkPermit1 = 1,
   checkPermit2 = 2,
+}
+
+export enum PermitSelector {
+  DefaultPermit,
+  Permit1,
+  Permit2,
+  Permit2Approve,
 }

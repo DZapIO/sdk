@@ -1,13 +1,14 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
-import { ConnectorType, Services } from 'src/enums';
+import { ConnectorType, PermitSelector, Services } from 'src/enums';
 import {
   BridgeParamsRequest,
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
+  HexString,
   SwapData,
   SwapParamsRequest,
   SwapQuoteRequest,
@@ -114,13 +115,14 @@ class DzapClient {
     return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, connectorType });
   }
 
-  public async permit({
+  public async getPermitData({
     chainId,
     sender,
     data,
     rpcProvider,
     connectorType,
     service,
+    permitSelectorForSrcTokens,
   }: {
     chainId: number;
     sender: string;
@@ -128,8 +130,40 @@ class DzapClient {
     rpcProvider: string;
     connectorType: ConnectorType;
     service: Services;
+    permitSelectorForSrcTokens: PermitSelector[];
   }) {
-    return await this.contractHandler.handlePermit({ chainId, sender, data, rpcProvider, connectorType, service });
+    return await this.contractHandler.handleGetPermitData({ chainId, sender, data, rpcProvider, connectorType, service, permitSelectorForSrcTokens });
+  }
+
+  public async getApprovalAndPermitSelector({
+    chainId,
+    sender,
+    data,
+    rpcProvider,
+    connectorType,
+    service,
+    afterPermit2ApprovalTxnCallback,
+    afterAllowanceCheckCallback,
+  }: {
+    chainId: number;
+    sender: string;
+    data: SwapData[] | BridgeParamsRequest[];
+    rpcProvider: string;
+    connectorType: ConnectorType;
+    service: Services;
+    afterPermit2ApprovalTxnCallback?: ({ txnHash }: { txnHash: HexString }) => Promise<void>;
+    afterAllowanceCheckCallback?: () => Promise<void>;
+  }) {
+    return await this.contractHandler.handleGetApprovalAndPermitSelector({
+      chainId,
+      sender,
+      data,
+      rpcProvider,
+      connectorType,
+      service,
+      afterPermit2ApprovalTxnCallback,
+      afterAllowanceCheckCallback,
+    });
   }
 }
 

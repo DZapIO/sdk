@@ -128,9 +128,7 @@ export const writeContract = async ({
     });
     const walletClient = await getWalletClient({ chainId, account: userAddress, connectorType, wcProjectId });
     const hash = await walletClient.writeContract(request);
-    // wait for block confirmation and return transaction receipt
-    const txReceipt = await publicClient.waitForTransactionReceipt({ hash });
-    return { ...txReceipt, code: StatusCodes.Success };
+    return { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
   } catch (e: any) {
     console.log({ e });
     if (e?.code === StatusCodes.UserRejectedRequest) {

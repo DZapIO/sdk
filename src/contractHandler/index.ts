@@ -1,9 +1,13 @@
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
 import { BRIDGE_ABIS, SWAP_ABIS } from 'src/config';
-import { DEFAULT_PERMIT1_DATA, DEFAULT_PERMIT2_APPROVE_DATA, NATIVE_TOKEN_ADDRESS } from 'src/constants';
-import { ConnectorType, PermitFunctionSelectorCases, Services, TxnStatus } from 'src/enums';
+import { PERMIT2_APPROVE_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
+import { ConnectorType, PermitSelector, Services, StatusCodes, TxnStatus } from 'src/enums';
 import { getDZapContractAddress } from 'src/utils/contract';
-import { getPermitdata } from 'src/utils/permit';
+import {
+  getAllowanceAndTokenPermit as getApprovalAndPermitUsed,
+  getPermit1PermitData,
+  getPermit2SignatureAndCalldataForApprove,
+} from 'src/utils/permit';
 import { decodeFunctionData } from 'viem';
 import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapData, SwapParamsRequest } from '../types';
 import { getWalletClient, initializeReadOnlyProvider, purgeBridgeVersion, purgeSwapVersion, viemchainsById } from '../utils';
@@ -137,13 +141,15 @@ class ContractHandler {
     }
   }
 
-  public async handlePermit({
+  public async handleGetApprovalAndPermitSelector({
     chainId,
     sender,
     data,
     rpcProvider,
     connectorType,
     service,
+    afterPermit2ApprovalTxnCallback,
+    afterAllowanceCheckCallback,
   }: {
     chainId: number;
     sender: string;
@@ -151,18 +157,16 @@ class ContractHandler {
     rpcProvider: string;
     connectorType: ConnectorType;
     service: Services;
+    afterPermit2ApprovalTxnCallback?: ({ txnHash }: { txnHash: HexString }) => Promise<void>;
+    afterAllowanceCheckCallback?: () => Promise<void>;
   }) {
     const dzapContractAddress = getDZapContractAddress(chainId, service);
-    if (
-      data.length > 1 &&
-      data[0].srcToken !== NATIVE_TOKEN_ADDRESS.toLowerCase() &&
-      data[0].srcToken.toLowerCase() === data[1].srcToken.toLowerCase()
-    ) {
+    if (data.length > 1 && data[0].srcToken.toLowerCase() === data[1].srcToken.toLowerCase()) {
       // handle one to many in case of same non-native srcToken
       const sum = data.reduce((acc, obj) => {
         return acc + BigInt(obj.amount);
       }, BigInt(0));
-      const { status, permitData, code, permitUsed } = await getPermitdata({
+      const { status, code, permitUsed } = await getApprovalAndPermitUsed({
         chainId,
         srcToken: data[0].srcToken,
         amount: sum.toString(),
@@ -170,42 +174,133 @@ class ContractHandler {
         userAddress: sender as HexString,
         dzapContractAddress,
         connectorType,
+        afterPermit2ApprovalTxnCallback,
         wcProjectId: this.wcProjectId,
       });
-      if (permitUsed === PermitFunctionSelectorCases.checkPermit1) {
-        data.forEach((obj: SwapData | BridgeParamsRequest) => {
-          obj.permitData = DEFAULT_PERMIT1_DATA;
-        });
+      let permitSelector = PermitSelector.DefaultPermit;
+      if (permitUsed === PermitSelector.Permit1) {
+        permitSelector = PermitSelector.Permit1;
+      } else if (permitUsed === PermitSelector.Permit2) {
+        permitSelector = PermitSelector.Permit2Approve;
+      }
+      const permitSelectorForSrcTokens = new Array(data.length).fill(permitSelector);
+      if (permitUsed === PermitSelector.Permit2) {
+        permitSelectorForSrcTokens[0] = PermitSelector.Permit2;
+      }
+      await afterAllowanceCheckCallback();
+      return { status, code, permitSelectorForSrcTokens };
+    }
+    const permitSelectorForSrcTokens = new Array(data.length);
+    for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
+      const { srcToken, amount } = data[dataIdx];
+      const { status, code, permitUsed } = await getApprovalAndPermitUsed({
+        chainId,
+        srcToken,
+        amount,
+        rpcProvider,
+        userAddress: sender as HexString,
+        dzapContractAddress,
+        connectorType,
+        afterPermit2ApprovalTxnCallback,
+        wcProjectId: this.wcProjectId,
+      });
+      if (status === TxnStatus.success) {
+        permitSelectorForSrcTokens[dataIdx] = permitUsed;
+        await afterAllowanceCheckCallback(); // Callback to update UI for each src token
       } else {
-        data.forEach((obj: SwapData | BridgeParamsRequest) => {
-          obj.permitData = DEFAULT_PERMIT2_APPROVE_DATA;
-        });
+        return { status, code, permitSelectorForSrcTokens: null };
+      }
+    }
+    return { status: TxnStatus.success, permitSelectorForSrcTokens: permitSelectorForSrcTokens };
+  }
+
+  public async handleGetPermitData({
+    chainId,
+    sender,
+    data,
+    rpcProvider,
+    connectorType,
+    service,
+    permitSelectorForSrcTokens,
+  }: {
+    chainId: number;
+    sender: string;
+    data: SwapData[] | BridgeParamsRequest[];
+    rpcProvider: string;
+    connectorType: ConnectorType;
+    service: Services;
+    permitSelectorForSrcTokens: PermitSelector[];
+  }) {
+    if (permitSelectorForSrcTokens.length !== data.length) {
+      throw new Error('Permit selector length mismatch');
+    }
+    const dzapContractAddress = getDZapContractAddress(chainId, service);
+    for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
+      const { srcToken, amount } = data[dataIdx];
+      let permitData: HexString, code: StatusCodes, status: TxnStatus;
+      switch (permitSelectorForSrcTokens[dataIdx]) {
+        case PermitSelector.DefaultPermit:
+          permitData = DEFAULT_PERMIT_DATA;
+          status = TxnStatus.success;
+          code = StatusCodes.Success;
+          break;
+        case PermitSelector.Permit1: {
+          const {
+            permitData: permitRes,
+            status: permitStatus,
+            code: permitCode,
+          } = await getPermit1PermitData({
+            chainId,
+            account: sender as HexString,
+            token: srcToken as HexString,
+            dzapContractAddress,
+            amount,
+            connectorType,
+            wcProjectId: this.wcProjectId,
+            rpcProvider,
+          });
+          permitData = permitRes;
+          status = permitStatus;
+          code = permitCode;
+          break;
+        }
+        case PermitSelector.Permit2:
+          {
+            const {
+              permitData: permitRes,
+              status: permitStatus,
+              code: permitCode,
+            } = await getPermit2SignatureAndCalldataForApprove({
+              chainId,
+              account: sender as HexString,
+              token: srcToken as HexString,
+              dzapContractAddress,
+              amount: BigInt(amount),
+              connectorType,
+              wcProjectId: this.wcProjectId,
+              rpcProvider,
+            });
+            permitData = permitRes;
+            status = permitStatus;
+            code = permitCode;
+          }
+          break;
+        case PermitSelector.Permit2Approve: {
+          permitData = PERMIT2_APPROVE_DATA;
+          status = TxnStatus.success;
+          code = StatusCodes.Success;
+          break;
+        }
+        default:
+          throw new Error('Invalid permit selector');
       }
       if (status === TxnStatus.success) {
-        data[0].permitData = permitData;
+        data[dataIdx].permitData = permitData;
       } else {
         return { status, code, data: null };
       }
-    } else {
-      for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
-        const { srcToken, amount } = data[dataIdx];
-        const { status, permitData, code } = await getPermitdata({
-          chainId,
-          srcToken,
-          amount,
-          rpcProvider,
-          userAddress: sender as HexString,
-          dzapContractAddress,
-          connectorType,
-          wcProjectId: this.wcProjectId,
-        });
-        if (status === TxnStatus.success) {
-          data[dataIdx].permitData = permitData;
-        } else {
-          return { status, code, data: null };
-        }
-      }
     }
+
     return { status: TxnStatus.success, data };
   }
 }
