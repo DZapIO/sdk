@@ -64,8 +64,8 @@ export enum PermitFunctionSelector {
 }
 
 export enum PermitSelector {
-  DefaultPermit,
-  Permit1,
-  Permit2,
-  Permit2Approve,
+  DefaultPermit = 0,
+  Permit1 = 1,
+  Permit2 = 2,
+  Permit2Approve = 3,
 }

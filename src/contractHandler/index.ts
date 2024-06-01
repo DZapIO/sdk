@@ -1,13 +1,8 @@
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
 import { BRIDGE_ABIS, SWAP_ABIS } from 'src/config';
-import { PERMIT2_APPROVE_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { ConnectorType, PermitSelector, Services, StatusCodes, TxnStatus } from 'src/enums';
 import { getDZapContractAddress } from 'src/utils/contract';
-import {
-  getAllowanceAndTokenPermit as getApprovalAndPermitUsed,
-  getPermit1PermitData,
-  getPermit2SignatureAndCalldataForApprove,
-} from 'src/utils/permit';
+import { getAllowanceAndTokenPermit as getApprovalAndPermitUsed, getPermitDetails } from 'src/utils/permit';
 import { decodeFunctionData } from 'viem';
 import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapData, SwapParamsRequest } from '../types';
 import { getWalletClient, initializeReadOnlyProvider, purgeBridgeVersion, purgeSwapVersion, viemchainsById } from '../utils';
@@ -187,7 +182,7 @@ class ContractHandler {
       if (permitUsed === PermitSelector.Permit2) {
         permitSelectorForSrcTokens[0] = PermitSelector.Permit2;
       }
-      await afterAllowanceCheckCallback();
+      await afterAllowanceCheckCallback(); // TODO: Callback to update UI for each src token should be given or not?
       return { status, code, permitSelectorForSrcTokens };
     }
     const permitSelectorForSrcTokens = new Array(data.length);
@@ -216,12 +211,12 @@ class ContractHandler {
 
   public async handleGetPermitData({
     chainId,
-    sender,
     data,
     rpcProvider,
-    connectorType,
+    sender,
     service,
     permitSelectorForSrcTokens,
+    connectorType,
   }: {
     chainId: number;
     sender: string;
@@ -236,64 +231,18 @@ class ContractHandler {
     }
     const dzapContractAddress = getDZapContractAddress(chainId, service);
     for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
-      const { srcToken, amount } = data[dataIdx];
-      let permitData: HexString, code: StatusCodes, status: TxnStatus;
-      switch (permitSelectorForSrcTokens[dataIdx]) {
-        case PermitSelector.DefaultPermit:
-          permitData = DEFAULT_PERMIT_DATA;
-          status = TxnStatus.success;
-          code = StatusCodes.Success;
-          break;
-        case PermitSelector.Permit1: {
-          const {
-            permitData: permitRes,
-            status: permitStatus,
-            code: permitCode,
-          } = await getPermit1PermitData({
-            chainId,
-            account: sender as HexString,
-            token: srcToken as HexString,
-            dzapContractAddress,
-            amount,
-            connectorType,
-            wcProjectId: this.wcProjectId,
-            rpcProvider,
-          });
-          permitData = permitRes;
-          status = permitStatus;
-          code = permitCode;
-          break;
-        }
-        case PermitSelector.Permit2:
-          {
-            const {
-              permitData: permitRes,
-              status: permitStatus,
-              code: permitCode,
-            } = await getPermit2SignatureAndCalldataForApprove({
-              chainId,
-              account: sender as HexString,
-              token: srcToken as HexString,
-              dzapContractAddress,
-              amount: BigInt(amount),
-              connectorType,
-              wcProjectId: this.wcProjectId,
-              rpcProvider,
-            });
-            permitData = permitRes;
-            status = permitStatus;
-            code = permitCode;
-          }
-          break;
-        case PermitSelector.Permit2Approve: {
-          permitData = PERMIT2_APPROVE_DATA;
-          status = TxnStatus.success;
-          code = StatusCodes.Success;
-          break;
-        }
-        default:
-          throw new Error('Invalid permit selector');
-      }
+      const { permitData, status, code } = await getPermitDetails({
+        permitSelector: permitSelectorForSrcTokens[dataIdx],
+        chainId,
+        sender: sender as HexString,
+        srcToken: data[dataIdx].srcToken,
+        dzapContractAddress,
+        amount: data[dataIdx].amount,
+        connectorType,
+        rpcProvider,
+        wcProjectId: this.wcProjectId,
+      });
+
       if (status === TxnStatus.success) {
         data[dataIdx].permitData = permitData;
       } else {
@@ -301,7 +250,7 @@ class ContractHandler {
       }
     }
 
-    return { status: TxnStatus.success, data };
+    return { status: TxnStatus.success, data, code: StatusCodes.Success };
   }
 }
 
