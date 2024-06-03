@@ -1,7 +1,6 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
-import { ConnectorType } from 'src/enums';
 import {
   BridgeParamsRequest,
   BridgeParamsResponse,
@@ -22,20 +21,21 @@ import {
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
+import { WalletClient } from 'viem';
 
 class DzapClient {
   private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
 
-  private constructor(wcProjectId: string = '') {
-    this.contractHandler = ContractHandler.getInstance(wcProjectId);
+  private constructor() {
+    this.contractHandler = ContractHandler.getInstance();
   }
 
   // Static method to control the access to the singleton instance.
-  public static getInstance(wcProjectId: string = ''): DzapClient {
+  public static getInstance(): DzapClient {
     if (!DzapClient.instance) {
-      DzapClient.instance = new DzapClient(wcProjectId);
+      DzapClient.instance = new DzapClient();
     }
     return DzapClient.instance;
   }
@@ -89,28 +89,28 @@ class DzapClient {
     chainId,
     rpcProvider,
     request,
-    connectorType = ConnectorType.injected,
+    signer,
   }: {
     chainId: number;
     rpcProvider: string;
     request: SwapParamsRequest;
-    connectorType?: ConnectorType;
+    signer: Signer | WalletClient;
   }) {
-    return await this.contractHandler.handleSwap({ chainId, rpcProvider, request, connectorType });
+    return await this.contractHandler.handleSwap({ chainId, rpcProvider, request, signer });
   }
 
   public async bridge({
     chainId,
     rpcProvider,
     request,
-    connectorType = ConnectorType.injected,
+    signer,
   }: {
     chainId: number;
     rpcProvider: string;
     request: BridgeParamsRequest[];
-    connectorType?: ConnectorType;
+    signer: Signer | WalletClient;
   }) {
-    return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, connectorType });
+    return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, signer });
   }
 }
 
