@@ -1,5 +1,4 @@
 import DzapClient from './client';
-import { ConnectorType } from './enums';
 import {
   ApiRpcResponse,
   BridgeParamsRequest,
@@ -32,7 +31,6 @@ export {
   BridgeQuoteResponse,
   Chain,
   ChainData,
-  ConnectorType,
   GetSwapParamsResponse,
   HexString,
   SwapData,
