@@ -1,8 +1,9 @@
 import { Signer } from 'ethers';
-import { createPublicClient, getAddress, http, stringToHex } from 'viem';
+import { createPublicClient, getAddress, http, ParseEventLogsReturnType, stringToHex, Abi, parseEventLogs, TransactionReceipt } from 'viem';
 import * as allWagmiChains from 'viem/chains';
 import { Chains, batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
-import { HexString } from '../types';
+import { HexString, ValidAbis } from '../types';
+import * as ABI from '../artifacts';
 
 export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
@@ -58,4 +59,21 @@ export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
 export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
+};
+
+export const handleDecodeTrxData = (data: TransactionReceipt, abiName: ValidAbis) => {
+  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
+  try {
+    events = parseEventLogs({
+      abi: ABI[abiName],
+      logs: data.logs,
+    });
+  } catch (e) {
+    events = [];
+  }
+  events = events?.filter((item: any) => item !== null);
+
+  const swapInfo = Array.isArray(events) && events.length > 0 ? (events[0]?.args as { swapInfo: unknown })?.swapInfo : [];
+
+  return swapInfo;
 };

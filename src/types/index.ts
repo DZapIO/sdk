@@ -1,3 +1,5 @@
+import { ABI_LIST } from 'src/constants';
+
 export type HexString = `0x${string}`;
 
 export type ChainData = {
@@ -242,3 +244,5 @@ export type BridgeParamsResponse = {
   gasLimit: string;
   additionalInfo?: BridgeAdditionalInfo;
 };
+
+export type ValidAbis = (typeof ABI_LIST)[keyof typeof ABI_LIST];

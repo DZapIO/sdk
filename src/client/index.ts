@@ -9,6 +9,7 @@ import {
   ChainData,
   SwapParamsRequest,
   SwapQuoteRequest,
+  ValidAbis,
 } from 'src/types';
 import {
   fetchAllSupportedChains,
@@ -21,7 +22,8 @@ import {
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
-import { WalletClient } from 'viem';
+import { TransactionReceipt, WalletClient } from 'viem';
+import { handleDecodeTrxData } from 'src/utils';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -111,6 +113,10 @@ class DzapClient {
     signer: Signer | WalletClient;
   }) {
     return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, signer });
+  }
+
+  public decodeTrxData({ data, abiName }: { data: TransactionReceipt; abiName: ValidAbis }) {
+    return handleDecodeTrxData(data, abiName);
   }
 }
 
