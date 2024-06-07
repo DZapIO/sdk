@@ -58,7 +58,7 @@ export type SwapParamsRequest = {
   chainId: number;
   integratorId: string;
   sender: string;
-  refundee: string;
+  refundee?: string;
   recipient: string;
   withOutRevert?: boolean; // default true
   includeSwapCallData?: boolean; // default false
