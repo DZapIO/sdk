@@ -8,6 +8,7 @@ import {
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
+  DZapAvailableAbis,
   OtherAvailableAbis,
   SwapParamsRequest,
   SwapQuoteRequest,
@@ -25,7 +26,6 @@ import {
 } from '../api';
 import { TransactionReceipt, WalletClient } from 'viem';
 import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
-import { DZapAbis } from 'src/enums';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -124,7 +124,7 @@ class DzapClient {
     return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, signer });
   }
 
-  public decodeTrxData({ data, abiName }: { data: TransactionReceipt; abiName: DZapAbis }) {
+  public decodeTrxData({ data, abiName }: { data: TransactionReceipt; abiName: DZapAvailableAbis }) {
     return handleDecodeTrxData(data, abiName);
   }
 }

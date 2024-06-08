@@ -2,9 +2,9 @@ import { Signer } from 'ethers';
 import { createPublicClient, getAddress, http, ParseEventLogsReturnType, stringToHex, Abi, parseEventLogs, TransactionReceipt } from 'viem';
 import * as allWagmiChains from 'viem/chains';
 import { Chains, batchSwapIntegrators, isStaging } from '../config';
-import { HexString, AvailableDZapServices, OtherAvailableAbis } from '../types';
+import { HexString, AvailableDZapServices, OtherAvailableAbis, DZapAvailableAbis } from '../types';
 import * as ABI from '../artifacts';
-import { DZapAbis, Services } from '../enums';
+import { DZapAbis, Services } from 'src/constants';
 
 export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
@@ -58,7 +58,7 @@ export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
 };
 
-export const handleDecodeTrxData = (data: TransactionReceipt, abiName: DZapAbis) => {
+export const handleDecodeTrxData = (data: TransactionReceipt, abiName: DZapAvailableAbis) => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
   try {
     events = parseEventLogs({
