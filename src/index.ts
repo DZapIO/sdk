@@ -14,6 +14,8 @@ import {
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
+  AvailableDZapServices,
+  OtherAvailableAbis,
 } from './types';
 // import { TestHook } from './test';
 // Test Scripts
@@ -38,4 +40,6 @@ export {
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
+  AvailableDZapServices,
+  OtherAvailableAbis,
 };
