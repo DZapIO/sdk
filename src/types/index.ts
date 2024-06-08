@@ -1,3 +1,6 @@
+import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import { AppEnv } from 'src/enums';
+
 export type HexString = `0x${string}`;
 
 export type ChainData = {
@@ -58,7 +61,7 @@ export type SwapParamsRequest = {
   chainId: number;
   integratorId: string;
   sender: string;
-  refundee: string;
+  refundee?: string;
   recipient: string;
   withOutRevert?: boolean; // default true
   includeSwapCallData?: boolean; // default false
@@ -242,3 +245,11 @@ export type BridgeParamsResponse = {
   gasLimit: string;
   additionalInfo?: BridgeAdditionalInfo;
 };
+
+export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
+
+export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
+
+export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
+
+export type AppEnvType = `${AppEnv}`;

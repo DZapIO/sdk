@@ -1,8 +1,6 @@
-import { abi as swapAbiV2 } from '../artifacts/v2/DZapAggregator';
-import { abi as bridgeAbiV2 } from '../artifacts/v2/DZapCore';
+import { AppEnv } from 'src/enums';
 import { Abi, Chain } from 'viem';
 import { mainnet, arbitrum, bsc, optimism, polygon, zkSync } from 'viem/chains';
-import { AppEnv } from './AppEnv';
 const { REACT_APP_ENV, REACT_APP_BASE_API_URL } = process.env;
 
 let baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
@@ -10,6 +8,7 @@ const stagingUrl = 'https://staging.dzap.io/';
 // const localhostUrl = 'http://localhost:8080/';
 export const appEnv = REACT_APP_ENV || AppEnv.development;
 export const isProd = appEnv === AppEnv.production;
+export const isStaging = appEnv === AppEnv.staging;
 export const versionPostfix = 'v1/';
 export const getBaseUrl = (): string => {
   if (!isProd) {
@@ -23,22 +22,6 @@ export type DeFiContract = {
     abi: Abi;
     [key: number]: string;
   };
-};
-
-export const defaultSwapVersion = 'v2';
-
-export const SWAP_ABIS: DeFiContract = {
-  v2: {
-    abi: swapAbiV2 as Abi,
-  },
-};
-
-export const defaultBridgeVersion = 'v2';
-
-export const BRIDGE_ABIS: DeFiContract = {
-  v2: {
-    abi: bridgeAbiV2 as Abi,
-  },
 };
 
 export const batchSwapIntegrators: {
