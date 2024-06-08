@@ -85,11 +85,10 @@ const paramRequest: SwapParamsRequest = {
 // const PRIVATE_KEY: string = '';
 // const account = privateKeyToAccount(`0x${PRIVATE_KEY}`);
 export async function TestHook() {
-  const rpcProvider = 'https://arb1.arbitrum.io/rpc';
   const dzapClient = DzapClient.getInstance();
   try {
     const signer = new Wallet('0x');
-    const resp = await dzapClient.swap({ chainId: 42161, rpcProvider, request: paramRequest, signer });
+    const resp = await dzapClient.swap({ chainId: 42161, request: paramRequest, signer });
     console.log(resp);
   } catch (e) {
     console.log('Test Error');

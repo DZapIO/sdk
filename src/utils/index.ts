@@ -2,7 +2,7 @@ import { Signer } from 'ethers';
 import { createPublicClient, getAddress, http, ParseEventLogsReturnType, stringToHex, Abi, parseEventLogs, TransactionReceipt } from 'viem';
 import * as allWagmiChains from 'viem/chains';
 import { Chains, batchSwapIntegrators, isStaging } from '../config';
-import { HexString, AvailableDZapServices, OtherAvailableAbis, DZapAvailableAbis } from '../types';
+import { HexString, AvailableDZapServices, OtherAvailableAbis } from '../types';
 import * as ABI from '../artifacts';
 import { DZapAbis, OtherAbis, Services } from 'src/constants';
 
@@ -58,23 +58,6 @@ export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
 };
 
-export const handleDecodeTrxData = (data: TransactionReceipt, abiName: DZapAvailableAbis) => {
-  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  try {
-    events = parseEventLogs({
-      abi: ABI[abiName],
-      logs: data.logs,
-    });
-  } catch (e) {
-    events = [];
-  }
-  events = events?.filter((item: any) => item !== null);
-
-  const swapInfo = Array.isArray(events) && events.length > 0 ? (events[0]?.args as { swapInfo: unknown })?.swapInfo : [];
-
-  return swapInfo;
-};
-
 export const getDZapAbi = (service: AvailableDZapServices) => {
   switch (service) {
     case Services.BatchSwap:
@@ -85,6 +68,23 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
     default:
       throw new Error('Invalid Service');
   }
+};
+
+export const handleDecodeTrxData = (data: TransactionReceipt, service: AvailableDZapServices) => {
+  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
+  try {
+    events = parseEventLogs({
+      abi: getDZapAbi(service),
+      logs: data.logs,
+    });
+  } catch (e) {
+    events = [];
+  }
+  events = events?.filter((item: any) => item !== null);
+
+  const swapInfo = Array.isArray(events) && events.length > 0 ? (events[0]?.args as { swapInfo: unknown })?.swapInfo : [];
+
+  return swapInfo;
 };
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {

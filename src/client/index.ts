@@ -8,7 +8,6 @@ import {
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
-  DZapAvailableAbis,
   OtherAvailableAbis,
   SwapParamsRequest,
   SwapQuoteRequest,
@@ -96,36 +95,16 @@ class DzapClient {
     return swapTokensApi({ request, provider });
   };
 
-  public async swap({
-    chainId,
-    rpcProvider,
-    request,
-    signer,
-  }: {
-    chainId: number;
-    rpcProvider: string;
-    request: SwapParamsRequest;
-    signer: Signer | WalletClient;
-  }) {
-    return await this.contractHandler.handleSwap({ chainId, rpcProvider, request, signer });
+  public async swap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }) {
+    return await this.contractHandler.handleSwap({ chainId, request, signer });
   }
 
-  public async bridge({
-    chainId,
-    rpcProvider,
-    request,
-    signer,
-  }: {
-    chainId: number;
-    rpcProvider: string;
-    request: BridgeParamsRequest[];
-    signer: Signer | WalletClient;
-  }) {
-    return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, signer });
+  public async bridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest[]; signer: Signer | WalletClient }) {
+    return await this.contractHandler.handleBridge({ chainId, request, signer });
   }
 
-  public decodeTrxData({ data, abiName }: { data: TransactionReceipt; abiName: DZapAvailableAbis }) {
-    return handleDecodeTrxData(data, abiName);
+  public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
+    return handleDecodeTrxData(data, service);
   }
 }
 

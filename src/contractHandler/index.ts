@@ -17,16 +17,7 @@ class ContractHandler {
     return ContractHandler.instance;
   }
 
-  public async handleSwap({
-    chainId,
-    request,
-    signer,
-  }: {
-    chainId: number;
-    rpcProvider: string;
-    request: SwapParamsRequest;
-    signer: Signer | WalletClient;
-  }) {
+  public async handleSwap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }) {
     const abi = getDZapAbi(Services.BatchSwap);
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
@@ -47,16 +38,7 @@ class ContractHandler {
     }
   }
 
-  public async handleBridge({
-    chainId,
-    request,
-    signer,
-  }: {
-    chainId: number;
-    rpcProvider: string;
-    request: BridgeParamsRequest[];
-    signer: Signer | WalletClient;
-  }) {
+  public async handleBridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest[]; signer: Signer | WalletClient }) {
     const abi = getDZapAbi(Services.CrossChain);
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
