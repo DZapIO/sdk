@@ -4,7 +4,7 @@ import * as allWagmiChains from 'viem/chains';
 import { Chains, batchSwapIntegrators, isStaging } from '../config';
 import { HexString, AvailableDZapServices, OtherAvailableAbis, DZapAvailableAbis } from '../types';
 import * as ABI from '../artifacts';
-import { DZapAbis, Services } from 'src/constants';
+import { DZapAbis, OtherAbis, Services } from 'src/constants';
 
 export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
@@ -89,9 +89,9 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {
   switch (name) {
-    case 'permit2Abi':
+    case OtherAbis.permit2:
       return ABI.permit2Abi;
-    case 'erc20Abi':
+    case OtherAbis.erc20:
       return ABI.erc20Abi;
     default:
       throw new Error('Invalid Abi');

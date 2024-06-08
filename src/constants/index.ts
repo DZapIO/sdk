@@ -17,8 +17,8 @@ export const DZapAbis = {
 } as const;
 
 export const OtherAbis = {
-  permit2Abi: 'permit2Abi',
-  erc20Abi: 'erc20Abi',
+  permit2: 'permit2',
+  erc20: 'erc20',
 } as const;
 
 export const Services = {

@@ -4,7 +4,7 @@ import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest
 import { getDZapAbi, initializeReadOnlyProvider, isTypeSigner, wagmiChainsById } from '../utils';
 import { handleTransactionError } from '../utils/errors';
 import { Signer } from 'ethers';
-import { Services } from 'src/enums';
+import { Services } from 'src/constants';
 
 class ContractHandler {
   private static instance: ContractHandler;
