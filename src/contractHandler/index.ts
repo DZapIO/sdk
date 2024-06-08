@@ -1,7 +1,7 @@
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
-import { WalletClient, decodeFunctionData } from 'viem';
+import { WalletClient } from 'viem';
 import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest } from '../types';
-import { getDZapAbi, initializeReadOnlyProvider, isTypeSigner, wagmiChainsById } from '../utils';
+import { getDZapAbi, isTypeSigner, wagmiChainsById } from '../utils';
 import { handleTransactionError } from '../utils/errors';
 import { Signer } from 'ethers';
 import { Services } from 'src/constants';
@@ -19,7 +19,6 @@ class ContractHandler {
 
   public async handleSwap({
     chainId,
-    rpcProvider,
     request,
     signer,
   }: {
@@ -34,24 +33,6 @@ class ContractHandler {
       const {
         transactionRequest: { data, from, to, value, gasLimit },
       } = paramResponseData;
-      //simulate transaction
-      const publicClient = initializeReadOnlyProvider({
-        chainId,
-        rpcProvider,
-      });
-      const { functionName, args } = decodeFunctionData({
-        abi: abi,
-        data: data,
-      });
-      await publicClient.simulateContract({
-        address: to,
-        abi: abi,
-        account: from,
-        value: value,
-        functionName: functionName,
-        args: args, //Are compulsory... if input is there.
-        gas: gasLimit,
-      });
       return await signer.sendTransaction({
         chain: wagmiChainsById[chainId],
         account: from as HexString,
@@ -68,7 +49,6 @@ class ContractHandler {
 
   public async handleBridge({
     chainId,
-    rpcProvider,
     request,
     signer,
   }: {
@@ -81,26 +61,6 @@ class ContractHandler {
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
       const { data, from, to, value, gasLimit, additionalInfo } = paramResponseData;
-      //simulate transaction
-      const publicClient = initializeReadOnlyProvider({
-        chainId,
-        rpcProvider,
-      });
-      const { functionName, args } = decodeFunctionData({
-        abi: abi,
-        data: data,
-      });
-      await publicClient.simulateContract({
-        address: to,
-        abi: abi,
-        account: from,
-        value: value,
-        functionName: functionName,
-        args: args,
-        gas: gasLimit,
-      });
-      console.log('Creating viem walletClient.');
-
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
         const txnRes = await signer.sendTransaction({
