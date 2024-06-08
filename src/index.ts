@@ -39,5 +39,3 @@ export {
   SwapQuoteRequest,
   SwapQuoteResponse,
 };
-
-export * from './artifacts';

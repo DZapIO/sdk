@@ -10,9 +10,15 @@ export const ERRORS = {
   NOT_FOUND: 'Request not found',
 };
 
-export const ABI_LIST = {
+export const AvailableAbis = {
   dZapCoreAbi: 'dZapCoreAbi',
   dZapDcaAbi: 'dZapDcaAbi',
+} as const;
+
+export const Services = {
+  BatchSwap: 'batchSwap',
+  CrossChain: 'crossChain',
+  Dca: 'dca',
 } as const;
 
 export const HISTORICAL_BLOCK = 10;

@@ -23,7 +23,7 @@ import {
   swapTokensApi,
 } from '../api';
 import { TransactionReceipt, WalletClient } from 'viem';
-import { handleDecodeTrxData } from 'src/utils';
+import { getAbi, handleDecodeTrxData } from 'src/utils';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -41,6 +41,8 @@ class DzapClient {
     }
     return DzapClient.instance;
   }
+
+  public static getAbiByService = getAbi;
 
   public async getQuoteRate(request: SwapQuoteRequest) {
     if (this.cancelTokenSource) {

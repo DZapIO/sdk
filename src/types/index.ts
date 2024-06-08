@@ -1,4 +1,4 @@
-import { ABI_LIST } from 'src/constants';
+import { AvailableAbis, Services } from 'src/constants';
 
 export type HexString = `0x${string}`;
 
@@ -245,4 +245,5 @@ export type BridgeParamsResponse = {
   additionalInfo?: BridgeAdditionalInfo;
 };
 
-export type ValidAbis = (typeof ABI_LIST)[keyof typeof ABI_LIST];
+export type ValidAbis = (typeof AvailableAbis)[keyof typeof AvailableAbis];
+export type ServiceTypes = (typeof Services)[keyof typeof Services];
