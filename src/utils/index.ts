@@ -2,9 +2,10 @@ import { Signer } from 'ethers';
 import { createPublicClient, getAddress, http, ParseEventLogsReturnType, stringToHex, Abi, parseEventLogs, TransactionReceipt } from 'viem';
 import * as allWagmiChains from 'viem/chains';
 import { Chains, batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
-import { HexString, ServiceTypes, ValidAbis } from '../types';
+import { AppEnvType, HexString, ServiceTypes, ValidAbis } from '../types';
 import * as ABI from '../artifacts';
 import { AvailableAbis, Services } from 'src/constants';
+import { AppEnv } from 'src/config/AppEnv';
 
 export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
@@ -79,11 +80,11 @@ export const handleDecodeTrxData = (data: TransactionReceipt, abiName: ValidAbis
   return swapInfo;
 };
 
-export const getAbi = (abiName: ServiceTypes) => {
+export const getAbi = (abiName: ServiceTypes, environment: AppEnvType = AppEnv.production) => {
   switch (abiName) {
     case Services.BatchSwap:
     case Services.CrossChain:
-      return ABI[AvailableAbis.dZapCoreAbi];
+      return environment === AppEnv.staging ? ABI[AvailableAbis.stagingDZapCoreAbi] : ABI[AvailableAbis.dZapCoreAbi];
     case Services.Dca:
       return ABI[AvailableAbis.dZapDcaAbi];
     default:

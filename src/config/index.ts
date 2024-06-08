@@ -1,4 +1,4 @@
-import { dZapCoreAbi } from '../artifacts';
+import { dZapCoreAbi, stagingDZapCoreAbi } from '../artifacts';
 import { Abi, Chain } from 'viem';
 import { mainnet, arbitrum, bsc, optimism, polygon, zkSync } from 'viem/chains';
 import { AppEnv } from './AppEnv';
@@ -29,7 +29,7 @@ export const defaultSwapVersion = 'v2';
 
 export const SWAP_ABIS: DeFiContract = {
   v2: {
-    abi: dZapCoreAbi as Abi,
+    abi: (!isStaging ? dZapCoreAbi : stagingDZapCoreAbi) as Abi,
   },
 };
 
@@ -37,7 +37,7 @@ export const defaultBridgeVersion = 'v2';
 
 export const BRIDGE_ABIS: DeFiContract = {
   v2: {
-    abi: dZapCoreAbi as Abi,
+    abi: (!isStaging ? dZapCoreAbi : stagingDZapCoreAbi) as Abi,
   },
 };
 

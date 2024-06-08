@@ -1,3 +1,4 @@
+import { AppEnv } from 'src/config/AppEnv';
 import { AvailableAbis, Services } from 'src/constants';
 
 export type HexString = `0x${string}`;
@@ -60,7 +61,7 @@ export type SwapParamsRequest = {
   chainId: number;
   integratorId: string;
   sender: string;
-  refundee: string;
+  refundee?: string;
   recipient: string;
   withOutRevert?: boolean; // default true
   includeSwapCallData?: boolean; // default false
@@ -247,3 +248,5 @@ export type BridgeParamsResponse = {
 
 export type ValidAbis = (typeof AvailableAbis)[keyof typeof AvailableAbis];
 export type ServiceTypes = (typeof Services)[keyof typeof Services];
+
+export type AppEnvType = `${AppEnv}`;
