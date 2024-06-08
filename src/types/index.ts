@@ -1,5 +1,4 @@
-import { AppEnv } from 'src/config/AppEnv';
-import { AvailableAbis, Services } from 'src/constants';
+import { AppEnv, OtherAbis, Services } from 'src/enums';
 
 export type HexString = `0x${string}`;
 
@@ -246,7 +245,6 @@ export type BridgeParamsResponse = {
   additionalInfo?: BridgeAdditionalInfo;
 };
 
-export type ValidAbis = (typeof AvailableAbis)[keyof typeof AvailableAbis];
-export type ServiceTypes = (typeof Services)[keyof typeof Services];
-
+export type AvailableDZapServices = `${Services}`;
+export type OtherAvailableAbis = `${OtherAbis}`;
 export type AppEnvType = `${AppEnv}`;

@@ -1,11 +1,10 @@
 import { Signer } from 'ethers';
 import { createPublicClient, getAddress, http, ParseEventLogsReturnType, stringToHex, Abi, parseEventLogs, TransactionReceipt } from 'viem';
 import * as allWagmiChains from 'viem/chains';
-import { Chains, batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
-import { AppEnvType, HexString, ServiceTypes, ValidAbis } from '../types';
+import { Chains, batchSwapIntegrators, isStaging } from '../config';
+import { HexString, AvailableDZapServices, OtherAvailableAbis } from '../types';
 import * as ABI from '../artifacts';
-import { AvailableAbis, Services } from 'src/constants';
-import { AppEnv } from 'src/config/AppEnv';
+import { DZapAbis, Services } from '../enums';
 
 export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
@@ -17,10 +16,6 @@ export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.valu
 }, {});
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
-
-export const purgeSwapVersion = (version?: string) => version || defaultSwapVersion;
-
-export const purgeBridgeVersion = (version?: string) => version || defaultBridgeVersion;
 
 export const initializeReadOnlyProvider = ({ chainId, rpcProvider }: { rpcProvider: string; chainId: number }) => {
   return createPublicClient({
@@ -63,7 +58,7 @@ export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
 };
 
-export const handleDecodeTrxData = (data: TransactionReceipt, abiName: ValidAbis) => {
+export const handleDecodeTrxData = (data: TransactionReceipt, abiName: DZapAbis) => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
   try {
     events = parseEventLogs({
@@ -80,14 +75,25 @@ export const handleDecodeTrxData = (data: TransactionReceipt, abiName: ValidAbis
   return swapInfo;
 };
 
-export const getAbi = (abiName: ServiceTypes, environment: AppEnvType = AppEnv.production) => {
-  switch (abiName) {
+export const getDZapAbi = (service: AvailableDZapServices) => {
+  switch (service) {
     case Services.BatchSwap:
     case Services.CrossChain:
-      return environment === AppEnv.staging ? ABI[AvailableAbis.stagingDZapCoreAbi] : ABI[AvailableAbis.dZapCoreAbi];
+      return isStaging ? ABI[DZapAbis.stagingDZapCoreAbi] : ABI[DZapAbis.dZapCoreAbi];
     case Services.Dca:
-      return ABI[AvailableAbis.dZapDcaAbi];
+      return ABI[DZapAbis.dZapDcaAbi];
     default:
       throw new Error('Invalid Service');
+  }
+};
+
+export const getOtherAbis = (name: OtherAvailableAbis) => {
+  switch (name) {
+    case 'permit2Abi':
+      return ABI.permit2Abi;
+    case 'erc20Abi':
+      return ABI.erc20Abi;
+    default:
+      throw new Error('Invalid Abi');
   }
 };

@@ -1,10 +1,10 @@
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
-import { BRIDGE_ABIS, SWAP_ABIS } from 'src/config';
 import { WalletClient, decodeFunctionData } from 'viem';
 import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest } from '../types';
-import { initializeReadOnlyProvider, isTypeSigner, purgeBridgeVersion, purgeSwapVersion, wagmiChainsById } from '../utils';
+import { getDZapAbi, initializeReadOnlyProvider, isTypeSigner, wagmiChainsById } from '../utils';
 import { handleTransactionError } from '../utils/errors';
 import { Signer } from 'ethers';
+import { Services } from 'src/enums';
 
 class ContractHandler {
   private static instance: ContractHandler;
@@ -28,8 +28,7 @@ class ContractHandler {
     request: SwapParamsRequest;
     signer: Signer | WalletClient;
   }) {
-    const purgedVersion = purgeSwapVersion();
-    const abi = SWAP_ABIS[purgedVersion].abi;
+    const abi = getDZapAbi(Services.BatchSwap);
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
       const {
@@ -78,8 +77,7 @@ class ContractHandler {
     request: BridgeParamsRequest[];
     signer: Signer | WalletClient;
   }) {
-    const purgedVersion = purgeBridgeVersion();
-    const abi = BRIDGE_ABIS[purgedVersion].abi;
+    const abi = getDZapAbi(Services.CrossChain);
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
       const { data, from, to, value, gasLimit, additionalInfo } = paramResponseData;

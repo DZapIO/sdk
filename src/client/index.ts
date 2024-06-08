@@ -2,14 +2,15 @@ import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
 import {
+  AvailableDZapServices,
   BridgeParamsRequest,
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
+  OtherAvailableAbis,
   SwapParamsRequest,
   SwapQuoteRequest,
-  ValidAbis,
 } from 'src/types';
 import {
   fetchAllSupportedChains,
@@ -23,7 +24,8 @@ import {
   swapTokensApi,
 } from '../api';
 import { TransactionReceipt, WalletClient } from 'viem';
-import { getAbi, handleDecodeTrxData } from 'src/utils';
+import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
+import { DZapAbis } from 'src/enums';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -42,7 +44,12 @@ class DzapClient {
     return DzapClient.instance;
   }
 
-  public static getAbiByService = getAbi;
+  public static getDZapAbi(service: AvailableDZapServices) {
+    return getDZapAbi(service);
+  }
+  public static getOtherAbi = (name: OtherAvailableAbis) => {
+    return getOtherAbis(name);
+  };
 
   public async getQuoteRate(request: SwapQuoteRequest) {
     if (this.cancelTokenSource) {
@@ -117,7 +124,7 @@ class DzapClient {
     return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, signer });
   }
 
-  public decodeTrxData({ data, abiName }: { data: TransactionReceipt; abiName: ValidAbis }) {
+  public decodeTrxData({ data, abiName }: { data: TransactionReceipt; abiName: DZapAbis }) {
     return handleDecodeTrxData(data, abiName);
   }
 }
