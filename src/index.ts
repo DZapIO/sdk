@@ -15,6 +15,7 @@ import {
   SwapQuoteRequest,
   SwapQuoteResponse,
 } from './types';
+import { Services, OtherAbis } from './constants';
 // import { TestHook } from './test';
 // Test Scripts
 // import { TestGetQuoteRate, TestGetSwapParams } from './test';
@@ -38,4 +39,6 @@ export {
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
+  Services,
+  OtherAbis,
 };
