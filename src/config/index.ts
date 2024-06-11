@@ -1,6 +1,5 @@
 import { AppEnv } from 'src/enums';
-import { Abi, Chain } from 'viem';
-import { mainnet, arbitrum, bsc, optimism, polygon, zkSync } from 'viem/chains';
+import { Abi } from 'viem';
 const { REACT_APP_ENV, REACT_APP_BASE_API_URL } = process.env;
 
 let baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
@@ -32,13 +31,4 @@ export const batchSwapIntegrators: {
   dZap: {
     contract: '0x12480616436DD6D555f88B8d94bB5156E28825B1',
   },
-};
-
-export const Chains: { [key: number]: Chain } = {
-  1: mainnet,
-  10: optimism,
-  56: bsc,
-  137: polygon,
-  42161: arbitrum,
-  324: zkSync,
 };

@@ -1,11 +1,10 @@
+import { Signer } from 'ethers';
 import { fetchBridgeParams, fetchSwapParams } from 'src/api';
+import { Services } from 'src/constants';
 import { WalletClient } from 'viem';
 import { BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest } from '../types';
 import { getDZapAbi, isTypeSigner, wagmiChainsById } from '../utils';
 import { handleTransactionError } from '../utils/errors';
-import { Signer } from 'ethers';
-import { Services } from 'src/constants';
-
 class ContractHandler {
   private static instance: ContractHandler;
   // private constructor() {}

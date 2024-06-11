@@ -1,10 +1,10 @@
 import { Signer } from 'ethers';
-import { createPublicClient, getAddress, http, ParseEventLogsReturnType, stringToHex, Abi, parseEventLogs, TransactionReceipt } from 'viem';
-import * as allWagmiChains from 'viem/chains';
-import { Chains, batchSwapIntegrators, isStaging } from '../config';
-import { HexString, AvailableDZapServices, OtherAvailableAbis } from '../types';
-import * as ABI from '../artifacts';
 import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import { Abi, ParseEventLogsReturnType, TransactionReceipt, getAddress, parseEventLogs, stringToHex } from 'viem';
+import * as allWagmiChains from 'viem/chains';
+import * as ABI from '../artifacts';
+import { batchSwapIntegrators, isStaging } from '../config';
+import { AvailableDZapServices, HexString, OtherAvailableAbis } from '../types';
 
 export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
   return chainData.id
@@ -16,13 +16,6 @@ export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.valu
 }, {});
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
-
-export const initializeReadOnlyProvider = ({ chainId, rpcProvider }: { rpcProvider: string; chainId: number }) => {
-  return createPublicClient({
-    chain: Chains[chainId],
-    transport: http(rpcProvider),
-  });
-};
 
 export const getIntegratorInfo = (integrator?: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
 
