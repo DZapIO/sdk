@@ -29,7 +29,7 @@ export type Chain = {
   multicallAddress: string;
   blockExplorerUrl: string;
   nativeToken: NativeTokenInfo;
-  rpcProvider: ApiRpcResponse;
+  rpcProviders: ApiRpcResponse[];
   pricingAvailable: boolean;
   balanceAvailable: boolean;
   supportedAs: {
@@ -41,7 +41,7 @@ export type Chain = {
 export type ApiRpcResponse = {
   url: string;
   keyRequired: boolean;
-  keyType?: 'ALCHEMY_KEY';
+  keyType?: 'ALCHEMY_KEY' | 'BLASTAPI_KEY';
 };
 
 // Swap
