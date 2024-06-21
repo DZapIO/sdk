@@ -119,6 +119,7 @@ export type SwapQuoteResponseData = {
   destToken: string;
   destAmount: string;
   estimatedGas: string;
+  estimatedGasUSD: string;
   priceImpactPercent: string | null;
   srcAmountUSD: string | null;
   destAmountUSD: string | null;
