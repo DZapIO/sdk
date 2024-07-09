@@ -1,6 +1,7 @@
-export enum ConnectorType {
-  injected = 'injected',
-  walletConnect = 'walletConnect',
+export enum AppEnv {
+  'production' = 'production',
+  'staging' = 'staging',
+  'development' = 'development',
 }
 
 export enum Erc20PermitFunctions {
@@ -43,12 +44,6 @@ export enum Versions {
   V2 = 'v2',
 }
 
-export enum Services {
-  BatchSwap = 'batchSwap',
-  CrossChain = 'crossChain',
-  Dca = 'dca',
-}
-
 export enum StatusCodes {
   UserRejectedRequest = 4001,
   Success = 200,
@@ -58,7 +53,7 @@ export enum StatusCodes {
 }
 
 export enum PermitFunctionSelector {
-  nativeTokenAndAllowanceCheck = 0,
+  checkNativeToken = 0,
   checkPermit1 = 1,
   checkPermit2 = 2,
 }

@@ -1,7 +1,8 @@
-import { Services, Versions } from 'src/enums';
+import { Versions } from 'src/enums';
+import { AvailableDZapServices } from '.';
 
 export type ContractConfig = {
-  [serviceKey in Services]: {
+  [serviceKey in AvailableDZapServices]: {
     [versionKey in Versions]?: {
       address: ContractAddress;
       abi: string;
@@ -10,5 +11,6 @@ export type ContractConfig = {
 };
 
 export type ContractAddress = {
-  [key: number]: string;
+  otherChains: string;
+  zkSync: string;
 };

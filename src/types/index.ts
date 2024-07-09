@@ -1,3 +1,6 @@
+import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import { AppEnv, PermitSelector } from 'src/enums';
+
 export type HexString = `0x${string}`;
 
 export type ChainData = {
@@ -26,7 +29,7 @@ export type Chain = {
   multicallAddress: string;
   blockExplorerUrl: string;
   nativeToken: NativeTokenInfo;
-  rpcProvider: ApiRpcResponse;
+  rpcProviders: ApiRpcResponse[];
   pricingAvailable: boolean;
   balanceAvailable: boolean;
   supportedAs: {
@@ -38,8 +41,10 @@ export type Chain = {
 export type ApiRpcResponse = {
   url: string;
   keyRequired: boolean;
-  keyType?: 'ALCHEMY_KEY';
+  keyType?: 'ALCHEMY_KEY' | 'BLASTAPI_KEY';
 };
+
+export type PermitSelectorData = { address: HexString; permitSelector: PermitSelector; permitAllowance: bigint };
 
 // Swap
 
@@ -59,7 +64,7 @@ export type SwapParamsRequest = {
   chainId: number;
   integratorId: string;
   sender: string;
-  refundee: string;
+  refundee?: string;
   recipient: string;
   withOutRevert?: boolean; // default true
   includeSwapCallData?: boolean; // default false
@@ -117,6 +122,7 @@ export type SwapQuoteResponseData = {
   destToken: string;
   destAmount: string;
   estimatedGas: string;
+  estimatedGasUSD: string;
   priceImpactPercent: string | null;
   srcAmountUSD: string | null;
   destAmountUSD: string | null;
@@ -244,3 +250,11 @@ export type BridgeParamsResponse = {
   gasLimit: string;
   additionalInfo?: BridgeAdditionalInfo;
 };
+
+export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
+
+export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
+
+export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
+
+export type AppEnvType = `${AppEnv}`;

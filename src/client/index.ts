@@ -1,18 +1,22 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
-import { ConnectorType, PermitSelector, Services } from 'src/enums';
 import {
+  AvailableDZapServices,
   BridgeParamsRequest,
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
   HexString,
+  OtherAvailableAbis,
+  PermitSelectorData,
   SwapData,
   SwapParamsRequest,
   SwapQuoteRequest,
 } from 'src/types';
+import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
+import { TransactionReceipt, WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
   fetchAllTokens,
@@ -24,23 +28,34 @@ import {
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
+import { StatusCodes, TxnStatus } from 'src/enums';
+import PermitHandler from 'src/contractHandler/permitHandler';
 
 class DzapClient {
   private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
+  private permitHandler: PermitHandler;
 
-  private constructor(wcProjectId: string = '') {
-    this.contractHandler = ContractHandler.getInstance(wcProjectId);
+  private constructor() {
+    this.contractHandler = ContractHandler.getInstance();
+    this.permitHandler = PermitHandler.getInstance();
   }
 
   // Static method to control the access to the singleton instance.
-  public static getInstance(wcProjectId: string = ''): DzapClient {
+  public static getInstance(): DzapClient {
     if (!DzapClient.instance) {
-      DzapClient.instance = new DzapClient(wcProjectId);
+      DzapClient.instance = new DzapClient();
     }
     return DzapClient.instance;
   }
+
+  public static getDZapAbi(service: AvailableDZapServices) {
+    return getDZapAbi(service);
+  }
+  public static getOtherAbi = (name: OtherAvailableAbis) => {
+    return getOtherAbis(name);
+  };
 
   public async getQuoteRate(request: SwapQuoteRequest) {
     if (this.cancelTokenSource) {
@@ -87,82 +102,100 @@ class DzapClient {
     return swapTokensApi({ request, provider });
   };
 
-  public async swap({
-    chainId,
-    rpcProvider,
-    request,
-    connectorType = ConnectorType.injected,
-  }: {
-    chainId: number;
-    rpcProvider: string;
-    request: SwapParamsRequest;
-    connectorType?: ConnectorType;
-  }) {
-    return await this.contractHandler.handleSwap({ chainId, rpcProvider, request, connectorType });
+  public async swap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }) {
+    return await this.contractHandler.handleSwap({ chainId, request, signer });
   }
 
-  public async bridge({
+  public async bridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest[]; signer: Signer | WalletClient }) {
+    return await this.contractHandler.handleBridge({ chainId, request, signer });
+  }
+
+  public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
+    return handleDecodeTrxData(data, service);
+  }
+
+  public getDZapContractAddress = ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => {
+    return this.contractHandler.getDZapContractAddress({ chainId, service });
+  };
+
+  public async getPermitSelectorAndAllowance({
     chainId,
-    rpcProvider,
-    request,
-    connectorType = ConnectorType.injected,
+    sender,
+    data,
+    rpcUrls,
   }: {
     chainId: number;
-    rpcProvider: string;
-    request: BridgeParamsRequest[];
-    connectorType?: ConnectorType;
+    sender: HexString;
+    data: SwapData[] | BridgeParamsRequest[];
+    rpcUrls: string[];
   }) {
-    return await this.contractHandler.handleBridge({ chainId, rpcProvider, request, connectorType });
+    return await this.permitHandler.handleGetPermitSelectorAndAllowance({
+      chainId,
+      sender,
+      data,
+      rpcUrls,
+    });
+  }
+
+  public async getPermit2Approvals({
+    chainId,
+    permitSelectorData,
+    signer,
+    sender,
+    rpcUrls,
+    afterPermit2ApprovalTxnCallback,
+  }: {
+    chainId: number;
+    permitSelectorData: PermitSelectorData[];
+    signer: WalletClient;
+    sender: HexString;
+    rpcUrls?: string[];
+    afterPermit2ApprovalTxnCallback?: ({
+      txnDetails,
+      address,
+    }: {
+      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
+      address: HexString;
+    }) => Promise<void>;
+  }) {
+    return await this.permitHandler.handleGetPermit2Approvals({
+      chainId,
+      permitSelectorData,
+      signer,
+      sender,
+      rpcUrls,
+      afterPermit2ApprovalTxnCallback,
+    });
   }
 
   public async getPermitData({
     chainId,
     sender,
     data,
-    rpcProvider,
-    connectorType,
+    rpcUrls,
+    signer,
     service,
-    permitSelectorForSrcTokens,
+    permitSelectorData,
+    afterSignatureCallback,
   }: {
     chainId: number;
     sender: string;
     data: SwapData[] | BridgeParamsRequest[];
-    rpcProvider: string;
-    connectorType: ConnectorType;
-    service: Services;
-    permitSelectorForSrcTokens: PermitSelector[];
+    rpcUrls?: string[];
+    service: AvailableDZapServices;
+    signer: WalletClient;
+    permitSelectorData: PermitSelectorData[];
+    afterSignatureCallback?: () => Promise<void>;
   }) {
-    return await this.contractHandler.handleGetPermitData({ chainId, sender, data, rpcProvider, connectorType, service, permitSelectorForSrcTokens });
-  }
-
-  public async getApprovalAndPermitSelector({
-    chainId,
-    sender,
-    data,
-    rpcProvider,
-    connectorType,
-    service,
-    afterPermit2ApprovalTxnCallback,
-    afterAllowanceCheckCallback,
-  }: {
-    chainId: number;
-    sender: string;
-    data: SwapData[] | BridgeParamsRequest[];
-    rpcProvider: string;
-    connectorType: ConnectorType;
-    service: Services;
-    afterPermit2ApprovalTxnCallback?: ({ txnHash }: { txnHash: HexString }) => Promise<void>;
-    afterAllowanceCheckCallback?: () => Promise<void>;
-  }) {
-    return await this.contractHandler.handleGetApprovalAndPermitSelector({
+    return await this.permitHandler.handleGetPermitData({
       chainId,
       sender,
       data,
-      rpcProvider,
-      connectorType,
+      rpcUrls,
+      signer,
       service,
-      afterPermit2ApprovalTxnCallback,
-      afterAllowanceCheckCallback,
+      permitSelectorData,
+      afterSignatureCallback,
     });
   }
 }

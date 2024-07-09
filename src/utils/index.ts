@@ -1,16 +1,25 @@
-import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import { Signer } from 'ethers';
-import { ConnectorType, StatusCodes, TxnStatus } from 'src/enums';
-import { Abi, createPublicClient, createWalletClient, custom, getAddress, http, stringToHex } from 'viem';
+import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import {
+  Abi,
+  ParseEventLogsReturnType,
+  TransactionReceipt,
+  WalletClient,
+  createPublicClient,
+  fallback,
+  getAddress,
+  http,
+  parseEventLogs,
+  stringToHex,
+} from 'viem';
 import * as allWagmiChains from 'viem/chains';
-import { batchSwapIntegrators, defaultBridgeVersion, defaultSwapVersion } from '../config';
-import { HexString } from '../types';
+import * as ABI from '../artifacts';
+import { batchSwapIntegrators, isStaging } from '../config';
+import { AvailableDZapServices, BridgeParamsRequest, HexString, OtherAvailableAbis, SwapData } from '../types';
+import { allViemChains } from './chains';
+import { StatusCodes, TxnStatus } from 'src/enums';
 
-type Window = {
-  ethereum: any;
-};
-
-export const viemchainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
+export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.values(allViemChains).reduce((acc, chainData) => {
   return chainData.id
     ? {
         ...acc,
@@ -19,51 +28,11 @@ export const viemchainsById: Record<number, allWagmiChains.Chain> = Object.value
     : acc;
 }, {});
 
-export const getChecksumAddress = (address: string): HexString => getAddress(address);
-
-export const purgeSwapVersion = (version?: string) => version || defaultSwapVersion;
-
-export const purgeBridgeVersion = (version?: string) => version || defaultBridgeVersion;
-
-export const initializeReadOnlyProvider = ({ chainId, rpcProvider }: { rpcProvider: string; chainId: number }) => {
+export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: string[]; chainId: number }) => {
   return createPublicClient({
-    chain: viemchainsById[chainId],
-    transport: http(rpcProvider),
+    chain: viemChainsById[chainId],
+    transport: fallback(rpcUrls.map((rpc: string) => http(rpc))),
   });
-};
-
-const getEthereumProvider = async (connectorType: ConnectorType, chainId: number, wcProjectId: string) => {
-  if (connectorType === ConnectorType.walletConnect && wcProjectId) {
-    return await EthereumProvider.init({
-      projectId: wcProjectId,
-      showQrModal: true,
-      optionalChains: [chainId],
-    });
-  }
-  return (window as unknown as Window).ethereum!;
-};
-export const getWalletClient = async ({
-  chainId,
-  account,
-  connectorType,
-  wcProjectId,
-}: {
-  chainId: number;
-  account: HexString;
-  connectorType: ConnectorType;
-  wcProjectId: string;
-}) => {
-  try {
-    const provider = await getEthereumProvider(connectorType, chainId, wcProjectId);
-    return createWalletClient({
-      chain: viemchainsById[chainId],
-      transport: custom(provider),
-      account,
-    });
-  } catch (error) {
-    console.log(error);
-    throw new Error('Error creating Wallet Client');
-  }
 };
 
 export const readContract = async ({
@@ -71,25 +40,27 @@ export const readContract = async ({
   contractAddress,
   abi,
   functionName,
-  rpcProvider,
+  rpcUrls,
   args = [],
 }: {
   chainId: number;
   contractAddress: HexString;
   abi: Abi;
   functionName: string;
-  rpcProvider: string;
+  rpcUrls?: string[];
   args?: unknown[];
 }) => {
   try {
-    return await initializeReadOnlyProvider({ chainId, rpcProvider }).readContract({
+    const result = await initializeReadOnlyProvider({ chainId, rpcUrls }).readContract({
       address: contractAddress,
       abi,
       functionName,
       args,
     });
+    return { data: result, status: TxnStatus.success, code: StatusCodes.Success };
   } catch (e) {
     console.log({ e });
+    return { status: TxnStatus.error, code: e.code || StatusCodes.Error };
   }
 };
 
@@ -101,9 +72,8 @@ export const writeContract = async ({
   args = [],
   userAddress,
   value = '0',
-  rpcProvider,
-  connectorType,
-  wcProjectId,
+  rpcUrls = [''],
+  signer,
 }: {
   chainId: number;
   contractAddress: HexString;
@@ -112,11 +82,10 @@ export const writeContract = async ({
   args?: unknown[];
   userAddress: HexString;
   value?: string;
-  rpcProvider: string;
-  connectorType: ConnectorType;
-  wcProjectId: string;
+  rpcUrls: string[];
+  signer: WalletClient;
 }) => {
-  const publicClient = initializeReadOnlyProvider({ chainId, rpcProvider });
+  const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls });
   try {
     const { request } = await publicClient.simulateContract({
       address: contractAddress,
@@ -126,17 +95,26 @@ export const writeContract = async ({
       account: userAddress,
       value,
     });
-    const walletClient = await getWalletClient({ chainId, account: userAddress, connectorType, wcProjectId });
-    const hash = await walletClient.writeContract(request);
+    const hash = await signer.writeContract(request);
     return { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
   } catch (e: any) {
     console.log({ e });
     if (e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, code: e?.code };
+      return { status: TxnStatus.rejected, code: e?.code, txnHash: '' };
     }
-    return { status: TxnStatus.error, code: e?.code };
+    return { status: TxnStatus.error, code: e?.code, txnHash: '' };
   }
 };
+
+export const calcTotalSrcTokenAmount = (data: BridgeParamsRequest[] | SwapData[]) => {
+  return data.reduce((acc, obj) => {
+    return acc + BigInt(obj.amount);
+  }, BigInt(0));
+};
+
+export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: string) => firstTokenAddress === secondTokenAddress;
+
+export const getChecksumAddress = (address: string): HexString => getAddress(address);
 
 export const getIntegratorInfo = (integrator?: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
 
@@ -170,4 +148,44 @@ export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
 export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
+};
+
+export const getDZapAbi = (service: AvailableDZapServices) => {
+  switch (service) {
+    case Services.BatchSwap:
+    case Services.CrossChain:
+      return isStaging ? ABI[DZapAbis.stagingDZapCoreAbi] : ABI[DZapAbis.dZapCoreAbi];
+    case Services.Dca:
+      return ABI[DZapAbis.dZapDcaAbi];
+    default:
+      throw new Error('Invalid Service');
+  }
+};
+
+export const handleDecodeTrxData = (data: TransactionReceipt, service: AvailableDZapServices) => {
+  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
+  try {
+    events = parseEventLogs({
+      abi: getDZapAbi(service),
+      logs: data.logs,
+    });
+  } catch (e) {
+    events = [];
+  }
+  events = events?.filter((item: any) => item !== null);
+
+  const swapInfo = Array.isArray(events) && events.length > 0 ? (events[0]?.args as { swapInfo: unknown })?.swapInfo : [];
+
+  return swapInfo;
+};
+
+export const getOtherAbis = (name: OtherAvailableAbis) => {
+  switch (name) {
+    case OtherAbis.permit2:
+      return ABI.permit2Abi;
+    case OtherAbis.erc20:
+      return ABI.erc20Abi;
+    default:
+      throw new Error('Invalid Abi');
+  }
 };

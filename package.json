@@ -1,6 +1,6 @@
 {
   "name": "@dzapio/dzap-sdk",
-  "version": "2.0.27",
+  "version": "2.0.35",
   "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
   "main": "dist/index.js",
   "module": "dist/index.m.js",
@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "@uniswap/permit2-sdk": "^1.2.1",
-    "@walletconnect/ethereum-provider": "^2.13.0",
     "axios": "^1.2.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.1.0",
