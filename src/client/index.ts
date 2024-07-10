@@ -1,6 +1,8 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
+import PermitHandler from 'src/contractHandler/permitHandler';
+import { StatusCodes, TxnState } from 'src/enums';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -10,7 +12,6 @@ import {
   ChainData,
   HexString,
   OtherAvailableAbis,
-  PermitSelectorData,
   SwapData,
   SwapParamsRequest,
   SwapQuoteRequest,
@@ -28,8 +29,6 @@ import {
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import PermitHandler from 'src/contractHandler/permitHandler';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -146,7 +145,6 @@ class DzapClient {
     approvalTxnCallback,
   }: {
     chainId: number;
-    permitSelectorData: PermitSelectorData[];
     signer: WalletClient;
     sender: HexString;
     rpcUrls?: string[];
@@ -155,9 +153,9 @@ class DzapClient {
       txnDetails,
       address,
     }: {
-      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
+      txnDetails: { txnHash: string; code: StatusCodes; status: TxnState };
       address: HexString;
-    }) => Promise<TxnStatus | void>;
+    }) => Promise<TxnState | void>;
   }) {
     return await this.permitHandler.handleApprove({
       chainId,

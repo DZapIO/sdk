@@ -28,14 +28,13 @@ export enum PermitType {
   PERMIT2_APPROVE,
 }
 
-export enum TxnStatus {
-  pending = 'pending',
-  inProgress = 'in-progress',
+export enum TxnState {
+  mining = 'mining',
   success = 'success',
   rejected = 'rejected',
   error = 'error',
   reverted = 'reverted',
-  checkOtherPermit = 'checkOtherPermit',
+  pendingWalletConfirmation = 'pendingWalletConfirmation',
 }
 
 export enum Versions {
@@ -48,7 +47,6 @@ export enum StatusCodes {
   UserRejectedRequest = 4001,
   Success = 200,
   FunctionNotFound = 32771, // 0x8003
-  CheckOtherPermit = 10801, // Depicts Current Permit Function Selector Failed
   Error = 101, // @TODO update as per need
 }
 

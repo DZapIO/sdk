@@ -10,8 +10,8 @@ if (typeof process !== 'undefined' && process.env) {
 }
 
 let baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
-// const stagingUrl = 'https://staging.dzap.io/';
-const stagingUrl = 'http://localhost:8080/';
+const stagingUrl = 'https://staging.dzap.io/';
+// const stagingUrl = 'http://localhost:8080/';
 export const appEnv = REACT_APP_ENV || AppEnv.development;
 export const isProd = appEnv === AppEnv.production;
 export const isStaging = appEnv === AppEnv.staging;
