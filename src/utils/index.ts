@@ -1,5 +1,5 @@
 import { Signer } from 'ethers';
-import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from 'src/constants';
 import {
   Abi,
   ParseEventLogsReturnType,
@@ -149,6 +149,8 @@ export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
 };
+
+export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
 export const getDZapAbi = (service: AvailableDZapServices) => {
   switch (service) {

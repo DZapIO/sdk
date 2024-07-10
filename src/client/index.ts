@@ -118,7 +118,7 @@ class DzapClient {
     return this.contractHandler.getDZapContractAddress({ chainId, service });
   };
 
-  public async getAllowance({
+  public async allowance({
     chainId,
     sender,
     data,
@@ -137,12 +137,12 @@ class DzapClient {
     });
   }
 
-  public async getApprovals({
+  public async approve({
     chainId,
-    permitSelectorData,
     signer,
     sender,
     rpcUrls,
+    data,
     approvalTxnCallback,
   }: {
     chainId: number;
@@ -150,6 +150,7 @@ class DzapClient {
     signer: WalletClient;
     sender: HexString;
     rpcUrls?: string[];
+    data: { srcToken: HexString; amountToApprove: bigint }[];
     approvalTxnCallback?: ({
       txnDetails,
       address,
@@ -158,24 +159,23 @@ class DzapClient {
       address: HexString;
     }) => Promise<TxnStatus | void>;
   }) {
-    return await this.permitHandler.getApprovals({
+    return await this.permitHandler.handleApprove({
       chainId,
-      permitSelectorData,
       signer,
       sender,
       rpcUrls,
+      data,
       approvalTxnCallback,
     });
   }
 
-  public async getPermitData({
+  public async sign({
     chainId,
     sender,
     data,
     rpcUrls,
     signer,
     service,
-    permitSelectorData,
     signatureCallback,
   }: {
     chainId: number;
@@ -184,17 +184,15 @@ class DzapClient {
     rpcUrls?: string[];
     service: AvailableDZapServices;
     signer: WalletClient;
-    permitSelectorData: PermitSelectorData[];
     signatureCallback?: () => Promise<void>;
   }) {
-    return await this.permitHandler.handleGetPermitData({
+    return await this.permitHandler.handleSign({
       chainId,
       sender,
       data,
       rpcUrls,
       signer,
       service,
-      permitSelectorData,
       signatureCallback,
     });
   }
