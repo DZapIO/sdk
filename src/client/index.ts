@@ -118,7 +118,7 @@ class DzapClient {
     return this.contractHandler.getDZapContractAddress({ chainId, service });
   };
 
-  public async getPermitSelectorAndAllowance({
+  public async getAllowance({
     chainId,
     sender,
     data,
@@ -129,7 +129,7 @@ class DzapClient {
     data: SwapData[] | BridgeParamsRequest[];
     rpcUrls: string[];
   }) {
-    return await this.permitHandler.handleGetPermitSelectorAndAllowance({
+    return await this.permitHandler.handleGetAllowance({
       chainId,
       sender,
       data,
@@ -137,34 +137,34 @@ class DzapClient {
     });
   }
 
-  public async getPermit2Approvals({
+  public async getApprovals({
     chainId,
     permitSelectorData,
     signer,
     sender,
     rpcUrls,
-    afterPermit2ApprovalTxnCallback,
+    approvalTxnCallback,
   }: {
     chainId: number;
     permitSelectorData: PermitSelectorData[];
     signer: WalletClient;
     sender: HexString;
     rpcUrls?: string[];
-    afterPermit2ApprovalTxnCallback?: ({
+    approvalTxnCallback?: ({
       txnDetails,
       address,
     }: {
       txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
-    }) => Promise<void>;
+    }) => Promise<TxnStatus | void>;
   }) {
-    return await this.permitHandler.handleGetPermit2Approvals({
+    return await this.permitHandler.getApprovals({
       chainId,
       permitSelectorData,
       signer,
       sender,
       rpcUrls,
-      afterPermit2ApprovalTxnCallback,
+      approvalTxnCallback,
     });
   }
 
@@ -176,7 +176,7 @@ class DzapClient {
     signer,
     service,
     permitSelectorData,
-    afterSignatureCallback,
+    signatureCallback,
   }: {
     chainId: number;
     sender: string;
@@ -185,7 +185,7 @@ class DzapClient {
     service: AvailableDZapServices;
     signer: WalletClient;
     permitSelectorData: PermitSelectorData[];
-    afterSignatureCallback?: () => Promise<void>;
+    signatureCallback?: () => Promise<void>;
   }) {
     return await this.permitHandler.handleGetPermitData({
       chainId,
@@ -195,7 +195,7 @@ class DzapClient {
       signer,
       service,
       permitSelectorData,
-      afterSignatureCallback,
+      signatureCallback,
     });
   }
 }

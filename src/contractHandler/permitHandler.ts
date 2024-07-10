@@ -21,7 +21,7 @@ class PermitHandler {
     return PermitHandler.instance;
   }
 
-  public async handleGetPermitSelectorAndAllowance({
+  public async handleGetAllowance({
     chainId,
     sender,
     data,
@@ -95,26 +95,26 @@ class PermitHandler {
     return { status: TxnStatus.success, code: StatusCodes.Success, data: { permitSelectorData, noOfApprovalsRequired } };
   }
 
-  public async handleGetPermit2Approvals({
+  public async getApprovals({
     chainId,
     permitSelectorData,
     signer,
     sender,
     rpcUrls,
-    afterPermit2ApprovalTxnCallback,
+    approvalTxnCallback,
   }: {
     chainId: number;
     permitSelectorData: PermitSelectorData[];
     signer: WalletClient;
     sender: HexString;
     rpcUrls?: string[];
-    afterPermit2ApprovalTxnCallback?: ({
+    approvalTxnCallback?: ({
       txnDetails,
       address,
     }: {
       txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
-    }) => Promise<void>;
+    }) => Promise<TxnStatus | void>;
   }) {
     if (permitSelectorData.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, data: { permitData: [] } };
     if (permitSelectorData.length > 1 && isOneToMany(permitSelectorData[0].address, permitSelectorData[1].address)) {
@@ -137,8 +137,16 @@ class PermitHandler {
           };
         }
       }
-      if (afterPermit2ApprovalTxnCallback) await afterPermit2ApprovalTxnCallback({ txnDetails, address: permitSelectorData[0].address });
-      return { status: TxnStatus.success, code: StatusCodes.Success, data: { permitData: null } };
+      if (approvalTxnCallback) {
+        const callbackStatus = await approvalTxnCallback({ txnDetails, address: permitSelectorData[0].address });
+        if (callbackStatus && callbackStatus !== TxnStatus.success) {
+          return {
+            status: txnDetails.status,
+            code: txnDetails?.code || StatusCodes.Error,
+          };
+        }
+      }
+      return { status: TxnStatus.success, code: StatusCodes.Success };
     }
     for (let dataIdx = 0; dataIdx < permitSelectorData.length; dataIdx++) {
       let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
@@ -160,7 +168,15 @@ class PermitHandler {
           };
         }
       }
-      if (afterPermit2ApprovalTxnCallback) await afterPermit2ApprovalTxnCallback({ txnDetails, address: permitSelectorData[dataIdx].address });
+      if (approvalTxnCallback) {
+        const callbackStatus = await approvalTxnCallback({ txnDetails, address: permitSelectorData[0].address });
+        if (callbackStatus && callbackStatus !== TxnStatus.success) {
+          return {
+            status: txnDetails.status,
+            code: txnDetails?.code || StatusCodes.Error,
+          };
+        }
+      }
     }
     return { status: TxnStatus.success, code: StatusCodes.Success };
   }
@@ -172,7 +188,7 @@ class PermitHandler {
     service,
     permitSelectorData,
     signer,
-    afterSignatureCallback,
+    signatureCallback,
   }: {
     chainId: number;
     sender: string;
@@ -181,7 +197,7 @@ class PermitHandler {
     signer: WalletClient;
     service: AvailableDZapServices;
     permitSelectorData: PermitSelectorData[];
-    afterSignatureCallback?: () => Promise<void>;
+    signatureCallback?: () => Promise<void>;
   }) {
     if (permitSelectorData.length !== data.length) {
       throw new Error('Permit selector length mismatch');
@@ -205,7 +221,7 @@ class PermitHandler {
 
       if (status === TxnStatus.success) {
         data[dataIdx].permitData = permitData;
-        if (afterSignatureCallback) await afterSignatureCallback();
+        if (signatureCallback) await signatureCallback();
       } else {
         return { status, code, data: null };
       }

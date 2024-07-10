@@ -44,7 +44,7 @@ export const getAllowanceAndTokenPermit = async ({
   chainId: number;
   rpcUrls?: string[];
 }) => {
-  for (let functionSelector = 0; functionSelector <= 2; functionSelector++) {
+  for (let functionSelector = 0; functionSelector < 2; functionSelector++) {
     const { status, code, data } = await permitFunctionSelector(functionSelector)({
       chainId,
       srcToken,
@@ -116,6 +116,6 @@ export const getPermitDetails = async ({
       return { permitData: PERMIT2_APPROVE_DATA, status: TxnStatus.success, code: StatusCodes.Success };
     }
     default:
-      throw new Error('Invalid permit selector');
+      return { permitData: null, status: TxnStatus.error, code: StatusCodes.Error };
   }
 };

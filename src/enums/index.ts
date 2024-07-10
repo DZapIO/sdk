@@ -54,13 +54,13 @@ export enum StatusCodes {
 
 export enum PermitFunctionSelector {
   checkNativeToken = 0,
-  checkPermit1 = 1,
-  checkPermit2 = 2,
+  checkPermit2 = 1,
+  checkPermit1 = 2,
 }
 
 export enum PermitSelector {
   DefaultPermit = 0,
-  Permit1 = 1,
-  Permit2 = 2,
+  Permit1 = 2,
+  Permit2 = 1,
   Permit2Approve = 3,
 }
