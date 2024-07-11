@@ -28,6 +28,7 @@ export const isAxiosError = (error: unknown): error is AxiosError => {
 export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) => {
   if (error.error.code === StatusCodes.WalletRPCFailure) {
     return {
+      error,
       errorMsg: 'Too many requests, failure on user wallet',
       code: StatusCodes.WalletRPCFailure,
       status: TxnStatus.error,
@@ -50,6 +51,7 @@ export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) 
   }
   return {
     status: TxnStatus.error,
+    error,
     errorMsg: errMsg,
     code: StatusCodes.ContractExecutionError,
   };

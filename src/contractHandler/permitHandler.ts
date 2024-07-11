@@ -29,48 +29,9 @@ class PermitHandler {
   }: {
     chainId: number;
     sender: HexString;
-    data: SwapData[] | BridgeParamsRequest[];
+    data: { srcToken: HexString; amount: bigint }[];
     rpcUrls: string[];
   }) {
-    if (data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken)) {
-      // handle one to many case
-      const srcTokenAddress = data[0].srcToken as HexString;
-      if (isDZapNativeToken(srcTokenAddress)) {
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          data: {
-            tokenAllowances: {
-              [srcTokenAddress]: maxUint256,
-            },
-            noOfApprovalsRequired: 0,
-            noOfSignaturesRequired: 0,
-          },
-        };
-      }
-      const totalSrcAmount = calcTotalSrcTokenAmount(data);
-      const {
-        status,
-        code,
-        data: { permitAllowance },
-      } = await checkPermit2({
-        chainId,
-        srcToken: srcTokenAddress,
-        rpcUrls,
-        userAddress: sender,
-      });
-      return {
-        status,
-        code,
-        data: {
-          tokenAllowances: {
-            [srcTokenAddress]: permitAllowance,
-          },
-          noOfApprovalsRequired: permitAllowance < totalSrcAmount ? 1 : 0,
-          noOfSignaturesRequired: 1,
-        },
-      };
-    }
     const tokenAllowances: { [key: string]: bigint } = {};
     // other cases like many to one or one to one
     let noOfApprovalsRequired = 0;

@@ -125,7 +125,7 @@ class DzapClient {
   }: {
     chainId: number;
     sender: HexString;
-    data: SwapData[] | BridgeParamsRequest[];
+    data: { srcToken: HexString; amount: bigint }[];
     rpcUrls: string[];
   }) {
     return await this.permitHandler.handleGetAllowance({

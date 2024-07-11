@@ -6,7 +6,7 @@ import { contractAddress, zkSyncChainId } from 'src/constants/contract';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { CURRENT_VERSION } from 'src/utils/contract';
 import { WalletClient } from 'viem';
-import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest } from '../types';
+import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapServiceResponse, HexString, SwapParamsRequest } from '../types';
 import { getDZapAbi, isTypeSigner, viemChainsById } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 class ContractHandler {
@@ -26,12 +26,15 @@ class ContractHandler {
     ] as HexString;
   };
 
-  public async handleSwap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }): Promise<{
-    status: TxnStatus;
-    errorMsg?: string;
-    code: StatusCodes;
-    txnHash?: HexString;
-  }> {
+  public async handleSwap({
+    chainId,
+    request,
+    signer,
+  }: {
+    chainId: number;
+    request: SwapParamsRequest;
+    signer: Signer | WalletClient;
+  }): Promise<DZapServiceResponse> {
     const abi = getDZapAbi(Services.BatchSwap);
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
@@ -72,9 +75,14 @@ class ContractHandler {
       console.log({ error });
       if (isAxiosError(error)) {
         if (error.response.status === StatusCodes.SimulationFailure) {
-          return { status: TxnStatus.error, errorMsg: `${'Simulation Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+          return {
+            status: TxnStatus.error,
+            errorMsg: 'Simulation Failed',
+            error: (error.response?.data as any).data.error,
+            code: error.response.status,
+          };
         }
-        return { status: TxnStatus.error, errorMsg: `${'Params Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+        return { status: TxnStatus.error, errorMsg: 'Params Failed', error, code: error.response.status };
       }
       return handleViemTransactionError({ abi, error });
     }
@@ -88,13 +96,7 @@ class ContractHandler {
     chainId: number;
     request: BridgeParamsRequest[];
     signer: Signer | WalletClient;
-  }): Promise<{
-    status: TxnStatus;
-    errorMsg?: string;
-    code: StatusCodes;
-    txnHash?: HexString;
-    additionalInfo?: Record<string, unknown>;
-  }> {
+  }): Promise<DZapServiceResponse> {
     const abi = getDZapAbi(Services.CrossChain);
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
@@ -135,9 +137,14 @@ class ContractHandler {
       console.log({ error });
       if (isAxiosError(error)) {
         if (error.response.status === StatusCodes.SimulationFailure) {
-          return { status: TxnStatus.error, errorMsg: `${'Simulation Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+          return {
+            status: TxnStatus.error,
+            errorMsg: 'Simulation Failed',
+            error: (error.response?.data as any).data.error,
+            code: error.response.status,
+          };
         }
-        return { status: TxnStatus.error, errorMsg: `${'Params Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+        return { status: TxnStatus.error, errorMsg: 'Params Failed', error, code: error.response.status };
       }
       return handleViemTransactionError({ abi, error });
     }
