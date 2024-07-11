@@ -5,13 +5,13 @@ let REACT_APP_ENV;
 let REACT_APP_BASE_API_URL;
 
 if (typeof process !== 'undefined' && process.env) {
-  REACT_APP_ENV = process.env.REACT_APP_ENV;
+  REACT_APP_ENV = process.env.REACT_APP_ENV || process.env.NEXT_PUBLIC_REACT_APP_ENV;
   REACT_APP_BASE_API_URL = process.env.REACT_APP_BASE_API_URL;
 }
 
 let baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
 const stagingUrl = 'https://staging.dzap.io/';
-// const localhostUrl = 'http://localhost:8080/';
+// const stagingUrl = 'http://localhost:8080/';
 export const appEnv = REACT_APP_ENV || AppEnv.development;
 export const isProd = appEnv === AppEnv.production;
 export const isStaging = appEnv === AppEnv.staging;

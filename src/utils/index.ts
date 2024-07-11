@@ -1,12 +1,25 @@
 import { Signer } from 'ethers';
-import { DZapAbis, OtherAbis, Services } from 'src/constants';
-import { Abi, ParseEventLogsReturnType, TransactionReceipt, getAddress, parseEventLogs, stringToHex } from 'viem';
+import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from 'src/constants';
+import {
+  Abi,
+  ParseEventLogsReturnType,
+  TransactionReceipt,
+  WalletClient,
+  createPublicClient,
+  fallback,
+  getAddress,
+  http,
+  parseEventLogs,
+  stringToHex,
+} from 'viem';
 import * as allWagmiChains from 'viem/chains';
 import * as ABI from '../artifacts';
 import { batchSwapIntegrators, isStaging } from '../config';
-import { AvailableDZapServices, HexString, OtherAvailableAbis } from '../types';
+import { AvailableDZapServices, BridgeParamsRequest, HexString, OtherAvailableAbis, SwapData } from '../types';
+import { allViemChains } from './chains';
+import { StatusCodes, TxnStatus } from 'src/enums';
 
-export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.values(allWagmiChains).reduce((acc, chainData) => {
+export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.values(allViemChains).reduce((acc, chainData) => {
   return chainData.id
     ? {
         ...acc,
@@ -14,6 +27,92 @@ export const wagmiChainsById: Record<number, allWagmiChains.Chain> = Object.valu
       }
     : acc;
 }, {});
+
+export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: string[]; chainId: number }) => {
+  return createPublicClient({
+    chain: viemChainsById[chainId],
+    transport: fallback(rpcUrls.map((rpc: string) => http(rpc))),
+  });
+};
+
+export const readContract = async ({
+  chainId,
+  contractAddress,
+  abi,
+  functionName,
+  rpcUrls,
+  args = [],
+}: {
+  chainId: number;
+  contractAddress: HexString;
+  abi: Abi;
+  functionName: string;
+  rpcUrls?: string[];
+  args?: unknown[];
+}) => {
+  try {
+    const result = await initializeReadOnlyProvider({ chainId, rpcUrls }).readContract({
+      address: contractAddress,
+      abi,
+      functionName,
+      args,
+    });
+    return { data: result, status: TxnStatus.success, code: StatusCodes.Success };
+  } catch (e) {
+    console.log({ e });
+    return { status: TxnStatus.error, code: e.code || StatusCodes.Error };
+  }
+};
+
+export const writeContract = async ({
+  chainId,
+  contractAddress,
+  abi,
+  functionName,
+  args = [],
+  userAddress,
+  value = '0',
+  rpcUrls = [''],
+  signer,
+}: {
+  chainId: number;
+  contractAddress: HexString;
+  abi: Abi;
+  functionName: string;
+  args?: unknown[];
+  userAddress: HexString;
+  value?: string;
+  rpcUrls: string[];
+  signer: WalletClient;
+}) => {
+  const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls });
+  try {
+    const { request } = await publicClient.simulateContract({
+      address: contractAddress,
+      abi,
+      functionName,
+      args,
+      account: userAddress,
+      value,
+    });
+    const hash = await signer.writeContract(request);
+    return { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
+  } catch (e: any) {
+    console.log({ e });
+    if (e?.code === StatusCodes.UserRejectedRequest) {
+      return { status: TxnStatus.rejected, code: e?.code, txnHash: '' };
+    }
+    return { status: TxnStatus.error, code: e?.code, txnHash: '' };
+  }
+};
+
+export const calcTotalSrcTokenAmount = (data: BridgeParamsRequest[] | SwapData[]) => {
+  return data.reduce((acc, obj) => {
+    return acc + BigInt(obj.amount);
+  }, BigInt(0));
+};
+
+export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: string) => firstTokenAddress === secondTokenAddress;
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 
@@ -50,6 +149,8 @@ export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 export const isTypeSigner = (variable): variable is Signer => {
   return variable instanceof Signer;
 };
+
+export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
 export const getDZapAbi = (service: AvailableDZapServices) => {
   switch (service) {

@@ -1,5 +1,5 @@
 import { DZapAbis, OtherAbis, Services } from 'src/constants';
-import { AppEnv } from 'src/enums';
+import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
 
 export type HexString = `0x${string}`;
 
@@ -44,6 +44,8 @@ export type ApiRpcResponse = {
   keyType?: 'ALCHEMY_KEY' | 'BLASTAPI_KEY';
 };
 
+export type PermitSelectorData = { address: HexString; permitSelector: PermitSelector; permitAllowance: bigint };
+
 // Swap
 
 export type SwapData = {
@@ -55,6 +57,7 @@ export type SwapData = {
   gasPrice?: number;
   srcDecimals: number;
   destDecimals: number;
+  permitData?: string;
 };
 
 export type SwapParamsRequest = {
@@ -235,6 +238,7 @@ export type BridgeParamsRequest = {
   toChain: number;
   selectedRoute: string;
   additionalInfo?: BridgeAdditionalInfo;
+  permitData?: string;
 };
 
 export type BridgeParamsResponse = {
@@ -254,3 +258,12 @@ export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
 export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
 
 export type AppEnvType = `${AppEnv}`;
+
+export type DZapServiceResponse = {
+  status: TxnStatus;
+  errorMsg?: string;
+  code: StatusCodes;
+  txnHash?: HexString;
+  error?: unknown;
+  additionalInfo?: Record<string, unknown>;
+};

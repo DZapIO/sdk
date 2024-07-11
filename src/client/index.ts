@@ -1,6 +1,8 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
+import PermitHandler from 'src/contractHandler/permitHandler';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -8,10 +10,14 @@ import {
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   ChainData,
+  HexString,
   OtherAvailableAbis,
+  SwapData,
   SwapParamsRequest,
   SwapQuoteRequest,
 } from 'src/types';
+import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
+import { TransactionReceipt, WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
   fetchAllTokens,
@@ -23,16 +29,16 @@ import {
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
-import { TransactionReceipt, WalletClient } from 'viem';
-import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
 
 class DzapClient {
   private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
+  private permitHandler: PermitHandler;
 
   private constructor() {
     this.contractHandler = ContractHandler.getInstance();
+    this.permitHandler = PermitHandler.getInstance();
   }
 
   // Static method to control the access to the singleton instance.
@@ -105,6 +111,88 @@ class DzapClient {
 
   public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
     return handleDecodeTrxData(data, service);
+  }
+
+  public getDZapContractAddress = ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => {
+    return this.contractHandler.getDZapContractAddress({ chainId, service });
+  };
+
+  public async allowance({
+    chainId,
+    sender,
+    data,
+    rpcUrls,
+  }: {
+    chainId: number;
+    sender: HexString;
+    data: { srcToken: HexString; amount: bigint }[];
+    rpcUrls: string[];
+  }) {
+    return await this.permitHandler.handleGetAllowance({
+      chainId,
+      sender,
+      data,
+      rpcUrls,
+    });
+  }
+
+  public async approve({
+    chainId,
+    signer,
+    sender,
+    rpcUrls,
+    data,
+    approvalTxnCallback,
+  }: {
+    chainId: number;
+    signer: WalletClient;
+    sender: HexString;
+    rpcUrls?: string[];
+    data: { srcToken: HexString; amountToApprove: bigint }[];
+    approvalTxnCallback?: ({
+      txnDetails,
+      address,
+    }: {
+      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
+      address: HexString;
+    }) => Promise<TxnStatus | void>;
+  }) {
+    return await this.permitHandler.handleApprove({
+      chainId,
+      signer,
+      sender,
+      rpcUrls,
+      data,
+      approvalTxnCallback,
+    });
+  }
+
+  public async sign({
+    chainId,
+    sender,
+    data,
+    rpcUrls,
+    signer,
+    service,
+    signatureCallback,
+  }: {
+    chainId: number;
+    sender: string;
+    data: SwapData[] | BridgeParamsRequest[];
+    rpcUrls?: string[];
+    service: AvailableDZapServices;
+    signer: WalletClient;
+    signatureCallback?: () => Promise<void>;
+  }) {
+    return await this.permitHandler.handleSign({
+      chainId,
+      sender,
+      data,
+      rpcUrls,
+      signer,
+      service,
+      signatureCallback,
+    });
   }
 }
 
