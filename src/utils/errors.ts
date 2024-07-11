@@ -34,6 +34,14 @@ export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) 
       status: TxnStatus.error,
     };
   }
+  if (error.error.code === StatusCodes.UserRejectedRequest) {
+    return {
+      error,
+      errorMsg: 'Rejected by User',
+      code: StatusCodes.UserRejectedRequest,
+      status: TxnStatus.rejected,
+    };
+  }
   let errMsg = error.shortMessage;
 
   const errName = getErrorName(error.metaMessages[0]);
