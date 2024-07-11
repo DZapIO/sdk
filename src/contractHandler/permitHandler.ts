@@ -1,5 +1,5 @@
 import { DEFAULT_PERMIT_DATA, PERMIT2_ADDRESS, PERMIT2_APPROVE_DATA } from 'src/constants';
-import { Erc20Functions, StatusCodes, TxnState } from 'src/enums';
+import { Erc20Functions, StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, BridgeParamsRequest, HexString, SwapData } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, writeContract } from 'src/utils';
 import { checkPermit2, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
@@ -29,48 +29,9 @@ class PermitHandler {
   }: {
     chainId: number;
     sender: HexString;
-    data: SwapData[] | BridgeParamsRequest[];
+    data: { srcToken: HexString; amount: bigint }[];
     rpcUrls: string[];
   }) {
-    if (data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken)) {
-      // handle one to many case
-      const srcTokenAddress = data[0].srcToken as HexString;
-      if (isDZapNativeToken(srcTokenAddress)) {
-        return {
-          status: TxnState.success,
-          code: StatusCodes.Success,
-          data: {
-            tokenAllowances: {
-              [srcTokenAddress]: maxUint256,
-            },
-            noOfApprovalsRequired: 0,
-            noOfSignaturesRequired: 0,
-          },
-        };
-      }
-      const totalSrcAmount = calcTotalSrcTokenAmount(data);
-      const {
-        status,
-        code,
-        data: { permitAllowance },
-      } = await checkPermit2({
-        chainId,
-        srcToken: srcTokenAddress,
-        rpcUrls,
-        userAddress: sender,
-      });
-      return {
-        status,
-        code,
-        data: {
-          tokenAllowances: {
-            [srcTokenAddress]: permitAllowance,
-          },
-          noOfApprovalsRequired: permitAllowance < totalSrcAmount ? 1 : 0,
-          noOfSignaturesRequired: 1,
-        },
-      };
-    }
     const tokenAllowances: { [key: string]: bigint } = {};
     // other cases like many to one or one to one
     let noOfApprovalsRequired = 0;
@@ -100,7 +61,7 @@ class PermitHandler {
         return { status, code, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
       }
     }
-    return { status: TxnState.success, code: StatusCodes.Success, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
+    return { status: TxnStatus.success, code: StatusCodes.Success, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
   }
 
   public async handleApprove({
@@ -120,12 +81,12 @@ class PermitHandler {
       txnDetails,
       address,
     }: {
-      txnDetails: { txnHash: string; code: StatusCodes; status: TxnState };
+      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
-    }) => Promise<TxnState | void>;
+    }) => Promise<TxnStatus | void>;
   }) {
     for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
-      let txnDetails = { status: TxnState.success, code: StatusCodes.Success, txnHash: '' };
+      let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
       txnDetails = await writeContract({
         chainId,
         contractAddress: data[dataIdx].srcToken as HexString,
@@ -144,7 +105,7 @@ class PermitHandler {
       }
       if (approvalTxnCallback) {
         const callbackStatus = await approvalTxnCallback({ txnDetails, address: data[dataIdx].srcToken });
-        if (callbackStatus && callbackStatus !== TxnState.success) {
+        if (callbackStatus && callbackStatus !== TxnStatus.success) {
           return {
             status: txnDetails.status,
             code: txnDetails?.code || StatusCodes.Error,
@@ -152,7 +113,7 @@ class PermitHandler {
         }
       }
     }
-    return { status: TxnState.success, code: StatusCodes.Success };
+    return { status: TxnStatus.success, code: StatusCodes.Success };
   }
   public async handleSign({
     chainId,
@@ -188,7 +149,7 @@ class PermitHandler {
         signer,
         rpcUrls,
       });
-      if (status === TxnState.success) {
+      if (status === TxnStatus.success) {
         data[0].permitData = permitData;
         if (signatureCallback) await signatureCallback();
       } else {
@@ -214,7 +175,7 @@ class PermitHandler {
             signer,
             rpcUrls,
           });
-          if (status === TxnState.success) {
+          if (status === TxnStatus.success) {
             permitData = permit2ApprovePermitData;
             if (signatureCallback) await signatureCallback();
           } else {
@@ -225,7 +186,7 @@ class PermitHandler {
       data[dataIdx].permitData = permitData;
     }
 
-    return { status: TxnState.success, data, code: StatusCodes.Success };
+    return { status: TxnStatus.success, data, code: StatusCodes.Success };
   }
 }
 

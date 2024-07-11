@@ -15,8 +15,9 @@ import {
   SwapQuoteRequest,
   SwapQuoteResponse,
   PermitSelectorData,
+  DZapServiceResponse,
 } from './types';
-import { PermitSelector, Erc20Functions, PermitType, TxnState, StatusCodes, PermitFunctionSelector } from './enums';
+import { PermitSelector, Erc20Functions, PermitType, TxnStatus, StatusCodes, PermitFunctionSelector } from './enums';
 import { Services, OtherAbis } from './constants';
 // import { TestHook } from './test';
 // Test Scripts
@@ -47,7 +48,8 @@ export {
   PermitSelectorData,
   PermitType,
   PermitFunctionSelector,
-  TxnState as TxnStatus,
+  TxnStatus,
   StatusCodes,
   Erc20Functions,
+  DZapServiceResponse,
 };

@@ -1,5 +1,5 @@
 import { DZapAbis, OtherAbis, Services } from 'src/constants';
-import { AppEnv, PermitSelector } from 'src/enums';
+import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
 
 export type HexString = `0x${string}`;
 
@@ -258,3 +258,12 @@ export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
 export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
 
 export type AppEnvType = `${AppEnv}`;
+
+export type DZapServiceResponse = {
+  status: TxnStatus;
+  errorMsg?: string;
+  code: StatusCodes;
+  txnHash?: HexString;
+  error?: unknown;
+  additionalInfo?: Record<string, unknown>;
+};
