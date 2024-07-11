@@ -3,11 +3,12 @@ import { fetchBridgeParams, fetchSwapParams } from 'src/api';
 import { appEnv } from 'src/config';
 import { Services } from 'src/constants';
 import { contractAddress, zkSyncChainId } from 'src/constants/contract';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import { CURRENT_VERSION } from 'src/utils/contract';
 import { WalletClient } from 'viem';
 import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, HexString, SwapParamsRequest } from '../types';
 import { getDZapAbi, isTypeSigner, viemChainsById } from '../utils';
-import { handleTransactionError } from '../utils/errors';
+import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 class ContractHandler {
   private static instance: ContractHandler;
   // private constructor() {}
@@ -25,28 +26,75 @@ class ContractHandler {
     ] as HexString;
   };
 
-  public async handleSwap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }) {
+  public async handleSwap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }): Promise<{
+    status: TxnStatus;
+    errorMsg?: string;
+    code: StatusCodes;
+    txnHash?: HexString;
+  }> {
     const abi = getDZapAbi(Services.BatchSwap);
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
       const {
         transactionRequest: { data, from, to, value, gasLimit },
       } = paramResponseData;
-      return await signer.sendTransaction({
-        chain: viemChainsById[chainId],
-        account: from as HexString,
-        to: to as HexString,
-        data: data as HexString,
-        value: value as bigint,
-        gasLimit,
-      });
+      if (isTypeSigner(signer)) {
+        console.log('Using ethers signer.');
+        const txnRes = await signer.sendTransaction({
+          from,
+          to,
+          data,
+          value,
+          gasLimit,
+        });
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash: txnRes.hash as HexString,
+        };
+      } else {
+        console.log('Using viem walletClient.');
+        const txnHash = await signer.sendTransaction({
+          chain: viemChainsById[chainId],
+          account: from as HexString,
+          to: to as HexString,
+          data: data as HexString,
+          value: BigInt(value),
+          gasLimit,
+        });
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash,
+        };
+      }
     } catch (error: any) {
       console.log({ error });
-      handleTransactionError({ abi, error });
+      if (isAxiosError(error)) {
+        if (error.response.status === StatusCodes.SimulationFailure) {
+          return { status: TxnStatus.error, errorMsg: `${'Simulation Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+        }
+        return { status: TxnStatus.error, errorMsg: `${'Params Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+      }
+      return handleViemTransactionError({ abi, error });
     }
   }
 
-  public async handleBridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest[]; signer: Signer | WalletClient }) {
+  public async handleBridge({
+    chainId,
+    request,
+    signer,
+  }: {
+    chainId: number;
+    request: BridgeParamsRequest[];
+    signer: Signer | WalletClient;
+  }): Promise<{
+    status: TxnStatus;
+    errorMsg?: string;
+    code: StatusCodes;
+    txnHash?: HexString;
+    additionalInfo?: Record<string, unknown>;
+  }> {
     const abi = getDZapAbi(Services.CrossChain);
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
@@ -61,7 +109,9 @@ class ContractHandler {
           gasLimit,
         });
         return {
-          txnHash: txnRes.hash,
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash: txnRes.hash as HexString,
           additionalInfo,
         };
       } else {
@@ -75,13 +125,21 @@ class ContractHandler {
           gasLimit,
         });
         return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
           txnHash,
           additionalInfo,
         };
       }
     } catch (error: any) {
       console.log({ error });
-      handleTransactionError({ abi, error });
+      if (isAxiosError(error)) {
+        if (error.response.status === StatusCodes.SimulationFailure) {
+          return { status: TxnStatus.error, errorMsg: `${'Simulation Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+        }
+        return { status: TxnStatus.error, errorMsg: `${'Params Failed: ' + JSON.stringify(error)}`, code: error.response.status };
+      }
+      return handleViemTransactionError({ abi, error });
     }
   }
 }

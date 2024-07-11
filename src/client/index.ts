@@ -2,7 +2,7 @@ import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
 import PermitHandler from 'src/contractHandler/permitHandler';
-import { StatusCodes, TxnState } from 'src/enums';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -153,9 +153,9 @@ class DzapClient {
       txnDetails,
       address,
     }: {
-      txnDetails: { txnHash: string; code: StatusCodes; status: TxnState };
+      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
-    }) => Promise<TxnState | void>;
+    }) => Promise<TxnStatus | void>;
   }) {
     return await this.permitHandler.handleApprove({
       chainId,

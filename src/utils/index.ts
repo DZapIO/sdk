@@ -17,7 +17,7 @@ import * as ABI from '../artifacts';
 import { batchSwapIntegrators, isStaging } from '../config';
 import { AvailableDZapServices, BridgeParamsRequest, HexString, OtherAvailableAbis, SwapData } from '../types';
 import { allViemChains } from './chains';
-import { StatusCodes, TxnState } from 'src/enums';
+import { StatusCodes, TxnStatus } from 'src/enums';
 
 export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.values(allViemChains).reduce((acc, chainData) => {
   return chainData.id
@@ -57,10 +57,10 @@ export const readContract = async ({
       functionName,
       args,
     });
-    return { data: result, status: TxnState.success, code: StatusCodes.Success };
+    return { data: result, status: TxnStatus.success, code: StatusCodes.Success };
   } catch (e) {
     console.log({ e });
-    return { status: TxnState.error, code: e.code || StatusCodes.Error };
+    return { status: TxnStatus.error, code: e.code || StatusCodes.Error };
   }
 };
 
@@ -96,13 +96,13 @@ export const writeContract = async ({
       value,
     });
     const hash = await signer.writeContract(request);
-    return { txnHash: hash, status: TxnState.success, code: StatusCodes.Success };
+    return { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
   } catch (e: any) {
     console.log({ e });
     if (e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnState.rejected, code: e?.code, txnHash: '' };
+      return { status: TxnStatus.rejected, code: e?.code, txnHash: '' };
     }
-    return { status: TxnState.error, code: e?.code, txnHash: '' };
+    return { status: TxnStatus.error, code: e?.code, txnHash: '' };
   }
 };
 

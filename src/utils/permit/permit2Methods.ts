@@ -1,5 +1,5 @@
 import { PERMIT2_ADDRESS } from 'src/constants';
-import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnState } from 'src/enums';
+import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { Abi, WalletClient, encodeAbiParameters, erc20Abi, maxUint48, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
@@ -31,15 +31,15 @@ export const checkPermit2 = async ({
       rpcUrls,
     });
     if (permitAllowanceRes.code !== StatusCodes.Success) {
-      return { status: TxnState.error, code: StatusCodes.Error, data: { permitAllowance: BigInt(0) } };
+      return { status: TxnStatus.error, code: StatusCodes.Error, data: { permitAllowance: BigInt(0) } };
     }
-    return { status: TxnState.success, code: StatusCodes.Success, data: { permitAllowance: permitAllowanceRes.data as bigint } };
+    return { status: TxnStatus.success, code: StatusCodes.Success, data: { permitAllowance: permitAllowanceRes.data as bigint } };
   } catch (e) {
     console.log({ e });
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnState.rejected, code: StatusCodes.UserRejectedRequest, data: { permitAllowance: BigInt(0) } };
+      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, data: { permitAllowance: BigInt(0) } };
     }
-    return { status: TxnState.error, code: e.code, data: { permitAllowance: BigInt(0) } };
+    return { status: TxnStatus.error, code: e.code, data: { permitAllowance: BigInt(0) } };
   }
 };
 
@@ -122,11 +122,11 @@ export async function getPermit2PermitDataForApprove({
       ],
     );
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_APPROVE, customPermitDataForTransfer]);
-    return { status: TxnState.success, permitData, code: StatusCodes.Success };
+    return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
   } catch (e) {
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnState.rejected, errorCode: StatusCodes.UserRejectedRequest, permitdata: null };
+      return { status: TxnStatus.rejected, errorCode: StatusCodes.UserRejectedRequest, permitdata: null };
     }
-    return { status: TxnState.error, code: e.code, permitData: null };
+    return { status: TxnStatus.error, code: e.code, permitData: null };
   }
 }
