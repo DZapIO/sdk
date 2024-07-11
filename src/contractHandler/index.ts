@@ -74,7 +74,7 @@ class ContractHandler {
     } catch (error: any) {
       console.log({ error });
       if (isAxiosError(error)) {
-        if (error.response.status === StatusCodes.SimulationFailure) {
+        if (error?.response?.status === StatusCodes.SimulationFailure) {
           return {
             status: TxnStatus.error,
             errorMsg: 'Simulation Failed',
@@ -82,7 +82,12 @@ class ContractHandler {
             code: error.response.status,
           };
         }
-        return { status: TxnStatus.error, errorMsg: 'Params Failed', error, code: error.response.status };
+        return {
+          status: TxnStatus.error,
+          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
+          error: error?.response?.data ?? error,
+          code: error?.response?.status ?? StatusCodes.Error,
+        };
       }
       return handleViemTransactionError({ abi, error });
     }
@@ -136,7 +141,7 @@ class ContractHandler {
     } catch (error: any) {
       console.log({ error });
       if (isAxiosError(error)) {
-        if (error.response.status === StatusCodes.SimulationFailure) {
+        if (error?.response?.status === StatusCodes.SimulationFailure) {
           return {
             status: TxnStatus.error,
             errorMsg: 'Simulation Failed',
@@ -144,7 +149,12 @@ class ContractHandler {
             code: error.response.status,
           };
         }
-        return { status: TxnStatus.error, errorMsg: 'Params Failed', error, code: error.response.status };
+        return {
+          status: TxnStatus.error,
+          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
+          error: error?.response?.data ?? error,
+          code: error?.response?.status ?? StatusCodes.Error,
+        };
       }
       return handleViemTransactionError({ abi, error });
     }
