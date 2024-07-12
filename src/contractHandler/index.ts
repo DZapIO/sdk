@@ -1,14 +1,15 @@
-import { Signer } from 'ethers';
-import { fetchBridgeParams, fetchSwapParams } from 'src/api';
-import { appEnv } from 'src/config';
-import { Services } from 'src/constants';
-import { contractAddress, zkSyncChainId } from 'src/constants/contract';
+import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapTransactionResponse, HexString, SwapParamsRequest } from '../types';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { CURRENT_VERSION } from 'src/utils/contract';
-import { WalletClient } from 'viem';
-import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapServiceResponse, HexString, SwapParamsRequest } from '../types';
+import { contractAddress, zkSyncChainId } from 'src/constants/contract';
+import { fetchBridgeParams, fetchSwapParams } from 'src/api';
 import { getDZapAbi, isTypeSigner, viemChainsById } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
+
+import { CURRENT_VERSION } from 'src/utils/contract';
+import { Services } from 'src/constants';
+import { Signer } from 'ethers';
+import { WalletClient } from 'viem';
+import { appEnv } from 'src/config';
 class ContractHandler {
   private static instance: ContractHandler;
   // private constructor() {}
@@ -34,7 +35,7 @@ class ContractHandler {
     chainId: number;
     request: SwapParamsRequest;
     signer: Signer | WalletClient;
-  }): Promise<DZapServiceResponse> {
+  }): Promise<DZapTransactionResponse> {
     const abi = getDZapAbi(Services.BatchSwap);
     try {
       const { data: paramResponseData } = await fetchSwapParams(request);
@@ -101,7 +102,7 @@ class ContractHandler {
     chainId: number;
     request: BridgeParamsRequest[];
     signer: Signer | WalletClient;
-  }): Promise<DZapServiceResponse> {
+  }): Promise<DZapTransactionResponse> {
     const abi = getDZapAbi(Services.CrossChain);
     try {
       const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;

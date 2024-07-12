@@ -1,4 +1,3 @@
-import DzapClient from './client';
 import {
   ApiRpcResponse,
   BridgeParamsRequest,
@@ -7,18 +6,21 @@ import {
   BridgeQuoteResponse,
   Chain,
   ChainData,
+  DZapTransactionResponse,
   GetSwapParamsResponse,
   HexString,
+  PermitSelectorData,
   SwapData,
   SwapParamsRequest,
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
-  PermitSelectorData,
-  DZapServiceResponse,
 } from './types';
-import { PermitSelector, Erc20Functions, PermitType, TxnStatus, StatusCodes, PermitFunctionSelector } from './enums';
-import { Services, OtherAbis } from './constants';
+import { Erc20Functions, PermitFunctionSelector, PermitSelector, PermitType, StatusCodes, TxnStatus } from './enums';
+import { OtherAbis, Services } from './constants';
+
+import DzapClient from './client';
+
 // import { TestHook } from './test';
 // Test Scripts
 // import { TestGetQuoteRate, TestGetSwapParams } from './test';
@@ -51,5 +53,5 @@ export {
   TxnStatus,
   StatusCodes,
   Erc20Functions,
-  DZapServiceResponse,
+  DZapTransactionResponse,
 };
