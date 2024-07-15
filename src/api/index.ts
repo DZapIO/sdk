@@ -1,27 +1,28 @@
-import { CancelToken } from 'axios';
-import { SwapQuoteRequest, SwapParamsRequest, BridgeQuoteRequest, BridgeParamsRequest } from '../types';
 import {
-  BATCH_SWAP_PARAMS_URL,
+  BATCH_SWAP_BUILD_TX_URL,
   BATCH_SWAP_QUOTE_URL,
+  BRIDGE_BUILD_TX_URL,
   BRIDGE_QUOTE_URL,
-  BRIDGE_PARAMS_URL,
+  GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
-  GET_ALL_CHAINS_URL,
 } from 'src/constants/urlConstants';
+import { BridgeParamsRequest, BridgeQuoteRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
 import { GET, POST } from 'src/constants/httpMethods';
-import { invoke } from 'src/utils/axios';
+
+import { CancelToken } from 'axios';
 import { Signer } from 'ethers';
+import { invoke } from 'src/utils/axios';
 
 export const fetchQuoteRate = (request: SwapQuoteRequest, cancelToken: CancelToken) => invoke(BATCH_SWAP_QUOTE_URL, request, POST, cancelToken);
 
 export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest[], cancelToken: CancelToken) => invoke(BRIDGE_QUOTE_URL, request, POST, cancelToken);
 
-export const fetchBridgeParams = (request: BridgeParamsRequest[]) => invoke(BRIDGE_PARAMS_URL, request, POST);
+export const buildBridgeTransaction = (request: BridgeParamsRequest[]) => invoke(BRIDGE_BUILD_TX_URL, request, POST);
 
-export const fetchSwapParams = (request: SwapParamsRequest) => {
-  return invoke(BATCH_SWAP_PARAMS_URL, request);
+export const buildSwapTransaction = (request: SwapParamsRequest) => {
+  return invoke(BATCH_SWAP_BUILD_TX_URL, request);
 };
 
 export const fetchAllSupportedChains = () => {
@@ -42,7 +43,7 @@ export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) => {
 
 export const swapTokensApi = async ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
   try {
-    const { data: paramResponseData } = await fetchSwapParams(request);
+    const { data: paramResponseData } = await buildSwapTransaction(request);
     const {
       transactionRequest: { data, from, to, value, gasLimit },
     } = paramResponseData;

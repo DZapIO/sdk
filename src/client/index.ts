@@ -1,8 +1,3 @@
-import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
-import ContractHandler from 'src/contractHandler';
-import PermitHandler from 'src/contractHandler/permitHandler';
-import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -16,19 +11,25 @@ import {
   SwapParamsRequest,
   SwapQuoteRequest,
 } from 'src/types';
-import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
+import Axios, { CancelTokenSource } from 'axios';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
+  buildBridgeTransaction,
+  buildSwapTransaction,
   fetchAllSupportedChains,
   fetchAllTokens,
-  fetchBridgeParams,
   fetchBridgeQuoteRate,
   fetchQuoteRate,
-  fetchSwapParams,
   fetchTokenDetails,
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
+import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
+
+import ContractHandler from 'src/contractHandler';
+import PermitHandler from 'src/contractHandler/permitHandler';
+import { Signer } from 'ethers';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -74,11 +75,11 @@ class DzapClient {
   }
 
   public async getBridgeParams(request: BridgeParamsRequest[]): Promise<BridgeParamsResponse> {
-    return await fetchBridgeParams(request);
+    return await buildBridgeTransaction(request);
   }
 
   public getSwapParams(request: SwapParamsRequest) {
-    return fetchSwapParams(request);
+    return buildSwapTransaction(request);
   }
 
   public getAllSupportedChains(): Promise<ChainData> {
