@@ -1,5 +1,5 @@
-import { DZapAbis, OtherAbis, Services } from 'src/constants';
 import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
+import { DZapAbis, OtherAbis, Services } from 'src/constants';
 
 export type HexString = `0x${string}`;
 
@@ -58,6 +58,7 @@ export type SwapData = {
   srcDecimals: number;
   destDecimals: number;
   permitData?: string;
+  additionalInfo?: Record<string, unknown>;
 };
 
 export type SwapParamsRequest = {
@@ -127,6 +128,7 @@ export type SwapQuoteResponseData = {
   srcAmountUSD: string | null;
   destAmountUSD: string | null;
   providerDetails: ProviderDetails;
+  additionalInfo?: Record<string, unknown>;
 };
 
 export type SwapQuoteResponse = {
@@ -259,7 +261,7 @@ export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
 
 export type AppEnvType = `${AppEnv}`;
 
-export type DZapServiceResponse = {
+export type DZapTransactionResponse = {
   status: TxnStatus;
   errorMsg?: string;
   code: StatusCodes;
