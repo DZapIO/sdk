@@ -1,7 +1,7 @@
 import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapTransactionResponse, HexString, SwapParamsRequest } from '../types';
 import { StatusCodes, TxnStatus } from 'src/enums';
+import { buildBridgeTransaction, buildSwapTransaction } from 'src/api';
 import { contractAddress, zkSyncChainId } from 'src/constants/contract';
-import { fetchBridgeParams, fetchSwapParams } from 'src/api';
 import { getDZapAbi, isTypeSigner, viemChainsById } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 
@@ -39,10 +39,10 @@ class ContractHandler {
   }): Promise<DZapTransactionResponse> {
     const abi = getDZapAbi(Services.BatchSwap);
     try {
-      const { data: paramResponseData } = await fetchSwapParams(request);
+      const { data: buildTxnResponseData } = await buildSwapTransaction(request);
       const {
         transactionRequest: { data, from, to, value, gasLimit },
-      } = paramResponseData;
+      } = buildTxnResponseData;
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
         const txnRes = await signer.sendTransaction({
@@ -106,8 +106,8 @@ class ContractHandler {
   }): Promise<DZapTransactionResponse> {
     const abi = getDZapAbi(Services.CrossChain);
     try {
-      const paramResponseData = (await fetchBridgeParams(request)) as BridgeParamsResponse;
-      const { data, from, to, value, gasLimit, additionalInfo } = paramResponseData;
+      const buildTxnResponseData = (await buildBridgeTransaction(request)) as BridgeParamsResponse;
+      const { data, from, to, value, gasLimit, additionalInfo } = buildTxnResponseData;
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
         const txnRes = await signer.sendTransaction({
