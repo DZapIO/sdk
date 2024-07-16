@@ -17,9 +17,9 @@ import { invoke } from 'src/utils/axios';
 
 export const fetchQuoteRate = (request: SwapQuoteRequest, cancelToken: CancelToken) => invoke(BATCH_SWAP_QUOTE_URL, request, POST, cancelToken);
 
-export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest[], cancelToken: CancelToken) => invoke(BRIDGE_QUOTE_URL, request, POST, cancelToken);
+export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest, cancelToken: CancelToken) => invoke(BRIDGE_QUOTE_URL, request, POST, cancelToken);
 
-export const buildBridgeTransaction = (request: BridgeParamsRequest[]) => invoke(BRIDGE_BUILD_TX_URL, request, POST);
+export const buildBridgeTransaction = (request: BridgeParamsRequest) => invoke(BRIDGE_BUILD_TX_URL, request, POST);
 
 export const buildSwapTransaction = (request: SwapParamsRequest) => {
   return invoke(BATCH_SWAP_BUILD_TX_URL, request);

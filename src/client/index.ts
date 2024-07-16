@@ -1,6 +1,7 @@
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
+  BridgeParamsRequestData,
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
@@ -66,7 +67,7 @@ class DzapClient {
     return await fetchQuoteRate(request, this.cancelTokenSource.token);
   }
 
-  public async getBridgeQuoteRate(request: BridgeQuoteRequest[]): Promise<BridgeQuoteResponse> {
+  public async getBridgeQuoteRate(request: BridgeQuoteRequest): Promise<BridgeQuoteResponse> {
     if (this.cancelTokenSource) {
       this.cancelTokenSource.cancel('Cancelled due to new request');
     }
@@ -74,7 +75,7 @@ class DzapClient {
     return await fetchBridgeQuoteRate(request, this.cancelTokenSource.token);
   }
 
-  public async getBridgeParams(request: BridgeParamsRequest[]): Promise<BridgeParamsResponse> {
+  public async getBridgeParams(request: BridgeParamsRequest): Promise<BridgeParamsResponse> {
     return await buildBridgeTransaction(request);
   }
 
@@ -106,7 +107,7 @@ class DzapClient {
     return await this.contractHandler.handleSwap({ chainId, request, signer });
   }
 
-  public async bridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest[]; signer: Signer | WalletClient }) {
+  public async bridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest; signer: Signer | WalletClient }) {
     return await this.contractHandler.handleBridge({ chainId, request, signer });
   }
 
@@ -179,7 +180,7 @@ class DzapClient {
   }: {
     chainId: number;
     sender: string;
-    data: SwapData[] | BridgeParamsRequest[];
+    data: SwapData[] | BridgeParamsRequestData[];
     rpcUrls?: string[];
     service: AvailableDZapServices;
     signer: WalletClient;
