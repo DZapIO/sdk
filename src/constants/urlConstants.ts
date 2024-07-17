@@ -1,10 +1,10 @@
 // Batch swap urls
 export const BATCH_SWAP_QUOTE_URL = 'swap/quote';
-export const BATCH_SWAP_BUILD_TX_URL = 'swap/build-tx';
+export const BATCH_SWAP_BUILD_TX_URL = 'swap/buildTx';
 
 // Bridge swap urls
 export const BRIDGE_QUOTE_URL = 'bridge/quote';
-export const BRIDGE_BUILD_TX_URL = 'bridge/build-tx';
+export const BRIDGE_BUILD_TX_URL = 'bridge/buildTx';
 
 // Common URLS
 export const GET_ALL_CHAINS_URL = 'chains';
