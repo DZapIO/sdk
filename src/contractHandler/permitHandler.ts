@@ -154,7 +154,7 @@ class PermitHandler {
         data[0].permitData = permitData;
         if (signatureCallback) await signatureCallback();
       } else {
-        return { status, code, data: null };
+        return { status, code, data };
       }
     }
     for (let dataIdx = 1; dataIdx < data.length; dataIdx++) {
