@@ -74,7 +74,7 @@ export async function getPermit2PermitDataForApprove({
       rpcUrls,
     });
     if (nonceRes.code !== StatusCodes.Success) {
-      return { status: nonceRes.status, code: nonceRes, permitData: null };
+      return { status: nonceRes.status, code: nonceRes.code, permitData: null };
     }
     const nonce = nonceRes.data as bigint;
     const PERMIT2_DOMAIN_NAME = 'Permit2';
@@ -125,7 +125,7 @@ export async function getPermit2PermitDataForApprove({
     return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
   } catch (e) {
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, errorCode: StatusCodes.UserRejectedRequest, permitdata: null };
+      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, permitdata: null };
     }
     return { status: TxnStatus.error, code: e.code, permitData: null };
   }
