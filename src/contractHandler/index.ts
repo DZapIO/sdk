@@ -101,7 +101,7 @@ class ContractHandler {
     signer,
   }: {
     chainId: number;
-    request: BridgeParamsRequest[];
+    request: BridgeParamsRequest;
     signer: Signer | WalletClient;
   }): Promise<DZapTransactionResponse> {
     const abi = getDZapAbi(Services.CrossChain);

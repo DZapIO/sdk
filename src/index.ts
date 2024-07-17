@@ -1,8 +1,10 @@
 import {
   ApiRpcResponse,
   BridgeParamsRequest,
+  BridgeParamsRequestData,
   BridgeParamsResponse,
   BridgeQuoteRequest,
+  BridgeQuoteRequestData,
   BridgeQuoteResponse,
   Chain,
   ChainData,
@@ -32,8 +34,10 @@ export default DzapClient;
 export {
   ApiRpcResponse,
   BridgeParamsRequest,
+  BridgeParamsRequestData,
   BridgeParamsResponse,
   BridgeQuoteRequest,
+  BridgeQuoteRequestData,
   BridgeQuoteResponse,
   Chain,
   ChainData,

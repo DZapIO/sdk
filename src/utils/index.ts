@@ -1,5 +1,6 @@
-import { Signer } from 'ethers';
-import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from 'src/constants';
+import * as ABI from '../artifacts';
+import * as allWagmiChains from 'viem/chains';
+
 import {
   Abi,
   ParseEventLogsReturnType,
@@ -12,12 +13,13 @@ import {
   parseEventLogs,
   stringToHex,
 } from 'viem';
-import * as allWagmiChains from 'viem/chains';
-import * as ABI from '../artifacts';
-import { batchSwapIntegrators, isStaging } from '../config';
-import { AvailableDZapServices, BridgeParamsRequest, HexString, OtherAvailableAbis, SwapData } from '../types';
-import { allViemChains } from './chains';
+import { AvailableDZapServices, BridgeParamsRequestData, HexString, OtherAvailableAbis, SwapData } from '../types';
+import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
 import { StatusCodes, TxnStatus } from 'src/enums';
+import { batchSwapIntegrators, isStaging } from '../config';
+
+import { Signer } from 'ethers';
+import { allViemChains } from './chains';
 
 export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.values(allViemChains).reduce((acc, chainData) => {
   return chainData.id
@@ -106,7 +108,7 @@ export const writeContract = async ({
   }
 };
 
-export const calcTotalSrcTokenAmount = (data: BridgeParamsRequest[] | SwapData[]) => {
+export const calcTotalSrcTokenAmount = (data: BridgeParamsRequestData[] | SwapData[]) => {
   return data.reduce((acc, obj) => {
     return acc + BigInt(obj.amount);
   }, BigInt(0));

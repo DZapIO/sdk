@@ -149,13 +149,23 @@ export type SwapQuoteResponse = {
 // Bridge
 
 export type BridgeQuoteRequest = {
-  amount: string;
   account?: string;
-  srcToken: string;
-  destToken: string;
-  slippage: number;
+  disableEstimation?: boolean;
+  integratorId: string;
   fromChain: number;
+  allowedSources?: string[];
+  notAllowedSources?: string[];
+  data: BridgeQuoteRequestData[];
+};
+
+export type BridgeQuoteRequestData = {
+  amount: string;
+  srcToken: string;
+  srcDecimals: number;
+  destToken: string;
+  destDecimals: number;
   toChain: number;
+  slippage: number;
 };
 
 export type Step = {
@@ -230,15 +240,24 @@ export type Token = {
 // Bridge Params
 
 export type BridgeParamsRequest = {
-  amount: string;
-  account: string;
-  recipient: string;
-  srcToken: string;
-  destToken: string;
-  slippage: number;
+  sender: HexString;
+  refundee: HexString;
+  integratorId: string;
   fromChain: number;
+  disableEstimation?: boolean;
+  data: BridgeParamsRequestData[];
+};
+
+export type BridgeParamsRequestData = {
+  amount: string;
+  srcToken: string;
+  srcDecimals: number;
+  destToken: string;
+  destDecimals: number;
   toChain: number;
   selectedRoute: string;
+  recipient: string;
+  slippage: number;
   additionalInfo?: BridgeAdditionalInfo;
   permitData?: string;
 };
