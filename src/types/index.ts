@@ -166,6 +166,7 @@ export type BridgeQuoteRequestData = {
   destDecimals: number;
   toChain: number;
   slippage: number;
+  selectedSource?: string;
 };
 
 export type Step = {
