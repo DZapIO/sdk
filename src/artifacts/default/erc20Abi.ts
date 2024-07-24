@@ -26,12 +26,7 @@ export const abi = [
       },
     ],
     name: 'approve',
-    outputs: [
-      {
-        name: '',
-        type: 'bool',
-      },
-    ],
+    outputs: [],
     payable: false,
     stateMutability: 'nonpayable',
     type: 'function',
