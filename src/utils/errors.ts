@@ -26,7 +26,7 @@ export const isAxiosError = (error: unknown): error is AxiosError => {
 };
 
 export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) => {
-  if (error?.code === StatusCodes.WalletRPCFailure || error?.error?.code === StatusCodes.WalletRPCFailure) {
+  if (error?.code === StatusCodes.WalletRPCFailure || error?.cause?.code === StatusCodes.WalletRPCFailure) {
     return {
       error,
       errorMsg: 'Too many requests, failure on user wallet',
@@ -34,7 +34,7 @@ export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) 
       status: TxnStatus.error,
     };
   }
-  if (error?.code === StatusCodes.UserRejectedRequest || error.error?.code === StatusCodes.UserRejectedRequest) {
+  if (error?.code === StatusCodes.UserRejectedRequest || error?.cause?.code === StatusCodes.UserRejectedRequest) {
     return {
       error,
       errorMsg: 'Rejected by User',
