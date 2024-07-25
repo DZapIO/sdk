@@ -3,12 +3,13 @@ import {
   BATCH_SWAP_QUOTE_URL,
   BRIDGE_BUILD_TX_URL,
   BRIDGE_QUOTE_URL,
+  CALCULATE_POINTS_URL,
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
 } from 'src/constants/urlConstants';
-import { BridgeParamsRequest, BridgeQuoteRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
+import { BridgeParamsRequest, BridgeQuoteRequest, CalculatePointsRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
 import { GET, POST } from 'src/constants/httpMethods';
 
 import { CancelToken } from 'axios';
@@ -39,6 +40,10 @@ export const fetchTokenDetails = (tokenAddress: string, chainId: number) => {
 
 export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) => {
   return invoke(GET_TOKEN_PRICE, { tokenAddresses, chainId }, GET);
+};
+
+export const fetchCalculatedPoints = (request: CalculatePointsRequest) => {
+  return invoke(CALCULATE_POINTS_URL, request, POST);
 };
 
 export const swapTokensApi = async ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {

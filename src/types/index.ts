@@ -16,6 +16,13 @@ export type NativeTokenInfo = {
   price?: string;
 };
 
+export type CalculatePointsRequest = {
+  srcTokens: { amount: string; address: string; decimals: number }[];
+  chainId: number;
+  account: string;
+  txType: 'swap' | 'bridge';
+};
+
 export type Chain = {
   coinKey: string;
   chainId: number;

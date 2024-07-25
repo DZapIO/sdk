@@ -5,6 +5,7 @@ import {
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
+  CalculatePointsRequest,
   ChainData,
   HexString,
   OtherAvailableAbis,
@@ -18,6 +19,7 @@ import { TransactionReceipt, WalletClient } from 'viem';
 import {
   buildBridgeTransaction,
   buildSwapTransaction,
+  fetchCalculatedPoints,
   fetchAllSupportedChains,
   fetchAllTokens,
   fetchBridgeQuoteRate,
@@ -113,6 +115,10 @@ class DzapClient {
 
   public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
     return handleDecodeTrxData(data, service);
+  }
+
+  public async calculatePoints(request: CalculatePointsRequest): Promise<{ points: number }> {
+    return await fetchCalculatedPoints(request);
   }
 
   public getDZapContractAddress = ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => {
