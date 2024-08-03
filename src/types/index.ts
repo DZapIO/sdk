@@ -124,14 +124,30 @@ export type ProviderDetails = {
   icon: string;
 };
 
+export type FeeDetails = {
+  address: string;
+  decimals: number;
+  chainId: number;
+  symbol: string;
+  logo?: string;
+  amount: string;
+  amountUSD: string;
+  included: boolean;
+};
+
+export type Fee = {
+  gasFee: FeeDetails[];
+  protocolFee: FeeDetails[];
+  providerFee: FeeDetails[];
+};
+
 export type SwapQuoteResponseData = {
   srcToken: string;
   srcAmount: string;
   destToken: string;
   destAmount: string;
-  estimatedGas: string;
-  estimatedGasUSD: string;
   priceImpactPercent: string | null;
+  fee: Fee;
   srcAmountUSD: string | null;
   destAmountUSD: string | null;
   providerDetails: ProviderDetails;
@@ -184,18 +200,6 @@ export type Step = {
   };
 };
 
-export type Fee = {
-  token: {
-    address: string;
-    decimals: number;
-    chainId: number;
-    symbol: string;
-    logo: string;
-  };
-  amount: string;
-  amountUSD: string;
-};
-
 export type BridgeQuoteRate = {
   bridgeDetails?: ProviderDetails;
   providerDetails: ProviderDetails;
@@ -207,8 +211,8 @@ export type BridgeQuoteRate = {
   swapPerUnit: string;
   srcToken: Token;
   destToken: Token;
-  gasFee: Fee;
-  protocolFee: Fee;
+  fee: Fee;
+  priceImpactPercent: string;
   duration: string;
   steps: Step[];
   additionalInfo?: BridgeAdditionalInfo;
