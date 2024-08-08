@@ -131,7 +131,7 @@ class PermitHandler {
     rpcUrls?: string[];
     signer: WalletClient;
     service: AvailableDZapServices;
-    signatureCallback?: () => Promise<void>;
+    signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
   }) {
     if (data.length === 0) return;
     const oneToMany = data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken);
@@ -141,18 +141,19 @@ class PermitHandler {
     if (isDZapNativeToken(data[0].srcToken)) {
       data[0].permitData = DEFAULT_PERMIT_DATA;
     } else {
+      const amount = oneToMany ? totalSrcAmount : BigInt(data[0].amount);
       const { status, code, permitData } = await getPermit2PermitDataForApprove({
         chainId,
         account: sender as HexString,
         token: data[0].srcToken as HexString,
         dzapContractAddress,
-        amount: oneToMany ? totalSrcAmount : BigInt(data[0].amount),
+        amount,
         signer,
         rpcUrls,
       });
       if (status === TxnStatus.success) {
         data[0].permitData = permitData;
-        if (signatureCallback) await signatureCallback();
+        if (signatureCallback) await signatureCallback({ permitData, amount, srcToken: data[0].srcToken as HexString });
       } else {
         return { status, code, data };
       }
@@ -163,6 +164,7 @@ class PermitHandler {
         if (oneToMany) {
           permitData = PERMIT2_APPROVE_DATA;
         } else {
+          const amount = oneToMany ? totalSrcAmount : BigInt(data[dataIdx].amount);
           const {
             status,
             code,
@@ -172,13 +174,13 @@ class PermitHandler {
             account: sender as HexString,
             token: data[dataIdx].srcToken as HexString,
             dzapContractAddress,
-            amount: oneToMany ? totalSrcAmount : BigInt(data[dataIdx].amount),
+            amount,
             signer,
             rpcUrls,
           });
           if (status === TxnStatus.success) {
             permitData = permit2ApprovePermitData;
-            if (signatureCallback) await signatureCallback();
+            if (signatureCallback) await signatureCallback({ permitData, srcToken: data[dataIdx].srcToken as HexString, amount });
           } else {
             return { status, code, data };
           }

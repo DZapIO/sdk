@@ -190,7 +190,7 @@ class DzapClient {
     rpcUrls?: string[];
     service: AvailableDZapServices;
     signer: WalletClient;
-    signatureCallback?: () => Promise<void>;
+    signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
     return await this.permitHandler.handleSign({
       chainId,
