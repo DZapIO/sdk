@@ -200,6 +200,18 @@ export type Step = {
   };
 };
 
+export type Path = {
+  type: string;
+  exchange: ProviderDetails;
+  srcToken: Token;
+  srcAmount: string;
+  srcAmountUSD: string;
+  destToken: Token;
+  destAmount: string;
+  destAmountUSD: string;
+  fee: Fee;
+};
+
 export type BridgeQuoteRate = {
   bridgeDetails?: ProviderDetails;
   providerDetails: ProviderDetails;
@@ -215,6 +227,7 @@ export type BridgeQuoteRate = {
   priceImpactPercent: string;
   duration: string;
   steps: Step[];
+  path: Path[];
   additionalInfo?: BridgeAdditionalInfo;
 };
 
