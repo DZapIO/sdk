@@ -16,6 +16,21 @@ export type NativeTokenInfo = {
   price?: string;
 };
 
+export const contractErrorActions = {
+  TRY_ANOTHER_ROUTE: 'TRY_ANOTHER_ROUTE',
+  INCREASE_SLIPPAGE: 'INCREASE_SLIPPAGE',
+  INCREASE_ALLOWANCE: 'INCREASE_ALLOWANCE',
+} as const;
+
+export type ContractErrorResponse = {
+  status: string;
+  txId: string;
+  code: number;
+  message: string;
+  error: unknown;
+  action: keyof typeof contractErrorActions;
+  details?: unknown;
+};
 export type CalculatePointsRequest = {
   srcTokens: { amount: string; address: string; decimals: number }[];
   chainId: number;
@@ -308,7 +323,8 @@ export type AppEnvType = `${AppEnv}`;
 export type DZapTransactionResponse = {
   status: TxnStatus;
   errorMsg?: string;
-  code: StatusCodes;
+  code: StatusCodes | number;
+  action?: keyof typeof contractErrorActions;
   txnHash?: HexString;
   error?: unknown;
   additionalInfo?: Record<string, unknown>;

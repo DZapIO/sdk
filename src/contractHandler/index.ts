@@ -1,4 +1,12 @@
-import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapTransactionResponse, HexString, SwapParamsRequest } from '../types';
+import {
+  AvailableDZapServices,
+  BridgeParamsRequest,
+  BridgeParamsResponse,
+  ContractErrorResponse,
+  DZapTransactionResponse,
+  HexString,
+  SwapParamsRequest,
+} from '../types';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { buildBridgeTransaction, buildSwapTransaction } from 'src/api';
 import { contractAddress, zkSyncChainId } from 'src/constants/contract';
@@ -80,8 +88,9 @@ class ContractHandler {
           return {
             status: TxnStatus.error,
             errorMsg: 'Simulation Failed',
-            error: (error.response?.data as any).data.errMsg,
-            code: error.response.status,
+            error: (error.response?.data as ContractErrorResponse).message,
+            code: (error.response?.data as ContractErrorResponse).code,
+            action: (error.response?.data as ContractErrorResponse).action,
           };
         }
         return {
@@ -147,8 +156,9 @@ class ContractHandler {
           return {
             status: TxnStatus.error,
             errorMsg: 'Simulation Failed',
-            error: (error.response?.data as any).data.errMsg,
-            code: error.response.status,
+            error: (error.response?.data as ContractErrorResponse).message,
+            code: (error.response?.data as ContractErrorResponse).code,
+            action: (error.response?.data as ContractErrorResponse).action,
           };
         }
         return {
