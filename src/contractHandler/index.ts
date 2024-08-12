@@ -1,4 +1,12 @@
-import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapTransactionResponse, HexString, SwapParamsRequest } from '../types';
+import {
+  AvailableDZapServices,
+  BridgeParamsRequest,
+  BridgeParamsResponse,
+  ContractErrorResponse,
+  DZapTransactionResponse,
+  HexString,
+  SwapParamsRequest,
+} from '../types';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { buildBridgeTransaction, buildSwapTransaction } from 'src/api';
 import { contractAddress, zkSyncChainId } from 'src/constants/contract';
@@ -80,8 +88,9 @@ class ContractHandler {
           return {
             status: TxnStatus.error,
             errorMsg: 'Simulation Failed',
-            error: (error.response?.data as any).data.errMsg,
-            code: error.response.status,
+            error: (error.response?.data as ContractErrorResponse).message,
+            code: (error.response?.data as ContractErrorResponse).code,
+            action: (error.response?.data as ContractErrorResponse).action,
           };
         }
         return {
@@ -107,7 +116,7 @@ class ContractHandler {
     const abi = getDZapAbi(Services.CrossChain);
     try {
       const buildTxnResponseData = (await buildBridgeTransaction(request)) as BridgeParamsResponse;
-      const { data, from, to, value, gasLimit, additionalInfo } = buildTxnResponseData;
+      const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
         const txnRes = await signer.sendTransaction({
@@ -122,6 +131,7 @@ class ContractHandler {
           code: StatusCodes.Success,
           txnHash: txnRes.hash as HexString,
           additionalInfo,
+          updatedQuotes,
         };
       } else {
         console.log('Using viem walletClient.');
@@ -147,8 +157,9 @@ class ContractHandler {
           return {
             status: TxnStatus.error,
             errorMsg: 'Simulation Failed',
-            error: (error.response?.data as any).data.errMsg,
-            code: error.response.status,
+            error: (error.response?.data as ContractErrorResponse).message,
+            code: (error.response?.data as ContractErrorResponse).code,
+            action: (error.response?.data as ContractErrorResponse).action,
           };
         }
         return {
