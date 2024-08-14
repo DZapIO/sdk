@@ -11,7 +11,7 @@ export enum Environment {
 
 export const contractAddress: { [key: string]: ContractConfig } = {
   [AppEnv.staging]: {
-    [Services.Dca]: {
+    [Services.dca]: {
       [Versions.V1]: {
         address: {
           zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
@@ -20,7 +20,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'staging/dca/v1/DZapDCA.json',
       },
     },
-    [Services.BatchSwap]: {
+    [Services.swap]: {
       [Versions.V2]: {
         address: {
           zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
@@ -29,7 +29,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'staging/core/V2/DZapCore.json',
       },
     },
-    [Services.CrossChain]: {
+    [Services.bridge]: {
       [Versions.V2]: {
         address: {
           zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
@@ -40,7 +40,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     },
   },
   [AppEnv.development]: {
-    [Services.Dca]: {
+    [Services.dca]: {
       [Versions.V1]: {
         address: {
           zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
@@ -49,7 +49,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'dZap/dca/v1/DZapDCA.json',
       },
     },
-    [Services.BatchSwap]: {
+    [Services.swap]: {
       [Versions.V2]: {
         address: {
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
@@ -58,7 +58,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'dZap/core/V2/DZapCore.json',
       },
     },
-    [Services.CrossChain]: {
+    [Services.bridge]: {
       [Versions.V2]: {
         address: {
           zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
