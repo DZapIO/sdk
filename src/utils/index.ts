@@ -156,10 +156,10 @@ export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTo
 
 export const getDZapAbi = (service: AvailableDZapServices) => {
   switch (service) {
-    case Services.BatchSwap:
-    case Services.CrossChain:
+    case Services.swap:
+    case Services.bridge:
       return isStaging ? ABI[DZapAbis.stagingDZapCoreAbi] : ABI[DZapAbis.dZapCoreAbi];
-    case Services.Dca:
+    case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
     default:
       throw new Error('Invalid Service');
