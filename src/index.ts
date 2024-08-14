@@ -17,6 +17,7 @@ import {
   SwapQuoteData,
   SwapQuoteRequest,
   SwapQuoteResponse,
+  Path,
 } from './types';
 import { Erc20Functions, PermitFunctionSelector, PermitSelector, PermitType, StatusCodes, TxnStatus } from './enums';
 import { OtherAbis, Services } from './constants';
@@ -58,4 +59,5 @@ export {
   StatusCodes,
   Erc20Functions,
   DZapTransactionResponse,
+  Path,
 };
