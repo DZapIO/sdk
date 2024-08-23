@@ -45,7 +45,7 @@ class ContractHandler {
     request: SwapParamsRequest;
     signer: Signer | WalletClient;
   }): Promise<DZapTransactionResponse> {
-    const abi = getDZapAbi(Services.BatchSwap);
+    const abi = getDZapAbi(Services.swap);
     try {
       const { data: buildTxnResponseData } = await buildSwapTransaction(request);
       const {
@@ -113,7 +113,7 @@ class ContractHandler {
     request: BridgeParamsRequest;
     signer: Signer | WalletClient;
   }): Promise<DZapTransactionResponse> {
-    const abi = getDZapAbi(Services.CrossChain);
+    const abi = getDZapAbi(Services.bridge);
     try {
       const buildTxnResponseData = (await buildBridgeTransaction(request)) as BridgeParamsResponse;
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;

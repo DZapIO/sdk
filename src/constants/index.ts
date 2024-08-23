@@ -26,9 +26,9 @@ export const OtherAbis = {
 } as const;
 
 export const Services = {
-  BatchSwap: 'batchSwap',
-  CrossChain: 'crossChain',
-  Dca: 'dca',
+  swap: 'swap',
+  bridge: 'bridge',
+  dca: 'dca',
 } as const;
 
 export const HISTORICAL_BLOCK = 10;

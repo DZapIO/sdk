@@ -5,9 +5,9 @@ import { Versions } from 'src/enums';
 import { HexString } from 'src/types';
 
 export const CURRENT_VERSION = {
-  [Services.BatchSwap]: Versions.V2,
-  [Services.CrossChain]: Versions.V2,
-  [Services.Dca]: Versions.V1,
+  [Services.swap]: Versions.V2,
+  [Services.bridge]: Versions.V2,
+  [Services.dca]: Versions.V1,
 };
 
 export const getDZapContractAddress = (chainId: number, service: keyof typeof Services) => {
