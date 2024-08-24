@@ -5,7 +5,7 @@ let REACT_APP_ENV;
 let REACT_APP_BASE_API_URL;
 
 if (typeof process !== 'undefined' && process.env) {
-  REACT_APP_ENV = process.env.REACT_APP_ENV || process.env.NEXT_PUBLIC_REACT_APP_ENV;
+  REACT_APP_ENV = process.env.REACT_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV;
   REACT_APP_BASE_API_URL = process.env.REACT_APP_BASE_API_URL;
 }
 
