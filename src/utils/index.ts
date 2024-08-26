@@ -20,6 +20,7 @@ import { batchSwapIntegrators, isStaging } from '../config';
 
 import { Signer } from 'ethers';
 import { allViemChains } from './chains';
+import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from 'src/constants/rpc';
 
 export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.values(allViemChains).reduce((acc, chainData) => {
   return chainData.id
@@ -30,10 +31,12 @@ export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.value
     : acc;
 }, {});
 
-export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: string[]; chainId: number }) => {
+const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
+
+export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: string[] | undefined; chainId: number }) => {
   return createPublicClient({
     chain: viemChainsById[chainId],
-    transport: fallback(rpcUrls.map((rpc: string) => http(rpc))),
+    transport: fallback(rpcUrls ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
   });
 };
 
@@ -60,7 +63,7 @@ export const readContract = async ({
       args,
     });
     return { data: result, status: TxnStatus.success, code: StatusCodes.Success };
-  } catch (e) {
+  } catch (e: any) {
     console.log({ e });
     return { status: TxnStatus.error, code: e.code || StatusCodes.Error };
   }
@@ -84,7 +87,7 @@ export const writeContract = async ({
   args?: unknown[];
   userAddress: HexString;
   value?: string;
-  rpcUrls: string[];
+  rpcUrls?: string[];
   signer: WalletClient;
 }) => {
   const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls });
@@ -95,7 +98,7 @@ export const writeContract = async ({
       functionName,
       args,
       account: userAddress,
-      value,
+      value: BigInt(value),
     });
     const hash = await signer.writeContract(request);
     return { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
@@ -118,7 +121,7 @@ export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: strin
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 
-export const getIntegratorInfo = (integrator?: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
+export const getIntegratorInfo = (integrator: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
 
 export const generateUUID = () => {
   let d = new Date().getTime();
@@ -148,7 +151,7 @@ export const getTrxId = (account: string) => {
 
 export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
-export const isTypeSigner = (variable): variable is Signer => {
+export const isTypeSigner = (variable: any): variable is Signer => {
   return variable instanceof Signer;
 };
 
