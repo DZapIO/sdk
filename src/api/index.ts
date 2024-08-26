@@ -61,7 +61,7 @@ export const swapTokensApi = async ({ request, provider }: { request: SwapParams
       value,
       gasLimit,
     });
-  } catch (err) {
+  } catch (err: any) {
     throw new Error(err);
   }
 };

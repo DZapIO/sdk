@@ -22,7 +22,7 @@ export const getRevertMsg = (res: string) => {
 };
 
 export const isAxiosError = (error: unknown): error is AxiosError => {
-  return error && (error as AxiosError).isAxiosError;
+  return Boolean(error) && (error as AxiosError).isAxiosError;
 };
 
 export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) => {
