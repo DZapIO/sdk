@@ -132,8 +132,12 @@ class PermitHandler {
     signer: WalletClient;
     service: AvailableDZapServices;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
-  }) {
-    if (data.length === 0) return;
+  }): Promise<{
+    status: TxnStatus;
+    data: SwapData[] | BridgeParamsRequestData[];
+    code: StatusCodes;
+  }> {
+    if (data.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, data };
     const oneToMany = data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken);
     let totalSrcAmount = BigInt(0);
     if (oneToMany) totalSrcAmount = calcTotalSrcTokenAmount(data);
@@ -152,8 +156,8 @@ class PermitHandler {
         rpcUrls,
       });
       if (status === TxnStatus.success) {
-        data[0].permitData = permitData;
-        if (signatureCallback) await signatureCallback({ permitData, amount, srcToken: data[0].srcToken as HexString });
+        data[0].permitData = permitData as HexString;
+        if (signatureCallback) await signatureCallback({ permitData: permitData as HexString, amount, srcToken: data[0].srcToken as HexString });
       } else {
         return { status, code, data };
       }
@@ -179,7 +183,7 @@ class PermitHandler {
             rpcUrls,
           });
           if (status === TxnStatus.success) {
-            permitData = permit2ApprovePermitData;
+            permitData = permit2ApprovePermitData as HexString;
             if (signatureCallback) await signatureCallback({ permitData, srcToken: data[dataIdx].srcToken as HexString, amount });
           } else {
             return { status, code, data };

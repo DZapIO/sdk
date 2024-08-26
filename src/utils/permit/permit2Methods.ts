@@ -34,7 +34,7 @@ export const checkPermit2 = async ({
       return { status: TxnStatus.error, code: StatusCodes.Error, data: { permitAllowance: BigInt(0) } };
     }
     return { status: TxnStatus.success, code: StatusCodes.Success, data: { permitAllowance: permitAllowanceRes.data as bigint } };
-  } catch (e) {
+  } catch (e: any) {
     console.log({ e });
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
       return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, data: { permitAllowance: BigInt(0) } };
@@ -76,7 +76,7 @@ export async function getPermit2PermitDataForApprove({
     if (nonceRes.code !== StatusCodes.Success) {
       return { status: nonceRes.status, code: nonceRes.code, permitData: null };
     }
-    const nonce = nonceRes.data as bigint;
+    const nonce = nonceRes.data as bigint[];
     const PERMIT2_DOMAIN_NAME = 'Permit2';
     const domain = { chainId, name: PERMIT2_DOMAIN_NAME, verifyingContract: PERMIT2_ADDRESS as HexString };
 
@@ -123,7 +123,7 @@ export async function getPermit2PermitDataForApprove({
     );
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_APPROVE, customPermitDataForTransfer]);
     return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
-  } catch (e) {
+  } catch (e: any) {
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
       return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, permitdata: null };
     }

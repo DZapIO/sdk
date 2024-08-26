@@ -1,15 +1,15 @@
-import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapTransactionResponse, HexString, SwapParamsRequest } from '../types';
-import { StatusCodes, TxnStatus } from 'src/enums';
 import { buildBridgeTransaction, buildSwapTransaction } from 'src/api';
 import { contractAddress, zkSyncChainId } from 'src/constants/contract';
+import { StatusCodes, TxnStatus } from 'src/enums';
+import { AvailableDZapServices, BridgeParamsRequest, BridgeParamsResponse, DZapTransactionResponse, HexString, SwapParamsRequest } from '../types';
 import { getDZapAbi, isTypeSigner, viemChainsById } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 
-import { CURRENT_VERSION } from 'src/utils/contract';
-import { Services } from 'src/constants';
 import { Signer } from 'ethers';
-import { WalletClient } from 'viem';
 import { appEnv } from 'src/config';
+import { Services } from 'src/constants';
+import { CURRENT_VERSION } from 'src/utils/contract';
+import { WalletClient } from 'viem';
 
 class ContractHandler {
   private static instance: ContractHandler;
