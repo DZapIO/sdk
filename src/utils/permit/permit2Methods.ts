@@ -1,4 +1,5 @@
-import { PERMIT2_ADDRESS } from 'src/constants';
+import { PERMIT2_ADDRESS, PERMIT2_ZKSYNC_ADDRESS } from 'src/constants';
+import { zkSyncChainId } from 'src/constants/contract';
 import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { Abi, WalletClient, encodeAbiParameters, erc20Abi, maxUint48, parseAbiParameters } from 'viem';
@@ -8,6 +9,14 @@ import { readContract } from '../index';
 export const MaxAllowanceTransferAmount = maxUint48;
 export const MaxAllowanceExpiration = maxUint48;
 export const MaxSigDeadline = maxUint48;
+
+export function getPermit2Address(chainId: number) {
+  if (chainId === zkSyncChainId) {
+    return PERMIT2_ZKSYNC_ADDRESS;
+  } else {
+    return PERMIT2_ADDRESS;
+  }
+}
 
 export const checkPermit2 = async ({
   srcToken,
@@ -21,13 +30,12 @@ export const checkPermit2 = async ({
   rpcUrls?: string[];
 }) => {
   try {
-    console.log('checking with permit2');
     const permitAllowanceRes = await readContract({
       chainId,
       contractAddress: srcToken as HexString,
       abi: erc20Abi,
       functionName: Erc20Functions.allowance,
-      args: [userAddress, PERMIT2_ADDRESS],
+      args: [userAddress, getPermit2Address(chainId)],
       rpcUrls,
     });
     if (permitAllowanceRes.code !== StatusCodes.Success) {
@@ -65,9 +73,10 @@ export async function getPermit2PermitDataForApprove({
   expiration?: bigint;
 }) {
   try {
+    const permit2Address = getPermit2Address(chainId);
     const nonceRes = await readContract({
       chainId,
-      contractAddress: PERMIT2_ADDRESS as HexString,
+      contractAddress: permit2Address,
       abi: Permit2Abi as Abi,
       functionName: Erc20PermitFunctions.allowance,
       args: [account, token, dzapContractAddress],
@@ -78,7 +87,7 @@ export async function getPermit2PermitDataForApprove({
     }
     const nonce = nonceRes.data as bigint[];
     const PERMIT2_DOMAIN_NAME = 'Permit2';
-    const domain = { chainId, name: PERMIT2_DOMAIN_NAME, verifyingContract: PERMIT2_ADDRESS as HexString };
+    const domain = { chainId, name: PERMIT2_DOMAIN_NAME, verifyingContract: permit2Address };
 
     const permitApprove = {
       details: {
