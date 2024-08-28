@@ -1,9 +1,9 @@
-import { Abi, WalletClient, erc20Abi, maxUint256 } from 'viem';
-import { AvailableDZapServices, BridgeParamsRequestData, HexString, SwapData } from 'src/types';
-import { DEFAULT_PERMIT_DATA, PERMIT2_ADDRESS, PERMIT2_APPROVE_DATA } from 'src/constants';
+import { DEFAULT_PERMIT_DATA, PERMIT2_APPROVE_DATA } from 'src/constants';
 import { Erc20Functions, StatusCodes, TxnStatus } from 'src/enums';
+import { AvailableDZapServices, BridgeParamsRequestData, HexString, SwapData } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, writeContract } from 'src/utils';
-import { checkPermit2, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
+import { checkPermit2, getPermit2Address, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
+import { Abi, WalletClient, erc20Abi, maxUint256 } from 'viem';
 
 import ContractHandler from '.';
 
@@ -93,7 +93,7 @@ class PermitHandler {
         contractAddress: data[dataIdx].srcToken as HexString,
         abi: erc20Abi as Abi,
         functionName: Erc20Functions.approve,
-        args: [PERMIT2_ADDRESS, data[dataIdx].amountToApprove],
+        args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
         userAddress: sender,
         rpcUrls,
         signer,
