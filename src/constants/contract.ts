@@ -18,7 +18,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     [Services.swap]: {
       [Versions.V2]: {
         address: {
-          zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
+          zkSync: '0x66C96103d046826BEac8d01d8A8DF70ef7f18216',
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
         },
         abi: 'staging/core/V2/DZapCore.json',
@@ -27,7 +27,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     [Services.bridge]: {
       [Versions.V2]: {
         address: {
-          zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
+          zkSync: '0x66C96103d046826BEac8d01d8A8DF70ef7f18216',
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
         },
         abi: 'staging/core/V2/DZapCore.json',
@@ -47,7 +47,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     [Services.swap]: {
       [Versions.V2]: {
         address: {
-          zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
+          zkSync: '0x66C96103d046826BEac8d01d8A8DF70ef7f18216',
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
         },
         abi: 'staging/core/V2/DZapCore.json',
@@ -56,7 +56,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     [Services.bridge]: {
       [Versions.V2]: {
         address: {
-          zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
+          zkSync: '0x66C96103d046826BEac8d01d8A8DF70ef7f18216',
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
         },
         abi: 'staging/core/V2/DZapCore.json',
@@ -76,8 +76,8 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     [Services.swap]: {
       [Versions.V2]: {
         address: {
+          zkSync: '0x66C96103d046826BEac8d01d8A8DF70ef7f18216',
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
-          zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
         },
         abi: 'dZap/core/V2/DZapCore.json',
       },
@@ -85,7 +85,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
     [Services.bridge]: {
       [Versions.V2]: {
         address: {
-          zkSync: '0x3d2A3e5F13B7204cA39530D27e87184030e1F2Df',
+          zkSync: '0x66C96103d046826BEac8d01d8A8DF70ef7f18216',
           otherChains: '0xF708e11A7C94abdE8f6217B13e6fE39C8b9cC0a6',
         },
         abi: 'dZap/core/V2/DZapCore.json',
