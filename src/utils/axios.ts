@@ -4,7 +4,6 @@ import { GET, POST } from 'src/constants/httpMethods';
 
 export const invoke = async (endpoint: string, data: any, method?: Method, cancelToken?: CancelToken) => {
   const url = `${getBaseUrl()}${endpoint}`;
-  console.log('sdk, baseUrl: ', url);
   return Axios({
     method: method || POST,
     url,
