@@ -34,8 +34,8 @@ export const fetchAllTokens = (chainId: number, source?: string, account?: strin
   return invoke(GET_ALL_TOKENS_URL, { chainId, source, account }, GET);
 };
 
-export const fetchTokenDetails = (tokenAddress: string, chainId: number) => {
-  return invoke(GET_TOKEN_DETAILS_URL, { tokenAddress, chainId }, GET);
+export const fetchTokenDetails = (tokenAddress: string, chainId: number, account?: string) => {
+  return invoke(GET_TOKEN_DETAILS_URL, { tokenAddress, chainId, account }, GET);
 };
 
 export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) => {
