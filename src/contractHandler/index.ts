@@ -73,7 +73,6 @@ class ContractHandler {
           to: to as HexString,
           data: data as HexString,
           value: BigInt(value),
-          gasLimit,
         });
         return {
           status: TxnStatus.success,
@@ -141,7 +140,6 @@ class ContractHandler {
           to: to as HexString,
           data: data as HexString,
           value: BigInt(value),
-          gasLimit,
         });
         return {
           status: TxnStatus.success,
