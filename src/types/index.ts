@@ -33,6 +33,7 @@ export type ContractErrorResponse = {
 };
 export type CalculatePointsRequest = {
   srcTokens: { amount: string; address: string; decimals: number }[];
+  destTokens: { amount: string; address: string; decimals: number }[];
   chainId: number;
   account: string;
   txType: 'swap' | 'bridge';

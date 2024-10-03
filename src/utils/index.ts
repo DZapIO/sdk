@@ -1,6 +1,7 @@
 import * as ABI from '../artifacts';
-import * as allWagmiChains from 'viem/chains';
 
+import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   Abi,
   ParseEventLogsReturnType,
@@ -13,23 +14,12 @@ import {
   parseEventLogs,
   stringToHex,
 } from 'viem';
-import { AvailableDZapServices, BridgeParamsRequestData, HexString, OtherAvailableAbis, SwapData } from '../types';
-import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
 import { batchSwapIntegrators, isStaging } from '../config';
+import { AvailableDZapServices, BridgeParamsRequestData, HexString, OtherAvailableAbis, SwapData } from '../types';
 
 import { Signer } from 'ethers';
-import { allViemChains } from './chains';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from 'src/constants/rpc';
-
-export const viemChainsById: Record<number, allWagmiChains.Chain> = Object.values(allViemChains).reduce((acc, chainData) => {
-  return chainData.id
-    ? {
-        ...acc,
-        [chainData.id]: chainData,
-      }
-    : acc;
-}, {});
+import { viemChainsById } from './chains';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 

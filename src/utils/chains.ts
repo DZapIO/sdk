@@ -29,6 +29,11 @@ import * as viemChains from 'viem/chains';
 //   sourceId: 1,
 // });
 
-export const allViemChains = {
-  ...viemChains,
-};
+export const viemChainsById: Record<number, viemChains.Chain> = Object.values(viemChains).reduce((acc, chainData) => {
+  return chainData.id
+    ? {
+        ...acc,
+        [chainData.id]: chainData,
+      }
+    : acc;
+}, {});

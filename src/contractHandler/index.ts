@@ -10,7 +10,7 @@ import {
   HexString,
   SwapParamsRequest,
 } from '../types';
-import { getDZapAbi, isTypeSigner, viemChainsById } from '../utils';
+import { getDZapAbi, isTypeSigner } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 
 import { Signer } from 'ethers';
@@ -18,6 +18,7 @@ import { appEnv } from 'src/config';
 import { Services } from 'src/constants';
 import { CURRENT_VERSION } from 'src/utils/contract';
 import { WalletClient } from 'viem';
+import { viemChainsById } from 'src/utils/chains';
 
 class ContractHandler {
   private static instance: ContractHandler;
