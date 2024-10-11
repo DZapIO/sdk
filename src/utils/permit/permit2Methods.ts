@@ -1,14 +1,11 @@
 import { PERMIT2_ADDRESS, PERMIT2_ZKSYNC_ADDRESS } from 'src/constants';
 import { zkSyncChainId } from 'src/constants/contract';
+import { SignatureExpiryInSecs, MaxAllowanceExpiration, MaxAllowanceTransferAmount } from 'src/constants/permit2';
 import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { Abi, WalletClient, encodeAbiParameters, erc20Abi, maxUint48, parseAbiParameters } from 'viem';
+import { Abi, WalletClient, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { readContract } from '../index';
-
-export const MaxAllowanceTransferAmount = maxUint48;
-export const MaxAllowanceExpiration = maxUint48;
-export const MaxSigDeadline = maxUint48;
 
 export function getPermit2Address(chainId: number) {
   if (chainId === zkSyncChainId) {
@@ -59,7 +56,7 @@ export async function getPermit2PermitDataForApprove({
   signer,
   rpcUrls,
   amount = BigInt(MaxAllowanceTransferAmount.toString()),
-  sigDeadline = BigInt(MaxSigDeadline.toString()),
+  sigDeadline = BigInt((SignatureExpiryInSecs + Math.floor(Date.now() / 1000)).toString()),
   expiration = BigInt(MaxAllowanceExpiration.toString()),
 }: {
   chainId: number;
