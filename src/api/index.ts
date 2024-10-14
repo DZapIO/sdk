@@ -1,3 +1,6 @@
+import { CancelToken } from 'axios';
+import { Signer } from 'ethers';
+import { GET, POST } from 'src/constants/httpMethods';
 import {
   BATCH_SWAP_BUILD_TX_URL,
   BATCH_SWAP_QUOTE_URL,
@@ -9,42 +12,74 @@ import {
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
 } from 'src/constants/urlConstants';
-import { BridgeParamsRequest, BridgeQuoteRequest, CalculatePointsRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
-import { GET, POST } from 'src/constants/httpMethods';
-
-import { CancelToken } from 'axios';
-import { Signer } from 'ethers';
 import { invoke } from 'src/utils/axios';
+import { BridgeParamsRequest, BridgeQuoteRequest, CalculatePointsRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
 
-export const fetchQuoteRate = (request: SwapQuoteRequest, cancelToken: CancelToken) => invoke(BATCH_SWAP_QUOTE_URL, request, POST, cancelToken);
+export const fetchQuoteRate = (request: SwapQuoteRequest, cancelToken: CancelToken) =>
+  invoke({
+    endpoint: BATCH_SWAP_QUOTE_URL,
+    data: request,
+    method: POST,
+    cancelToken,
+  });
 
-export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest, cancelToken: CancelToken) => invoke(BRIDGE_QUOTE_URL, request, POST, cancelToken);
+export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest, cancelToken: CancelToken) =>
+  invoke({
+    endpoint: BRIDGE_QUOTE_URL,
+    data: request,
+    method: POST,
+    cancelToken,
+  });
 
-export const buildBridgeTransaction = (request: BridgeParamsRequest) => invoke(BRIDGE_BUILD_TX_URL, request, POST);
+export const buildBridgeTransaction = (request: BridgeParamsRequest) =>
+  invoke({
+    endpoint: BRIDGE_BUILD_TX_URL,
+    data: request,
+    method: POST,
+  });
 
-export const buildSwapTransaction = (request: SwapParamsRequest) => {
-  return invoke(BATCH_SWAP_BUILD_TX_URL, request);
-};
+export const buildSwapTransaction = (request: SwapParamsRequest) =>
+  invoke({
+    endpoint: BATCH_SWAP_BUILD_TX_URL,
+    data: request,
+  });
 
-export const fetchAllSupportedChains = () => {
-  return invoke(GET_ALL_CHAINS_URL, {}, GET);
-};
+export const fetchAllSupportedChains = () =>
+  invoke({
+    endpoint: GET_ALL_CHAINS_URL,
+    data: {},
+    method: GET,
+    shouldRetry: true,
+  });
 
-export const fetchAllTokens = (chainId: number, source?: string, account?: string) => {
-  return invoke(GET_ALL_TOKENS_URL, { chainId, source, account }, GET);
-};
+export const fetchAllTokens = (chainId: number, source?: string, account?: string) =>
+  invoke({
+    endpoint: GET_ALL_TOKENS_URL,
+    data: { chainId, source, account },
+    method: GET,
+    shouldRetry: true,
+  });
 
-export const fetchTokenDetails = (tokenAddress: string, chainId: number, account?: string) => {
-  return invoke(GET_TOKEN_DETAILS_URL, { tokenAddress, chainId, account }, GET);
-};
+export const fetchTokenDetails = (tokenAddress: string, chainId: number, account?: string) =>
+  invoke({
+    endpoint: GET_TOKEN_DETAILS_URL,
+    data: { tokenAddress, chainId, account },
+    method: GET,
+  });
 
-export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) => {
-  return invoke(GET_TOKEN_PRICE, { tokenAddresses, chainId }, GET);
-};
+export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
+  invoke({
+    endpoint: GET_TOKEN_PRICE,
+    data: { tokenAddresses, chainId },
+    method: GET,
+  });
 
-export const fetchCalculatedPoints = (request: CalculatePointsRequest) => {
-  return invoke(CALCULATE_POINTS_URL, request, POST);
-};
+export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
+  invoke({
+    endpoint: CALCULATE_POINTS_URL,
+    data: request,
+    method: POST,
+  });
 
 export const swapTokensApi = async ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
   try {
@@ -53,7 +88,7 @@ export const swapTokensApi = async ({ request, provider }: { request: SwapParams
       transactionRequest: { data, from, to, value, gasLimit },
     } = paramResponseData;
 
-    // Add gasPrice : fast, medium, slow
+    // Add gasPrice: fast, medium, slow
     return await provider.sendTransaction({
       from,
       to,

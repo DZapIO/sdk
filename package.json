@@ -1,6 +1,6 @@
 {
   "name": "@dzapio/dzap-sdk",
-  "version": "2.0.53",
+  "version": "2.0.54",
   "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
   "main": "dist/index.js",
   "module": "dist/index.m.js",
@@ -74,5 +74,6 @@
   "bugs": {
     "url": "https://github.com/dzapio/dzap-sdk/issues"
   },
-  "homepage": "https://github.com/dzapio/dzap-sdk#readme"
+  "homepage": "https://github.com/dzapio/dzap-sdk#readme",
+  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }
