@@ -1,18 +1,13 @@
-import { PERMIT2_ADDRESS, PERMIT2_ZKSYNC_ADDRESS } from 'src/constants';
-import { zkSyncChainId } from 'src/constants/contract';
-import { SignatureExpiryInSecs, MaxAllowanceExpiration, MaxAllowanceTransferAmount } from 'src/constants/permit2';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
+import { MaxAllowanceExpiration, MaxAllowanceTransferAmount, SignatureExpiryInSecs } from 'src/constants/permit2';
 import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { Abi, WalletClient, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { readContract } from '../index';
 
-export function getPermit2Address(chainId: number) {
-  if (chainId === zkSyncChainId) {
-    return PERMIT2_ZKSYNC_ADDRESS;
-  } else {
-    return PERMIT2_ADDRESS;
-  }
+export function getPermit2Address(chainId: number): HexString {
+  return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
 }
 
 export const checkPermit2 = async ({
