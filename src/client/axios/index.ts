@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
-import { API_REQUEST_TIMEOUT, MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../../constants/axioslient';
+import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../../constants/axioslient';
 
 class AxiosClient {
   private static instance: AxiosClient | null = null;
@@ -10,7 +10,6 @@ class AxiosClient {
   private constructor(baseURL: string) {
     this.axiosInstance = axios.create({
       baseURL,
-      timeout: API_REQUEST_TIMEOUT,
     });
 
     this.axiosInstance.interceptors.response.use(
