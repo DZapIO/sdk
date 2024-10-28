@@ -15,7 +15,11 @@ class AxiosClient {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       async (error) => {
-        const config = error.config as ExtendedAxiosRequestConfig; // Explicitly type the config
+        const config = error.config as ExtendedAxiosRequestConfig;
+
+        if (!config) {
+          return Promise.reject(error);
+        }
 
         config.retryCount = config.retryCount ?? 0;
         config.shouldRetry = config.shouldRetry ?? false;
