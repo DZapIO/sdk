@@ -1,3 +1,5 @@
+import Axios, { CancelTokenSource } from 'axios';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -11,28 +13,27 @@ import {
   OtherAvailableAbis,
   SwapData,
   SwapParamsRequest,
+  SwapParamsResponse,
   SwapQuoteRequest,
 } from 'src/types';
-import Axios, { CancelTokenSource } from 'axios';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
   buildBridgeTransaction,
   buildSwapTransaction,
-  fetchCalculatedPoints,
   fetchAllSupportedChains,
   fetchAllTokens,
   fetchBridgeQuoteRate,
+  fetchCalculatedPoints,
   fetchQuoteRate,
   fetchTokenDetails,
   fetchTokenPrice,
   swapTokensApi,
 } from '../api';
-import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
 
+import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
 import PermitHandler from 'src/contractHandler/permitHandler';
-import { Signer } from 'ethers';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -105,12 +106,32 @@ class DzapClient {
     return swapTokensApi({ request, provider });
   };
 
-  public async swap({ chainId, request, signer }: { chainId: number; request: SwapParamsRequest; signer: Signer | WalletClient }) {
-    return await this.contractHandler.handleSwap({ chainId, request, signer });
+  public async swap({
+    chainId,
+    request,
+    signer,
+    txnData,
+  }: {
+    chainId: number;
+    request: SwapParamsRequest;
+    signer: Signer | WalletClient;
+    txnData?: SwapParamsResponse;
+  }) {
+    return await this.contractHandler.handleSwap({ chainId, request, signer, txnData });
   }
 
-  public async bridge({ chainId, request, signer }: { chainId: number; request: BridgeParamsRequest; signer: Signer | WalletClient }) {
-    return await this.contractHandler.handleBridge({ chainId, request, signer });
+  public async bridge({
+    chainId,
+    request,
+    signer,
+    txnData,
+  }: {
+    chainId: number;
+    request: BridgeParamsRequest;
+    signer: Signer | WalletClient;
+    txnData?: BridgeParamsResponse;
+  }) {
+    return await this.contractHandler.handleBridge({ chainId, request, signer, txnData });
   }
 
   public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
