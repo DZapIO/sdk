@@ -55,8 +55,7 @@ class ContractHandler {
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
-        const data = await buildSwapTransaction(request);
-        buildTxnResponseData = data;
+        buildTxnResponseData = await buildSwapTransaction(request);
       }
       const {
         data: {
@@ -132,8 +131,7 @@ class ContractHandler {
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
-        const data = await buildBridgeTransaction(request);
-        buildTxnResponseData = data;
+        buildTxnResponseData = await buildBridgeTransaction(request);
       }
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       if (isTypeSigner(signer)) {
