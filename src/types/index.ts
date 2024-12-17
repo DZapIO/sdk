@@ -59,6 +59,10 @@ export type Chain = {
     source: boolean;
     destination: boolean;
   };
+  coingecko?: {
+    chainKey: string;
+    nativeTokenKey: string;
+  };
 };
 
 export type ApiRpcResponse = {
@@ -177,6 +181,7 @@ export type SwapQuoteResponse = {
     recommendedSource: string;
     recommendedSourceByAmount: string;
     recommendedSourceByGas: string;
+    tokensWithoutPrice: string[];
     quoteRates: {
       [key: string]: {
         data: SwapQuoteResponseData;
@@ -272,6 +277,7 @@ export type BridgeQuoteResponse = {
     message?: string;
     recommendedSource?: string;
     quoteRates?: BridgeQuotes;
+    tokensWithoutPrice: Record<number, string[]>;
   };
 };
 

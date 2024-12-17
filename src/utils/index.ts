@@ -1,5 +1,4 @@
 import * as ABI from '../artifacts';
-
 import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import {

@@ -8,6 +8,7 @@ import {
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   CalculatePointsRequest,
+  Chain,
   ChainData,
   HexString,
   OtherAvailableAbis,
@@ -15,6 +16,7 @@ import {
   SwapParamsRequest,
   SwapParamsResponse,
   SwapQuoteRequest,
+  SwapQuoteResponse,
 } from 'src/types';
 import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
 import { TransactionReceipt, WalletClient } from 'viem';
@@ -27,23 +29,26 @@ import {
   fetchCalculatedPoints,
   fetchQuoteRate,
   fetchTokenDetails,
-  fetchTokenPrice,
   swapTokensApi,
 } from '../api';
-
-import { Signer } from 'ethers';
 import ContractHandler from 'src/contractHandler';
 import PermitHandler from 'src/contractHandler/permitHandler';
+import { Signer } from 'ethers';
+import { updateSwapQuotes } from 'src/utils/updateSwapQuotes';
+import { updateBridgeQuotes } from 'src/utils/updateBridgeQuotes';
+import { PriceService } from 'src/service/price';
 
 class DzapClient {
   private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
   private permitHandler: PermitHandler;
-
+  private static chainConfig: ChainData | null = null;
+  private priceService;
   private constructor() {
     this.contractHandler = ContractHandler.getInstance();
     this.permitHandler = PermitHandler.getInstance();
+    this.priceService = new PriceService();
   }
 
   // Static method to control the access to the singleton instance.
@@ -54,6 +59,20 @@ class DzapClient {
     return DzapClient.instance;
   }
 
+  public static async getChainConfig(): Promise<ChainData> {
+    if (!DzapClient.chainConfig) {
+      const data = await fetchAllSupportedChains();
+      const chains: ChainData = {};
+      data.forEach((chain: Chain) => {
+        if (!chains[chain.chainId]) {
+          chains[chain.chainId] = chain;
+        }
+      });
+      DzapClient.chainConfig = chains;
+    }
+    return DzapClient.chainConfig;
+  }
+
   public static getDZapAbi(service: AvailableDZapServices) {
     return getDZapAbi(service);
   }
@@ -61,13 +80,18 @@ class DzapClient {
     return getOtherAbis(name);
   };
 
-  public async getQuoteRate(request: SwapQuoteRequest) {
+  public async getQuoteRate(request: SwapQuoteRequest): Promise<SwapQuoteResponse> {
     if (this.cancelTokenSource) {
       this.cancelTokenSource.cancel('Cancelled due to new request');
     }
-
     this.cancelTokenSource = Axios.CancelToken.source();
-    return await fetchQuoteRate(request, this.cancelTokenSource.token);
+
+    const quotes: SwapQuoteResponse = await fetchQuoteRate(request, this.cancelTokenSource.token);
+    const chainConfig = await DzapClient.getChainConfig();
+    if (chainConfig === null) {
+      return quotes;
+    }
+    return updateSwapQuotes(quotes, request, this.priceService, chainConfig);
   }
 
   public async getBridgeQuoteRate(request: BridgeQuoteRequest): Promise<BridgeQuoteResponse> {
@@ -75,7 +99,12 @@ class DzapClient {
       this.cancelTokenSource.cancel('Cancelled due to new request');
     }
     this.cancelTokenSource = Axios.CancelToken.source();
-    return await fetchBridgeQuoteRate(request, this.cancelTokenSource.token);
+    const quotes: BridgeQuoteResponse = await fetchBridgeQuoteRate(request, this.cancelTokenSource.token);
+    const chainConfig = await DzapClient.getChainConfig();
+    if (chainConfig === null) {
+      return quotes;
+    }
+    return updateBridgeQuotes(quotes, request, this.priceService, chainConfig);
   }
 
   public async getBridgeParams(request: BridgeParamsRequest): Promise<BridgeParamsResponse> {
@@ -98,8 +127,9 @@ class DzapClient {
     return await fetchTokenDetails(tokenAddress, chainId, account);
   }
 
-  public async getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string>> {
-    return await fetchTokenPrice(tokenAddresses, chainId);
+  public async getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>> {
+    const chainConfig = await DzapClient.getChainConfig();
+    return await this.priceService.getPrices({ chainId, tokenAddresses, chainConfig });
   }
 
   public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
