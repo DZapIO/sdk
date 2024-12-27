@@ -27,7 +27,7 @@ export const updateSwapQuotes = async (
       const data = rate.data;
       const tokensDetails = request.data.find((d) => d.srcToken === data.srcToken && d.destToken === data.destToken);
       if (!tokensDetails) {
-        break;
+        continue;
       }
       const { srcDecimals, destDecimals } = tokensDetails;
 
