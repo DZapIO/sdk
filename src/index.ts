@@ -34,7 +34,6 @@ import DzapClient from './client';
 // TestHook();
 // TestGetQuoteRate();
 // TestGetSwapParams();
-export default DzapClient;
 
 export {
   ApiRpcResponse,
@@ -67,5 +66,6 @@ export {
   SwapQuoteRequest,
   SwapQuoteResponse,
   SwapParamsResponse,
+  DzapClient,
   TxnStatus,
 };
