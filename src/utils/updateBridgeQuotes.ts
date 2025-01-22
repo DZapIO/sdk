@@ -1,40 +1,8 @@
-import { BridgeQuoteRate, BridgeQuoteRequest, BridgeQuoteResponse, ChainData, Fee, FeeDetails } from 'src/types';
+import { BridgeQuoteRequest, BridgeQuoteResponse, ChainData } from 'src/types';
 import Decimal from 'decimal.js';
-import { calculateAmountUSD } from './amount';
+import { calculateAmountUSD, calculateNetAmountUsd, compareAmount, updateFee, updatePath } from './amount';
 import { PriceService } from 'src/service/price';
 import { priceProviders } from 'src/service/price/types/IPriceProvider';
-export const updateFee = (fee: Fee, tokensPrice: Record<number, Record<string, number | null>>) => {
-  const updateAmountUSD = (feeItem: FeeDetails, chainId: number, address: string, amount: string, decimals: number) => {
-    const price = tokensPrice[chainId]?.[address] || 0;
-    if (!feeItem.amountUSD || parseFloat(feeItem.amountUSD) === 0) {
-      return calculateAmountUSD(amount, decimals, price.toString()).toString();
-    }
-    return feeItem.amountUSD;
-  };
-
-  const updateFeeItems = (feeItems: FeeDetails[]) =>
-    feeItems.map((feeItem) => ({
-      ...feeItem,
-      amountUSD: updateAmountUSD(feeItem, feeItem.chainId, feeItem.address, feeItem.amount, feeItem.decimals),
-    }));
-
-  return {
-    gasFee: updateFeeItems(fee.gasFee),
-    providerFee: updateFeeItems(fee.providerFee),
-    protocolFee: updateFeeItems(fee.protocolFee),
-  };
-};
-
-export const updatePath = (data: BridgeQuoteRate, tokensPrice: Record<number, Record<string, number | null>>) => {
-  return data.path.map((path) => {
-    return {
-      ...path,
-      fee: updateFee(path.fee, tokensPrice),
-      srcAmountUSD: data.srcAmountUSD,
-      destAmountUSD: data.destAmountUSD,
-    };
-  });
-};
 
 export const updateBridgeQuotes = async (
   quotes: BridgeQuoteResponse,
@@ -52,9 +20,7 @@ export const updateBridgeQuotes = async (
         if (!tokensWithoutPrice[chainId]) {
           tokensWithoutPrice[chainId] = new Set<string>();
         }
-
-        const uniqueTokens = tokensWithoutPrice[chainId];
-        tokens.forEach((token) => uniqueTokens.add(token));
+        tokens.forEach((token) => tokensWithoutPrice[chainId].add(token));
       });
     }
   });
@@ -62,7 +28,7 @@ export const updateBridgeQuotes = async (
   if (Object.keys(tokensWithoutPrice).length === 0) {
     return quotes;
   }
-  const tokensPrice: Record<number, Record<string, number | null>> = Object.fromEntries(
+  const tokensPrice: Record<number, Record<string, string | null>> = Object.fromEntries(
     await Promise.all(
       Object.entries(tokensWithoutPrice).map(async ([chainIdStr, tokens]) => {
         const chainId = Number(chainIdStr);
@@ -74,8 +40,8 @@ export const updateBridgeQuotes = async (
   );
 
   for (const quote of Object.values(quotes)) {
-    if (!quote.quoteRates) continue;
-
+    if (!quote.quoteRates || !Object.keys(quote.quoteRates).length) continue;
+    let isSorted = true;
     for (const data of Object.values(quote.quoteRates)) {
       const tokensDetails = request.data.find((d) => d.srcToken === data.srcToken.address && d.destToken === data.destToken.address);
       if (!tokensDetails) {
@@ -83,19 +49,36 @@ export const updateBridgeQuotes = async (
       }
       const { srcDecimals, destDecimals, toChain } = tokensDetails;
 
-      const srcTokenPricePerUnit = tokensPrice[request.fromChain]?.[data.srcToken.address] || 0;
-      const destTokenPricePerUnit = tokensPrice[toChain]?.[data.destToken.address] || 0;
+      if (!compareAmount(data.srcAmountUSD, '0')) {
+        isSorted = false;
+        const srcTokenPricePerUnit = tokensPrice[request.fromChain]?.[data.srcToken.address] || '0';
+        data.srcAmountUSD = calculateAmountUSD(data.srcAmount, srcDecimals, srcTokenPricePerUnit);
+      }
 
-      data.srcAmountUSD = calculateAmountUSD(data.srcAmount, srcDecimals, srcTokenPricePerUnit.toString()).toString();
-      data.destAmountUSD = calculateAmountUSD(data.destAmount, destDecimals, destTokenPricePerUnit.toString()).toString();
+      if (!compareAmount(data.destAmountUSD, '0')) {
+        isSorted = false;
+        const destTokenPricePerUnit = tokensPrice[toChain]?.[data.destToken.address] || '0';
+        data.destAmountUSD = calculateAmountUSD(data.destAmount, destDecimals, destTokenPricePerUnit);
+      }
 
-      if (data.srcAmountUSD && data.destAmountUSD && data.srcAmountUSD !== '0' && data.destAmountUSD !== '0') {
+      if (!compareAmount(data.srcAmountUSD, '0') && !compareAmount(data.destAmountUSD, '0')) {
         const priceImpact = new Decimal(data.destAmountUSD).minus(data.srcAmountUSD).div(data.srcAmountUSD).mul(100);
         data.priceImpactPercent = priceImpact.toFixed(2);
       }
-
-      data.fee = updateFee(data.fee, tokensPrice);
+      const { isUpdated, fee } = updateFee(data.fee, tokensPrice);
+      isSorted = !isUpdated;
+      data.fee = fee;
       data.path = updatePath(data, tokensPrice);
+    }
+    if (Object.keys(quote.tokensWithoutPrice).length !== 0 && isSorted === false) {
+      quote.quoteRates = Object.fromEntries(
+        Object.entries(quote.quoteRates).sort(([, a], [, b]) => {
+          const aNetAmount = calculateNetAmountUsd(a);
+          const bNetAmount = calculateNetAmountUsd(b);
+          return new Decimal(bNetAmount).comparedTo(aNetAmount);
+        }),
+      );
+      quote.recommendedSource = Object.keys(quote.quoteRates)[0];
     }
   }
 
