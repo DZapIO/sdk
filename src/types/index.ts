@@ -172,6 +172,7 @@ export type SwapQuoteResponseData = {
   destAmountUSD: string | null;
   providerDetails: ProviderDetails;
   additionalInfo?: Record<string, unknown>;
+  swapPerUnit: string;
 };
 
 export type SwapQuoteResponse = {
