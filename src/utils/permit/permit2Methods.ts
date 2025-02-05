@@ -5,6 +5,7 @@ import { HexString } from 'src/types';
 import { Abi, WalletClient, decodeAbiParameters, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { readContract } from '../index';
+import { PermitValidationResult } from 'src/types/permit';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -146,101 +147,62 @@ export async function validatePermit2Data({
   account: HexString;
   chainId: number;
   rpcUrls: string[];
-}): Promise<{
-  status: TxnStatus;
-  code: StatusCodes;
-  isValid: boolean;
-  details?: {
-    nonce: bigint;
-    currentNonce: bigint;
-    expiration: bigint;
-    sigDeadline: bigint;
-  };
-}> {
+}): Promise<PermitValidationResult> {
   try {
-    // Decode permit type and details
-    const [permitType, permitDetails] = decodeAbiParameters([{ type: 'uint8' }, { type: 'bytes' }], permitData);
-
-    // Skip validation for non-PERMIT2_APPROVE types
-    if (permitType !== PermitType.PERMIT2_APPROVE) {
-      return {
-        status: TxnStatus.success,
-        code: StatusCodes.Success,
-        isValid: true,
-      };
-    }
-
-    const permit2Address = getPermit2Address(chainId);
-
-    // Decode permit details including nonce
     const [nonce, expiration, sigDeadline] = decodeAbiParameters(
       [{ type: 'uint160' }, { type: 'uint48' }, { type: 'uint48' }, { type: 'uint256' }],
-      permitDetails,
+      permitData,
     );
 
-    // Get current nonce from permit2 contract
-    const nonceRes = await readContract({
-      chainId,
-      contractAddress: permit2Address,
-      abi: Permit2Abi as Abi,
-      functionName: Erc20PermitFunctions.allowance,
-      args: [account, srcToken, permit2Address],
-      rpcUrls,
-    });
+    const permit2Address = getPermit2Address(chainId);
+    const [nonceRes, allowanceRes] = await Promise.all([
+      readContract({
+        chainId,
+        contractAddress: permit2Address,
+        abi: Permit2Abi as Abi,
+        functionName: Erc20PermitFunctions.allowance,
+        args: [account, srcToken, permit2Address],
+        rpcUrls,
+      }),
+      checkPermit2({
+        chainId,
+        srcToken,
+        userAddress: account,
+        rpcUrls,
+      }),
+    ]);
 
-    if (nonceRes.code !== StatusCodes.Success) {
+    if (nonceRes.code !== StatusCodes.Success || allowanceRes.code !== StatusCodes.Success) {
       return {
-        status: nonceRes.status,
-        code: nonceRes.code,
         isValid: false,
       };
     }
 
-    const currentNonce = (nonceRes.data as bigint[])[2];
-
-    // Check current permit2 allowance
-    const {
-      status,
-      code,
-      data: { permitAllowance },
-    } = await checkPermit2({
-      chainId,
-      srcToken,
-      userAddress: account,
-      rpcUrls,
-    });
-
-    if (code !== StatusCodes.Success) {
-      return {
-        status,
-        code,
-        isValid: false,
-      };
-    }
-
-    // Get current timestamp
+    // Permit2 allowance returns [amount, expiration, nonce]
+    const [, , currentNonce] = nonceRes.data as [bigint, bigint, bigint];
     const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
+    const parsedNonce = BigInt(nonce);
+    const parsedExpiration = BigInt(expiration);
+    const parsedSigDeadline = BigInt(sigDeadline);
 
-    // Check if permit is valid (allowance, nonce, and expiration)
     const isValid =
-      permitAllowance >= amount && BigInt(nonce) === currentNonce && BigInt(sigDeadline) > currentTimestamp && BigInt(expiration) > currentTimestamp;
+      allowanceRes.data.permitAllowance >= amount &&
+      parsedNonce === currentNonce &&
+      parsedSigDeadline > currentTimestamp &&
+      parsedExpiration > currentTimestamp;
 
     return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
       isValid,
       details: {
-        nonce: BigInt(nonce),
+        nonce: parsedNonce,
         currentNonce,
-        expiration: BigInt(expiration),
-        sigDeadline: BigInt(sigDeadline),
+        expiration: parsedExpiration,
+        sigDeadline: parsedSigDeadline,
       },
     };
   } catch (error) {
     console.error('Error validating permit2 data:', error);
     return {
-      status: TxnStatus.error,
-      code: StatusCodes.Error,
       isValid: false,
     };
   }
