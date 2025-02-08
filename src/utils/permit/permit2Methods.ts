@@ -2,9 +2,10 @@ import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constant
 import { MaxAllowanceExpiration, MaxAllowanceTransferAmount, SignatureExpiryInSecs } from 'src/constants/permit2';
 import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { Abi, WalletClient, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
+import { Abi, WalletClient, decodeAbiParameters, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { readContract } from '../index';
+import { PermitValidationResult } from 'src/types/permit';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -129,5 +130,80 @@ export async function getPermit2PermitDataForApprove({
       return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, permitdata: null };
     }
     return { status: TxnStatus.error, code: e.code, permitData: null };
+  }
+}
+
+export async function validatePermit2Data({
+  permitData,
+  srcToken,
+  amount,
+  account,
+  chainId,
+  rpcUrls,
+}: {
+  permitData: HexString;
+  srcToken: string;
+  amount: bigint;
+  account: HexString;
+  chainId: number;
+  rpcUrls: string[];
+}): Promise<PermitValidationResult> {
+  try {
+    const [nonce, expiration, sigDeadline] = decodeAbiParameters(
+      [{ type: 'uint160' }, { type: 'uint48' }, { type: 'uint48' }, { type: 'uint256' }],
+      permitData,
+    );
+
+    const permit2Address = getPermit2Address(chainId);
+    const [nonceRes, allowanceRes] = await Promise.all([
+      readContract({
+        chainId,
+        contractAddress: permit2Address,
+        abi: Permit2Abi as Abi,
+        functionName: Erc20PermitFunctions.allowance,
+        args: [account, srcToken, permit2Address],
+        rpcUrls,
+      }),
+      checkPermit2({
+        chainId,
+        srcToken,
+        userAddress: account,
+        rpcUrls,
+      }),
+    ]);
+
+    if (nonceRes.code !== StatusCodes.Success || allowanceRes.code !== StatusCodes.Success) {
+      return {
+        isValid: false,
+      };
+    }
+
+    // Permit2 allowance returns [amount, expiration, nonce]
+    const [, , currentNonce] = nonceRes.data as [bigint, bigint, bigint];
+    const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
+    const parsedNonce = BigInt(nonce);
+    const parsedExpiration = BigInt(expiration);
+    const parsedSigDeadline = BigInt(sigDeadline);
+
+    const isValid =
+      allowanceRes.data.permitAllowance >= amount &&
+      parsedNonce === currentNonce &&
+      parsedSigDeadline > currentTimestamp &&
+      parsedExpiration > currentTimestamp;
+
+    return {
+      isValid,
+      details: {
+        nonce: parsedNonce,
+        currentNonce,
+        expiration: parsedExpiration,
+        sigDeadline: parsedSigDeadline,
+      },
+    };
+  } catch (error) {
+    console.error('Error validating permit2 data:', error);
+    return {
+      isValid: false,
+    };
   }
 }

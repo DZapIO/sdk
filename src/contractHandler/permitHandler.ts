@@ -1,12 +1,13 @@
-import { DEFAULT_PERMIT_DATA, PERMIT2_APPROVE_DATA } from 'src/constants';
-import { Erc20Functions, StatusCodes, TxnStatus } from 'src/enums';
+import { DEFAULT_PERMIT_DATA, PERMIT2_APPROVE_DATA, Services } from 'src/constants';
+import { Erc20Functions, StatusCodes, TxnStatus, PermitType } from 'src/enums';
 import { AvailableDZapServices, BridgeParamsRequestData, HexString, SwapData } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, writeContract } from 'src/utils';
 import { checkPermit2, getPermit2Address, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
-import { Abi, WalletClient, maxUint256 } from 'viem';
-
+import { Abi, WalletClient, decodeAbiParameters, maxUint256 } from 'viem';
 import { erc20Abi } from 'src/artifacts';
 import ContractHandler from '.';
+import { getPermit1DataForApprove } from 'src/utils/permit/permit1Methods';
+import { validatePermitData } from 'src/utils/permit';
 
 class PermitHandler {
   public static instance: PermitHandler;
@@ -195,6 +196,124 @@ class PermitHandler {
     }
 
     return { status: TxnStatus.success, data, code: StatusCodes.Success };
+  }
+  public async validatePermit({
+    permitData,
+    srcToken,
+    amount,
+    account,
+    chainId,
+    rpcUrls,
+    walletClient,
+  }: {
+    permitData: HexString;
+    srcToken: string;
+    amount: bigint;
+    account: HexString;
+    chainId: number;
+    rpcUrls: string[];
+    walletClient: WalletClient;
+  }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString | null }> {
+    try {
+      // Validate permit data using utility function
+      const { isValid } = await validatePermitData({
+        permitData,
+        srcToken,
+        amount,
+        account,
+        chainId,
+        rpcUrls,
+      });
+
+      if (isValid) {
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          permitData,
+        };
+      }
+
+      // If invalid, determine permit type and create appropriate new permit
+      const [permitType] = decodeAbiParameters([{ type: 'uint8' }, { type: 'bytes' }], permitData);
+
+      if (permitType === PermitType.PERMIT) {
+        // Create new Permit1
+        const dzapContractAddress = this.contractHandler.getDZapContractAddress({
+          chainId,
+          service: Services.swap,
+        });
+
+        const res = await getPermit1DataForApprove({
+          chainId,
+          account,
+          token: srcToken,
+          spender: dzapContractAddress,
+          amount,
+          signer: walletClient,
+          rpcUrls,
+        });
+
+        if (!res.permitData) {
+          return {
+            status: TxnStatus.error,
+            code: StatusCodes.Error,
+            permitData: null,
+          };
+        }
+
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          permitData: res.permitData,
+        };
+      }
+
+      if (permitType === PermitType.PERMIT2_APPROVE) {
+        // Create new Permit2
+        const dzapContractAddress = this.contractHandler.getDZapContractAddress({
+          chainId,
+          service: Services.swap,
+        });
+
+        const res = await getPermit2PermitDataForApprove({
+          chainId,
+          account,
+          token: srcToken,
+          dzapContractAddress,
+          amount,
+          signer: walletClient,
+          rpcUrls,
+        });
+
+        if (!res.permitData) {
+          return {
+            status: TxnStatus.error,
+            code: StatusCodes.Error,
+            permitData: null,
+          };
+        }
+
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          permitData: res.permitData,
+        };
+      }
+
+      // Unsupported permit type
+      return {
+        status: TxnStatus.error,
+        code: StatusCodes.Error,
+        permitData: null,
+      };
+    } catch (error) {
+      console.error('Error validating permit:', error);
+      return {
+        status: TxnStatus.error,
+        code: StatusCodes.Error,
+        permitData: null,
+      };
+    }
   }
 }
 
