@@ -28,7 +28,7 @@
     "fix-permissions": "node ./scripts/fixPermissions.js"
   },
   "husky": {
-    "hooks": { 
+    "hooks": {
       "pre-commit": "npx lint-staged",
       "pre-push": "yarn prepush"
     }
