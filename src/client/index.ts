@@ -136,8 +136,8 @@ class DzapClient {
     }
   }
 
-  public async getTokenDetails(tokenAddress: string, chainId: number, account?: string) {
-    return await fetchTokenDetails(tokenAddress, chainId, account);
+  public async getTokenDetails(tokenAddress: string, chainId: number, account?: string, includeBalance?: boolean, includePrice?: boolean) {
+    return await fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
   }
 
   public async getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>> {
