@@ -62,10 +62,10 @@ export const fetchAllTokens = (chainId: number, source?: string, account?: strin
     shouldRetry: true,
   });
 
-export const fetchTokenDetails = (tokenAddress: string, chainId: number, account?: string) =>
+export const fetchTokenDetails = (tokenAddress: string, chainId: number, account?: string, includeBalance?: boolean, includePrice?: boolean) =>
   invoke({
     endpoint: GET_TOKEN_DETAILS_URL,
-    data: { tokenAddress, chainId, account },
+    data: { tokenAddress, chainId, account, includeBalance, includePrice },
     method: GET,
   });
 
