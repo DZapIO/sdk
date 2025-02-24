@@ -36,6 +36,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'staging/core/V2/DZapCore.json',
       },
     },
+    [Services.zap]: {},
   },
   [AppEnv.production]: {
     [Services.dca]: {
@@ -65,6 +66,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'staging/core/V2/DZapCore.json',
       },
     },
+    [Services.zap]: {},
   },
   [AppEnv.development]: {
     [Services.dca]: {
@@ -94,6 +96,7 @@ export const contractAddress: { [key: string]: ContractConfig } = {
         abi: 'dZap/core/V2/DZapCore.json',
       },
     },
+    [Services.zap]: {},
   },
 } as const;
 

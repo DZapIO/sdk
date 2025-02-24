@@ -11,6 +11,10 @@ if (typeof process !== 'undefined' && process.env) {
 
 let baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
 const stagingUrl = 'https://staging.dzap.io/';
+
+const zapStagingBaseUrl = 'https://zap-backend-931602832391.europe-north1.run.app/v1';
+const zapProdBaseUrl = 'https://zap.dzap.io/v1';
+
 export const appEnv = REACT_APP_ENV || AppEnv.development;
 export const isProd = appEnv === AppEnv.production;
 export const isStaging = appEnv === AppEnv.staging;
@@ -20,6 +24,13 @@ export const getBaseUrl = (): string => {
     baseUrl = stagingUrl;
   }
   return `${baseUrl}${versionPostfix}`;
+};
+
+export const getBaseZapUrl = (): string => {
+  if (!isProd) {
+    return zapStagingBaseUrl;
+  }
+  return zapProdBaseUrl;
 };
 
 export type DeFiContract = {

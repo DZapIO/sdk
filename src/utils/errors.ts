@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
-import { StatusCodes, TxnStatus as TxnStatus } from 'src/enums';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { Abi, decodeAbiParameters, parseAbiParameters } from 'viem';
+import { decodeAbiParameters, parseAbiParameters } from 'viem';
 
 export const BRIDGE_ERRORS = {
   BridgeCallFailed: 'BridgeCallFailed',
@@ -25,7 +25,7 @@ export const isAxiosError = (error: unknown): error is AxiosError => {
   return Boolean(error) && (error as AxiosError).isAxiosError;
 };
 
-export const handleViemTransactionError = ({ error }: { abi: Abi; error: any }) => {
+export const handleViemTransactionError = ({ error }: { error: any }) => {
   if (error?.code === StatusCodes.WalletRPCFailure || error?.cause?.code === StatusCodes.WalletRPCFailure) {
     return {
       error,

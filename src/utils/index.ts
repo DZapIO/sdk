@@ -153,6 +153,7 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
       return isStaging ? ABI[DZapAbis.stagingDZapCoreAbi] : ABI[DZapAbis.dZapCoreAbi];
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
+    case Services.zap:
     default:
       throw new Error('Invalid Service');
   }

@@ -28,6 +28,7 @@ export const Services = {
   swap: 'swap',
   bridge: 'bridge',
   dca: 'dca',
+  zap: 'zap',
 } as const;
 
 export const HISTORICAL_BLOCK = 10;

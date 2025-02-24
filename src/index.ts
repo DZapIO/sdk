@@ -28,6 +28,9 @@ import {
 
 import DzapClient from './client';
 
+export * from './zap/constants';
+export * from './zap/types';
+
 // import { TestHook } from './test';
 // Test Scripts
 // import { TestGetQuoteRate, TestGetSwapParams } from './test';

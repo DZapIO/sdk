@@ -1,6 +1,6 @@
-import { StatusCodes, TxnStatus } from 'src/enums';
 import { buildBridgeTransaction, buildSwapTransaction } from 'src/api';
 import { contractAddress, zkSyncChainId } from 'src/constants/contract';
+import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -11,15 +11,14 @@ import {
   SwapParamsRequest,
   SwapParamsResponse,
 } from '../types';
-import { getDZapAbi, isTypeSigner } from '../utils';
+import { isTypeSigner } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 
 import { Signer } from 'ethers';
 import { appEnv } from 'src/config';
-import { Services } from 'src/constants';
+import { viemChainsById } from 'src/utils/chains';
 import { CURRENT_VERSION } from 'src/utils/contract';
 import { WalletClient } from 'viem';
-import { viemChainsById } from 'src/utils/chains';
 
 class ContractHandler {
   private static instance: ContractHandler;
@@ -49,7 +48,6 @@ class ContractHandler {
     signer: Signer | WalletClient;
     txnData?: SwapParamsResponse;
   }): Promise<DZapTransactionResponse> {
-    const abi = getDZapAbi(Services.swap);
     try {
       let buildTxnResponseData: SwapParamsResponse;
       if (txnData) {
@@ -110,7 +108,7 @@ class ContractHandler {
           code: error?.response?.status ?? StatusCodes.Error,
         };
       }
-      return handleViemTransactionError({ abi, error });
+      return handleViemTransactionError({ error });
     }
   }
 
@@ -125,7 +123,6 @@ class ContractHandler {
     signer: Signer | WalletClient;
     txnData?: BridgeParamsResponse;
   }): Promise<DZapTransactionResponse> {
-    const abi = getDZapAbi(Services.bridge);
     try {
       let buildTxnResponseData: BridgeParamsResponse;
       if (txnData) {
@@ -185,7 +182,7 @@ class ContractHandler {
           code: error?.response?.status ?? StatusCodes.Error,
         };
       }
-      return handleViemTransactionError({ abi, error });
+      return handleViemTransactionError({ error });
     }
   }
 }

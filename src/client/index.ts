@@ -1,5 +1,9 @@
 import Axios, { CancelTokenSource } from 'axios';
+import { Signer } from 'ethers';
+import ContractHandler from 'src/contractHandler';
+import PermitHandler from 'src/contractHandler/permitHandler';
 import { StatusCodes, TxnStatus } from 'src/enums';
+import { PriceService } from 'src/service/price';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
@@ -19,6 +23,11 @@ import {
   SwapQuoteResponse,
 } from 'src/types';
 import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
+import { updateTokenListPrices } from 'src/utils/tokens';
+import { updateBridgeQuotes } from 'src/utils/updateBridgeQuotes';
+import { updateSwapQuotes } from 'src/utils/updateSwapQuotes';
+import ZapHandler from 'src/zap';
+import { ZapTransactionStep, ZapTxnDetails } from 'src/zap/types/step';
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
   buildBridgeTransaction,
@@ -31,25 +40,20 @@ import {
   fetchTokenDetails,
   swapTokensApi,
 } from '../api';
-import ContractHandler from 'src/contractHandler';
-import PermitHandler from 'src/contractHandler/permitHandler';
-import { Signer } from 'ethers';
-import { updateSwapQuotes } from 'src/utils/updateSwapQuotes';
-import { updateBridgeQuotes } from 'src/utils/updateBridgeQuotes';
-import { PriceService } from 'src/service/price';
-import { updateTokenListPrices } from 'src/utils/tokens';
 
 class DzapClient {
   private static instance: DzapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
   private permitHandler: PermitHandler;
+  private zapHandler: ZapHandler;
   private static chainConfig: ChainData | null = null;
   private priceService;
   private constructor() {
     this.contractHandler = ContractHandler.getInstance();
     this.permitHandler = PermitHandler.getInstance();
     this.priceService = new PriceService();
+    this.zapHandler = ZapHandler.getInstance();
   }
 
   // Static method to control the access to the singleton instance.
@@ -264,6 +268,22 @@ class DzapClient {
       signer,
       service,
       signatureCallback,
+    });
+  }
+
+  public async executeZapTransaction({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: WalletClient }) {
+    return await this.zapHandler.execute({
+      chainId,
+      data,
+      signer,
+    });
+  }
+
+  public async zap({ chainId, data, signer }: { chainId: number; data: ZapTransactionStep[]; signer: WalletClient }) {
+    return await this.zapHandler.zap({
+      chainId,
+      data,
+      signer,
     });
   }
 }
