@@ -1,7 +1,7 @@
 import { Signer } from 'ethers';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { DZapTransactionResponse, HexString } from 'src/types';
-import { isTypeSigner } from 'src/utils';
+import { initializeReadOnlyProvider, isTypeSigner } from 'src/utils';
 import { viemChainsById } from 'src/utils/chains';
 import { handleViemTransactionError } from 'src/utils/errors';
 import { WalletClient } from 'viem';
@@ -60,6 +60,15 @@ class ZapHandler {
         };
       }
     } catch (error: any) {
+      const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls: undefined });
+      const blockNumber = await publicClient.getBlockNumber();
+      console.dir(
+        {
+          blockNumber,
+          ...data,
+        },
+        { depth: null },
+      );
       console.log({ error });
       return handleViemTransactionError({ error });
     }
