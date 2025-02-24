@@ -29,6 +29,16 @@ class ZapHandler {
   }): Promise<DZapTransactionResponse> {
     try {
       const { callData, callTo, value, estimatedGas } = data;
+      const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls: undefined });
+      const blockNumber = await publicClient.getBlockNumber();
+      console.log('block Number and data');
+      console.dir(
+        {
+          blockNumber,
+          ...data,
+        },
+        { depth: null },
+      );
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
         const from = await signer.getAddress();
@@ -60,15 +70,6 @@ class ZapHandler {
         };
       }
     } catch (error: any) {
-      const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls: undefined });
-      const blockNumber = await publicClient.getBlockNumber();
-      console.dir(
-        {
-          blockNumber,
-          ...data,
-        },
-        { depth: null },
-      );
       console.log({ error });
       return handleViemTransactionError({ error });
     }
