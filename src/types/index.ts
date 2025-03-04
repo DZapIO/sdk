@@ -63,6 +63,7 @@ export type Chain = {
     chainKey: string;
     nativeTokenKey: string;
   };
+  disableMultiTxn: boolean;
 };
 
 export type ApiRpcResponse = {
