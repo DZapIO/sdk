@@ -125,6 +125,7 @@ class PermitHandler {
     service,
     signer,
     signatureCallback,
+    getDZapContractAddress,
   }: {
     chainId: number;
     sender: string;
@@ -133,6 +134,7 @@ class PermitHandler {
     signer: WalletClient;
     service: AvailableDZapServices;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
+    getDZapContractAddress: ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => Promise<string>;
   }): Promise<{
     status: TxnStatus;
     data: SwapData[] | BridgeParamsRequestData[];
@@ -142,7 +144,7 @@ class PermitHandler {
     const oneToMany = data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken);
     let totalSrcAmount = BigInt(0);
     if (oneToMany) totalSrcAmount = calcTotalSrcTokenAmount(data);
-    const dzapContractAddress = this.contractHandler.getDZapContractAddress({ chainId, service });
+    const dzapContractAddress = await getDZapContractAddress({ chainId, service });
     if (isDZapNativeToken(data[0].srcToken)) {
       data[0].permitData = DEFAULT_PERMIT_DATA;
     } else {

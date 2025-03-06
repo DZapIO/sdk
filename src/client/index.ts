@@ -40,6 +40,7 @@ import {
   fetchTokenDetails,
   swapTokensApi,
 } from '../api';
+import { Services } from 'src/constants';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -189,9 +190,31 @@ class DzapClient {
     return await fetchCalculatedPoints(request);
   }
 
-  public getDZapContractAddress = ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => {
-    return this.contractHandler.getDZapContractAddress({ chainId, service });
-  };
+  public async getDZapContractAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
+    const chainConfig = await DzapClient.getChainConfig();
+    if (!chainConfig) {
+      throw new Error('Chains config not found');
+    }
+
+    const chainData = chainConfig[chainId];
+    if (!chainData?.contracts) {
+      throw new Error(`No contracts found for chain: ${chainId}`);
+    }
+    const contractMap: Record<AvailableDZapServices, string | undefined> = {
+      [Services.bridge]: chainData.contracts.router,
+      [Services.swap]: chainData.contracts.router,
+      [Services.dca]: chainData.contracts.dca,
+      [Services.zap]: chainData.contracts.zap,
+    };
+
+    const contractAddress = contractMap[service];
+
+    if (!contractAddress) {
+      throw new Error(`Contract not found for service "${service}" on chain: ${chainId}`);
+    }
+
+    return contractAddress;
+  }
 
   public async allowance({
     chainId,
@@ -268,6 +291,7 @@ class DzapClient {
       signer,
       service,
       signatureCallback,
+      getDZapContractAddress: this.getDZapContractAddress,
     });
   }
 

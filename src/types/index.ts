@@ -59,6 +59,11 @@ export type Chain = {
     source: boolean;
     destination: boolean;
   };
+  contracts?: Partial<{
+    router: string;
+    dca: string;
+    zap: string;
+  }>;
   coingecko?: {
     chainKey: string;
     nativeTokenKey: string;

@@ -1,8 +1,6 @@
 import { buildBridgeTransaction, buildSwapTransaction } from 'src/api';
-import { contractAddress, zkSyncChainId } from 'src/constants/contract';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import {
-  AvailableDZapServices,
   BridgeParamsRequest,
   BridgeParamsResponse,
   ContractErrorResponse,
@@ -15,9 +13,7 @@ import { isTypeSigner } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 
 import { Signer } from 'ethers';
-import { appEnv } from 'src/config';
 import { viemChainsById } from 'src/utils/chains';
-import { CURRENT_VERSION } from 'src/utils/contract';
 import { WalletClient } from 'viem';
 
 class ContractHandler {
@@ -30,12 +26,6 @@ class ContractHandler {
     }
     return ContractHandler.instance;
   }
-
-  public getDZapContractAddress = ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => {
-    return contractAddress[appEnv as string][service][CURRENT_VERSION[service]]?.address[
-      chainId === zkSyncChainId ? 'zkSync' : 'otherChains'
-    ] as HexString;
-  };
 
   public async handleSwap({
     chainId,
