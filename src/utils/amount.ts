@@ -43,7 +43,7 @@ export const updateFee = (fee: Fee, tokensPrice: Record<number, Record<string, s
   const updateAmountUSD = (feeItem: FeeDetails, chainId: number, address: string, amount: string, decimals: number) => {
     const price = tokensPrice[chainId]?.[address] || '0';
     if (!feeItem.amountUSD || parseFloat(feeItem.amountUSD) === 0) {
-      isUpdated = feeItem.included;
+      isUpdated = feeItem.included === false;
       return calculateAmountUSD(amount, decimals, price);
     }
     return feeItem.amountUSD;
@@ -55,13 +55,14 @@ export const updateFee = (fee: Fee, tokensPrice: Record<number, Record<string, s
       amountUSD: updateAmountUSD(feeItem, feeItem.chainId, feeItem.address, feeItem.amount, feeItem.decimals),
     }));
 
+  const updateFees = {
+    gasFee: updateFeeItems(fee.gasFee),
+    providerFee: updateFeeItems(fee.providerFee),
+    protocolFee: updateFeeItems(fee.protocolFee),
+  };
   return {
     isUpdated: isUpdated,
-    fee: {
-      gasFee: updateFeeItems(fee.gasFee),
-      providerFee: updateFeeItems(fee.providerFee),
-      protocolFee: updateFeeItems(fee.protocolFee),
-    },
+    fee: updateFees,
   };
 };
 

@@ -45,16 +45,17 @@ export const updateSwapQuotes = async (
         return +amountUSD ? amountUSD.toFixed() : null;
       };
 
-      if (data.srcAmountUSD && !Number(data.srcAmountUSD)) {
+      if (!Number(data.srcAmountUSD)) {
         isSorted = false;
         data.srcAmountUSD = calculateAmountUSD(srcAmount, srcTokenPricePerUnit);
       }
-      if (data.destAmountUSD && !Number(data.srcAmountUSD)) {
+
+      if (!Number(data.destAmountUSD)) {
         isSorted = false;
         data.destAmountUSD = calculateAmountUSD(destAmount, destTokenPricePerUnit);
       }
 
-      if (data.srcAmountUSD && !Number(data.srcAmountUSD) && data.destAmountUSD && !Number(data.srcAmountUSD)) {
+      if (!data.priceImpactPercent || (!Number(data.srcAmountUSD) && !Number(data.destAmountUSD))) {
         const priceImpact = new Decimal(data.destAmountUSD || 0)
           .minus(data.srcAmountUSD || 0)
           .div(data.srcAmountUSD || 0)
@@ -66,8 +67,9 @@ export const updateSwapQuotes = async (
         [request.chainId]: tokensPrice,
       });
       data.fee = fee;
-      isSorted = !isUpdated;
+      isSorted = isSorted && !isUpdated;
     }
+
     if (quote.tokensWithoutPrice.length !== 0 || isSorted == false) {
       quote.quoteRates = Object.fromEntries(
         Object.entries(quote.quoteRates).sort(([, a], [, b]) => {
@@ -76,9 +78,11 @@ export const updateSwapQuotes = async (
           return Number(bNetAmount) - Number(aNetAmount);
         }),
       );
+
       const recommendedSourceByGas = Object.keys(quote.quoteRates).sort((a, b) =>
         Number(calculateNetGasFee(quote.quoteRates[b].data) - calculateNetGasFee(quote.quoteRates[a].data)),
       )[0];
+
       const recommendedSourceByAmount = Object.keys(quote.quoteRates).sort((a, b) =>
         new Decimal(quote.quoteRates[a].data.destAmount).comparedTo(quote.quoteRates[b].data.destAmount),
       )[0];
