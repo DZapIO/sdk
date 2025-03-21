@@ -29,6 +29,45 @@ class ZapHandler {
   }): Promise<DZapTransactionResponse> {
     try {
       const { callData, callTo, value, estimatedGas } = data;
+      if (isTypeSigner(signer)) {
+        console.log('Using ethers signer.');
+        const from = await signer.getAddress();
+        const txnRes = await signer.sendTransaction({
+          from,
+          to: callTo,
+          data: callData,
+          value: BigInt(value),
+          gasLimit: BigInt(estimatedGas) ? BigInt(estimatedGas) : undefined,
+        });
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash: txnRes.hash as HexString,
+        };
+      } else {
+        console.log('Using viem walletClient.');
+        const txnHash = await signer.sendTransaction({
+          chain: viemChainsById[chainId],
+          account: signer.account?.address as HexString,
+          to: data.callTo,
+          data: data.callData,
+          value: BigInt(data.value),
+        });
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash,
+        };
+      }
+    } catch (error: any) {
+      console.log({ error });
+      return handleViemTransactionError({ error });
+    }
+  }
+
+  public async approve({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: Signer | WalletClient }) {
+    try {
+      const { callData, callTo, value, estimatedGas } = data;
       const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls: undefined });
       const blockNumber = await publicClient.getBlockNumber();
       console.log('block Number and data');
@@ -47,7 +86,7 @@ class ZapHandler {
           to: callTo,
           data: callData,
           value: BigInt(value),
-          gasLimit: BigInt(estimatedGas),
+          gasLimit: BigInt(estimatedGas) ? BigInt(estimatedGas) : undefined,
         });
         return {
           status: TxnStatus.success,
@@ -86,6 +125,11 @@ class ZapHandler {
             return result;
           }
           txnHash = result.txnHash as HexString;
+        } else if (step.action === zapStepAction.approve) {
+          const result = await this.approve({ chainId, data: step.data as ZapTxnDetails, signer });
+          if (result.status !== TxnStatus.success) {
+            throw new Error('Approval failed');
+          }
         }
       }
       return {

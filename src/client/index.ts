@@ -1,5 +1,6 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
+import { Services } from 'src/constants';
 import ContractHandler from 'src/contractHandler';
 import PermitHandler from 'src/contractHandler/permitHandler';
 import { StatusCodes, TxnStatus } from 'src/enums';
@@ -27,6 +28,8 @@ import { updateTokenListPrices } from 'src/utils/tokens';
 import { updateBridgeQuotes } from 'src/utils/updateBridgeQuotes';
 import { updateSwapQuotes } from 'src/utils/updateSwapQuotes';
 import ZapHandler from 'src/zap';
+import { fetchZapRoute, fetchZapTxnStatus } from 'src/zap/api/route';
+import { ZapRouteRequest, ZapRouteResponse, ZapTxnStatusRequest, ZapTxnStatusResponse } from 'src/zap/types';
 import { ZapTransactionStep, ZapTxnDetails } from 'src/zap/types/step';
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
@@ -40,7 +43,6 @@ import {
   fetchTokenDetails,
   swapTokensApi,
 } from '../api';
-import { Services } from 'src/constants';
 
 class DzapClient {
   private static instance: DzapClient;
@@ -309,6 +311,24 @@ class DzapClient {
       data,
       signer,
     });
+  }
+
+  public async getZapRoute(request: ZapRouteRequest): Promise<ZapRouteResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapRouteResponse = (await fetchZapRoute(request, this.cancelTokenSource.token)).data;
+    return route;
+  }
+
+  public async getZapTxnStatus(request: ZapTxnStatusRequest): Promise<ZapTxnStatusResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const status: ZapTxnStatusResponse = (await fetchZapTxnStatus(request, this.cancelTokenSource.token)).data;
+    return status;
   }
 }
 
