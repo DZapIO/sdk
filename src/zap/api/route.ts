@@ -11,7 +11,6 @@ export const fetchZapRoute = (request: ZapRouteRequest, cancelToken: CancelToken
     data: request,
     method: POST,
     cancelToken,
-    shouldRetry: true,
   });
 
 export const fetchZapTxnStatus = (request: ZapTxnStatusRequest) =>
