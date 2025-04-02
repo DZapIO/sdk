@@ -323,11 +323,7 @@ class DzapClient {
   }
 
   public async getZapTxnStatus(request: ZapTxnStatusRequest): Promise<ZapTxnStatusResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
-    }
-    this.cancelTokenSource = Axios.CancelToken.source();
-    const status: ZapTxnStatusResponse = (await fetchZapTxnStatus(request, this.cancelTokenSource.token)).data;
+    const status: ZapTxnStatusResponse = (await fetchZapTxnStatus(request)).data;
     return status;
   }
 }

@@ -14,11 +14,9 @@ export const fetchZapRoute = (request: ZapRouteRequest, cancelToken: CancelToken
     shouldRetry: true,
   });
 
-export const fetchZapTxnStatus = (request: ZapTxnStatusRequest, cancelToken: CancelToken) =>
+export const fetchZapTxnStatus = (request: ZapTxnStatusRequest) =>
   invokeZap({
     endpoint: `${getBaseZapUrl()}/${ZAP_TXN_STATUS_URL}`,
     data: request,
     method: GET,
-    cancelToken,
-    shouldRetry: true,
   });
