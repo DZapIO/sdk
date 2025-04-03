@@ -83,7 +83,13 @@ export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
     method: POST,
   });
 
-export const swapTokensApi = async ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
+export const swapTokensApi = async ({
+  request,
+  provider,
+}: {
+  request: SwapParamsRequest;
+  provider: Signer;
+}): ReturnType<typeof provider.sendTransaction> => {
   try {
     const { data: paramResponseData } = await buildSwapTransaction(request);
     const {

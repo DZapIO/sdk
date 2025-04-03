@@ -1,12 +1,30 @@
 import { PriceService } from 'src/service/price';
 import { priceProviders } from 'src/service/price/types/IPriceProvider';
-import { ChainData, HexString, TokenResponse } from 'src/types';
+import { ChainData, HexString, TokenInfo, TokenResponse } from 'src/types';
 import { formatUnits, isAddress, zeroAddress } from 'viem';
 import { getChecksumAddress } from '.';
 
 export const isNativeCurrency = (address: string, chainConfig: ChainData) => {
   if (!chainConfig) return false;
   return Object.values(chainConfig).some(({ nativeToken }) => nativeToken.contract === address);
+};
+
+export const sortByBalanceInUsd = (tokenEntries: [string, TokenInfo][]): TokenResponse => {
+  const { withBalanceInUsd, withoutBalanceInUsd } = tokenEntries.reduce(
+    (acc, [key, token]) => {
+      if (token.balanceInUsd !== null) {
+        acc.withBalanceInUsd.push([key, token]);
+      } else {
+        acc.withoutBalanceInUsd.push([key, token]);
+      }
+      return acc;
+    },
+    { withBalanceInUsd: [] as [string, TokenInfo][], withoutBalanceInUsd: [] as [string, TokenInfo][] },
+  );
+
+  withBalanceInUsd.sort((a, b) => b[1].balanceInUsd! - a[1].balanceInUsd!);
+
+  return Object.fromEntries([...withBalanceInUsd, ...withoutBalanceInUsd]);
 };
 
 export const updateTokenListPrices = async (
@@ -35,7 +53,7 @@ export const updateTokenListPrices = async (
         ? parseFloat(fetchedPrices[token]) * parseFloat(formatUnits(BigInt(tokens[token].balance), tokens[token].decimals))
         : null;
     });
-    return tokens;
+    return sortByBalanceInUsd(Object.entries(tokens));
   } catch (error) {
     console.error('Error fetching token prices:', error);
     return tokens;

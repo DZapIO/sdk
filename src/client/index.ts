@@ -152,7 +152,7 @@ class DzapClient {
     return await this.priceService.getPrices({ chainId, tokenAddresses, chainConfig });
   }
 
-  public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }) => {
+  public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }): ReturnType<typeof swapTokensApi> => {
     return swapTokensApi({ request, provider });
   };
 
