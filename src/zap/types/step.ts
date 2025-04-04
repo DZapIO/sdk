@@ -12,7 +12,7 @@ export type ZapTxnDetails = {
 };
 
 export type ZapTransactionStep = {
-  action: typeof zapStepAction.execute;
+  action: StepAction;
   data: ZapTxnDetails;
 };
 
