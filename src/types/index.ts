@@ -122,7 +122,6 @@ export type SwapQuoteRequest = {
   integratorId: string;
   data: Array<SwapQuoteData>;
   allowedSources?: string[];
-  notAllowedSources?: string[];
 };
 
 export type GetSwapParamsResponse = {
@@ -220,7 +219,6 @@ export type BridgeQuoteRequest = {
   integratorId: string;
   fromChain: number;
   allowedSources?: string[];
-  notAllowedSources?: string[];
   data: BridgeQuoteRequestData[];
 };
 

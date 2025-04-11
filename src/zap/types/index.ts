@@ -20,6 +20,8 @@ export type ZapRouteRequest = {
   estimateGas?: boolean;
   positionDetails?: ZapRouteRequestPositionDetails;
   poolDetails?: ZapRouteRequestPoolDetails;
+  allowedBridges?: string[];
+  allowedDexes?: string[];
 };
 
 export type ZapRouteRequestPositionDetails = {
