@@ -1,5 +1,6 @@
-import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
 import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
+import { PsbtInput, PsbtOutput } from './btc';
 
 export type HexString = `0x${string}`;
 
@@ -346,6 +347,12 @@ export type BridgeParamsResponse = {
   value: string;
   gasLimit: string;
   additionalInfo?: BridgeAdditionalInfo;
+  //dev: only used for btc tx.
+  btcTxData?: {
+    inputs: PsbtInput[];
+    outputs: PsbtOutput[];
+    feeRate: number;
+  };
   updatedQuotes: Record<string, string>;
 };
 
