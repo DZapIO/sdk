@@ -69,6 +69,10 @@ export type Chain = {
     chainKey: string;
     nativeTokenKey: string;
   };
+  defiLlama?: {
+    chainKey: string;
+    nativeTokenKey: string;
+  };
   disableMultiTxn: boolean;
 };
 

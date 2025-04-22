@@ -3,6 +3,8 @@ import { CoingeckoPriceProvider } from './provider/coingecko';
 import { DefiLlamaPriceProvider } from './provider/defiLlama';
 import { DzapPriceProvider } from './provider/dzap';
 import { IPriceProvider, PriceProvider, priceProviders } from './types/IPriceProvider';
+import { CacheProvider } from '../cache/cacheProvider';
+import { getTokensPriceCacheKey, TOKENS_PRICE_EXPIRY } from '../cache/constant';
 
 export class PriceService {
   private providers: Map<PriceProvider, IPriceProvider>;
@@ -44,10 +46,15 @@ export class PriceService {
       return {};
     }
 
+    const cacheKey = getTokensPriceCacheKey(chainId);
+    const cachedPrices = CacheProvider.get<Record<string, string>>(cacheKey) || {};
+    const tokenWithPrice: Record<string, string> = {};
     const result: Record<string, string | null> = {};
 
     tokenAddresses.forEach((token) => {
-      result[token] = null;
+      if (!cachedPrices?.[token]) {
+        result[token] = null;
+      }
     });
 
     for (const provider of validProviders) {
@@ -58,11 +65,22 @@ export class PriceService {
       this.updateTokensPrice(fetchedPrices, result);
     }
 
-    const notFoundTokens = Object.keys(result).filter((token) => result[token] === null);
-    if (notFoundTokens.length > 0) {
-      console.warn('Prices not found for tokens:', notFoundTokens);
+    const remainingTokens: string[] = [];
+    for (const [token, price] of Object.entries(result)) {
+      if (price === null) {
+        remainingTokens.push(token);
+      } else {
+        tokenWithPrice[token] = price;
+      }
     }
 
+    if (remainingTokens.length > 0) {
+      console.warn('Prices not found for tokens:', remainingTokens);
+    }
+
+    if (Object.keys(tokenWithPrice).length > 0) {
+      CacheProvider.set(cacheKey, { ...cachedPrices, ...tokenWithPrice }, TOKENS_PRICE_EXPIRY);
+    }
     return result;
   }
 

@@ -62,7 +62,7 @@ export const updateBridgeQuotes = async (
         const destTokenPricePerUnit = tokensPrice[toChain]?.[data.destToken.address] || '0';
         data.destAmountUSD = calculateAmountUSD(data.destAmount, destDecimals, destTokenPricePerUnit);
       }
-      if (!Number(data.srcAmountUSD) && !Number(data.destAmountUSD)) {
+      if (Number(data.srcAmountUSD) && Number(data.destAmountUSD)) {
         const priceImpact = new Decimal(data.destAmountUSD).minus(data.srcAmountUSD).div(data.srcAmountUSD).mul(100);
         data.priceImpactPercent = priceImpact.toFixed(2);
       }

@@ -55,7 +55,7 @@ export const updateSwapQuotes = async (
         data.destAmountUSD = calculateAmountUSD(destAmount, destTokenPricePerUnit);
       }
 
-      if (!data.priceImpactPercent || (!Number(data.srcAmountUSD) && !Number(data.destAmountUSD))) {
+      if (Number(data.srcAmountUSD) && Number(data.destAmountUSD)) {
         const priceImpact = new Decimal(data.destAmountUSD || 0)
           .minus(data.srcAmountUSD || 0)
           .div(data.srcAmountUSD || 0)

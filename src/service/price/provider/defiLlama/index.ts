@@ -4,16 +4,27 @@ import { invoke } from 'src/utils/axios';
 import { defiLlamaConfig } from './config';
 import { DefiLlamaResponse } from './types';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
+import { isNativeCurrency } from 'src/utils/tokens';
 
 export class DefiLlamaPriceProvider implements IPriceProvider {
   public id = priceProviders.defiLlama;
   public requiresChainConfig = true;
 
-  private preProcess = (chainId: number, tokenAddresses: string[], chainConfig: ChainData) => {
-    const { name } = chainConfig[chainId];
-    if (!name) return [];
-    return tokenAddresses.map((address) => `${name}:${address}`);
-  };
+  private preProcess(chainId: number, tokenAddresses: string[], chainConfig: ChainData): string[] {
+    const chainInfo = chainConfig[chainId];
+    if (!chainInfo?.name) return [];
+    const { name, defiLlama } = chainInfo;
+
+    return tokenAddresses.map((address) => {
+      if (defiLlama?.chainKey) {
+        if (isNativeCurrency(address, chainConfig)) {
+          return `${defiLlama.chainKey}:${defiLlama.nativeTokenKey}`;
+        }
+        return `${defiLlama.chainKey}:${address}`;
+      }
+      return `${name}:${address}`;
+    });
+  }
 
   private postProcess = (chainId: number, tokenAddresses: string[], chainConfig: ChainData, respose: DefiLlamaResponse) => {
     const { name } = chainConfig[chainId];
