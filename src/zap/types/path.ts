@@ -8,7 +8,7 @@ export type ZapPathAsset = {
   address: HexString;
   symbol: string;
   logo: string;
-  decimal: number;
+  decimals: number;
   price: string;
   type: string;
 };
