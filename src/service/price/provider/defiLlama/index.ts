@@ -12,7 +12,9 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
 
   private preProcess(chainId: number, tokenAddresses: string[], chainConfig: ChainData): string[] {
     const chainInfo = chainConfig[chainId];
-    if (!chainInfo?.name) return [];
+    if (!chainInfo.isEnabled || !chainInfo?.name) {
+      return [];
+    }
     const { name, defiLlama } = chainInfo;
 
     return tokenAddresses.map((address) => {

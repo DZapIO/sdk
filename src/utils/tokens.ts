@@ -6,7 +6,7 @@ import { getChecksumAddress } from '.';
 
 export const isNativeCurrency = (address: string, chainConfig: ChainData) => {
   if (!chainConfig) return false;
-  return Object.values(chainConfig).some(({ nativeToken }) => nativeToken.contract === address);
+  return Object.values(chainConfig).some((chain) => chain.isEnabled && chain.nativeToken.contract === address);
 };
 
 export const sortByBalanceInUsd = (tokenEntries: [string, TokenInfo][]): TokenResponse => {

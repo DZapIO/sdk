@@ -10,7 +10,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
   public requiresChainConfig = true;
 
   private fetchNativePrice = async (chainId: number, chainConfig: ChainData): Promise<number | null> => {
-    if (!chainConfig) return 0;
+    if (!chainConfig || !chainConfig[chainId].isEnabled) return 0;
     const { coingecko } = chainConfig[chainId];
     if (!coingecko) return 0;
     const response: Record<string, { usd: number }> = await invoke({
@@ -22,7 +22,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
   };
 
   private fetchERC20Prices = async (chainId: number, addresses: string[], chainConfig: ChainData): Promise<Record<string, string | null>> => {
-    if (!addresses.length || !chainConfig) return {};
+    if (!addresses.length || !chainConfig || !chainConfig[chainId].isEnabled) return {};
 
     const { coingecko } = chainConfig[chainId];
     if (!coingecko) return {};
@@ -51,7 +51,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
         this.fetchERC20Prices(chainId, addressesWithoutNativeToken, chainConfig),
         addressesWithoutNativeToken.length !== tokenAddresses.length ? this.fetchNativePrice(chainId, chainConfig) : undefined,
       ]);
-      if (nativePrice) {
+      if (chainConfig[chainId].isEnabled && nativePrice) {
         erc20Prices[chainConfig[chainId].nativeToken.contract] = nativePrice.toString();
       }
 

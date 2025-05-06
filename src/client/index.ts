@@ -194,7 +194,7 @@ class DzapClient {
 
   public async getDZapContractAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
     const chainConfig = await DzapClient.getChainConfig();
-    if (!chainConfig) {
+    if (!chainConfig[chainId].isEnabled || !chainConfig) {
       throw new Error('Chains config not found');
     }
 

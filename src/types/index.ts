@@ -74,6 +74,7 @@ export type Chain = {
     nativeTokenKey: string;
   };
   disableMultiTxn: boolean;
+  isEnabled: boolean;
 };
 
 export type ApiRpcResponse = {
