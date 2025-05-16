@@ -1,4 +1,3 @@
-import { CancelToken } from 'axios';
 import { Signer } from 'ethers';
 import { GET, POST } from 'src/constants/httpMethods';
 import {
@@ -15,21 +14,19 @@ import {
 import { invoke } from 'src/utils/axios';
 import { BridgeParamsRequest, BridgeQuoteRequest, CalculatePointsRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
 
-export const fetchQuoteRate = (request: SwapQuoteRequest, cancelToken: CancelToken) =>
+export const fetchQuoteRate = (request: SwapQuoteRequest) =>
   invoke({
     endpoint: BATCH_SWAP_QUOTE_URL,
     data: request,
     method: POST,
-    cancelToken,
     shouldRetry: true,
   });
 
-export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest, cancelToken: CancelToken) =>
+export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest) =>
   invoke({
     endpoint: BRIDGE_QUOTE_URL,
     data: request,
     method: POST,
-    cancelToken,
     shouldRetry: true,
   });
 

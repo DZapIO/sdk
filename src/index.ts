@@ -1,4 +1,4 @@
-import { OtherAbis, Services } from './constants';
+import { OtherAbis, Services, QuoteFilters } from './constants';
 import { SignatureExpiryInSecs } from './constants/permit2';
 import { Erc20Functions, PermitFunctionSelector, PermitSelector, PermitType, StatusCodes, TxnStatus } from './enums';
 import {
@@ -24,6 +24,7 @@ import {
   SwapQuoteRequest,
   SwapQuoteResponse,
   SwapParamsResponse,
+  QuoteFilter,
 } from './types';
 
 import DzapClient from './client';
@@ -69,6 +70,8 @@ export {
   SwapQuoteRequest,
   SwapQuoteResponse,
   SwapParamsResponse,
+  QuoteFilter,
+  QuoteFilters,
   DzapClient,
   TxnStatus,
 };

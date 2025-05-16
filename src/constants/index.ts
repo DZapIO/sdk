@@ -31,6 +31,12 @@ export const Services = {
   zap: 'zap',
 } as const;
 
+export const QuoteFilters = {
+  fastest: 'fastest',
+  best: 'best',
+  all: 'all',
+} as const;
+
 export const HISTORICAL_BLOCK = 10;
 
 export const NATIVE_TOKEN_DECIMAL = 18;

@@ -1,4 +1,4 @@
-import { DZapAbis, OtherAbis, Services } from 'src/constants';
+import { DZapAbis, OtherAbis, QuoteFilters, Services } from 'src/constants';
 import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
 import { PsbtInput, PsbtOutput } from './btc';
 
@@ -123,11 +123,14 @@ export type SwapQuoteData = {
   slippage: number;
 };
 
+export type QuoteFilter = keyof typeof QuoteFilters;
+
 export type SwapQuoteRequest = {
   chainId: number;
   integratorId: string;
   data: Array<SwapQuoteData>;
   allowedSources?: string[];
+  filter?: QuoteFilter;
 };
 
 export type GetSwapParamsResponse = {
@@ -220,12 +223,13 @@ export type SwapParamsResponse = {
 // Bridge
 
 export type BridgeQuoteRequest = {
-  account?: string;
-  disableEstimation?: boolean;
   integratorId: string;
   fromChain: number;
-  allowedSources?: string[];
   data: BridgeQuoteRequestData[];
+  disableEstimation?: boolean;
+  account?: string;
+  allowedSources?: string[];
+  filter?: QuoteFilter;
 };
 
 export type BridgeQuoteRequestData = {

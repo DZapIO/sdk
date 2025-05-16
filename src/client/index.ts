@@ -89,12 +89,7 @@ class DzapClient {
   };
 
   public async getQuoteRate(request: SwapQuoteRequest): Promise<SwapQuoteResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
-    }
-    this.cancelTokenSource = Axios.CancelToken.source();
-
-    const quotes: SwapQuoteResponse = await fetchQuoteRate(request, this.cancelTokenSource.token);
+    const quotes: SwapQuoteResponse = await fetchQuoteRate(request);
     const chainConfig = await DzapClient.getChainConfig();
     if (chainConfig === null) {
       return quotes;
@@ -103,11 +98,7 @@ class DzapClient {
   }
 
   public async getBridgeQuoteRate(request: BridgeQuoteRequest): Promise<BridgeQuoteResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
-    }
-    this.cancelTokenSource = Axios.CancelToken.source();
-    const quotes: BridgeQuoteResponse = await fetchBridgeQuoteRate(request, this.cancelTokenSource.token);
+    const quotes: BridgeQuoteResponse = await fetchBridgeQuoteRate(request);
     const chainConfig = await DzapClient.getChainConfig();
     if (chainConfig === null) {
       return quotes;
