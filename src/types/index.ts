@@ -358,6 +358,10 @@ export type BridgeParamsResponse = {
     outputs: PsbtOutput[];
     feeRate: number;
   };
+  svmTxData?: {
+    blockhash: string;
+    lastValidBlockHeight: number;
+  };
   updatedQuotes: Record<string, string>;
 };
 
