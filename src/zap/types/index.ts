@@ -3,6 +3,7 @@ import { ZapPath, ZapPathAsset } from './path';
 import { ZapStep } from './step';
 
 export type ZapRouteResponse = {
+  amountOut: string;
   steps: ZapStep[];
   path: ZapPath[];
 };

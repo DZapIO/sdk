@@ -15,7 +15,6 @@ export type ZapPathAsset = {
 
 export type ZapPath = {
   action: ZapPathAction;
-  amountOut: string;
   protocol: ProviderDetails;
   input: {
     asset: ZapPathAsset;
