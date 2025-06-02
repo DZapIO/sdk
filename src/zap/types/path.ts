@@ -1,4 +1,4 @@
-import { HexString } from 'src/types';
+import { HexString, ProviderDetails } from 'src/types';
 import { zapPathAction } from '../constants/path';
 
 export type ZapPathAction = keyof typeof zapPathAction;
@@ -15,7 +15,8 @@ export type ZapPathAsset = {
 
 export type ZapPath = {
   action: ZapPathAction;
-  protocol: string;
+  amountOut: string;
+  protocol: ProviderDetails;
   input: {
     asset: ZapPathAsset;
     amount: string;

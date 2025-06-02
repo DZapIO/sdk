@@ -1,4 +1,4 @@
-import { HexString } from 'src/types';
+import { HexString, ProviderDetails } from 'src/types';
 import { ZapPath, ZapPathAsset } from './path';
 import { ZapStep } from './step';
 
@@ -46,6 +46,8 @@ export type ZapTxnStatusStep = {
   chainId: number;
   hash?: string;
   status: ZapTxnStatus;
+  action: string;
+  protocol: ProviderDetails;
   input: ZapTransactionAsset[];
   output: ZapTransactionAsset[];
 };
