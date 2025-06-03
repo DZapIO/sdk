@@ -11,11 +11,20 @@ export type ZapPathAsset = {
   decimals: number;
   price: string;
   type: string;
+  name: string;
+};
+
+export type ZapFee = {
+    amount: string;
+    amountUSD: string;
+    asset: ZapPathAsset;
+    included: boolean;
 };
 
 export type ZapPath = {
   action: ZapPathAction;
   protocol: ProviderDetails;
+  fee: ZapFee[];
   input: {
     asset: ZapPathAsset;
     amount: string;
