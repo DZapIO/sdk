@@ -15,10 +15,10 @@ export type ZapPathAsset = {
 };
 
 export type ZapFee = {
-    amount: string;
-    amountUSD: string;
-    asset: ZapPathAsset;
-    included: boolean;
+  amount: string;
+  amountUSD: string;
+  asset: ZapPathAsset;
+  included: boolean;
 };
 
 export type ZapPath = {

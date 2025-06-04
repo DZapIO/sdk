@@ -154,6 +154,7 @@ export type GetSwapParamsResponse = {
 };
 
 export type ProviderDetails = {
+  id: string;
   name: string;
   icon: string;
 };
