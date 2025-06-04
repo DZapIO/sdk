@@ -1,4 +1,3 @@
-import * as ABI from '../artifacts';
 import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import {
@@ -13,8 +12,9 @@ import {
   parseEventLogs,
   stringToHex,
 } from 'viem';
+import * as ABI from '../artifacts';
 import { batchSwapIntegrators, isStaging } from '../config';
-import { AvailableDZapServices, BridgeParamsRequestData, HexString, OtherAvailableAbis, SwapData } from '../types';
+import { AvailableDZapServices, BridgeParamsRequestData, HexString, OtherAvailableAbis, SwapData, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from 'src/constants/rpc';
@@ -28,6 +28,27 @@ export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: stri
     transport: fallback(rpcUrls ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
   });
 };
+
+function getPairString({
+  srcToken,
+  destToken,
+  srcChainId,
+  destChainId,
+  forceIncludeChainId,
+}: {
+  srcToken: string;
+  destToken: string;
+  srcChainId?: number;
+  destChainId?: number;
+  forceIncludeChainId?: boolean;
+}): string {
+  if ((!srcChainId || !destChainId || srcChainId === destChainId) && !forceIncludeChainId) {
+    return `${srcToken}-${destToken}`;
+  }
+  const srcTokenAddress = srcToken;
+  const destTokenAddress = destToken;
+  return `${srcChainId}_${srcTokenAddress}-${destChainId}_${destTokenAddress}`;
+}
 
 export const readContract = async ({
   chainId,
@@ -159,21 +180,41 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
   }
 };
 
-export const handleDecodeTrxData = (data: TransactionReceipt, service: AvailableDZapServices) => {
+export const handleDecodeTrxData = (
+  data: TransactionReceipt,
+  service: AvailableDZapServices,
+): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
+  const dzapAbi = getDZapAbi(service);
   try {
     events = parseEventLogs({
-      abi: getDZapAbi(service),
+      abi: dzapAbi,
       logs: data.logs,
     });
   } catch (e) {
     events = [];
   }
+
   events = events?.filter((item: any) => item !== null);
+  const txLogArgs = events[0]?.args as { swapInfo: SwapInfo | SwapInfo[] };
+  let swapFailPairs: string[] = [];
 
-  const swapInfo = Array.isArray(events) && events.length > 0 ? (events[0]?.args as { swapInfo: unknown })?.swapInfo : [];
-
-  return swapInfo;
+  if (Array.isArray(txLogArgs?.swapInfo)) {
+    swapFailPairs = txLogArgs.swapInfo
+      .filter((info) => BigInt(info.returnToAmount) === BigInt(0) || BigInt(info.fromAmount) === BigInt(0))
+      .map((info) => getPairString({ srcToken: info.fromToken, destToken: info.toToken }));
+  } else if (typeof txLogArgs?.swapInfo === 'object' && Object.keys(txLogArgs?.swapInfo).length > 0) {
+    const { fromAmount, returnToAmount, fromToken, toToken } = txLogArgs.swapInfo;
+    if (BigInt(returnToAmount) === BigInt(0) || BigInt(fromAmount) === BigInt(0)) {
+      swapFailPairs.push(
+        getPairString({
+          srcToken: fromToken,
+          destToken: toToken,
+        }),
+      );
+    }
+  }
+  return { swapInfo: txLogArgs?.swapInfo, swapFailPairs };
 };
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {

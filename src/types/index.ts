@@ -388,3 +388,11 @@ export type DZapTransactionResponse = {
   additionalInfo?: Record<string, unknown>;
   updatedQuotes?: Record<string, string>;
 };
+
+export type SwapInfo = {
+  dex: string; //dex if router address not name of provider
+  fromToken: string;
+  fromAmount: bigint;
+  toToken: string;
+  returnToAmount: bigint;
+};
