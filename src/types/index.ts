@@ -318,6 +318,14 @@ export type Token = {
 export type TokenInfo = NativeTokenInfo & {
   chainId: number;
   balanceInUsd?: number | null;
+  isDisabledOnSwapBridge?: {
+    source: boolean;
+    destination: boolean;
+  };
+  isDisabledOnZap?: {
+    source: boolean;
+    destination: boolean;
+  };
 };
 
 export type TokenResponse = {
@@ -349,13 +357,16 @@ export type BridgeParamsRequestData = {
   permitData?: string;
 };
 
-export type BridgeParamsResponse = {
+export type ExecuteTxnData = {
   data: HexString;
   to: HexString;
   from: HexString;
   chainId: number;
   value: string;
   gasLimit: string;
+};
+
+export type BridgeParamsResponse = ExecuteTxnData & {
   additionalInfo?: BridgeAdditionalInfo;
   //dev: only used for btc tx.
   btcTxData?: {

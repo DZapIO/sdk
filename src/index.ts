@@ -24,7 +24,11 @@ import {
   SwapQuoteRequest,
   SwapQuoteResponse,
   SwapParamsResponse,
+  ExecuteTxnData,
   QuoteFilter,
+  ProviderDetails,
+  TokenInfo,
+  TokenResponse,
 } from './types';
 
 import DzapClient from './client';
@@ -74,4 +78,8 @@ export {
   QuoteFilters,
   DzapClient,
   TxnStatus,
+  ExecuteTxnData,
+  ProviderDetails,
+  TokenInfo,
+  TokenResponse,
 };

@@ -17,6 +17,7 @@ import {
   ChainData,
   HexString,
   OtherAvailableAbis,
+  ExecuteTxnData,
   SwapData,
   SwapParamsRequest,
   SwapParamsResponse,
@@ -173,6 +174,13 @@ class DzapClient {
     txnData?: BridgeParamsResponse;
   }) {
     return await this.contractHandler.handleBridge({ chainId, request, signer, txnData });
+  }
+
+  public async sendTransaction({ signer, txnData }: { chainId: number; signer: Signer | WalletClient; txnData: ExecuteTxnData }) {
+    return await this.contractHandler.handleSendTransaction({
+      signer,
+      ...txnData,
+    });
   }
 
   public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
