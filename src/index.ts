@@ -1,6 +1,7 @@
 import { OtherAbis, Services, QuoteFilters } from './constants';
 import { SignatureExpiryInSecs } from './constants/permit2';
 import { Erc20Functions, PermitFunctionSelector, PermitSelector, PermitType, StatusCodes, TxnStatus } from './enums';
+import { getTokensPairKey, formatToken } from './utils';
 import {
   ApiRpcResponse,
   BridgeParamsRequest,
@@ -29,6 +30,7 @@ import {
   ProviderDetails,
   TokenInfo,
   TokenResponse,
+  SwapInfo,
 } from './types';
 
 import DzapClient from './client';
@@ -82,4 +84,7 @@ export {
   ProviderDetails,
   TokenInfo,
   TokenResponse,
+  getTokensPairKey,
+  formatToken,
+  SwapInfo,
 };

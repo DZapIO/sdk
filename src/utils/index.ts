@@ -9,14 +9,16 @@ import {
   fallback,
   getAddress,
   http,
+  isAddress,
   parseEventLogs,
   stringToHex,
 } from 'viem';
 import * as ABI from '../artifacts';
 import { batchSwapIntegrators, isStaging } from '../config';
-import { AvailableDZapServices, BridgeParamsRequestData, HexString, OtherAvailableAbis, SwapData, SwapInfo } from '../types';
+import { AvailableDZapServices, BridgeParamsRequestData, Chain, HexString, OtherAvailableAbis, SwapData, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
+import { nativeTokens, zeroAddress } from 'src/constants/address';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from 'src/constants/rpc';
 import { viemChainsById } from './chains';
 
@@ -29,25 +31,44 @@ export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: stri
   });
 };
 
-function getPairString({
+export const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
+
+export const getChecksumAddress = (address: string): HexString => getAddress(address);
+
+export const formatToken = <T extends HexString | string>(token: T, nativeTokenAddress: T = zeroAddress as T): T => {
+  if (!isAddress(token)) {
+    return token;
+  } else if (isNativeCurrency(token)) {
+    return nativeTokenAddress;
+  } else {
+    return getChecksumAddress(token) as T;
+  }
+};
+
+export function getTokensPairKey({
   srcToken,
   destToken,
   srcChainId,
   destChainId,
   forceIncludeChainId,
+  srcChainNativeAddress = zeroAddress,
+  destChainNativeAddress = zeroAddress,
 }: {
   srcToken: string;
   destToken: string;
   srcChainId?: number;
   destChainId?: number;
   forceIncludeChainId?: boolean;
+  srcChainNativeAddress?: string;
+  destChainNativeAddress?: string;
 }): string {
+  const srcFormattedAddress = formatToken(srcToken, srcChainNativeAddress);
+  const destFormattedAddress = formatToken(destToken, destChainNativeAddress);
+
   if ((!srcChainId || !destChainId || srcChainId === destChainId) && !forceIncludeChainId) {
-    return `${srcToken}-${destToken}`;
+    return `${srcFormattedAddress}-${destFormattedAddress}`;
   }
-  const srcTokenAddress = srcToken;
-  const destTokenAddress = destToken;
-  return `${srcChainId}_${srcTokenAddress}-${destChainId}_${destTokenAddress}`;
+  return `${srcChainId}_${srcFormattedAddress}-${destChainId}_${destFormattedAddress}`;
 }
 
 export const readContract = async ({
@@ -129,8 +150,6 @@ export const calcTotalSrcTokenAmount = (data: BridgeParamsRequestData[] | SwapDa
 
 export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: string) => firstTokenAddress === secondTokenAddress;
 
-export const getChecksumAddress = (address: string): HexString => getAddress(address);
-
 export const getIntegratorInfo = (integrator: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
 
 export const generateUUID = () => {
@@ -183,6 +202,7 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
 export const handleDecodeTrxData = (
   data: TransactionReceipt,
   service: AvailableDZapServices,
+  chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
   const dzapAbi = getDZapAbi(service);
@@ -197,24 +217,51 @@ export const handleDecodeTrxData = (
 
   events = events?.filter((item: any) => item !== null);
   const txLogArgs = events[0]?.args as { swapInfo: SwapInfo | SwapInfo[] };
-  let swapFailPairs: string[] = [];
+  const swapFailPairs: string[] = [];
 
+  let swapInfo: SwapInfo | SwapInfo[] = [];
   if (Array.isArray(txLogArgs?.swapInfo)) {
-    swapFailPairs = txLogArgs.swapInfo
-      .filter((info) => BigInt(info.returnToAmount) === BigInt(0) || BigInt(info.fromAmount) === BigInt(0))
-      .map((info) => getPairString({ srcToken: info.fromToken, destToken: info.toToken }));
+    swapInfo = txLogArgs.swapInfo.map((info) => {
+      if (BigInt(info.returnToAmount) === BigInt(0) || BigInt(info.fromAmount) === BigInt(0)) {
+        swapFailPairs.push(
+          getTokensPairKey({
+            srcToken: info.fromToken,
+            destToken: info.toToken,
+            srcChainId: chain.chainId,
+            destChainId: chain.chainId,
+            srcChainNativeAddress: chain?.nativeToken?.contract,
+            destChainNativeAddress: chain?.nativeToken?.contract,
+          }),
+        );
+      }
+      return {
+        ...info,
+        fromToken: formatToken(info.fromToken, chain?.nativeToken?.contract),
+        toToken: formatToken(info.toToken, chain?.nativeToken?.contract),
+      };
+    });
   } else if (typeof txLogArgs?.swapInfo === 'object' && Object.keys(txLogArgs?.swapInfo).length > 0) {
     const { fromAmount, returnToAmount, fromToken, toToken } = txLogArgs.swapInfo;
     if (BigInt(returnToAmount) === BigInt(0) || BigInt(fromAmount) === BigInt(0)) {
       swapFailPairs.push(
-        getPairString({
+        getTokensPairKey({
           srcToken: fromToken,
           destToken: toToken,
+          srcChainId: chain.chainId,
+          destChainId: chain.chainId,
+          srcChainNativeAddress: chain?.nativeToken?.contract,
+          destChainNativeAddress: chain?.nativeToken?.contract,
         }),
       );
     }
+    swapInfo = {
+      ...txLogArgs.swapInfo,
+      fromToken: formatToken(txLogArgs.swapInfo.fromToken, chain?.nativeToken?.contract),
+      toToken: formatToken(txLogArgs.swapInfo.toToken, chain?.nativeToken?.contract),
+    };
   }
-  return { swapInfo: txLogArgs?.swapInfo, swapFailPairs };
+
+  return { swapInfo, swapFailPairs };
 };
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {

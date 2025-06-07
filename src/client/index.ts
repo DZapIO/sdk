@@ -183,8 +183,12 @@ class DzapClient {
     });
   }
 
-  public decodeTrxData({ data, service }: { data: TransactionReceipt; service: AvailableDZapServices }) {
-    return handleDecodeTrxData(data, service);
+  public async decodeTrxData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
+    const chainConfig = await DzapClient.getChainConfig();
+    if (chainConfig === null || chainConfig?.[chainId] == null) {
+      throw new Error('Chains config not found');
+    }
+    return handleDecodeTrxData(data, service, chainConfig[chainId]);
   }
 
   public async calculatePoints(request: CalculatePointsRequest): Promise<{ points: number }> {
