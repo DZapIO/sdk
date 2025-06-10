@@ -106,7 +106,6 @@ export const writeContract = async ({
   abi,
   functionName,
   args = [],
-  userAddress,
   value = '0',
   rpcUrls = [''],
   signer,
@@ -116,7 +115,6 @@ export const writeContract = async ({
   abi: Abi;
   functionName: string;
   args?: unknown[];
-  userAddress: HexString;
   value?: string;
   rpcUrls?: string[];
   signer: WalletClient;
@@ -128,7 +126,7 @@ export const writeContract = async ({
       abi,
       functionName,
       args,
-      account: userAddress,
+      account: signer.account,
       value: BigInt(value),
     });
     const hash = await signer.writeContract(request);

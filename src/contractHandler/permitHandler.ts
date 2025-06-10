@@ -69,7 +69,6 @@ class PermitHandler {
   public async handleApprove({
     chainId,
     signer,
-    sender,
     rpcUrls,
     data,
     approvalTxnCallback,
@@ -95,7 +94,6 @@ class PermitHandler {
         abi: erc20Abi as Abi,
         functionName: Erc20Functions.approve,
         args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
-        userAddress: sender,
         rpcUrls,
         signer,
       });
