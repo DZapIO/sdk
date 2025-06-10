@@ -125,11 +125,6 @@ class ZapHandler {
             return result;
           }
           txnHash = result.txnHash as HexString;
-        } else if (step.action === zapStepAction.approve) {
-          const result = await this.approve({ chainId, data: step.data as ZapTxnDetails, signer });
-          if (result.status !== TxnStatus.success) {
-            throw new Error('Approval failed');
-          }
         }
       }
       return {

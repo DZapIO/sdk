@@ -8,17 +8,15 @@ import { PriceService } from 'src/service/price';
 import {
   AvailableDZapServices,
   BridgeParamsRequest,
-  BridgeParamsRequestData,
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
   CalculatePointsRequest,
   Chain,
   ChainData,
+  ExecuteTxnData,
   HexString,
   OtherAvailableAbis,
-  ExecuteTxnData,
-  SwapData,
   SwapParamsRequest,
   SwapParamsResponse,
   SwapQuoteRequest,
@@ -29,8 +27,8 @@ import { updateTokenListPrices } from 'src/utils/tokens';
 import { updateBridgeQuotes } from 'src/utils/updateBridgeQuotes';
 import { updateSwapQuotes } from 'src/utils/updateSwapQuotes';
 import ZapHandler from 'src/zap';
-import { fetchZapRoute, fetchZapTxnStatus } from 'src/zap/api/route';
-import { ZapRouteRequest, ZapRouteResponse, ZapTxnStatusRequest, ZapTxnStatusResponse } from 'src/zap/types';
+import { fetchZapBuildTxnData, fetchZapQuote, fetchZapTxnStatus } from 'src/zap/api/route';
+import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapTxnStatusRequest, ZapTxnStatusResponse } from 'src/zap/types';
 import { ZapTransactionStep, ZapTxnDetails } from 'src/zap/types/step';
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
@@ -276,15 +274,21 @@ class DzapClient {
     sender,
     data,
     rpcUrls,
-    signer,
     service,
+    signer,
+    spender,
     signatureCallback,
   }: {
     chainId: number;
     sender: string;
-    data: SwapData[] | BridgeParamsRequestData[];
-    rpcUrls?: string[];
+    data: {
+      srcToken: string;
+      permitData?: string;
+      amount: string;
+    }[];
     service: AvailableDZapServices;
+    rpcUrls?: string[];
+    spender: string;
     signer: WalletClient;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
@@ -293,10 +297,10 @@ class DzapClient {
       sender,
       data,
       rpcUrls,
-      signer,
       service,
+      signer,
+      spender,
       signatureCallback,
-      getDZapContractAddress: this.getDZapContractAddress,
     });
   }
 
@@ -316,12 +320,21 @@ class DzapClient {
     });
   }
 
-  public async getZapRoute(request: ZapRouteRequest): Promise<ZapRouteResponse> {
+  public async buildZapTransaction(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse> {
     if (this.cancelTokenSource) {
       this.cancelTokenSource.cancel('Cancelled due to new request');
     }
     this.cancelTokenSource = Axios.CancelToken.source();
-    const route: ZapRouteResponse = (await fetchZapRoute(request, this.cancelTokenSource.token)).data;
+    const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
+    return route;
+  }
+
+  public async getZapQuote(request: ZapQuoteRequest): Promise<ZapQuoteResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapQuoteResponse = (await fetchZapQuote(request, this.cancelTokenSource.token)).data;
     return route;
   }
 

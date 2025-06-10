@@ -1,3 +1,4 @@
-export const ZAP_ROUTE_URL = 'route';
+export const ZAP_BUILD_TX_URL = 'buildTx';
+export const ZAP_QUOTE_URL = 'quote';
 
 export const ZAP_TXN_STATUS_URL = 'status';

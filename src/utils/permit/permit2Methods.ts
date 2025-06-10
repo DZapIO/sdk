@@ -1,10 +1,11 @@
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
 import { MaxAllowanceExpiration, MaxAllowanceTransferAmount, SignatureExpiryInSecs } from 'src/constants/permit2';
-import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
+import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
+import { AvailableDZapServices, HexString } from 'src/types';
 import { Abi, WalletClient, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { readContract } from '../index';
+import { Services } from 'src/constants';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -46,6 +47,7 @@ export const checkPermit2 = async ({
 export async function getPermit2PermitDataForApprove({
   chainId,
   dzapContractAddress,
+  service,
   account,
   token,
   signer,
@@ -57,6 +59,7 @@ export async function getPermit2PermitDataForApprove({
   chainId: number;
   account: string;
   token: string;
+  service: AvailableDZapServices;
   dzapContractAddress: string;
   rpcUrls?: string[];
   sigDeadline?: bigint;
@@ -122,7 +125,8 @@ export async function getPermit2PermitDataForApprove({
         signature,
       ],
     );
-    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_APPROVE, customPermitDataForTransfer]);
+    const permitType = service === Services.zap ? ZapPermitType.PERMIT2 : PermitType.PERMIT2_APPROVE;
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitType, customPermitDataForTransfer]);
     return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
   } catch (e: any) {
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {

@@ -22,6 +22,11 @@ export enum Erc20Functions {
   symbol = 'symbol',
 }
 
+export enum ZapPermitType {
+  PERMIT,
+  PERMIT2,
+}
+
 export enum PermitType {
   PERMIT,
   PERMIT2_TRANSFER_FROM,

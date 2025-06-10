@@ -1,6 +1,6 @@
 import { DEFAULT_PERMIT_DATA, PERMIT2_APPROVE_DATA } from 'src/constants';
 import { Erc20Functions, StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, BridgeParamsRequestData, HexString, SwapData } from 'src/types';
+import { AvailableDZapServices, HexString } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, writeContract } from 'src/utils';
 import { checkPermit2, getPermit2Address, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
 import { Abi, WalletClient, maxUint256 } from 'viem';
@@ -120,29 +120,37 @@ class PermitHandler {
     data,
     rpcUrls,
     sender,
-    service,
     signer,
+    service,
     signatureCallback,
-    getDZapContractAddress,
+    spender,
   }: {
     chainId: number;
     sender: string;
-    data: SwapData[] | BridgeParamsRequestData[];
+    data: {
+      srcToken: string;
+      permitData?: string;
+      amount: string;
+    }[];
+    service: AvailableDZapServices;
     rpcUrls?: string[];
     signer: WalletClient;
-    service: AvailableDZapServices;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
-    getDZapContractAddress: ({ chainId, service }: { chainId: number; service: AvailableDZapServices }) => Promise<string>;
+    spender: string;
   }): Promise<{
     status: TxnStatus;
-    data: SwapData[] | BridgeParamsRequestData[];
+    data: {
+      srcToken: string;
+      permitData?: string;
+      amount: string;
+    }[];
     code: StatusCodes;
   }> {
     if (data.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, data };
     const oneToMany = data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken);
     let totalSrcAmount = BigInt(0);
     if (oneToMany) totalSrcAmount = calcTotalSrcTokenAmount(data);
-    const dzapContractAddress = await getDZapContractAddress({ chainId, service });
+    const dzapContractAddress = spender;
     if (isDZapNativeToken(data[0].srcToken)) {
       data[0].permitData = DEFAULT_PERMIT_DATA;
     } else {
@@ -153,6 +161,7 @@ class PermitHandler {
         token: data[0].srcToken as HexString,
         dzapContractAddress,
         amount,
+        service,
         signer,
         rpcUrls,
       });
@@ -180,6 +189,7 @@ class PermitHandler {
             token: data[dataIdx].srcToken as HexString,
             dzapContractAddress,
             amount,
+            service,
             signer,
             rpcUrls,
           });

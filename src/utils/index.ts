@@ -15,7 +15,7 @@ import {
 } from 'viem';
 import * as ABI from '../artifacts';
 import { batchSwapIntegrators, isStaging } from '../config';
-import { AvailableDZapServices, BridgeParamsRequestData, Chain, HexString, OtherAvailableAbis, SwapData, SwapInfo } from '../types';
+import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
 import { nativeTokens, zeroAddress } from 'src/constants/address';
@@ -140,7 +140,7 @@ export const writeContract = async ({
   }
 };
 
-export const calcTotalSrcTokenAmount = (data: BridgeParamsRequestData[] | SwapData[]) => {
+export const calcTotalSrcTokenAmount = (data: { amount: string }[]) => {
   return data.reduce((acc, obj) => {
     return acc + BigInt(obj.amount);
   }, BigInt(0));
