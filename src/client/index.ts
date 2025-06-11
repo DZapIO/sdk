@@ -325,7 +325,7 @@ class DzapClient {
       this.cancelTokenSource.cancel('Cancelled due to new request');
     }
     this.cancelTokenSource = Axios.CancelToken.source();
-    const route: ZapBuildTxnResponse = await fetchZapBuildTxnData(request, this.cancelTokenSource.token);
+    const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
     return route;
   }
 
