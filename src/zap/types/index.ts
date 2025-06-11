@@ -2,7 +2,7 @@ import { HexString, ProviderDetails } from 'src/types';
 import { ZapPath, ZapPathAsset } from './path';
 import { ZapStep } from './step';
 
-export type ZapBuildTxnResponse = {
+export type ZapBuildTxnData = {
   amountOut: string;
   approvalData: {
     callTo: HexString;
@@ -13,7 +13,12 @@ export type ZapBuildTxnResponse = {
   path: ZapPath[];
 };
 
-export type ZapQuoteResponse = Omit<ZapBuildTxnResponse, 'steps'>;
+export type ZapBuildTxnResponse = {
+  data: ZapBuildTxnData;
+  status: string;
+};
+
+export type ZapQuoteResponse = Omit<ZapBuildTxnData, 'steps'>;
 
 export type ZapBuildTxnRequest = {
   srcToken: HexString;
