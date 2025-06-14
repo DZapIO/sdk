@@ -2,4 +2,13 @@ export const exclusiveChainIds = {
   zkSync: 324,
   arthera: 10242,
   gnosis: 100,
+  kaia: 8217,
+  bounceBit: 6001,
+  biFrost: 996,
+  flare: 14,
+  iotaEvm: 8822,
+  opbnb: 204,
+  zkFair: 42766,
+  bahamut: 5165,
+  immutableZkevm: 13371,
 };
