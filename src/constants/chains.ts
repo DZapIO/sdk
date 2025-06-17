@@ -11,4 +11,6 @@ export const exclusiveChainIds = {
   zkFair: 42766,
   bahamut: 5165,
   immutableZkevm: 13371,
+  abstract: 2741,
+  lens: 232,
 };
