@@ -264,6 +264,8 @@ export type Path = {
   fee: Fee;
 };
 
+export type Tag = { title: string; link?: string; message?: string };
+
 export type BridgeQuoteRate = {
   bridgeDetails?: ProviderDetails;
   providerDetails: ProviderDetails;
@@ -280,6 +282,7 @@ export type BridgeQuoteRate = {
   duration: string;
   steps: Step[];
   path: Path[];
+  tags?: Tag[];
   additionalInfo?: BridgeAdditionalInfo;
 };
 
