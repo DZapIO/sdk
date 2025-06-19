@@ -25,6 +25,7 @@ export type ZapPath = {
   action: ZapPathAction;
   protocol: ProviderDetails;
   fee: ZapFee[];
+  estimatedDuration: number;
   input: {
     asset: ZapPathAsset;
     amount: string;
