@@ -7,42 +7,34 @@ import { StatusCodes, TxnStatus } from 'src/enums';
 import { PriceService } from 'src/service/price';
 import {
   AvailableDZapServices,
-  BridgeParamsRequest,
-  BridgeParamsResponse,
-  BridgeQuoteRequest,
-  BridgeQuoteResponse,
-  BridgeStatusV2Response,
+  BuildTxRequest,
+  BuildTxResponse,
   CalculatePointsRequest,
   Chain,
   ChainData,
   ExecuteTxnData,
   HexString,
   OtherAvailableAbis,
-  SwapParamsRequest,
-  SwapParamsResponse,
-  SwapQuoteRequest,
-  SwapQuoteResponse,
+  QuotesRequest,
+  QuotesResponse,
+  StatusResponse,
 } from 'src/types';
 import { getDZapAbi, getOtherAbis, handleDecodeTrxData } from 'src/utils';
 import { updateTokenListPrices } from 'src/utils/tokens';
-import { updateBridgeQuotes } from 'src/utils/updateBridgeQuotes';
-import { updateSwapQuotes } from 'src/utils/updateSwapQuotes';
+import { updateQuotes } from 'src/utils/updateQuotes';
 import ZapHandler from 'src/zap';
 import { fetchZapBuildTxnData, fetchZapQuote, fetchZapTxnStatus } from 'src/zap/api/route';
 import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapTxnStatusRequest, ZapTxnStatusResponse } from 'src/zap/types';
 import { ZapTransactionStep, ZapTxnDetails } from 'src/zap/types/step';
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
-  buildBridgeTransaction,
-  buildSwapTransaction,
+  buildTransaction,
   fetchAllSupportedChains,
   fetchAllTokens,
-  fetchBridgeQuoteRate,
   fetchCalculatedPoints,
-  fetchQuoteRate,
+  fetchQuotes,
   fetchStatus,
   fetchTokenDetails,
-  swapTokensApi,
 } from '../api';
 
 class DzapClient {
@@ -85,34 +77,22 @@ class DzapClient {
   public static getDZapAbi(service: AvailableDZapServices) {
     return getDZapAbi(service);
   }
+
   public static getOtherAbi = (name: OtherAvailableAbis) => {
     return getOtherAbis(name);
   };
 
-  public async getQuoteRate(request: SwapQuoteRequest): Promise<SwapQuoteResponse> {
-    const quotes: SwapQuoteResponse = await fetchQuoteRate(request);
+  public async getQuotes(request: QuotesRequest): Promise<QuotesResponse> {
+    const quotes: QuotesResponse = await fetchQuotes(request);
     const chainConfig = await DzapClient.getChainConfig();
     if (chainConfig === null) {
       return quotes;
     }
-    return updateSwapQuotes(quotes, request, this.priceService, chainConfig);
+    return updateQuotes(quotes, request, this.priceService, chainConfig);
   }
 
-  public async getBridgeQuoteRate(request: BridgeQuoteRequest): Promise<BridgeQuoteResponse> {
-    const quotes: BridgeQuoteResponse = await fetchBridgeQuoteRate(request);
-    const chainConfig = await DzapClient.getChainConfig();
-    if (chainConfig === null) {
-      return quotes;
-    }
-    return updateBridgeQuotes(quotes, request, this.priceService, chainConfig);
-  }
-
-  public async getBridgeParams(request: BridgeParamsRequest): Promise<BridgeParamsResponse> {
-    return await buildBridgeTransaction(request);
-  }
-
-  public getSwapParams(request: SwapParamsRequest) {
-    return buildSwapTransaction(request);
+  public async buildTxn(request: BuildTxRequest): Promise<BuildTxResponse> {
+    return await buildTransaction(request);
   }
 
   /**
@@ -130,7 +110,7 @@ class DzapClient {
     txHash?: string;
     txIds?: string;
     chainId?: string;
-  }): Promise<BridgeStatusV2Response | Record<string, BridgeStatusV2Response>> {
+  }): Promise<StatusResponse | Record<string, StatusResponse>> {
     return fetchStatus({ txHash, txIds, chainId });
   }
 
@@ -163,40 +143,22 @@ class DzapClient {
     return await this.priceService.getPrices({ chainId, tokenAddresses, chainConfig });
   }
 
-  public swapTokens = ({ request, provider }: { request: SwapParamsRequest; provider: Signer }): ReturnType<typeof swapTokensApi> => {
-    return swapTokensApi({ request, provider });
-  };
-
-  public async swap({
+  public async buildAndSendTransaction({
     chainId,
     request,
     signer,
     txnData,
   }: {
     chainId: number;
-    request: SwapParamsRequest;
+    request: BuildTxRequest;
     signer: Signer | WalletClient;
-    txnData?: SwapParamsResponse;
+    txnData?: BuildTxResponse;
   }) {
-    return await this.contractHandler.handleSwap({ chainId, request, signer, txnData });
-  }
-
-  public async bridge({
-    chainId,
-    request,
-    signer,
-    txnData,
-  }: {
-    chainId: number;
-    request: BridgeParamsRequest;
-    signer: Signer | WalletClient;
-    txnData?: BridgeParamsResponse;
-  }) {
-    return await this.contractHandler.handleBridge({ chainId, request, signer, txnData });
+    return await this.contractHandler.buildAndSendTransaction({ chainId, request, signer, txnData });
   }
 
   public async sendTransaction({ signer, txnData }: { chainId: number; signer: Signer | WalletClient; txnData: ExecuteTxnData }) {
-    return await this.contractHandler.handleSendTransaction({
+    return await this.contractHandler.sendTransaction({
       signer,
       ...txnData,
     });
@@ -240,7 +202,7 @@ class DzapClient {
     return contractAddress;
   }
 
-  public async allowance({
+  public async permitAllowance({
     chainId,
     sender,
     data,
@@ -259,7 +221,7 @@ class DzapClient {
     });
   }
 
-  public async approve({
+  public async approvePermit({
     chainId,
     signer,
     sender,

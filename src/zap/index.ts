@@ -114,7 +114,14 @@ class ZapHandler {
     }
   }
 
-  public async zap({ chainId, data, signer }: { chainId: number; data: ZapStep[]; signer: Signer | WalletClient }) {
+  public async zap({ chainId, data, signer }: { chainId: number; data: ZapStep[]; signer: Signer | WalletClient }): Promise<
+    | {
+        status: TxnStatus.success;
+        code: StatusCodes | number;
+        txnHash: HexString;
+      }
+    | DZapTransactionResponse
+  > {
     try {
       let txnHash: HexString | undefined;
       for (let i = 0; i < data.length; i++) {

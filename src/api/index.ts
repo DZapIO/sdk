@@ -1,47 +1,30 @@
-import { Signer } from 'ethers';
 import { GET, POST } from 'src/constants/httpMethods';
 import {
-  BATCH_SWAP_BUILD_TX_URL,
-  BATCH_SWAP_QUOTE_URL,
-  BRIDGE_BUILD_TX_URL,
-  BRIDGE_QUOTE_URL,
+  BUILD_TX_URL,
   CALCULATE_POINTS_URL,
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
   GET_STATUS,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
+  QUOTES_URL,
 } from 'src/constants/urlConstants';
 import { invoke } from 'src/utils/axios';
-import { BridgeParamsRequest, BridgeQuoteRequest, CalculatePointsRequest, SwapParamsRequest, SwapQuoteRequest } from '../types';
+import { BuildTxRequest, CalculatePointsRequest, QuotesRequest } from '../types';
 
-export const fetchQuoteRate = (request: SwapQuoteRequest) =>
+export const fetchQuotes = (request: QuotesRequest) =>
   invoke({
-    endpoint: BATCH_SWAP_QUOTE_URL,
+    endpoint: QUOTES_URL,
     data: request,
     method: POST,
     shouldRetry: true,
   });
 
-export const fetchBridgeQuoteRate = (request: BridgeQuoteRequest) =>
+export const buildTransaction = (request: BuildTxRequest) =>
   invoke({
-    endpoint: BRIDGE_QUOTE_URL,
+    endpoint: BUILD_TX_URL,
     data: request,
     method: POST,
-    shouldRetry: true,
-  });
-
-export const buildBridgeTransaction = (request: BridgeParamsRequest) =>
-  invoke({
-    endpoint: BRIDGE_BUILD_TX_URL,
-    data: request,
-    method: POST,
-  });
-
-export const buildSwapTransaction = (request: SwapParamsRequest) =>
-  invoke({
-    endpoint: BATCH_SWAP_BUILD_TX_URL,
-    data: request,
   });
 
 export const fetchAllSupportedChains = () =>
@@ -91,29 +74,3 @@ export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
     data: request,
     method: POST,
   });
-
-export const swapTokensApi = async ({
-  request,
-  provider,
-}: {
-  request: SwapParamsRequest;
-  provider: Signer;
-}): ReturnType<typeof provider.sendTransaction> => {
-  try {
-    const { data: paramResponseData } = await buildSwapTransaction(request);
-    const {
-      transactionRequest: { data, from, to, value, gasLimit },
-    } = paramResponseData;
-
-    // Add gasPrice: fast, medium, slow
-    return await provider.sendTransaction({
-      from,
-      to,
-      data,
-      value,
-      gasLimit,
-    });
-  } catch (err: any) {
-    throw new Error(err);
-  }
-};

@@ -87,71 +87,69 @@ export type PermitSelectorData = { address: HexString; permitSelector: PermitSel
 
 // Swap
 
-export type SwapData = {
-  sourceId: string;
-  srcToken: string;
-  destToken: string;
-  amount: string;
-  slippage: number;
-  gasPrice?: number;
-  srcDecimals: number;
-  destDecimals: number;
-  permitData?: string;
-  additionalInfo?: Record<string, unknown>;
-};
+// export type SwapData = {
+//   sourceId: string;
+//   srcToken: string;
+//   destToken: string;
+//   amount: string;
+//   slippage: number;
+//   gasPrice?: number;
+//   srcDecimals: number;
+//   destDecimals: number;
+//   permitData?: string;
+//   additionalInfo?: Record<string, unknown>;
+// };
 
-export type SwapParamsRequest = {
-  chainId: number;
-  integratorId: string;
-  sender: string;
-  refundee?: string;
-  recipient: string;
-  withOutRevert?: boolean; // default true
-  includeSwapCallData?: boolean; // default false
-  includeTxData?: boolean; // default true
-  data: Array<SwapData>;
-};
+// export type SwapParamsRequest = {
+//   chainId: number;
+//   integratorId: string;
+//   sender: string;
+//   refundee?: string;
+//   recipient: string;
+//   withOutRevert?: boolean; // default true
+//   includeSwapCallData?: boolean; // default false
+//   includeTxData?: boolean; // default true
+//   data: Array<SwapData>;
+// };
 
-export type SwapQuoteData = {
-  amount: string;
-  selectedSource?: string;
-  account: string;
-  srcToken: string;
-  srcDecimals: number;
-  destToken: string;
-  destDecimals: number;
-  slippage: number;
-};
+// export type SwapQuoteData = {
+//   amount: string;
+//   selectedSource?: string;
+//   account: string;
+//   srcToken: string;
+//   srcDecimals: number;
+//   destToken: string;
+//   destDecimals: number;
+//   slippage: number;
+// };
 
-export type QuoteFilter = keyof typeof QuoteFilters;
+// export type SwapQuoteRequest = {
+//   chainId: number;
+//   integratorId: string;
+//   data: Array<SwapQuoteData>;
+//   allowedSources?: string[];
+//   filter?: QuoteFilter;
+// };
 
-export type SwapQuoteRequest = {
-  chainId: number;
-  integratorId: string;
-  data: Array<SwapQuoteData>;
-  allowedSources?: string[];
-  filter?: QuoteFilter;
-};
-
-export type GetSwapParamsResponse = {
-  value: string;
-  ercSwapDetails: {
-    executor: string;
-    desc: {
-      srcToken: string;
-      dstToken: string;
-      srcReceiver: string;
-      dstReceiver: string;
-      amount: string;
-      minReturnAmount: string;
-      flags: number;
-      permit: string;
-    };
-    routeData: string;
-    permit: string;
-    minReturnAmount: number;
-  }[];
-};
+// export type GetSwapParamsResponse = {
+//   value: string;
+//   ercSwapDetails: {
+//     executor: string;
+//     desc: {
+//       srcToken: string;
+//       dstToken: string;
+//       srcReceiver: string;
+//       dstReceiver: string;
+//       amount: string;
+//       minReturnAmount: string;
+//       flags: number;
+//       permit: string;
+//     };
+//     routeData: string;
+//     permit: string;
+//     minReturnAmount: number;
+//   }[];
+// };
 
 export type ProviderDetails = {
   id: string;
@@ -176,65 +174,66 @@ export type Fee = {
   providerFee: FeeDetails[];
 };
 
-export type SwapQuoteResponseData = {
-  srcToken: string;
-  srcAmount: string;
-  destToken: string;
-  destAmount: string;
-  priceImpactPercent: string | null;
-  fee: Fee;
-  srcAmountUSD: string | null;
-  destAmountUSD: string | null;
-  providerDetails: ProviderDetails;
-  additionalInfo?: Record<string, unknown>;
-  swapPerUnit: string;
-  tags?: Tag[];
-};
+// export type SwapQuoteResponseData = {
+//   srcToken: string;
+//   srcAmount: string;
+//   destToken: string;
+//   destAmount: string;
+//   priceImpactPercent: string | null;
+//   fee: Fee;
+//   srcAmountUSD: string | null;
+//   destAmountUSD: string | null;
+//   providerDetails: ProviderDetails;
+//   additionalInfo?: Record<string, unknown>;
+//   swapPerUnit: string;
+//   tags?: Tag[];
+// };
 
-export type SwapQuoteResponse = {
-  [key: string]: {
-    status: string;
-    errorMessage?: string;
-    recommendedSource: string;
-    recommendedSourceByAmount: string;
-    recommendedSourceByGas: string;
-    tokensWithoutPrice: string[];
-    quoteRates: {
-      [key: string]: {
-        data: SwapQuoteResponseData;
-      };
-    };
-  };
-};
+// export type SwapQuoteResponse = {
+//   [key: string]: {
+//     status: string;
+//     errorMessage?: string;
+//     recommendedSource: string;
+//     recommendedSourceByAmount: string;
+//     recommendedSourceByGas: string;
+//     tokensWithoutPrice: string[];
+//     quoteRates: {
+//       [key: string]: {
+//         data: SwapQuoteResponseData;
+//       };
+//     };
+//   };
+// };
 
-export type SwapParamsResponse = {
-  data: {
-    transactionRequest: {
-      txId: string;
-      data: string;
-      to: string;
-      from: string;
-      chainId: number;
-      value: string;
-      gasLimit: string;
-    };
-    updatedQuotes: Record<string, string>;
-  };
-};
+// export type SwapParamsResponse = {
+//   data: {
+//     transactionRequest: {
+//       txId: string;
+//       data: string;
+//       to: string;
+//       from: string;
+//       chainId: number;
+//       value: string;
+//       gasLimit: string;
+//     };
+//     updatedQuotes: Record<string, string>;
+//   };
+// };
 
+export type QuoteFilter = keyof typeof QuoteFilters;
 // Bridge
 
-export type BridgeQuoteRequest = {
+export type QuotesRequest = {
   integratorId: string;
   fromChain: number;
-  data: BridgeQuoteRequestData[];
+  data: QuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
   allowedSources?: string[];
   filter?: QuoteFilter;
 };
 
-export type BridgeQuoteRequestData = {
+export type QuotesRequestData = {
   amount: string;
   srcToken: string;
   srcDecimals: number;
@@ -267,7 +266,7 @@ export type Path = {
 
 export type Tag = { title: string; link?: string; message?: string };
 
-export type BridgeQuoteRate = {
+export type Quote = {
   bridgeDetails?: ProviderDetails;
   providerDetails: ProviderDetails;
   srcAmount: string;
@@ -284,19 +283,19 @@ export type BridgeQuoteRate = {
   steps: Step[];
   path: Path[];
   tags?: Tag[];
-  additionalInfo?: BridgeAdditionalInfo;
+  additionalInfo?: AdditionalInfo;
 };
 
-export type BridgeQuotes = {
-  [providerAndBridge: string]: BridgeQuoteRate;
+export type QuotesByProviderId = {
+  [providerAndBridge: string]: Quote;
 };
 
-export type BridgeQuoteResponse = {
+export type QuotesResponse = {
   [pair: string]: {
     status?: string;
     message?: string;
     recommendedSource?: string;
-    quoteRates?: BridgeQuotes;
+    quoteRates?: QuotesByProviderId;
     tokensWithoutPrice: Record<number, string[]>;
   };
 };
@@ -306,7 +305,7 @@ export type BridgeSource = {
   bridge: string;
 };
 
-export type BridgeAdditionalInfo = {
+export type AdditionalInfo = {
   [key: string]: unknown;
 };
 
@@ -338,16 +337,17 @@ export type TokenResponse = {
 
 // Bridge Params
 
-export type BridgeParamsRequest = {
+export type BuildTxRequest = {
   sender: HexString;
   refundee: HexString;
   integratorId: string;
   fromChain: number;
   disableEstimation?: boolean;
-  data: BridgeParamsRequestData[];
+  data: BuildTxRequestData[];
+  publicKey?: string;
 };
 
-export type BridgeParamsRequestData = {
+export type BuildTxRequestData = {
   amount: string;
   srcToken: string;
   srcDecimals: number;
@@ -357,7 +357,7 @@ export type BridgeParamsRequestData = {
   selectedRoute: string;
   recipient: string;
   slippage: number;
-  additionalInfo?: BridgeAdditionalInfo;
+  additionalInfo?: AdditionalInfo;
   permitData?: string;
 };
 
@@ -370,8 +370,8 @@ export type ExecuteTxnData = {
   gasLimit: string;
 };
 
-export type BridgeParamsResponse = ExecuteTxnData & {
-  additionalInfo?: BridgeAdditionalInfo;
+export type BuildTxResponse = ExecuteTxnData & {
+  additionalInfo?: AdditionalInfo;
   //dev: only used for btc tx.
   btcTxData?: {
     inputs: PsbtInput[];
@@ -412,7 +412,7 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type BridgeStatusV2ResponseData = {
+export type StatusResponseData = {
   srcChainId: number;
   srcToken: string;
   srcAmount: string;
@@ -432,6 +432,6 @@ export type BridgeStatusV2ResponseData = {
   status: keyof typeof STATUS_RESPONSE;
 };
 
-export type BridgeStatusV2Response = {
-  [pair: string]: BridgeStatusV2ResponseData;
+export type StatusResponse = {
+  [pair: string]: StatusResponseData;
 };

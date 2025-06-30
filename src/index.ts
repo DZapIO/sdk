@@ -4,27 +4,20 @@ import { Erc20Functions, PermitFunctionSelector, PermitSelector, PermitType, Sta
 import { getTokensPairKey, formatToken } from './utils';
 import {
   ApiRpcResponse,
-  BridgeParamsRequest,
-  BridgeParamsRequestData,
-  BridgeParamsResponse,
-  BridgeQuoteRequest,
-  BridgeQuoteRequestData,
-  BridgeQuoteResponse,
+  BuildTxRequest,
+  BuildTxRequestData,
+  BuildTxResponse,
+  QuotesRequest,
+  QuotesRequestData,
+  QuotesResponse,
   Chain,
   ChainData,
   contractErrorActions,
   ContractErrorResponse,
   DZapTransactionResponse,
-  GetSwapParamsResponse,
   HexString,
   Path,
   PermitSelectorData,
-  SwapData,
-  SwapParamsRequest,
-  SwapQuoteData,
-  SwapQuoteRequest,
-  SwapQuoteResponse,
-  SwapParamsResponse,
   ExecuteTxnData,
   QuoteFilter,
   ProviderDetails,
@@ -38,21 +31,14 @@ import DzapClient from './client';
 export * from './zap/constants';
 export * from './zap/types';
 
-// import { TestHook } from './test';
-// Test Scripts
-// import { TestGetQuoteRate, TestGetSwapParams } from './test';
-// TestHook();
-// TestGetQuoteRate();
-// TestGetSwapParams();
-
 export {
   ApiRpcResponse,
-  BridgeParamsRequest,
-  BridgeParamsRequestData,
-  BridgeParamsResponse,
-  BridgeQuoteRequest,
-  BridgeQuoteRequestData,
-  BridgeQuoteResponse,
+  BuildTxRequest,
+  BuildTxRequestData,
+  BuildTxResponse,
+  QuotesRequest,
+  QuotesRequestData,
+  QuotesResponse,
   Chain,
   ChainData,
   contractErrorActions,
@@ -60,7 +46,6 @@ export {
   SignatureExpiryInSecs,
   DZapTransactionResponse,
   Erc20Functions,
-  GetSwapParamsResponse,
   HexString,
   OtherAbis,
   Path,
@@ -70,12 +55,6 @@ export {
   PermitType,
   Services,
   StatusCodes,
-  SwapData,
-  SwapParamsRequest,
-  SwapQuoteData,
-  SwapQuoteRequest,
-  SwapQuoteResponse,
-  SwapParamsResponse,
   QuoteFilter,
   QuoteFilters,
   DzapClient,
