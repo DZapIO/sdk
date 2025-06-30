@@ -8,6 +8,7 @@ import {
   CALCULATE_POINTS_URL,
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
+  GET_STATUS,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
 } from 'src/constants/urlConstants';
@@ -70,6 +71,17 @@ export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
   invoke({
     endpoint: GET_TOKEN_PRICE,
     data: { tokenAddresses, chainId },
+    method: GET,
+  });
+
+export const fetchStatus = ({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: string }) =>
+  invoke({
+    endpoint: GET_STATUS,
+    data: {
+      txHash,
+      txIds,
+      chainId,
+    },
     method: GET,
   });
 

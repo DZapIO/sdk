@@ -1,4 +1,4 @@
-import { DZapAbis, OtherAbis, QuoteFilters, Services } from 'src/constants';
+import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
 import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
 import { PsbtInput, PsbtOutput } from './btc';
 
@@ -188,6 +188,7 @@ export type SwapQuoteResponseData = {
   providerDetails: ProviderDetails;
   additionalInfo?: Record<string, unknown>;
   swapPerUnit: string;
+  tags?: Tag[];
 };
 
 export type SwapQuoteResponse = {
@@ -409,4 +410,28 @@ export type SwapInfo = {
   fromAmount: bigint;
   toToken: string;
   returnToAmount: bigint;
+};
+
+export type BridgeStatusV2ResponseData = {
+  srcChainId: number;
+  srcToken: string;
+  srcAmount: string;
+  srcAmountUSD: string;
+  srcTxHash: string;
+  destChainId: number;
+  destToken: string;
+  destAmount: string;
+  destAmountUSD: string;
+  destTxHash: string;
+  account: string;
+  recipient: string;
+  outputToken?: string;
+  refundTxHash?: string;
+  provider: string;
+  allowUserTxOnDestChain: boolean;
+  status: keyof typeof STATUS_RESPONSE;
+};
+
+export type BridgeStatusV2Response = {
+  [pair: string]: BridgeStatusV2ResponseData;
 };

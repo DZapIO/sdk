@@ -11,6 +11,7 @@ import {
   BridgeParamsResponse,
   BridgeQuoteRequest,
   BridgeQuoteResponse,
+  BridgeStatusV2Response,
   CalculatePointsRequest,
   Chain,
   ChainData,
@@ -39,6 +40,7 @@ import {
   fetchBridgeQuoteRate,
   fetchCalculatedPoints,
   fetchQuoteRate,
+  fetchStatus,
   fetchTokenDetails,
   swapTokensApi,
 } from '../api';
@@ -111,6 +113,25 @@ class DzapClient {
 
   public getSwapParams(request: SwapParamsRequest) {
     return buildSwapTransaction(request);
+  }
+
+  /**
+   * Fetches the status of a bridge or swap transaction.
+   *
+   * For multiple transactions, provide a comma-separated list of txIds values (srcChainId-txHash).
+   * For a single transaction, provide both txHash and chainId.
+   * Either txIds or both txHash and chainId must be provided.
+   */
+  public getStatus({
+    txHash,
+    txIds,
+    chainId,
+  }: {
+    txHash?: string;
+    txIds?: string;
+    chainId?: string;
+  }): Promise<BridgeStatusV2Response | Record<string, BridgeStatusV2Response>> {
+    return fetchStatus({ txHash, txIds, chainId });
   }
 
   public getAllSupportedChains(): Promise<ChainData> {
