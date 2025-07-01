@@ -14,7 +14,7 @@ import {
   stringToHex,
 } from 'viem';
 import * as ABI from '../artifacts';
-import { batchSwapIntegrators, isStaging } from '../config';
+import { batchSwapIntegrators } from '../config';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
@@ -188,7 +188,7 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
   switch (service) {
     case Services.swap:
     case Services.bridge:
-      return isStaging ? ABI[DZapAbis.stagingDZapCoreAbi] : ABI[DZapAbis.dZapCoreAbi];
+      return ABI[DZapAbis.dZapCoreAbi];
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
     case Services.zap:

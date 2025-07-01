@@ -15,7 +15,6 @@ export const ERRORS = {
 
 export const DZapAbis = {
   dZapCoreAbi: 'dZapCoreAbi',
-  stagingDZapCoreAbi: 'stagingDZapCoreAbi',
   dZapDcaAbi: 'dZapDcaAbi',
 } as const;
 
