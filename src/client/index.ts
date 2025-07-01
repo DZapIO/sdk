@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
+import { Signer, Wallet } from 'ethers';
 import { Services } from 'src/constants';
 import ContractHandler from 'src/contractHandler';
 import PermitHandler from 'src/contractHandler/permitHandler';
@@ -230,7 +230,7 @@ class DzapClient {
     approvalTxnCallback,
   }: {
     chainId: number;
-    signer: WalletClient;
+    signer: WalletClient | Signer;
     sender: HexString;
     rpcUrls?: string[];
     data: { srcToken: HexString; amountToApprove: bigint }[];
@@ -272,7 +272,7 @@ class DzapClient {
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender: string;
-    signer: WalletClient;
+    signer: WalletClient | Wallet;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
     return await this.permitHandler.handleSign({
@@ -287,7 +287,7 @@ class DzapClient {
     });
   }
 
-  public async executeZapTransaction({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: WalletClient }) {
+  public async executeZapTransaction({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: WalletClient | Signer }) {
     return await this.zapHandler.execute({
       chainId,
       data,
@@ -295,7 +295,7 @@ class DzapClient {
     });
   }
 
-  public async zap({ chainId, data, signer }: { chainId: number; data: ZapTransactionStep[]; signer: WalletClient }) {
+  public async zap({ chainId, data, signer }: { chainId: number; data: ZapTransactionStep[]; signer: WalletClient | Signer }) {
     return await this.zapHandler.zap({
       chainId,
       data,

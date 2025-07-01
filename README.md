@@ -281,7 +281,7 @@ See the [Permit Utilities](#permit-utilities) section for code examples.
 - **Purpose:** Approves tokens for spending (Permit2/Permit-based only).
 - **Input:**
   - `chainId`: number
-  - `signer`: WalletClient
+  - `signer`: `Signer` or `WalletClient`
   - `sender`: HexString
   - `rpcUrls?`: string[]
   - `data`: Array of `{ srcToken: HexString; amountToApprove: bigint }`
@@ -303,7 +303,7 @@ See the [Permit Utilities](#permit-utilities) section for code examples.
   - `service`: AvailableDZapServices
   - `rpcUrls?`: string[]
   - `spender`: string
-  - `signer`: WalletClient
+  - `signer`: `Signer` or `WalletClient`
   - `signatureCallback?`: Callback function for each signature result
 - **Output:**
   - Signature result

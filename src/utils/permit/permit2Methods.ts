@@ -1,11 +1,12 @@
+import { Wallet } from 'ethers';
+import { Services } from 'src/constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
 import { MaxAllowanceExpiration, MaxAllowanceTransferAmount, SignatureExpiryInSecs } from 'src/constants/permit2';
 import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
 import { Abi, WalletClient, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
-import { readContract } from '../index';
-import { Services } from 'src/constants';
+import { isTypeSigner, readContract } from '../index';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -64,7 +65,7 @@ export async function getPermit2PermitDataForApprove({
   rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
-  signer: WalletClient;
+  signer: WalletClient | Wallet;
   expiration?: bigint;
 }) {
   try {
@@ -107,8 +108,17 @@ export async function getPermit2PermitDataForApprove({
         { name: 'nonce', type: 'uint48' },
       ],
     };
+    let signature: HexString;
     const values = permitApprove;
-    const signature = await signer.signTypedData({
+    if (isTypeSigner(signer)) {
+      console.log('Using ethers signer.');
+      signature = (await signer._signTypedData(domain, types, values)) as HexString;
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+      };
+    }
+    signature = await signer.signTypedData({
       account: account as HexString,
       domain,
       message: values,

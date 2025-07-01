@@ -1,12 +1,13 @@
 import { DEFAULT_PERMIT_DATA, PERMIT2_APPROVE_DATA } from 'src/constants';
 import { Erc20Functions, StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
-import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, writeContract } from 'src/utils';
+import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, isTypeSigner, writeContract } from 'src/utils';
 import { checkPermit2, getPermit2Address, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
-import { Abi, WalletClient, maxUint256 } from 'viem';
+import { Abi, WalletClient, encodeFunctionData, maxUint256 } from 'viem';
 
 import { erc20Abi } from 'src/artifacts';
 import ContractHandler from '.';
+import { Signer, Wallet } from 'ethers';
 
 class PermitHandler {
   public static instance: PermitHandler;
@@ -74,7 +75,7 @@ class PermitHandler {
     approvalTxnCallback,
   }: {
     chainId: number;
-    signer: WalletClient;
+    signer: WalletClient | Signer;
     sender: HexString;
     data: { srcToken: HexString; amountToApprove: bigint }[];
     rpcUrls?: string[];
@@ -88,15 +89,35 @@ class PermitHandler {
   }) {
     for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
       let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
-      txnDetails = await writeContract({
-        chainId,
-        contractAddress: data[dataIdx].srcToken as HexString,
-        abi: erc20Abi as Abi,
-        functionName: Erc20Functions.approve,
-        args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
-        rpcUrls,
-        signer,
-      });
+      if (isTypeSigner(signer)) {
+        console.log('Using ethers signer.');
+        const from = await signer.getAddress();
+        const callData = encodeFunctionData({
+          abi: erc20Abi,
+          functionName: Erc20Functions.approve,
+          args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
+        });
+        await signer.sendTransaction({
+          from,
+          chainId,
+          to: data[dataIdx].srcToken as HexString,
+          data: callData,
+        });
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+        };
+      } else {
+        txnDetails = await writeContract({
+          chainId,
+          contractAddress: data[dataIdx].srcToken as HexString,
+          abi: erc20Abi as Abi,
+          functionName: Erc20Functions.approve,
+          args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
+          rpcUrls,
+          signer,
+        });
+      }
       if (txnDetails.code !== StatusCodes.Success) {
         return {
           status: txnDetails.status,
@@ -134,7 +155,7 @@ class PermitHandler {
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    signer: WalletClient;
+    signer: WalletClient | Wallet;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
     spender: string;
   }): Promise<{
