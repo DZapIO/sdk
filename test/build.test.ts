@@ -1,5 +1,5 @@
-import DzapClient from '../client';
-import { BuildTxRequest } from '../types';
+import DzapClient from '../src/client';
+import { BuildTxRequest } from '../src/types';
 
 describe('DzapClient - buildTxn', () => {
   let client: DzapClient;

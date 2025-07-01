@@ -1,5 +1,5 @@
-import DzapClient from '../client';
-import { QuotesRequest } from '../types';
+import DzapClient from '../src/client';
+import { QuotesRequest } from '../src/types';
 
 describe('DzapClient - getQuotes', () => {
   let client: DzapClient;

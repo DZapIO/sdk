@@ -2,6 +2,16 @@
 
 A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations such as swaps, bridges, DCA, and Zaps. This SDK abstracts away the complexity of contract interactions, token management, and price fetching, making it easy to build on top of DZap.
 
+## Installation
+
+```bash
+npm install @dzapio/dzap-sdk
+# or
+yarn add @dzapio/dzap-sdk
+# or
+pnpm add @dzapio/dzap-sdk
+```
+
 ---
 
 ## Table of Contents
@@ -27,20 +37,10 @@ A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing ut
 
 ---
 
-## Installation
-
-```bash
-npm install dzap-sdk
-# or
-yarn add dzap-sdk
-```
-
----
-
 ## Initialization
 
 ```typescript
-import DzapClient from 'dzap-sdk';
+import { DzapClient } from '@dzapio/dzap-sdk';
 
 const dzap = DzapClient.getInstance();
 ```

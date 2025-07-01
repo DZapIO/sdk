@@ -1,14 +1,24 @@
 {
   "name": "@dzapio/dzap-sdk",
   "version": "1.0.0",
-  "description": "This project is a thin React wrapper around DZap, to easily call functionalities/contract integration.",
+  "description": "A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations such as swaps, bridges, DCA, and Zaps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
   "module": "dist/index.m.js",
   "unpkg": "dist/index.umd.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.m.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "publishConfig": {
-    "@dzapio:registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "scripts": {
     "start": "node .",
@@ -16,8 +26,8 @@
     "yalcPublish": "npm run build && yalc publish",
     "pack": "yarn build && npm pack",
     "githubPublish": "npm run build && npm publish",
-    "npmPublish": "yarn build && npm publish --access public",
-    "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap",
+    "npmPublish": "npm run build && npm publish --access public",
+    "build": "rm -rf dist && microbundle --tsconfig tsconfig.build.json",
     "dev": "nodemon",
     "test": "jest",
     "lint": "eslint --cache src/**/*.ts",
@@ -37,11 +47,27 @@
     "src/**/*.{js,ts}": "eslint --cache --fix",
     "src/**/*.{js,ts,md}": "prettier --write --ignore-unknown"
   },
-  "keywords": [],
+  "keywords": [
+    "dZap",
+    "defi",
+    "dex",
+    "swap",
+    "bridge",
+    "zap",
+    "dca",
+    "ethereum",
+    "blockchain",
+    "web3",
+    "typescript",
+    "sdk"
+  ],
   "author": "DZap",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "devDependencies": {
     "@types/jest": "^30.0.0",
@@ -49,8 +75,14 @@
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
     "eslint": "^8.54.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.0.10",
     "jest": "^29.7.0",
+    "lint-staged": "^15.2.2",
     "microbundle": "^0.15.1",
     "nodemon": "^2.0.16",
     "prettier": "^3.1.0",
@@ -60,14 +92,8 @@
   "dependencies": {
     "axios": "^1.2.1",
     "decimal.js": "^10.4.3",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-airbnb-typescript": "^17.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-prettier": "^5.1.3",
-    "ethers": "5.7.2",
-    "husky": "^9.0.10",
-    "lint-staged": "^15.2.2",
     "node-cache": "^5.1.2",
+    "ethers": "5.7.2",
     "viem": "^2.17.0"
   },
   "repository": {
@@ -77,5 +103,13 @@
   "bugs": {
     "url": "https://github.com/dzapio/dzap-sdk/issues"
   },
-  "homepage": "https://github.com/dzapio/dzap-sdk#readme"
+  "homepage": "https://github.com/dzapio/dzap-sdk#readme",
+  "microbundle": {
+    "entry": "src/index.ts",
+    "output": "dist",
+    "format": "esm,cjs,umd",
+    "target": "node",
+    "sourcemap": false,
+    "generateTypes": true
+  }
 }

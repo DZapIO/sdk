@@ -1,3 +1,8 @@
+# Source files
+src/
+examples/
+
+# Development files
 /node_modules
 /build
 .DS_Store
@@ -9,7 +14,9 @@ electron-builder.yml
 /.yalc
 yalc.lock
 yarn.lock
-# testing
+bun.lockb
+
+# Testing
 /coverage/
 src/types/contracts/
 src/types/gateway/
@@ -17,3 +24,16 @@ tsconfig.tsbuildinfo
 public/**/*.js
 jest.results.json
 *.#*
+
+# Configuration files
+tsconfig.json
+jest.config.mjs
+.eslintrc.js
+.prettierrc
+.husky/
+scripts/
+
+# Documentation (keep README.md)
+docs/
+*.md
+!README.md

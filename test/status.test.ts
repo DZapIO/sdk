@@ -1,5 +1,5 @@
 import { StatusResponse } from 'src/types';
-import DzapClient from '../client';
+import DzapClient from '../src/client';
 
 describe('DzapClient - getStatus', () => {
   let client: DzapClient;
