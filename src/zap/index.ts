@@ -20,15 +20,15 @@ class ZapHandler {
 
   public async execute({
     chainId,
-    data,
+    txnData,
     signer,
   }: {
     chainId: number;
-    data: ZapTxnDetails;
+    txnData: ZapTxnDetails;
     signer: Signer | WalletClient;
   }): Promise<DZapTransactionResponse> {
     try {
-      const { callData, callTo, value, estimatedGas } = data;
+      const { callData, callTo, value, estimatedGas } = txnData;
       if (isTypeSigner(signer)) {
         console.log('Using ethers signer.');
         const from = await signer.getAddress();
@@ -49,9 +49,9 @@ class ZapHandler {
         const txnHash = await signer.sendTransaction({
           chain: viemChainsById[chainId],
           account: signer.account?.address as HexString,
-          to: data.callTo,
-          data: data.callData,
-          value: BigInt(data.value),
+          to: txnData.callTo,
+          data: txnData.callData,
+          value: BigInt(txnData.value),
         });
         return {
           status: TxnStatus.success,
@@ -114,7 +114,7 @@ class ZapHandler {
     }
   }
 
-  public async zap({ chainId, data, signer }: { chainId: number; data: ZapStep[]; signer: Signer | WalletClient }): Promise<
+  public async zap({ chainId, steps, signer }: { chainId: number; steps: ZapStep[]; signer: Signer | WalletClient }): Promise<
     | {
         status: TxnStatus.success;
         code: StatusCodes | number;
@@ -124,10 +124,10 @@ class ZapHandler {
   > {
     try {
       let txnHash: HexString | undefined;
-      for (let i = 0; i < data.length; i++) {
-        const step = data[i];
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
         if (step.action === zapStepAction.execute) {
-          const result = await this.execute({ chainId, data: step.data as ZapTxnDetails, signer });
+          const result = await this.execute({ chainId, txnData: step.data as ZapTxnDetails, signer });
           if (result.status !== TxnStatus.success) {
             return result;
           }

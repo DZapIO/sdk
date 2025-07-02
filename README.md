@@ -174,12 +174,12 @@ See the [Permit Utilities](#permit-utilities) section for code examples.
 
 > **Note:** This method requires token approval. See [Token Approval Mechanism](#token-approval-mechanism).
 
-##### `zap({ chainId, data, signer })`
+##### `zap({ chainId, steps, signer })`
 
-- **Purpose:** Executes a sequence of Zap steps.
+- **Purpose:** Executes a Zap transaction.
 - **Input:**
   - `chainId`: number
-  - `data`: ZapTransactionStep[]
+  - `steps`: ZapTransactionStep[]
   - `signer`: WalletClient
 - **Output:**
   - Transaction result

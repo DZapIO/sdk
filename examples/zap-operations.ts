@@ -60,7 +60,7 @@ async function runZapExamples() {
         });
         const zapResult = await dZapClient.zap({
           chainId: 42161,
-          data: zapBuildResponse.steps,
+          steps: zapBuildResponse.steps,
           signer: walletClient,
         });
         console.log('Zap execution result:', zapResult);
