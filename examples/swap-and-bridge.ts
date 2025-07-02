@@ -1,9 +1,9 @@
 import { createWalletClient, http } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { DzapClient } from '../src'; // Corrected: Named import
+import { DZapClient } from '../src'; // Corrected: Named import
 import { BuildTxRequest, Quote, QuotesRequest, StatusResponse } from '../src/types';
 
-const dzapClient = DzapClient.getInstance();
+const dZapClient = DZapClient.getInstance();
 
 // Setup a signer. This is a placeholder.
 // In a real app, you would get this from a wallet connector like RainbowKit, wagmi, etc.
@@ -38,7 +38,7 @@ async function runSwapAndBridgeExamples() {
   };
 
   try {
-    const quotesResponse = await dzapClient.getQuotes(quotesRequest);
+    const quotesResponse = await dZapClient.getQuotes(quotesRequest);
     console.log('Quotes received:', JSON.stringify(quotesResponse, null, 2));
 
     // The response is an object with keys for each requested pair.
@@ -81,7 +81,7 @@ async function runSwapAndBridgeExamples() {
       ],
     };
 
-    const txResult = await dzapClient.buildAndSendTransaction({
+    const txResult = await dZapClient.buildAndSendTransaction({
       chainId: 42161,
       request: buildTxRequest,
       signer: walletClient,
@@ -97,7 +97,7 @@ async function runSwapAndBridgeExamples() {
       console.log('\nFetching transaction status in 15 seconds...');
       setTimeout(async () => {
         try {
-          const statusResponse = (await dzapClient.getStatus({
+          const statusResponse = (await dZapClient.getStatus({
             txHash: txResult.txnHash,
             chainId: '42161',
           })) as StatusResponse;

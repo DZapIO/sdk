@@ -47,7 +47,7 @@ export const checkPermit2 = async ({
 
 export async function getPermit2PermitDataForApprove({
   chainId,
-  dzapContractAddress,
+  dZapContractAddress,
   service,
   account,
   token,
@@ -61,7 +61,7 @@ export async function getPermit2PermitDataForApprove({
   account: string;
   token: string;
   service: AvailableDZapServices;
-  dzapContractAddress: string;
+  dZapContractAddress: string;
   rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
@@ -75,7 +75,7 @@ export async function getPermit2PermitDataForApprove({
       contractAddress: permit2Address,
       abi: Permit2Abi as Abi,
       functionName: Erc20PermitFunctions.allowance,
-      args: [account, token, dzapContractAddress],
+      args: [account, token, dZapContractAddress],
       rpcUrls,
     });
     if (nonceRes.code !== StatusCodes.Success) {
@@ -92,7 +92,7 @@ export async function getPermit2PermitDataForApprove({
         expiration,
         nonce: nonce[2],
       },
-      spender: dzapContractAddress,
+      spender: dZapContractAddress,
       sigDeadline,
     };
     const types = {

@@ -1,11 +1,11 @@
 import { createWalletClient, http } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { DzapClient, TxnStatus } from '../src';
+import { DZapClient, TxnStatus } from '../src';
 import { ZapQuoteRequest } from '../src/zap/types';
 
 // 1. INITIALIZATION
 
-const dzapClient = DzapClient.getInstance();
+const dZapClient = DZapClient.getInstance();
 
 // Setup a signer. This is a placeholder.
 // In a real app, you would get this from a wallet connector like RainbowKit, wagmi, etc.
@@ -37,7 +37,7 @@ async function runZapExamples() {
   };
 
   try {
-    const zapQuoteResponse = await dzapClient.getZapQuote(zapQuoteRequest);
+    const zapQuoteResponse = await dZapClient.getZapQuote(zapQuoteRequest);
     console.log('Zap quote received:', JSON.stringify(zapQuoteResponse, null, 2));
 
     if (!zapQuoteResponse) {
@@ -55,10 +55,10 @@ async function runZapExamples() {
     if (walletClient.account) {
       try {
         // The `data` for the `zap` method is the array of steps from the quote response.
-        const zapBuildResponse = await dzapClient.buildZapTransaction({
+        const zapBuildResponse = await dZapClient.buildZapTransaction({
           ...zapQuoteRequest,
         });
-        const zapResult = await dzapClient.zap({
+        const zapResult = await dZapClient.zap({
           chainId: 42161,
           data: zapBuildResponse.steps,
           signer: walletClient,
@@ -75,7 +75,7 @@ async function runZapExamples() {
 
         setTimeout(async () => {
           try {
-            const statusResponse = await dzapClient.getZapTxnStatus({ chainId: '42161', txnHash });
+            const statusResponse = await dZapClient.getZapTxnStatus({ chainId: '42161', txnHash });
             console.log('Zap transaction status:', JSON.stringify(statusResponse, null, 2));
           } catch (e) {
             console.error('Error getting zap status:', e);

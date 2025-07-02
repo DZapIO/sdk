@@ -1,7 +1,7 @@
 import { fetchTokenPrice } from 'src/api';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 
-export class DzapPriceProvider implements IPriceProvider {
+export class DZapPriceProvider implements IPriceProvider {
   public id = priceProviders.dZap;
   public requiresChainConfig = false;
 

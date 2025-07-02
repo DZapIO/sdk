@@ -1,11 +1,11 @@
-import DzapClient from '../src/client';
+import DZapClient from '../src/client';
 import { QuotesRequest } from '../src/types';
 
-describe('DzapClient - getQuotes', () => {
-  let client: DzapClient;
+describe('DZapClient - getQuotes', () => {
+  let client: DZapClient;
 
   beforeAll(() => {
-    client = DzapClient.getInstance();
+    client = DZapClient.getInstance();
   });
 
   it('should return quotes for a cross-chain swap', async () => {

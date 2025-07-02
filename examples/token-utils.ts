@@ -1,6 +1,6 @@
-import { DzapClient } from '../src';
+import { DZapClient } from '../src';
 
-const dzapClient = DzapClient.getInstance();
+const dZapClient = DZapClient.getInstance();
 
 async function runTokenUtilsExamples() {
   console.log('Running Token Utilities examples...');
@@ -11,7 +11,7 @@ async function runTokenUtilsExamples() {
 
   console.log(`\nFetching all tokens for chain ${arbitrumChainId}...`);
   try {
-    const allTokens = await dzapClient.getAllTokens(arbitrumChainId);
+    const allTokens = await dZapClient.getAllTokens(arbitrumChainId);
     console.log(`Found ${Object.keys(allTokens).length} tokens.`);
     // Log the first 5 tokens for brevity
     console.log('First 5 tokens:', Object.fromEntries(Object.entries(allTokens).slice(0, 5)));
@@ -25,7 +25,7 @@ async function runTokenUtilsExamples() {
   const userAddress = '0xYourWalletAddress'; // Replace with your address to check balance
   console.log(`\nFetching details for USDC on arbitrum...`);
   try {
-    const tokenDetails = await dzapClient.getTokenDetails(
+    const tokenDetails = await dZapClient.getTokenDetails(
       usdcAddress,
       arbitrumChainId,
       userAddress,
@@ -46,7 +46,7 @@ async function runTokenUtilsExamples() {
   ];
   console.log(`\nFetching prices for ${tokensToPrice.length} tokens...`);
   try {
-    const tokenPrices = await dzapClient.getTokenPrice(tokensToPrice, arbitrumChainId);
+    const tokenPrices = await dZapClient.getTokenPrice(tokensToPrice, arbitrumChainId);
     console.log('Token prices:', JSON.stringify(tokenPrices, null, 2));
   } catch (error) {
     console.error('Error fetching token prices:', error);

@@ -26,7 +26,7 @@ import {
   SwapInfo,
 } from './types';
 
-import DzapClient from './client';
+import DZapClient from './client';
 
 export * from './zap/constants';
 export * from './zap/types';
@@ -57,7 +57,7 @@ export {
   StatusCodes,
   QuoteFilter,
   QuoteFilters,
-  DzapClient,
+  DZapClient,
   TxnStatus,
   ExecuteTxnData,
   ProviderDetails,

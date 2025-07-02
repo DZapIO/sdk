@@ -37,8 +37,8 @@ import {
   fetchTokenDetails,
 } from '../api';
 
-class DzapClient {
-  private static instance: DzapClient;
+class DZapClient {
+  private static instance: DZapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private contractHandler: ContractHandler;
   private permitHandler: PermitHandler;
@@ -53,15 +53,15 @@ class DzapClient {
   }
 
   // Static method to control the access to the singleton instance.
-  public static getInstance(): DzapClient {
-    if (!DzapClient.instance) {
-      DzapClient.instance = new DzapClient();
+  public static getInstance(): DZapClient {
+    if (!DZapClient.instance) {
+      DZapClient.instance = new DZapClient();
     }
-    return DzapClient.instance;
+    return DZapClient.instance;
   }
 
   public static async getChainConfig(): Promise<ChainData> {
-    if (!DzapClient.chainConfig) {
+    if (!DZapClient.chainConfig) {
       const data = await fetchAllSupportedChains();
       const chains: ChainData = {};
       data.forEach((chain: Chain) => {
@@ -69,9 +69,9 @@ class DzapClient {
           chains[chain.chainId] = chain;
         }
       });
-      DzapClient.chainConfig = chains;
+      DZapClient.chainConfig = chains;
     }
-    return DzapClient.chainConfig;
+    return DZapClient.chainConfig;
   }
 
   public static getDZapAbi(service: AvailableDZapServices) {
@@ -84,7 +84,7 @@ class DzapClient {
 
   public async getQuotes(request: QuotesRequest): Promise<QuotesResponse> {
     const quotes: QuotesResponse = await fetchQuotes(request);
-    const chainConfig = await DzapClient.getChainConfig();
+    const chainConfig = await DZapClient.getChainConfig();
     if (chainConfig === null) {
       return quotes;
     }
@@ -120,7 +120,7 @@ class DzapClient {
 
   public async getAllTokens(chainId: number, source?: string, account?: string) {
     try {
-      const [tokensResult, chainConfigResult] = await Promise.allSettled([fetchAllTokens(chainId, source, account), DzapClient.getChainConfig()]);
+      const [tokensResult, chainConfigResult] = await Promise.allSettled([fetchAllTokens(chainId, source, account), DZapClient.getChainConfig()]);
 
       const tokens = tokensResult.status === 'fulfilled' ? tokensResult.value : {};
       const chainConfig = chainConfigResult.status === 'fulfilled' ? chainConfigResult.value : null;
@@ -139,7 +139,7 @@ class DzapClient {
   }
 
   public async getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>> {
-    const chainConfig = await DzapClient.getChainConfig();
+    const chainConfig = await DZapClient.getChainConfig();
     return await this.priceService.getPrices({ chainId, tokenAddresses, chainConfig });
   }
 
@@ -165,7 +165,7 @@ class DzapClient {
   }
 
   public async decodeTrxData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const chainConfig = await DzapClient.getChainConfig();
+    const chainConfig = await DZapClient.getChainConfig();
     if (chainConfig === null || chainConfig?.[chainId] == null) {
       throw new Error('Chains config not found');
     }
@@ -177,7 +177,7 @@ class DzapClient {
   }
 
   public async getDZapContractAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
-    const chainConfig = await DzapClient.getChainConfig();
+    const chainConfig = await DZapClient.getChainConfig();
     if (!chainConfig[chainId].isEnabled || !chainConfig) {
       throw new Error('Chains config not found');
     }
@@ -327,4 +327,4 @@ class DzapClient {
   }
 }
 
-export default DzapClient;
+export default DZapClient;

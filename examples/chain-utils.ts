@@ -1,13 +1,13 @@
-import { DzapClient } from '../src';
+import { DZapClient } from '../src';
 
-const dzapClient = DzapClient.getInstance();
+const dZapClient = DZapClient.getInstance();
 
 async function runChainUtilsExamples() {
   console.log('Running Chain Utilities examples...');
 
   console.log('\nFetching all supported chains...');
   try {
-    const allChains = await dzapClient.getAllSupportedChains();
+    const allChains = await dZapClient.getAllSupportedChains();
     console.log(`Found ${Object.keys(allChains).length} supported chains.`);
     // Log a few chain details for brevity
     const chainSubset = Object.fromEntries(

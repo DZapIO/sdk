@@ -40,9 +40,9 @@ pnpm add @dzapio/dzap-sdk
 ## Initialization
 
 ```typescript
-import { DzapClient } from '@dzapio/dzap-sdk';
+import { DZapClient } from '@dzapio/dzap-sdk';
 
-const dzap = DzapClient.getInstance();
+const dZap = DZapClient.getInstance();
 ```
 
 ---
@@ -56,7 +56,7 @@ Before executing any transaction that spends ERC20 tokens (swap, bridge, zap, et
 
    ```typescript
    // Example: Fetching the router address for a chain
-   const chainConfig = await DzapClient.getChainConfig();
+   const chainConfig = await DZapClient.getChainConfig();
    const routerAddress = chainConfig[CHAIN_ID].contracts?.router;
    // Use routerAddress as the spender in your ERC20 approve call
    ```

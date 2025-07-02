@@ -1,11 +1,11 @@
-import DzapClient from '../src/client';
+import DZapClient from '../src/client';
 import { BuildTxRequest } from '../src/types';
 
-describe('DzapClient - buildTxn', () => {
-  let client: DzapClient;
+describe('DZapClient - buildTxn', () => {
+  let client: DZapClient;
 
   beforeAll(() => {
-    client = DzapClient.getInstance();
+    client = DZapClient.getInstance();
   });
 
   it('should build a cross-chain transaction', async () => {

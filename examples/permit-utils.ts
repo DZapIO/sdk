@@ -1,9 +1,9 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { DzapClient } from '../src';
+import { DZapClient } from '../src';
 import { HexString } from '../src/types';
 
-const dzapClient = DzapClient.getInstance();
+const dZapClient = DZapClient.getInstance();
 
 // Setup a signer. This is a placeholder.
 // In a real app, you would get this from a wallet connector like RainbowKit, wagmi, etc.
@@ -26,7 +26,7 @@ async function runPermitExamples() {
 
   console.log('\nChecking allowance...');
   try {
-    const allowanceResponse = await dzapClient.permitAllowance({
+    const allowanceResponse = await dZapClient.permitAllowance({
       chainId,
       sender: senderAddress,
       data: [{ srcToken: tokenToApprove, amount: amountToTrade }],
@@ -41,7 +41,7 @@ async function runPermitExamples() {
     if (walletClient.account && tokenAllowance && BigInt(tokenAllowance.allowance) < amountToTrade) {
       console.log('\nAllowance is insufficient. Requesting approval...');
       try {
-        await dzapClient.approvePermit({
+        await dZapClient.approvePermit({
           chainId,
           signer: walletClient,
           sender: senderAddress,
@@ -70,12 +70,12 @@ async function runPermitExamples() {
   console.log('\nSigning permit...');
   if (walletClient.account) {
     try {
-      const routerAddress = (await dzapClient.getAllSupportedChains())[chainId].contracts?.router;
+      const routerAddress = (await dZapClient.getAllSupportedChains())[chainId].contracts?.router;
 
       if (!routerAddress) {
         throw new Error(`Router address not found for chain ID ${chainId}`);
       }
-      const signResponse = await dzapClient.sign({
+      const signResponse = await dZapClient.sign({
         chainId,
         signer: walletClient,
         sender: senderAddress,

@@ -203,10 +203,10 @@ export const handleDecodeTrxData = (
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dzapAbi = getDZapAbi(service);
+  const dZapAbi = getDZapAbi(service);
   try {
     events = parseEventLogs({
-      abi: dzapAbi,
+      abi: dZapAbi,
       logs: data.logs,
     });
   } catch (e) {

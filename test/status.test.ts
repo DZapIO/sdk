@@ -1,11 +1,11 @@
 import { StatusResponse } from 'src/types';
-import DzapClient from '../src/client';
+import DZapClient from '../src/client';
 
-describe('DzapClient - getStatus', () => {
-  let client: DzapClient;
+describe('DZapClient - getStatus', () => {
+  let client: DZapClient;
 
   beforeAll(() => {
-    client = DzapClient.getInstance();
+    client = DZapClient.getInstance();
   });
 
   it('should fetch status for multiple transaction IDs', async () => {

@@ -171,7 +171,7 @@ class PermitHandler {
     const oneToMany = data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken);
     let totalSrcAmount = BigInt(0);
     if (oneToMany) totalSrcAmount = calcTotalSrcTokenAmount(data);
-    const dzapContractAddress = spender;
+    const dZapContractAddress = spender;
     if (isDZapNativeToken(data[0].srcToken)) {
       data[0].permitData = DEFAULT_PERMIT_DATA;
     } else {
@@ -180,7 +180,7 @@ class PermitHandler {
         chainId,
         account: sender as HexString,
         token: data[0].srcToken as HexString,
-        dzapContractAddress,
+        dZapContractAddress,
         amount,
         service,
         signer,
@@ -208,7 +208,7 @@ class PermitHandler {
             chainId,
             account: sender as HexString,
             token: data[dataIdx].srcToken as HexString,
-            dzapContractAddress,
+            dZapContractAddress,
             amount,
             service,
             signer,

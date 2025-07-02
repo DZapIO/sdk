@@ -1,7 +1,7 @@
 import { ChainData } from 'src/types';
 import { CoingeckoPriceProvider } from './provider/coingecko';
 import { DefiLlamaPriceProvider } from './provider/defiLlama';
-import { DzapPriceProvider } from './provider/dzap';
+import { DZapPriceProvider } from './provider/dZap';
 import { IPriceProvider, PriceProvider, priceProviders } from './types/IPriceProvider';
 import { CacheProvider } from '../cache/cacheProvider';
 import { getTokensPriceCacheKey, TOKENS_PRICE_EXPIRY } from '../cache/constant';
@@ -15,7 +15,7 @@ export class PriceService {
 
   private initailizeProviders(): Map<PriceProvider, IPriceProvider> {
     return new Map<PriceProvider, IPriceProvider>([
-      [priceProviders.dZap, new DzapPriceProvider()],
+      [priceProviders.dZap, new DZapPriceProvider()],
       [priceProviders.defiLlama, new DefiLlamaPriceProvider()],
       [priceProviders.coingecko, new CoingeckoPriceProvider()],
     ]);
