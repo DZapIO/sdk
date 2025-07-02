@@ -1,26 +1,28 @@
 import { AppEnv } from 'src/enums';
 import { Abi } from 'viem';
 
-let REACT_APP_ENV;
-let REACT_APP_BASE_API_URL;
+let APP_ENV;
+let BASE_API_URL;
+let ZAP_API_URL;
 
 if (typeof process !== 'undefined' && process.env) {
-  REACT_APP_ENV = process.env.REACT_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV;
-  REACT_APP_BASE_API_URL = process.env.REACT_APP_BASE_API_URL;
+  APP_ENV = process.env.REACT_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV;
+  BASE_API_URL = process.env.REACT_APP_BASE_API_URL || process.env.NEXT_PUBLIC_BASE_API_URL;
+  ZAP_API_URL = process.env.REACT_APP_ZAP_API_URL || process.env.NEXT_PUBLIC_ZAP_API_URL;
 }
 
-const baseUrl = REACT_APP_BASE_API_URL || 'https://api.dzap.io/';
+const baseUrl = BASE_API_URL || 'https://api.dzap.io/';
 
-const zapProdBaseUrl = 'https://zap.dzap.io/v1';
+const zapBaseUrl = ZAP_API_URL || 'https://zap.dzap.io/v1';
 
-export const appEnv = REACT_APP_ENV || AppEnv.development;
+export const appEnv = APP_ENV || AppEnv.development;
 export const versionPostfix = 'v1/';
 export const getBaseUrl = (): string => {
   return `${baseUrl}${versionPostfix}`;
 };
 
 export const getBaseZapUrl = (): string => {
-  return zapProdBaseUrl;
+  return zapBaseUrl;
 };
 
 export type DeFiContract = {
