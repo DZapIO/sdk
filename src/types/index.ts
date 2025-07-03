@@ -86,72 +86,6 @@ export type ApiRpcResponse = {
 
 export type PermitSelectorData = { address: HexString; permitSelector: PermitSelector; permitAllowance: bigint };
 
-// Swap
-
-// export type SwapData = {
-//   sourceId: string;
-//   srcToken: string;
-//   destToken: string;
-//   amount: string;
-//   slippage: number;
-//   gasPrice?: number;
-//   srcDecimals: number;
-//   destDecimals: number;
-//   permitData?: string;
-//   additionalInfo?: Record<string, unknown>;
-// };
-
-// export type SwapParamsRequest = {
-//   chainId: number;
-//   integratorId: string;
-//   sender: string;
-//   refundee?: string;
-//   recipient: string;
-//   withOutRevert?: boolean; // default true
-//   includeSwapCallData?: boolean; // default false
-//   includeTxData?: boolean; // default true
-//   data: Array<SwapData>;
-// };
-
-// export type SwapQuoteData = {
-//   amount: string;
-//   selectedSource?: string;
-//   account: string;
-//   srcToken: string;
-//   srcDecimals: number;
-//   destToken: string;
-//   destDecimals: number;
-//   slippage: number;
-// };
-
-// export type SwapQuoteRequest = {
-//   chainId: number;
-//   integratorId: string;
-//   data: Array<SwapQuoteData>;
-//   allowedSources?: string[];
-//   filter?: QuoteFilter;
-// };
-
-// export type GetSwapParamsResponse = {
-//   value: string;
-//   ercSwapDetails: {
-//     executor: string;
-//     desc: {
-//       srcToken: string;
-//       dstToken: string;
-//       srcReceiver: string;
-//       dstReceiver: string;
-//       amount: string;
-//       minReturnAmount: string;
-//       flags: number;
-//       permit: string;
-//     };
-//     routeData: string;
-//     permit: string;
-//     minReturnAmount: number;
-//   }[];
-// };
-
 export type ProviderDetails = {
   id: string;
   name: string;
@@ -175,54 +109,7 @@ export type Fee = {
   providerFee: FeeDetails[];
 };
 
-// export type SwapQuoteResponseData = {
-//   srcToken: string;
-//   srcAmount: string;
-//   destToken: string;
-//   destAmount: string;
-//   priceImpactPercent: string | null;
-//   fee: Fee;
-//   srcAmountUSD: string | null;
-//   destAmountUSD: string | null;
-//   providerDetails: ProviderDetails;
-//   additionalInfo?: Record<string, unknown>;
-//   swapPerUnit: string;
-//   tags?: Tag[];
-// };
-
-// export type SwapQuoteResponse = {
-//   [key: string]: {
-//     status: string;
-//     errorMessage?: string;
-//     recommendedSource: string;
-//     recommendedSourceByAmount: string;
-//     recommendedSourceByGas: string;
-//     tokensWithoutPrice: string[];
-//     quoteRates: {
-//       [key: string]: {
-//         data: SwapQuoteResponseData;
-//       };
-//     };
-//   };
-// };
-
-// export type SwapParamsResponse = {
-//   data: {
-//     transactionRequest: {
-//       txId: string;
-//       data: string;
-//       to: string;
-//       from: string;
-//       chainId: number;
-//       value: string;
-//       gasLimit: string;
-//     };
-//     updatedQuotes: Record<string, string>;
-//   };
-// };
-
 export type QuoteFilter = keyof typeof QuoteFilters;
-// Bridge
 
 export type QuotesRequest = {
   integratorId: string;
