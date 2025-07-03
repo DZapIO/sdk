@@ -75,6 +75,7 @@ export type Chain = {
   };
   disableMultiTxn: boolean;
   isEnabled: boolean;
+  mainnet: boolean;
 };
 
 export type ApiRpcResponse = {
