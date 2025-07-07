@@ -84,7 +84,7 @@ export type ApiRpcResponse = {
   keyType?: 'ALCHEMY_KEY' | 'BLASTAPI_KEY';
 };
 
-export type PermitSelectorData = { address: HexString; permitSelector: PermitSelector; permitAllowance: bigint };
+export type PermitSelectorData = { address: HexString; permitSelector: PermitSelector; fetchPermitAllowance: bigint };
 
 export type ProviderDetails = {
   id: string;

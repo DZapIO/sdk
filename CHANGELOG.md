@@ -28,6 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `getTokenDetails()` - Get detailed token information
 - `getTokenPrice()` - Fetch token prices
 - `getAllSupportedChains()` - Get supported blockchain networks
-- `permitAllowance()` - Check Permit2 allowances
+- `fetchPermitAllowance()` - Check Permit2 allowances
 - `approvePermit()` - Approve tokens via Permit2
 - `sign()` - Sign permit data for gas-less approvals 

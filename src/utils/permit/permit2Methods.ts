@@ -33,15 +33,15 @@ export const checkPermit2 = async ({
       rpcUrls,
     });
     if (permitAllowanceRes.code !== StatusCodes.Success) {
-      return { status: TxnStatus.error, code: StatusCodes.Error, data: { permitAllowance: BigInt(0) } };
+      return { status: TxnStatus.error, code: StatusCodes.Error, data: { fetchPermitAllowance: BigInt(0) } };
     }
-    return { status: TxnStatus.success, code: StatusCodes.Success, data: { permitAllowance: permitAllowanceRes.data as bigint } };
+    return { status: TxnStatus.success, code: StatusCodes.Success, data: { fetchPermitAllowance: permitAllowanceRes.data as bigint } };
   } catch (e: any) {
     console.log({ e });
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, data: { permitAllowance: BigInt(0) } };
+      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, data: { fetchPermitAllowance: BigInt(0) } };
     }
-    return { status: TxnStatus.error, code: e.code, data: { permitAllowance: BigInt(0) } };
+    return { status: TxnStatus.error, code: e.code, data: { fetchPermitAllowance: BigInt(0) } };
   }
 };
 

@@ -278,7 +278,7 @@ class DZapClient {
    * Checks token allowances for a sender (Permit2/Permit-based only).
    * @param params Object containing chainId, sender, data, and rpcUrls.
    */
-  public async permitAllowance({
+  public async fetchPermitAllowance({
     chainId,
     sender,
     data,

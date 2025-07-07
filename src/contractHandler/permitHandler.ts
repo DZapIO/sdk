@@ -48,18 +48,18 @@ class PermitHandler {
       const {
         status,
         code,
-        data: { permitAllowance },
+        data: { fetchPermitAllowance },
       } = await checkPermit2({
         chainId,
         srcToken,
         rpcUrls,
         userAddress: sender as HexString,
       });
-      if (permitAllowance < BigInt(amount)) {
+      if (fetchPermitAllowance < BigInt(amount)) {
         noOfApprovalsRequired++;
       }
       noOfSignaturesRequired++;
-      tokenAllowances[srcToken] = permitAllowance;
+      tokenAllowances[srcToken] = fetchPermitAllowance;
       if (code !== StatusCodes.Success) {
         return { status, code, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
       }

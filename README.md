@@ -63,7 +63,7 @@ Before executing any transaction that spends ERC20 tokens (swap, bridge, zap, et
 
 2. **Gas-less Permit-based Approval (Permit2):**  
    Use the SDK's `sign` method to generate a permit signature, and pass the resulting `permitData` to the transaction-building method. This allows for a seamless, gas-less approval experience if the token supports Permit2.
-   - The SDK's `permitAllowance` and `approvePermit` methods are for Permit2/Permit-based flows only.
+   - The SDK's `fetchPermitAllowance` and `approvePermit` methods are for Permit2/Permit-based flows only.
 
 See the [Permit Utilities](#permit-utilities) section for code examples.
 
@@ -261,7 +261,7 @@ See the [Permit Utilities](#permit-utilities) section for code examples.
 
 ### Permit Utilities
 
-#### `permitAllowance({ chainId, sender, data, rpcUrls })`
+#### `fetchPermitAllowance({ chainId, sender, data, rpcUrls })`
 
 - **Purpose:** Checks token allowances for a sender (Permit2/Permit-based only).
 - **Input:**
