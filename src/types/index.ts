@@ -182,7 +182,9 @@ export type QuotesResponse = {
   [pair: string]: {
     status?: string;
     message?: string;
-    recommendedSource?: string;
+    recommendedSource: string;
+    fastestSource: string;
+    questSource?: string;
     quoteRates?: QuotesByProviderId;
     tokensWithoutPrice: Record<number, string[]>;
   };

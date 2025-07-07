@@ -1,7 +1,7 @@
 import { ChainData } from 'src/types';
 import { CoingeckoPriceProvider } from './provider/coingecko';
 import { DefiLlamaPriceProvider } from './provider/defiLlama';
-import { DZapPriceProvider } from './provider/dZap';
+import { DZapPriceProvider } from './provider/dzap';
 import { IPriceProvider, PriceProvider, priceProviders } from './types/IPriceProvider';
 import { CacheProvider } from '../cache/cacheProvider';
 import { getTokensPriceCacheKey, TOKENS_PRICE_EXPIRY } from '../cache/constant';
