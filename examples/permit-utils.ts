@@ -26,7 +26,7 @@ async function runPermitExamples() {
 
   console.log('\nChecking allowance...');
   try {
-    const allowanceResponse = await dZapClient.fetchPermitAllowance({
+    const allowanceResponse = await dZapClient.getPermitAllowance({
       chainId,
       sender: senderAddress,
       data: [{ srcToken: tokenToApprove, amount: amountToTrade }],
