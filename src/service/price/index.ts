@@ -81,7 +81,7 @@ export class PriceService {
     if (Object.keys(tokenWithPrice).length > 0) {
       CacheProvider.set(cacheKey, { ...cachedPrices, ...tokenWithPrice }, TOKENS_PRICE_EXPIRY);
     }
-    return result;
+    return { ...cachedPrices, ...result };
   }
 
   private getValidProviders({
