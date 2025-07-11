@@ -11,14 +11,14 @@ if (typeof process !== 'undefined' && process.env) {
   ZAP_API_URL = process.env.REACT_APP_ZAP_API_URL || process.env.NEXT_PUBLIC_ZAP_API_URL;
 }
 
-const baseUrl = BASE_API_URL || 'https://api.dzap.io/';
+const baseUrl = BASE_API_URL || 'https://api.dzap.io';
 
 const zapBaseUrl = ZAP_API_URL || 'https://zap.dzap.io/v1';
 
 export const appEnv = APP_ENV || AppEnv.development;
 export const versionPostfix = 'v1/';
 export const getBaseUrl = (): string => {
-  return `${baseUrl}${versionPostfix}`;
+  return `${baseUrl}/${versionPostfix}`;
 };
 
 export const getBaseZapUrl = (): string => {
