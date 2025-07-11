@@ -1,67 +1,37 @@
 import { Wallet } from 'ethers';
 import { Services } from 'src/constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { MaxAllowanceExpiration, MaxAllowanceTransferAmount, SignatureExpiryInSecs } from 'src/constants/permit2';
-import { Erc20Functions, Erc20PermitFunctions, PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
+import { erc20PermitFunctions } from 'src/constants/erc20';
+import { SignatureExpiryInSecs } from 'src/constants/permit2';
+import { PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
-import { Abi, WalletClient, encodeAbiParameters, erc20Abi, parseAbiParameters } from 'viem';
+import { WalletClient, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
-import { isTypeSigner, readContract } from '../index';
+import { getPublicClient } from '../index';
+import { signTypedData } from '../signTypedData';
+import { generateDeadline } from '../date';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
 }
 
-export const checkPermit2 = async ({
-  srcToken,
-  userAddress,
+export async function getPermit2Signature({
   chainId,
-  rpcUrls,
-}: {
-  srcToken: string;
-  userAddress: string;
-  chainId: number;
-  rpcUrls?: string[];
-}) => {
-  try {
-    const permitAllowanceRes = await readContract({
-      chainId,
-      contractAddress: srcToken as HexString,
-      abi: erc20Abi,
-      functionName: Erc20Functions.allowance,
-      args: [userAddress, getPermit2Address(chainId)],
-      rpcUrls,
-    });
-    if (permitAllowanceRes.code !== StatusCodes.Success) {
-      return { status: TxnStatus.error, code: StatusCodes.Error, data: { getPermitAllowance: BigInt(0) } };
-    }
-    return { status: TxnStatus.success, code: StatusCodes.Success, data: { getPermitAllowance: permitAllowanceRes.data as bigint } };
-  } catch (e: any) {
-    console.log({ e });
-    if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, data: { getPermitAllowance: BigInt(0) } };
-    }
-    return { status: TxnStatus.error, code: e.code, data: { getPermitAllowance: BigInt(0) } };
-  }
-};
-
-export async function getPermit2PermitDataForApprove({
-  chainId,
-  dZapContractAddress,
+  spender,
   service,
   account,
   token,
   signer,
   rpcUrls,
-  amount = BigInt(MaxAllowanceTransferAmount.toString()),
-  sigDeadline = BigInt((SignatureExpiryInSecs + Math.floor(Date.now() / 1000)).toString()),
-  expiration = BigInt(MaxAllowanceExpiration.toString()),
+  amount = maxUint256,
+  sigDeadline = generateDeadline(SignatureExpiryInSecs),
+  expiration = maxUint48,
 }: {
   chainId: number;
-  account: string;
-  token: string;
+  account: HexString;
+  token: HexString;
   service: AvailableDZapServices;
-  dZapContractAddress: string;
+  spender: HexString;
   rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
@@ -70,20 +40,20 @@ export async function getPermit2PermitDataForApprove({
 }) {
   try {
     const permit2Address = getPermit2Address(chainId);
-    const nonceRes = await readContract({
-      chainId,
-      contractAddress: permit2Address,
-      abi: Permit2Abi as Abi,
-      functionName: Erc20PermitFunctions.allowance,
-      args: [account, token, dZapContractAddress],
-      rpcUrls,
+    const publicClient = getPublicClient({ chainId, rpcUrls });
+    const nonce = await publicClient.readContract({
+      address: permit2Address,
+      abi: Permit2Abi,
+      functionName: erc20PermitFunctions.allowance,
+      args: [account, token, spender],
     });
-    if (nonceRes.code !== StatusCodes.Success) {
-      return { status: nonceRes.status, code: nonceRes.code, permitData: null };
-    }
-    const nonce = nonceRes.data as bigint[];
+
     const PERMIT2_DOMAIN_NAME = 'Permit2';
-    const domain = { chainId, name: PERMIT2_DOMAIN_NAME, verifyingContract: permit2Address };
+    const domain = {
+      chainId,
+      name: PERMIT2_DOMAIN_NAME,
+      verifyingContract: permit2Address,
+    };
 
     const permitApprove = {
       details: {
@@ -92,7 +62,7 @@ export async function getPermit2PermitDataForApprove({
         expiration,
         nonce: nonce[2],
       },
-      spender: dZapContractAddress,
+      spender,
       sigDeadline,
     };
     const types = {
@@ -108,22 +78,15 @@ export async function getPermit2PermitDataForApprove({
         { name: 'nonce', type: 'uint48' },
       ],
     };
-    let signature: HexString;
     const values = permitApprove;
-    if (isTypeSigner(signer)) {
-      console.log('Using ethers signer.');
-      signature = (await signer._signTypedData(domain, types, values)) as HexString;
-      return {
-        status: TxnStatus.success,
-        code: StatusCodes.Success,
-      };
-    }
-    signature = await signer.signTypedData({
-      account: account as HexString,
+
+    const signature = await signTypedData({
+      signer,
       domain,
       message: values,
-      primaryType: 'PermitSingle',
       types,
+      account,
+      primaryType: 'PermitSingle',
     });
     const customPermitDataForTransfer = encodeAbiParameters(
       parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),

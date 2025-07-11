@@ -1,7 +1,7 @@
 import { Signer } from 'ethers';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { DZapTransactionResponse, HexString } from 'src/types';
-import { initializeReadOnlyProvider, isTypeSigner } from 'src/utils';
+import { getPublicClient, isTypeSigner } from 'src/utils';
 import { viemChainsById } from 'src/utils/chains';
 import { handleViemTransactionError } from 'src/utils/errors';
 import { WalletClient } from 'viem';
@@ -68,7 +68,7 @@ class ZapHandler {
   public async approve({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: Signer | WalletClient }) {
     try {
       const { callData, callTo, value, estimatedGas } = data;
-      const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls: undefined });
+      const publicClient = getPublicClient({ chainId, rpcUrls: undefined });
       const blockNumber = await publicClient.getBlockNumber();
       console.log('block Number and data');
       console.dir(

@@ -1,6 +1,7 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { DZapClient } from '../src';
+import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
+import { StatusCodes, TxnStatus } from '../src/enums';
 import { HexString } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
@@ -26,11 +27,13 @@ async function runPermitExamples() {
 
   console.log('\nChecking allowance...');
   try {
-    const allowanceResponse = await dZapClient.getPermitAllowance({
+    const allowanceResponse = await dZapClient.getAllowance({
       chainId,
       sender: senderAddress,
+      service: Services.swap,
       data: [{ srcToken: tokenToApprove, amount: amountToTrade }],
       rpcUrls,
+      mode: ApprovalModes.Permit2,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
@@ -38,15 +41,23 @@ async function runPermitExamples() {
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 
-    if (walletClient.account && tokenAllowance && BigInt(tokenAllowance.allowance) < amountToTrade) {
+    if (walletClient.account && tokenAllowance && BigInt(tokenAllowance[tokenToApprove].allowance) < amountToTrade) {
       console.log('\nAllowance is insufficient. Requesting approval...');
       try {
-        await dZapClient.approvePermit({
+        await dZapClient.approve({
           chainId,
           signer: walletClient,
           sender: senderAddress,
+          service: Services.swap,
+          mode: ApprovalModes.Permit2,
           data: [{ srcToken: tokenToApprove, amountToApprove: amountToTrade }],
-          approvalTxnCallback: async ({ txnDetails, address }) => {
+          approvalTxnCallback: async ({
+            txnDetails,
+            address,
+          }: {
+            txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
+            address: HexString;
+          }) => {
             console.log(`Approval transaction sent for ${address}:`, txnDetails);
           },
         });
@@ -80,7 +91,8 @@ async function runPermitExamples() {
         signer: walletClient,
         sender: senderAddress,
         service: 'swap',
-        spender: routerAddress,
+        spender: routerAddress as HexString,
+        permitType: PermitTypes.Permit2,
         data: [
           {
             srcToken: tokenToApprove,

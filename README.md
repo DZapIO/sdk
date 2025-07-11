@@ -18,7 +18,6 @@ pnpm add @dzapio/dzap-sdk
 
 - [Installation](#installation)
 - [Initialization](#initialization)
-- [Token Approval Mechanism](#token-approval-mechanism)
 - [Client Methods](#client-methods)
   - [Swap and Bridge Operations](#swap-and-bridge-operations)
     - [Quotes](#quotes)
@@ -32,6 +31,7 @@ pnpm add @dzapio/dzap-sdk
   - [Token Utilities](#token-utilities)
   - [Chain Utilities](#chain-utilities)
   - [Permit Utilities](#permit-utilities)
+- [Token Approval Mechanism](#token-approval-mechanism)
 - [Types](#types)
 - [License](#license)
 
@@ -44,28 +44,6 @@ import { DZapClient } from '@dzapio/dzap-sdk';
 
 const dZap = DZapClient.getInstance();
 ```
-
----
-
-## Token Approval Mechanism
-
-Before executing any transaction that spends ERC20 tokens (swap, bridge, zap, etc.), the DZap contract must be approved to access those tokens. There are two ways to do this:
-
-1. **On-Chain Approval (Standard ERC20):**  
-   You must manually call the ERC20 token contract's `approve` method, specifying the DZap router contract as the spender. To get the correct router address for a chain, use the chain config:
-
-   ```typescript
-   // Example: Fetching the router address for a chain
-   const chainConfig = await DZapClient.getChainConfig();
-   const routerAddress = chainConfig[CHAIN_ID].contracts?.router;
-   // Use routerAddress as the spender in your ERC20 approve call
-   ```
-
-2. **Gas-less Permit-based Approval (Permit2):**  
-   Use the SDK's `sign` method to generate a permit signature, and pass the resulting `permitData` to the transaction-building method. This allows for a seamless, gas-less approval experience if the token supports Permit2.
-   - The SDK's `getPermitAllowance` and `approvePermit` methods are for Permit2/Permit-based flows only.
-
-See the [Permit Utilities](#permit-utilities) section for code examples.
 
 ---
 
@@ -261,66 +239,119 @@ See the [Permit Utilities](#permit-utilities) section for code examples.
 
 ### Permit Utilities
 
-#### `getPermitAllowance({ chainId, sender, data, rpcUrls })`
+#### `getAllowance({ chainId, sender, data, rpcUrls, service, mode })`
 
-- **Purpose:** Checks token allowances for a sender (Permit2/Permit-based only).
+- **Purpose:** Checks token allowances for a sender with support for different approval modes.
 - **Input:**
   - `chainId`: number
   - `sender`: HexString
   - `data`: Array of `{ srcToken: HexString; amount: bigint }`
   - `rpcUrls`: string[]
+  - `service`: AvailableDZapServices
+  - `mode?`: ApprovalMode (defaults to `ApprovalModes.AutoPermit`)
 - **Output:**
-  - Allowance information
+  - `{ status, code, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } }`
 - **Description:**
-  Returns the current allowance for each token.
+  Returns the current allowance for each token and indicates how many approvals/signatures are needed.
 
 ---
 
-#### `approvePermit({ chainId, signer, sender, rpcUrls, data, approvalTxnCallback })`
+#### `approve({ chainId, signer, sender, rpcUrls, data, service, mode, approvalTxnCallback })`
 
-- **Purpose:** Approves tokens for spending (Permit2/Permit-based only).
+- **Purpose:** Approves tokens for spending based on the specified approval mode.
 - **Input:**
   - `chainId`: number
   - `signer`: `Signer` or `WalletClient`
   - `sender`: HexString
   - `rpcUrls?`: string[]
   - `data`: Array of `{ srcToken: HexString; amountToApprove: bigint }`
-  - `approvalTxnCallback?`: callback for transaction status
+  - `service`: AvailableDZapServices
+  - `mode?`: ApprovalMode (defaults to `ApprovalModes.AutoPermit`)
+  - `approvalTxnCallback?`: callback for transaction status updates
 - **Output:**
   - Approval transaction result
 - **Description:**
-  Sends approval transactions for the specified tokens.
+  Sends approval transactions for the specified tokens. The spender is automatically determined based on the approval mode.
 
 ---
 
-#### `sign({ chainId, sender, data, rpcUrls, service, signer, spender, signatureCallback })`
+#### `sign({ chainId, sender, data, rpcUrls, service, signer, spender, permitType, signatureCallback })`
 
-- **Purpose:** Signs permit data for tokens (Permit2).
+- **Purpose:** Signs EIP-2612Permit/Permit2 data for gas-less token approvals.
 - **Input:**
   - `chainId`: number
   - `sender`: string
   - `data`: Array of `{ srcToken: string; permitData?: string; amount: string }`
   - `service`: AvailableDZapServices
-  - `rpcUrls?`: string[]
-  - `spender`: string
   - `signer`: `Signer` or `WalletClient`
+  - `spender`: string
+  - `permitType?`: PermitModeType (defaults to `PermitMode.AutoPermit`)
+  - `rpcUrls?`: string[]
   - `signatureCallback?`: Callback function for each signature result
 - **Output:**
-  - Signature result
+  - `{ status, code, data }` with permit signatures populated
 - **Description:**
-  Signs permit data for gasless approvals.
+  Signs permit data for gas-less approvals. Automatically handles EIP2612 or Permit2 based on token support and permit type.
+
+---
+
+## Token Approval Mechanism
+
+Before executing any transaction that spends ERC20 tokens (swap, bridge, zap, etc.), the DZap contract must be approved to access those tokens. The SDK provides multiple approval modes to handle different scenarios:
+
+### Approval Modes
+
+The SDK supports four approval modes via `ApprovalModes`:
+
+#### 1. **Default Mode** (`ApprovalModes.Default`)
+
+Standard ERC20 approval directly to the DZap contract.
+
+- **How it works**: Traditional `approve()` call on the token contract
+- **Gas**: Requires gas for the approval transaction
+- **Spender**: DZap router/contract address
+- **Use case**: Standard approval flow for all ERC20 tokens
+
+#### 2. **Permit2 Mode** (`ApprovalModes.Permit2`)
+
+Uses Uniswap's Permit2 for gas-less approvals.
+
+- **How it works**: Two-step process - `approve` Permit2 contract once, then `sign` permits
+- **Gas**: Initial approval to Permit2, then gas-less signatures
+- **Spender**: Permit2 contract address
+- **Use case**: Gas-efficient repeated transactions
+
+#### 3. **EIP2612 Permit Mode** (`ApprovalModes.EIP2612Permit`)
+
+Uses EIP2612 permit signatures directly to the DZap contract.
+
+- **How it works**: Sign a permit message instead of sending approval transaction
+- **Gas**: Gas-less (signature only)
+- **Spender**: DZap router/contract address
+- **Use case**: Tokens that support EIP2612 permits
+
+#### 4. **Auto Permit Mode** (`ApprovalModes.AutoPermit`)
+
+Automatically chooses between EIP2612 and Permit2 based on token support.
+
+- **How it works**: Checks if token supports EIP2612, falls back to Permit2
+- **Gas**: Gas-less if EIP2612 supported, otherwise Permit2 flow
+- **Spender**: Automatically determined
+- **Use case**: Best user experience with automatic optimization
+
+### Recommended Flow
+
+1. **Check Allowance**: Use `getAllowance()` to check if approval is needed
+2. **Choose Mode**: Use `ApprovalModes.AutoPermit` for best user experience
+3. **Approve if Needed**: Use `approve()` for on-chain approvals
+4. **Sign if Preferred**: Use `sign()` for gas-less permit signatures
+5. **Execute Transaction**: Pass permit data to transaction methods
 
 ---
 
 ## Types
 
 All input/output types are defined in the SDK's `src/types` directory. Refer to those files for detailed type definitions.
-
----
-
-## Error Handling
-
-All methods throw errors on failure. Use `try/catch` blocks to handle errors gracefully.
 
 ---
 

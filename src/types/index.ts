@@ -1,6 +1,8 @@
 import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
-import { AppEnv, PermitSelector, StatusCodes, TxnStatus } from 'src/enums';
+import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
 import { PsbtInput, PsbtOutput } from './btc';
+import { PermitTypes } from 'src/constants/permit';
+import { ApprovalModes } from 'src/constants/approval';
 
 export type HexString = `0x${string}`;
 
@@ -83,8 +85,6 @@ export type ApiRpcResponse = {
   keyRequired: boolean;
   keyType?: 'ALCHEMY_KEY' | 'BLASTAPI_KEY';
 };
-
-export type PermitSelectorData = { address: HexString; permitSelector: PermitSelector; getPermitAllowance: bigint };
 
 export type ProviderDetails = {
   id: string;
@@ -325,3 +325,6 @@ export type StatusResponseData = {
 export type StatusResponse = {
   [pair: string]: StatusResponseData;
 };
+
+export type PermitMode = keyof typeof PermitTypes;
+export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;

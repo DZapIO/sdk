@@ -24,10 +24,11 @@ import { viemChainsById } from './chains';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
-export const initializeReadOnlyProvider = ({ rpcUrls, chainId }: { rpcUrls: string[] | undefined; chainId: number }) => {
+export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | undefined; chainId: number }) => {
+  const rpcs = rpcUrls && Array.isArray(rpcUrls) && rpcUrls.length > 0;
   return createPublicClient({
     chain: viemChainsById[chainId],
-    transport: fallback(rpcUrls ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+    transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
   });
 };
 
@@ -87,7 +88,7 @@ export const readContract = async ({
   args?: unknown[];
 }) => {
   try {
-    const result = await initializeReadOnlyProvider({ chainId, rpcUrls }).readContract({
+    const result = await getPublicClient({ chainId, rpcUrls }).readContract({
       address: contractAddress,
       abi,
       functionName,
@@ -119,7 +120,7 @@ export const writeContract = async ({
   rpcUrls?: string[];
   signer: WalletClient;
 }) => {
-  const publicClient = initializeReadOnlyProvider({ chainId, rpcUrls });
+  const publicClient = getPublicClient({ chainId, rpcUrls });
   try {
     const { request } = await publicClient.simulateContract({
       address: contractAddress,

@@ -6,6 +6,7 @@ import PermitHandler from 'src/contractHandler/permitHandler';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { PriceService } from 'src/service/price';
 import {
+  ApprovalMode,
   AvailableDZapServices,
   BuildTxRequest,
   BuildTxResponse,
@@ -15,6 +16,7 @@ import {
   ExecuteTxnData,
   HexString,
   OtherAvailableAbis,
+  PermitMode,
   QuotesRequest,
   QuotesResponse,
   StatusResponse,
@@ -36,6 +38,10 @@ import {
   fetchStatus,
   fetchTokenDetails,
 } from '../api';
+import { approveToken, getAllowance } from 'src/utils/erc20';
+import { getPermit2Address } from 'src/utils/permit/permit2Methods';
+import { PermitTypes } from 'src/constants/permit';
+import { ApprovalModes } from 'src/constants/approval';
 
 class DZapClient {
   private static instance: DZapClient;
@@ -45,19 +51,23 @@ class DZapClient {
   private zapHandler: ZapHandler;
   private static chainConfig: ChainData | null = null;
   private priceService;
-  private constructor() {
+  public rpcUrlsByChainId: Record<number, string[]> = {};
+  private constructor(rpcUrlsByChainId?: Record<number, string[]>) {
     this.contractHandler = ContractHandler.getInstance();
     this.permitHandler = PermitHandler.getInstance();
     this.priceService = new PriceService();
     this.zapHandler = ZapHandler.getInstance();
+    if (rpcUrlsByChainId) {
+      this.rpcUrlsByChainId = rpcUrlsByChainId;
+    }
   }
 
   /**
    * Returns the singleton instance of DZapClient.
    */
-  public static getInstance(): DZapClient {
+  public static getInstance(rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
     if (!DZapClient.instance) {
-      DZapClient.instance = new DZapClient();
+      DZapClient.instance = new DZapClient(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }
@@ -275,39 +285,48 @@ class DZapClient {
   }
 
   /**
-   * Gets token allowances for a sender (Permit2/Permit-based only).
-   * @param params Object containing chainId, sender, data, and rpcUrls.
+   * Gets token allowances for a sender.
+   * @param params Object containing chainId, sender, data, rpcUrls, service and mode.
    */
-  public async getPermitAllowance({
+  public async getAllowance({
     chainId,
     sender,
     data,
     rpcUrls,
+    service,
+    mode = ApprovalModes.AutoPermit,
   }: {
     chainId: number;
     sender: HexString;
     data: { srcToken: HexString; amount: bigint }[];
-    rpcUrls: string[];
+    rpcUrls?: string[];
+    service: AvailableDZapServices;
+    mode?: ApprovalMode;
   }) {
-    return await this.permitHandler.handleGetAllowance({
+    const dZapContractAddress = (await this.getDZapContractAddress({ chainId, service })) as HexString;
+    return await getAllowance({
       chainId,
       sender,
       data,
-      rpcUrls,
+      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      mode,
+      dZapContractAddress,
     });
   }
 
   /**
-   * Approves tokens for spending (Permit2/Permit-based only).
-   * @param params Object containing chainId, signer, sender, rpcUrls, data, and optional approvalTxnCallback.
+   * Approves tokens for spending (Permit2 only).
+   * @param params Object containing chainId, signer, sender, rpcUrls, data, service and mode and approvalTxnCallback.
    */
-  public async approvePermit({
+  public async approve({
     chainId,
     signer,
     sender,
     rpcUrls,
     data,
     approvalTxnCallback,
+    mode = ApprovalModes.AutoPermit,
+    service,
   }: {
     chainId: number;
     signer: WalletClient | Signer;
@@ -321,20 +340,27 @@ class DZapClient {
       txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
     }) => Promise<TxnStatus | void>;
+    mode?: ApprovalMode;
+    service: AvailableDZapServices;
   }) {
-    return await this.permitHandler.handleApprove({
+    const spender =
+      mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit
+        ? getPermit2Address(chainId)
+        : ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    return await approveToken({
       chainId,
       signer,
       sender,
-      rpcUrls,
+      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       data,
       approvalTxnCallback,
+      spender,
     });
   }
 
   /**
-   * Signs permit data for tokens (Permit2).
-   * @param params Object containing chainId, sender, data, service, rpcUrls, spender, signer, and optional signatureCallback.
+   * Signs permit data for tokens (EIP2612Permit/Permit2).
+   * @param params Object containing chainId, sender, data, service, rpcUrls, spender, signer, permitType, and optional signatureCallback.
    */
   public async sign({
     chainId,
@@ -344,29 +370,32 @@ class DZapClient {
     service,
     signer,
     spender,
+    permitType = PermitTypes.AutoPermit,
     signatureCallback,
   }: {
     chainId: number;
-    sender: string;
+    sender: HexString;
     data: {
-      srcToken: string;
-      permitData?: string;
+      srcToken: HexString;
+      permitData?: HexString;
       amount: string;
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    spender: string;
+    spender: HexString;
     signer: WalletClient | Wallet;
+    permitType?: PermitMode;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
-    return await this.permitHandler.handleSign({
+    return await this.permitHandler.signPermit({
       chainId,
       sender,
       data,
-      rpcUrls,
+      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       service,
       signer,
       spender,
+      permitType,
       signatureCallback,
     });
   }

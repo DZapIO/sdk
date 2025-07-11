@@ -1,6 +1,6 @@
 import { OtherAbis, Services, QuoteFilters } from './constants';
 import { SignatureExpiryInSecs } from './constants/permit2';
-import { Erc20Functions, PermitFunctionSelector, PermitSelector, PermitType, StatusCodes, TxnStatus } from './enums';
+import { PermitType, StatusCodes, TxnStatus } from './enums';
 import { getTokensPairKey, formatToken } from './utils';
 import {
   ApiRpcResponse,
@@ -17,16 +17,20 @@ import {
   DZapTransactionResponse,
   HexString,
   Path,
-  PermitSelectorData,
   ExecuteTxnData,
   QuoteFilter,
   ProviderDetails,
   TokenInfo,
   TokenResponse,
   SwapInfo,
+  ApprovalMode,
+  PermitMode,
 } from './types';
 
 import DZapClient from './client';
+import { ApprovalModes } from './constants/approval';
+import { PermitTypes } from './constants/permit';
+import { erc20Functions } from './constants/erc20';
 
 export * from './zap/constants';
 export * from './zap/types';
@@ -45,13 +49,10 @@ export {
   ContractErrorResponse,
   SignatureExpiryInSecs,
   DZapTransactionResponse,
-  Erc20Functions,
+  erc20Functions,
   HexString,
   OtherAbis,
   Path,
-  PermitFunctionSelector,
-  PermitSelector,
-  PermitSelectorData,
   PermitType,
   Services,
   StatusCodes,
@@ -66,4 +67,8 @@ export {
   getTokensPairKey,
   formatToken,
   SwapInfo,
+  ApprovalMode,
+  PermitMode,
+  ApprovalModes,
+  PermitTypes,
 };

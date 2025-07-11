@@ -1,13 +1,15 @@
-import { DEFAULT_PERMIT_DATA, PERMIT2_APPROVE_DATA } from 'src/constants';
-import { Erc20Functions, StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString } from 'src/types';
-import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany, isTypeSigner, writeContract } from 'src/utils';
-import { checkPermit2, getPermit2Address, getPermit2PermitDataForApprove } from 'src/utils/permit/permit2Methods';
-import { Abi, WalletClient, encodeFunctionData, maxUint256 } from 'viem';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
+import { StatusCodes, TxnStatus } from 'src/enums';
+import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
+import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
+import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
+import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
+import { WalletClient } from 'viem';
 
-import { erc20Abi } from 'src/artifacts';
+import { Wallet } from 'ethers';
+import { PermitTypes } from 'src/constants/permit';
 import ContractHandler from '.';
-import { Signer, Wallet } from 'ethers';
+import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 
 class PermitHandler {
   public static instance: PermitHandler;
@@ -24,119 +26,100 @@ class PermitHandler {
     return PermitHandler.instance;
   }
 
-  public async handleGetAllowance({
+  private async generatePermitDataForToken({
+    tokenData,
+    isFirstToken,
+    oneToMany,
+    totalSrcAmount,
     chainId,
+    rpcUrls,
     sender,
-    data,
-    rpcUrls,
-  }: {
-    chainId: number;
-    sender: HexString;
-    data: { srcToken: HexString; amount: bigint }[];
-    rpcUrls: string[];
-  }) {
-    const tokenAllowances: { [key: string]: bigint } = {};
-    // other cases like many to one or one to one
-    let noOfApprovalsRequired = 0;
-    let noOfSignaturesRequired = 0;
-    for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
-      const { srcToken, amount } = data[dataIdx];
-      if (isDZapNativeToken(srcToken)) {
-        tokenAllowances[srcToken] = maxUint256;
-        continue;
-      }
-      const {
-        status,
-        code,
-        data: { getPermitAllowance },
-      } = await checkPermit2({
-        chainId,
-        srcToken,
-        rpcUrls,
-        userAddress: sender as HexString,
-      });
-      if (getPermitAllowance < BigInt(amount)) {
-        noOfApprovalsRequired++;
-      }
-      noOfSignaturesRequired++;
-      tokenAllowances[srcToken] = getPermitAllowance;
-      if (code !== StatusCodes.Success) {
-        return { status, code, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
-      }
-    }
-    return { status: TxnStatus.success, code: StatusCodes.Success, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
-  }
-
-  public async handleApprove({
-    chainId,
+    spender,
+    permitType,
     signer,
-    rpcUrls,
-    data,
-    approvalTxnCallback,
+    service,
   }: {
+    tokenData: { srcToken: HexString; amount: string };
+    isFirstToken: boolean;
+    oneToMany: boolean;
+    totalSrcAmount: bigint;
     chainId: number;
-    signer: WalletClient | Signer;
-    sender: HexString;
-    data: { srcToken: HexString; amountToApprove: bigint }[];
     rpcUrls?: string[];
-    approvalTxnCallback?: ({
-      txnDetails,
-      address,
-    }: {
-      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
-      address: HexString;
-    }) => Promise<TxnStatus | void>;
-  }) {
-    for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
-      let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        const from = await signer.getAddress();
-        const callData = encodeFunctionData({
-          abi: erc20Abi,
-          functionName: Erc20Functions.approve,
-          args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
-        });
-        await signer.sendTransaction({
-          from,
-          chainId,
-          to: data[dataIdx].srcToken as HexString,
-          data: callData,
-        });
+    sender: HexString;
+    spender: HexString;
+    permitType: PermitMode;
+    signer: WalletClient | Wallet;
+    service: AvailableDZapServices;
+  }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString }> {
+    if (isDZapNativeToken(tokenData.srcToken)) {
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        permitData: DEFAULT_PERMIT_DATA,
+      };
+    }
+
+    const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokenData.amount);
+    const eip2612PermitData = await checkEIP2612PermitSupport({
+      tokenAddress: tokenData.srcToken,
+      chainId,
+      rpcUrls,
+    });
+    if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
+      if (!eip2612PermitData.supportsPermit) {
+        throw new Error('Token does not support EIP-2612 permits');
+      }
+
+      if (oneToMany && !isFirstToken) {
         return {
           status: TxnStatus.success,
           code: StatusCodes.Success,
+          permitData: DEFAULT_PERMIT_DATA,
+        };
+      }
+      const { permitData, status, code } = await getEIP2612PermitSignature({
+        chainId,
+        account: sender,
+        token: tokenData.srcToken,
+        spender,
+        amount,
+        signer,
+        rpcUrls,
+        version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
+      });
+      return {
+        status,
+        code,
+        permitData: permitData as HexString,
+      };
+    } else {
+      if (oneToMany && !isFirstToken) {
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          permitData: DEFAULT_PERMIT2_DATA,
         };
       } else {
-        txnDetails = await writeContract({
+        const { status, code, permitData } = await getPermit2Signature({
           chainId,
-          contractAddress: data[dataIdx].srcToken as HexString,
-          abi: erc20Abi as Abi,
-          functionName: Erc20Functions.approve,
-          args: [getPermit2Address(chainId), data[dataIdx].amountToApprove],
-          rpcUrls,
+          account: sender,
+          token: tokenData.srcToken,
+          spender,
+          amount,
+          service,
           signer,
+          rpcUrls,
         });
-      }
-      if (txnDetails.code !== StatusCodes.Success) {
         return {
-          status: txnDetails.status,
-          code: txnDetails?.code || StatusCodes.FunctionNotFound,
+          status,
+          code,
+          permitData: permitData as HexString,
         };
       }
-      if (approvalTxnCallback) {
-        const callbackStatus = await approvalTxnCallback({ txnDetails, address: data[dataIdx].srcToken });
-        if (callbackStatus && callbackStatus !== TxnStatus.success) {
-          return {
-            status: txnDetails.status,
-            code: txnDetails?.code || StatusCodes.Error,
-          };
-        }
-      }
     }
-    return { status: TxnStatus.success, code: StatusCodes.Success };
   }
-  public async handleSign({
+
+  public async signPermit({
     chainId,
     data,
     rpcUrls,
@@ -145,19 +128,21 @@ class PermitHandler {
     service,
     signatureCallback,
     spender,
+    permitType,
   }: {
     chainId: number;
-    sender: string;
+    sender: HexString;
     data: {
-      srcToken: string;
-      permitData?: string;
+      srcToken: HexString;
+      permitData?: HexString;
       amount: string;
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     signer: WalletClient | Wallet;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
-    spender: string;
+    spender: HexString;
+    permitType: PermitMode;
   }): Promise<{
     status: TxnStatus;
     data: {
@@ -168,61 +153,40 @@ class PermitHandler {
     code: StatusCodes;
   }> {
     if (data.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, data };
+
     const oneToMany = data.length > 1 && isOneToMany(data[0].srcToken, data[1].srcToken);
-    let totalSrcAmount = BigInt(0);
-    if (oneToMany) totalSrcAmount = calcTotalSrcTokenAmount(data);
-    const dZapContractAddress = spender;
-    if (isDZapNativeToken(data[0].srcToken)) {
-      data[0].permitData = DEFAULT_PERMIT_DATA;
-    } else {
-      const amount = oneToMany ? totalSrcAmount : BigInt(data[0].amount);
-      const { status, code, permitData } = await getPermit2PermitDataForApprove({
+    const totalSrcAmount = calcTotalSrcTokenAmount(data);
+
+    for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
+      const isFirstToken = dataIdx === 0;
+      const { status, code, permitData } = await this.generatePermitDataForToken({
+        tokenData: data[dataIdx],
+        isFirstToken,
+        oneToMany,
+        totalSrcAmount,
         chainId,
-        account: sender as HexString,
-        token: data[0].srcToken as HexString,
-        dZapContractAddress,
-        amount,
-        service,
-        signer,
         rpcUrls,
+        sender,
+        spender,
+        permitType,
+        signer,
+        service,
       });
-      if (status === TxnStatus.success) {
-        data[0].permitData = permitData as HexString;
-        if (signatureCallback) await signatureCallback({ permitData: permitData as HexString, amount, srcToken: data[0].srcToken as HexString });
-      } else {
+
+      if (status !== TxnStatus.success) {
         return { status, code, data };
       }
-    }
-    for (let dataIdx = 1; dataIdx < data.length; dataIdx++) {
-      let permitData = DEFAULT_PERMIT_DATA;
-      if (!isDZapNativeToken(data[dataIdx].srcToken)) {
-        if (oneToMany) {
-          permitData = PERMIT2_APPROVE_DATA;
-        } else {
-          const amount = oneToMany ? totalSrcAmount : BigInt(data[dataIdx].amount);
-          const {
-            status,
-            code,
-            permitData: permit2ApprovePermitData,
-          } = await getPermit2PermitDataForApprove({
-            chainId,
-            account: sender as HexString,
-            token: data[dataIdx].srcToken as HexString,
-            dZapContractAddress,
-            amount,
-            service,
-            signer,
-            rpcUrls,
-          });
-          if (status === TxnStatus.success) {
-            permitData = permit2ApprovePermitData as HexString;
-            if (signatureCallback) await signatureCallback({ permitData, srcToken: data[dataIdx].srcToken as HexString, amount });
-          } else {
-            return { status, code, data };
-          }
-        }
-      }
+
       data[dataIdx].permitData = permitData;
+
+      if (signatureCallback && !isDZapNativeToken(data[dataIdx].srcToken)) {
+        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(data[dataIdx].amount);
+        await signatureCallback({
+          permitData,
+          srcToken: data[dataIdx].srcToken as HexString,
+          amount,
+        });
+      }
     }
 
     return { status: TxnStatus.success, data, code: StatusCodes.Success };
