@@ -1,6 +1,6 @@
 {
   "name": "@dzapio/dzap-sdk",
-  "version": "1.0.0",
+  "version": "2.1.32",
   "description": "A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations such as swaps, bridges, DCA, and Zaps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
