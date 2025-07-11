@@ -1,4 +1,4 @@
-import { OtherAbis, Services, QuoteFilters } from './constants';
+import { OtherAbis, Services, QuoteFilters, STATUS } from './constants';
 import { SignatureExpiryInSecs } from './constants/permit2';
 import { PermitType, StatusCodes, TxnStatus } from './enums';
 import { getTokensPairKey, formatToken } from './utils';
@@ -9,7 +9,6 @@ import {
   BuildTxResponse,
   QuotesRequest,
   QuotesRequestData,
-  QuotesResponse,
   Chain,
   ChainData,
   contractErrorActions,
@@ -25,7 +24,13 @@ import {
   SwapInfo,
   ApprovalMode,
   PermitMode,
+  Fee,
+  FeeDetails,
+  Step,
+  Token,
+  QuotesResponse,
 } from './types';
+import { PsbtInput, PsbtOutput } from './types/btc';
 
 import DZapClient from './client';
 import { ApprovalModes } from './constants/approval';
@@ -71,4 +76,11 @@ export {
   PermitMode,
   ApprovalModes,
   PermitTypes,
+  Fee,
+  FeeDetails,
+  Step,
+  Token,
+  PsbtInput,
+  PsbtOutput,
+  STATUS,
 };
