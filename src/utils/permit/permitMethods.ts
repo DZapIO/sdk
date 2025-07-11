@@ -93,7 +93,7 @@ export const getEIP2612PermitSignature = async ({
     const name = tokenNameResult.value;
     const nonce = nonceResult.value;
 
-    if (!name || !nonce) {
+    if (!name || Number.isNaN(Number(nonce))) {
       throw new Error('Failed to retrieve token name or nonce');
     }
     const domain = {
@@ -107,7 +107,7 @@ export const getEIP2612PermitSignature = async ({
       owner,
       spender,
       value: amount,
-      nonce: nonceResult.value,
+      nonce,
       deadline,
     };
 
