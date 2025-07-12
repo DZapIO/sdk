@@ -1,6 +1,6 @@
 # DZap SDK
 
-A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations such as swaps, bridges, DCA, and Zaps. This SDK abstracts away the complexity of contract interactions, token management, and price fetching, making it easy to build on top of DZap.
+A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations such as swaps, bridges, and Zaps. This SDK abstracts away the complexity of contract interactions, token management, and price fetching, making it easy to build on top of DZap.
 
 ## Installation
 
@@ -19,7 +19,7 @@ pnpm add @dzapio/dzap-sdk
 - [Installation](#installation)
 - [Initialization](#initialization)
 - [Client Methods](#client-methods)
-  - [Swap and Bridge Operations](#swap-and-bridge-operations)
+  - [Trade Operations](#trade-operations)
     - [Quotes](#quotes)
     - [Build Transaction](#build-transaction)
     - [Build and Send Transaction](#build-and-send-transaction)
@@ -49,7 +49,7 @@ const dZap = DZapClient.getInstance();
 
 ## Client Methods
 
-### Swap and Bridge Operations
+### Trade Operations
 
 #### Quotes
 
@@ -104,7 +104,7 @@ const dZap = DZapClient.getInstance();
 
 ##### `getStatus({ txHash, txIds, chainId }): Promise<StatusResponse | Record<string, StatusResponse>>`
 
-- **Purpose:** Fetches the status of a transaction (swap/bridge).
+- **Purpose:** Fetches the status of a trade transaction (swap/bridge).
 - **Input:**
   - `txHash?`: string (transaction hash)
   - `txIds?`: string (comma-separated list of `srcChainId-txHash`)
