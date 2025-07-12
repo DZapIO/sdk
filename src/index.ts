@@ -4,18 +4,18 @@ import { PermitType, StatusCodes, TxnStatus } from './enums';
 import { getTokensPairKey, formatToken } from './utils';
 import {
   ApiRpcResponse,
-  BuildTxRequest,
-  BuildTxRequestData,
-  BuildTxResponse,
-  QuotesRequest,
-  QuotesRequestData,
+  TradeBuildTxnRequest,
+  TradeBuildTxnRequestData,
+  TradeBuildTxnResponse,
+  TradeQuotesRequest,
+  TradeQuotesRequestData,
   Chain,
   ChainData,
   contractErrorActions,
   ContractErrorResponse,
   DZapTransactionResponse,
   HexString,
-  Path,
+  TradePath,
   ExecuteTxnData,
   QuoteFilter,
   ProviderDetails,
@@ -26,28 +26,28 @@ import {
   PermitMode,
   Fee,
   FeeDetails,
-  Step,
+  TradeStep,
   Token,
-  QuotesResponse,
+  TradeQuotesResponse,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 
-import DZapClient from './client';
+import DZapClient from './dZapClient';
 import { ApprovalModes } from './constants/approval';
 import { PermitTypes } from './constants/permit';
 import { erc20Functions } from './constants/erc20';
 
 export * from './zap/constants';
-export * from './zap/types';
+export * from './types/zap';
 
 export {
   ApiRpcResponse,
-  BuildTxRequest,
-  BuildTxRequestData,
-  BuildTxResponse,
-  QuotesRequest,
-  QuotesRequestData,
-  QuotesResponse,
+  TradeBuildTxnRequest,
+  TradeBuildTxnRequestData,
+  TradeBuildTxnResponse,
+  TradeQuotesRequest,
+  TradeQuotesRequestData,
+  TradeQuotesResponse,
   Chain,
   ChainData,
   contractErrorActions,
@@ -57,7 +57,7 @@ export {
   erc20Functions,
   HexString,
   OtherAbis,
-  Path,
+  TradePath,
   PermitType,
   Services,
   StatusCodes,
@@ -78,7 +78,7 @@ export {
   PermitTypes,
   Fee,
   FeeDetails,
-  Step,
+  TradeStep,
   Token,
   PsbtInput,
   PsbtOutput,

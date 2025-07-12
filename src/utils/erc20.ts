@@ -14,14 +14,14 @@ export const approveToken = async ({
   chainId,
   signer,
   rpcUrls,
-  data,
+  tokens,
   approvalTxnCallback,
   spender,
 }: {
   chainId: number;
   signer: WalletClient | Signer;
   sender: HexString;
-  data: { srcToken: HexString; amountToApprove: bigint }[];
+  tokens: { address: HexString; amount: bigint }[];
   rpcUrls?: string[];
   approvalTxnCallback?: ({
     txnDetails,
@@ -32,7 +32,7 @@ export const approveToken = async ({
   }) => Promise<TxnStatus | void>;
   spender: HexString;
 }) => {
-  for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
+  for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
     let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
     if (isTypeSigner(signer)) {
       console.log('Using ethers signer.');
@@ -40,12 +40,12 @@ export const approveToken = async ({
       const callData = encodeFunctionData({
         abi: erc20Abi,
         functionName: erc20Functions.approve,
-        args: [spender, data[dataIdx].amountToApprove],
+        args: [spender, tokens[dataIdx].amount],
       });
       await signer.sendTransaction({
         from,
         chainId,
-        to: data[dataIdx].srcToken as HexString,
+        to: tokens[dataIdx].address,
         data: callData,
       });
       return {
@@ -55,10 +55,10 @@ export const approveToken = async ({
     } else {
       txnDetails = await writeContract({
         chainId,
-        contractAddress: data[dataIdx].srcToken as HexString,
+        contractAddress: tokens[dataIdx].address,
         abi: erc20Abi,
         functionName: erc20Functions.approve,
-        args: [spender, data[dataIdx].amountToApprove],
+        args: [spender, tokens[dataIdx].amount],
         rpcUrls,
         signer,
       });
@@ -70,7 +70,7 @@ export const approveToken = async ({
       };
     }
     if (approvalTxnCallback) {
-      const callbackStatus = await approvalTxnCallback({ txnDetails, address: data[dataIdx].srcToken });
+      const callbackStatus = await approvalTxnCallback({ txnDetails, address: tokens[dataIdx].address });
       if (callbackStatus && callbackStatus !== TxnStatus.success) {
         return {
           status: txnDetails.status,
@@ -132,14 +132,14 @@ export const batchGetAllowances = async ({
 export const getAllowance = async ({
   chainId,
   sender,
-  data,
+  tokens,
   rpcUrls,
   mode = ApprovalModes.Default,
   dZapContractAddress,
 }: {
   chainId: number;
   sender: HexString;
-  data: { srcToken: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: bigint }[];
   rpcUrls?: string[];
   dZapContractAddress: HexString;
   mode?: ApprovalMode;
@@ -148,33 +148,33 @@ export const getAllowance = async ({
   let noOfApprovalsRequired = 0;
   let noOfSignaturesRequired = 0;
 
-  const nativeTokens = data.filter(({ srcToken }) => isDZapNativeToken(srcToken));
-  const erc20Tokens = data.filter(({ srcToken }) => !isDZapNativeToken(srcToken));
+  const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
+  const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
   const approvalData = await Promise.all(
-    erc20Tokens.map(async ({ srcToken, amount }) => {
+    erc20Tokens.map(async ({ address, amount }) => {
       if (mode === ApprovalModes.Permit2) {
         const permit2Address = getPermit2Address(chainId);
-        return { token: srcToken, spender: permit2Address, amount };
+        return { token: address, spender: permit2Address, amount };
       } else if (mode === ApprovalModes.AutoPermit) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
-          tokenAddress: srcToken as HexString,
+          address,
           chainId,
           rpcUrls,
         });
         return {
-          token: srcToken,
+          token: address,
           spender: eip2612PermitData.supportsPermit ? dZapContractAddress : getPermit2Address(chainId), // @dev: not needed, but added for consistency
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
         };
       }
-      return { token: srcToken, spender: dZapContractAddress, amount };
+      return { token: address, spender: dZapContractAddress, amount };
     }),
   );
 
-  for (const { srcToken } of nativeTokens) {
-    tokenAllowances[srcToken] = { allowance: maxUint256, approvalNeeded: false };
+  for (const { address } of nativeTokens) {
+    tokenAllowances[address] = { allowance: maxUint256, approvalNeeded: false };
   }
 
   if (erc20Tokens.length === 0) {

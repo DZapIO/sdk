@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
-import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../../constants/axioslient';
+import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../constants/axioslient';
 
 class AxiosClient {
   private static instance: AxiosClient | null = null;

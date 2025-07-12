@@ -37,9 +37,10 @@ export type ContractErrorResponse = {
 export type CalculatePointsRequest = {
   srcTokens: { amount: string; address: string; decimals: number }[];
   destTokens: { amount: string; address: string; decimals: number }[];
+  providers: string[];
   chainId: number;
   account: string;
-  txType: 'swap' | 'bridge';
+  txType: keyof typeof Services.swap | keyof typeof Services.bridge;
 };
 
 export type Chain = {
@@ -111,17 +112,17 @@ export type Fee = {
 
 export type QuoteFilter = keyof typeof QuoteFilters;
 
-export type QuotesRequest = {
+export type TradeQuotesRequest = {
   integratorId: string;
   fromChain: number;
-  data: QuotesRequestData[];
+  data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
   allowedSources?: string[];
   filter?: QuoteFilter;
 };
 
-export type QuotesRequestData = {
+export type TradeQuotesRequestData = {
   amount: string;
   srcToken: string;
   srcDecimals: number;
@@ -132,7 +133,7 @@ export type QuotesRequestData = {
   selectedSource?: string;
 };
 
-export type Step = {
+export type TradeStep = {
   type: string;
   exchange: {
     logo: string;
@@ -140,7 +141,7 @@ export type Step = {
   };
 };
 
-export type Path = {
+export type TradePath = {
   type: string;
   exchange: ProviderDetails;
   srcToken: Token;
@@ -154,7 +155,7 @@ export type Path = {
 
 export type Tag = { title: string; link?: string; message?: string };
 
-export type Quote = {
+export type TradeQuote = {
   bridgeDetails?: ProviderDetails;
   providerDetails: ProviderDetails;
   srcAmount: string;
@@ -168,31 +169,26 @@ export type Quote = {
   fee: Fee;
   priceImpactPercent: string;
   duration: string;
-  steps: Step[];
-  path: Path[];
+  steps: TradeStep[];
+  path: TradePath[];
   tags?: Tag[];
   additionalInfo?: AdditionalInfo;
 };
 
-export type QuotesByProviderId = {
-  [providerAndBridge: string]: Quote;
+export type TradeQuotesByProviderId = {
+  [providerAndBridge: string]: TradeQuote;
 };
 
-export type QuotesResponse = {
+export type TradeQuotesResponse = {
   [pair: string]: {
     status?: string;
     message?: string;
     recommendedSource: string;
     fastestSource: string;
     questSource?: string;
-    quoteRates?: QuotesByProviderId;
+    quoteRates?: TradeQuotesByProviderId;
     tokensWithoutPrice: Record<number, string[]>;
   };
-};
-
-export type BridgeSource = {
-  provider: string;
-  bridge: string;
 };
 
 export type AdditionalInfo = {
@@ -225,19 +221,17 @@ export type TokenResponse = {
   [key: string]: TokenInfo;
 };
 
-// Bridge Params
-
-export type BuildTxRequest = {
+export type TradeBuildTxnRequest = {
   sender: HexString;
   refundee: HexString;
   integratorId: string;
   fromChain: number;
   disableEstimation?: boolean;
-  data: BuildTxRequestData[];
+  data: TradeBuildTxnRequestData[];
   publicKey?: string;
 };
 
-export type BuildTxRequestData = {
+export type TradeBuildTxnRequestData = {
   amount: string;
   srcToken: string;
   srcDecimals: number;
@@ -260,7 +254,7 @@ export type ExecuteTxnData = {
   gasLimit: string;
 };
 
-export type BuildTxResponse = ExecuteTxnData & {
+export type TradeBuildTxnResponse = ExecuteTxnData & {
   additionalInfo?: AdditionalInfo;
   //dev: only used for btc tx.
   btcTxData?: {
@@ -302,7 +296,7 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type StatusResponseData = {
+export type TradeStatusResponseData = {
   srcChainId: number;
   srcToken: string;
   srcAmount: string;
@@ -322,8 +316,8 @@ export type StatusResponseData = {
   status: keyof typeof STATUS_RESPONSE;
 };
 
-export type StatusResponse = {
-  [pair: string]: StatusResponseData;
+export type TradeStatusResponse = {
+  [pair: string]: TradeStatusResponseData;
 };
 
 export type PermitMode = keyof typeof PermitTypes;

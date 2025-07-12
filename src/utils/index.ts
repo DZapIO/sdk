@@ -51,24 +51,18 @@ export function getTokensPairKey({
   destToken,
   srcChainId,
   destChainId,
-  forceIncludeChainId,
   srcChainNativeAddress = zeroAddress,
   destChainNativeAddress = zeroAddress,
 }: {
   srcToken: string;
   destToken: string;
-  srcChainId?: number;
-  destChainId?: number;
-  forceIncludeChainId?: boolean;
+  srcChainId: number;
+  destChainId: number;
   srcChainNativeAddress?: string;
   destChainNativeAddress?: string;
 }): string {
   const srcFormattedAddress = formatToken(srcToken, srcChainNativeAddress);
   const destFormattedAddress = formatToken(destToken, destChainNativeAddress);
-
-  if ((!srcChainId || !destChainId || srcChainId === destChainId) && !forceIncludeChainId) {
-    return `${srcFormattedAddress}-${destFormattedAddress}`;
-  }
   return `${srcChainId}_${srcFormattedAddress}-${destChainId}_${destFormattedAddress}`;
 }
 
@@ -198,7 +192,7 @@ export const getDZapAbi = (service: AvailableDZapServices) => {
   }
 };
 
-export const handleDecodeTrxData = (
+export const handleDecodeTxnData = (
   data: TransactionReceipt,
   service: AvailableDZapServices,
   chain: Chain,

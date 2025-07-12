@@ -31,7 +31,7 @@ async function runPermitExamples() {
       chainId,
       sender: senderAddress,
       service: Services.swap,
-      data: [{ srcToken: tokenToApprove, amount: amountToTrade }],
+      tokens: [{ address: tokenToApprove, amount: amountToTrade }],
       rpcUrls,
       mode: ApprovalModes.Permit2,
     });
@@ -50,7 +50,7 @@ async function runPermitExamples() {
           sender: senderAddress,
           service: Services.swap,
           mode: ApprovalModes.Permit2,
-          data: [{ srcToken: tokenToApprove, amountToApprove: amountToTrade }],
+          tokens: [{ address: tokenToApprove, amount: amountToTrade }],
           approvalTxnCallback: async ({
             txnDetails,
             address,
@@ -93,9 +93,9 @@ async function runPermitExamples() {
         service: 'swap',
         spender: routerAddress as HexString,
         permitType: PermitTypes.Permit2,
-        data: [
+        tokens: [
           {
-            srcToken: tokenToApprove,
+            address: tokenToApprove,
             amount: amountToTrade.toString(),
           },
         ],

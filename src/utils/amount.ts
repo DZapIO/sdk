@@ -1,12 +1,12 @@
 import Decimal from 'decimal.js';
-import { Quote, Fee, FeeDetails } from 'src/types';
+import { TradeQuote, Fee, FeeDetails } from 'src/types';
 import { formatUnits } from 'viem';
 
 export const calculateAmountUSD = (amountInWei: string, decimals: number, price: string) => {
   return decimals ? new Decimal(formatUnits(BigInt(amountInWei), decimals)).mul(price || 0).toFixed(5) : '0';
 };
 
-export const calculateNetGasFeeUsd = (item: Quote): string => {
+export const calculateNetGasFeeUsd = (item: TradeQuote): string => {
   const totalGas = item.fee.gasFee.reduce((acc, fee) => {
     if (!fee.included) {
       const feeAmount = fee.amountUSD || '0';
@@ -17,7 +17,7 @@ export const calculateNetGasFeeUsd = (item: Quote): string => {
   return totalGas.toFixed(5);
 };
 
-export const calculateNetAmountUsd = (item: Quote) => {
+export const calculateNetAmountUsd = (item: TradeQuote) => {
   let feeUSD = new Decimal(calculateNetGasFeeUsd(item));
   item.fee.providerFee.forEach((fee) => {
     if (!fee.included) {
@@ -27,7 +27,7 @@ export const calculateNetAmountUsd = (item: Quote) => {
   return new Decimal(item.destAmountUSD || '0').minus(feeUSD).toFixed(5);
 };
 
-export const calculateNetGasFee = (item: Quote) => {
+export const calculateNetGasFee = (item: TradeQuote) => {
   const totalGas = item.fee.gasFee.reduce((acc, fee) => {
     if (!fee.included) {
       const feeAmount = BigInt(fee.amount || '0');
@@ -66,7 +66,7 @@ export const updateFee = (fee: Fee, tokensPrice: Record<number, Record<string, s
   };
 };
 
-export const updatePath = (data: Quote, tokensPrice: Record<number, Record<string, string | null>>) => {
+export const updatePath = (data: TradeQuote, tokensPrice: Record<number, Record<string, string | null>>) => {
   return data.path.map((path) => {
     const { fee } = updateFee(path.fee, tokensPrice);
     return {

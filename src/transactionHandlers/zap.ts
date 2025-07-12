@@ -5,20 +5,13 @@ import { getPublicClient, isTypeSigner } from 'src/utils';
 import { viemChainsById } from 'src/utils/chains';
 import { handleViemTransactionError } from 'src/utils/errors';
 import { WalletClient } from 'viem';
-import { zapStepAction } from './constants/step';
-import { ZapStep, ZapTxnDetails } from './types/step';
+import { zapStepAction } from '../zap/constants/step';
+import { ZapStep, ZapTxnDetails } from '../types/zap/step';
+import { ZapBuildTxnRequest, ZapBuildTxnResponse } from 'src/types/zap';
+import { fetchZapBuildTxnData } from 'src/api';
 
-class ZapHandler {
-  private static instance: ZapHandler;
-
-  public static getInstance(): ZapHandler {
-    if (!ZapHandler.instance) {
-      ZapHandler.instance = new ZapHandler();
-    }
-    return ZapHandler.instance;
-  }
-
-  public async execute({
+class ZapTxnHandler {
+  public static execute = async ({
     chainId,
     txnData,
     signer,
@@ -26,7 +19,7 @@ class ZapHandler {
     chainId: number;
     txnData: ZapTxnDetails;
     signer: Signer | WalletClient;
-  }): Promise<DZapTransactionResponse> {
+  }): Promise<DZapTransactionResponse> => {
     try {
       const { callData, callTo, value, estimatedGas } = txnData;
       if (isTypeSigner(signer)) {
@@ -63,9 +56,9 @@ class ZapHandler {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
-  }
+  };
 
-  public async approve({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: Signer | WalletClient }) {
+  public static approve = async ({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: Signer | WalletClient }) => {
     try {
       const { callData, callTo, value, estimatedGas } = data;
       const publicClient = getPublicClient({ chainId, rpcUrls: undefined });
@@ -112,22 +105,42 @@ class ZapHandler {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
-  }
+  };
 
-  public async zap({ chainId, steps, signer }: { chainId: number; steps: ZapStep[]; signer: Signer | WalletClient }): Promise<
+  public static zap = async ({
+    request,
+    steps,
+    signer,
+  }: {
+    request: ZapBuildTxnRequest;
+    steps?: ZapStep[];
+    signer: Signer | WalletClient;
+  }): Promise<
     | {
         status: TxnStatus.success;
         code: StatusCodes | number;
         txnHash: HexString;
       }
     | DZapTransactionResponse
-  > {
+  > => {
     try {
+      const { srcChainId: chainId } = request;
+      if (!steps || steps.length === 0) {
+        const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request)).data;
+        steps = route.steps;
+        if (!steps || steps.length === 0) {
+          return {
+            status: TxnStatus.error,
+            code: StatusCodes.FunctionNotFound,
+            errorMsg: 'No steps found in the zap route.',
+          };
+        }
+      }
       let txnHash: HexString | undefined;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         if (step.action === zapStepAction.execute) {
-          const result = await this.execute({ chainId, txnData: step.data as ZapTxnDetails, signer });
+          const result = await ZapTxnHandler.execute({ chainId, txnData: step.data as ZapTxnDetails, signer });
           if (result.status !== TxnStatus.success) {
             return result;
           }
@@ -143,7 +156,7 @@ class ZapHandler {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
-  }
+  };
 }
 
-export default ZapHandler;
+export default ZapTxnHandler;

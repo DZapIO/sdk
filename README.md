@@ -20,12 +20,13 @@ pnpm add @dzapio/dzap-sdk
 - [Initialization](#initialization)
 - [Client Methods](#client-methods)
   - [Trade Operations](#trade-operations)
-    - [Quotes](#quotes)
-    - [Build Transaction](#build-transaction)
-    - [Build and Send Transaction](#build-and-send-transaction)
-    - [Transaction Status](#status-request)
+    - [Trade Quotes](#trade-quotes)
+    - [Build Trade Transaction](#build-trade-transaction)
+    - [Trade](#trade)
+    - [Get Trade Transaction Status](#get-trade-transaction-status)
   - [Zap Operations](#zap-operations)
     - [Get Zap Quote](#get-zap-quote)
+    - [Build Zap Transaction](#build-zap-transaction)
     - [Zap](#zap)
     - [Get Zap Transaction Status](#get-zap-transaction-status)
   - [Token Utilities](#token-utilities)
@@ -42,7 +43,19 @@ pnpm add @dzapio/dzap-sdk
 ```typescript
 import { DZapClient } from '@dzapio/dzap-sdk';
 
+// Basic initialization
 const dZap = DZapClient.getInstance();
+
+// With custom RPC URLs (optional)
+const customRpcUrls = {
+  1: ['https://eth.llamarpc.com'], // Ethereum mainnet
+  42161: ['https://arbitrum.llamarpc.com'], // Arbitrum
+  // Add more chains as needed
+};
+
+// Initialize with custom RPC URLs
+// This is useful if you want to use specific RPC endpoints instead of the defaults.
+const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 ```
 
 ---
@@ -51,58 +64,58 @@ const dZap = DZapClient.getInstance();
 
 ### Trade Operations
 
-#### Quotes
+#### Trade Quotes
 
-##### `getQuotes(request: QuotesRequest): Promise<QuotesResponse>`
+##### `getTradeQuotes(request: TradeQuotesRequest): Promise<TradeQuotesResponse>`
 
 - **Purpose:** Fetches quotes for swaps, bridges, or other DZap services.
 - **Input:**
-  - `request`: `QuotesRequest` (object with details like source/destination tokens, amounts, chains, etc.)
+  - `request`: `TradeQuotesRequest` (object with details like source/destination tokens, amounts, chains, etc.)
 - **Output:**
-  - `Promise<QuotesResponse>` (object containing available quotes, rates, fees, etc.)
+  - `Promise<TradeQuotesResponse>` (object containing available quotes, rates, fees, etc.)
 - **Description:**
   Returns the best available quotes for the requested operation, with prices updated using the SDK's price service.
 
 ---
 
-#### Build Transaction
+#### Build Trade Transaction
 
 > **Note:** This method requires token approval. See [Token Approval Mechanism](#token-approval-mechanism).
 
-##### `buildTxn(request: BuildTxRequest): Promise<BuildTxResponse>`
+##### `buildTradeTxn(request: TradeBuildTxnRequest): Promise<TradeBuildTxnResponse>`
 
 - **Purpose:** Builds a transaction payload for a swap, bridge, or other operation.
 - **Input:**
-  - `request`: `BuildTxRequest` (object with operation details)
+  - `request`: `TradeBuildTxnRequest` (object with operation details)
 - **Output:**
-  - `Promise<BuildTxResponse>` (transaction data ready to be signed/sent)
+  - `Promise<TradeBuildTxnResponse>` (transaction data ready to be signed/sent)
 - **Description:**
   Prepares the transaction data required to execute the requested operation on-chain.
 
 ---
 
-#### Build and Send Transaction
+#### Trade
 
 > **Note:** This method requires token approval. See [Token Approval Mechanism](#token-approval-mechanism).
 
-##### `buildAndSendTransaction({ chainId, request, signer, txnData })`
+##### `trade({ chainId, request, signer, txnData })`
 
-- **Purpose:** Builds and sends a transaction in one step.
+- **Purpose:** Builds and sends a trade transaction in one step.
 - **Input:**
   - `chainId`: number
-  - `request`: `BuildTxRequest`
+  - `request`: `TradeBuildTxnRequest`
   - `signer`: `Signer` or `WalletClient`
-  - `txnData?`: `BuildTxResponse`
+  - `txnData?`: `TradeBuildTxnResponse`
 - **Output:**
-  - Transaction result (depends on contract handler)
+  - Transaction result
 - **Description:**
   Combines building and sending a transaction for convenience.
 
 ---
 
-#### Transaction Status
+#### Get Trade Transaction Status
 
-##### `getStatus({ txHash, txIds, chainId }): Promise<StatusResponse | Record<string, StatusResponse>>`
+##### `getTradeTxnStatus({ txHash, txIds, chainId }): Promise<TradeStatusResponse | Record<string, TradeStatusResponse>>`
 
 - **Purpose:** Fetches the status of a trade transaction (swap/bridge).
 - **Input:**
@@ -111,24 +124,9 @@ const dZap = DZapClient.getInstance();
   - `chainId?`: string (chain ID)
   - **Note:** Either `txIds` OR both `txHash` and `chainId` must be provided.
 - **Output:**
-  - `Promise<StatusResponse | Record<string, StatusResponse>>`
+  - `Promise<TradeStatusResponse | Record<string, TradeStatusResponse>>`
 - **Description:**
   Returns the status (pending, completed, failed) of one or more transactions.
-
----
-
-#### Get DZap Contract Address
-
-##### `getDZapContractAddress({ chainId, service }): Promise<string>`
-
-- **Purpose:** Returns the contract address for a given service on a chain.
-- **Input:**
-  - `chainId`: number
-  - `service`: `AvailableDZapServices`
-- **Output:**
-  - `Promise<string>`
-- **Description:**  
-  Fetches the address of the router, zap, or DCA contract for the specified chain/service.
 
 ---
 
@@ -148,21 +146,35 @@ const dZap = DZapClient.getInstance();
 
 ---
 
+#### Build Zap Transaction
+
+##### `buildZapTxn(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse>`
+
+- **Purpose:** Builds a zap transaction with detailed steps for execution.
+- **Input:**
+  - `request`: ZapBuildTxnRequest
+- **Output:**
+  - `Promise<ZapBuildTxnResponse>`
+- **Description:**
+  Prepares the transaction steps required to execute the requested Zap operation on-chain.
+
+---
+
 #### Zap
 
 > **Note:** This method requires token approval. See [Token Approval Mechanism](#token-approval-mechanism).
 
-##### `zap({ chainId, steps, signer })`
+##### `zap({ request, signer, steps })`
 
-- **Purpose:** Executes a Zap transaction.
+- **Purpose:** Builds and sends a zap transaction in one step.
 - **Input:**
-  - `chainId`: number
-  - `steps`: ZapTransactionStep[]
-  - `signer`: WalletClient
+  - `request`: ZapBuildTxnRequest
+  - `signer`: WalletClient | Signer
+  - `steps?`: ZapTransactionStep[] (optional, will build if not provided)
 - **Output:**
   - Transaction result
 - **Description:**
-  Runs a series of Zap steps as a single operation.
+  Runs a series of Zap steps as a single operation, building steps from request if not provided.
 
 ---
 
@@ -212,7 +224,7 @@ const dZap = DZapClient.getInstance();
 
 ---
 
-#### `getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>>`
+#### `getTokenPrices(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>>`
 
 - **Purpose:** Fetches prices for a list of tokens on a chain.
 - **Input:**
@@ -239,14 +251,14 @@ const dZap = DZapClient.getInstance();
 
 ### Permit Utilities
 
-#### `getAllowance({ chainId, sender, data, rpcUrls, service, mode })`
+#### `getAllowance({ chainId, sender, tokens, rpcUrls, service, mode })`
 
 - **Purpose:** Checks token allowances for a sender with support for different approval modes.
 - **Input:**
   - `chainId`: number
   - `sender`: HexString
-  - `data`: Array of `{ srcToken: HexString; amount: bigint }`
-  - `rpcUrls`: string[]
+  - `tokens`: Array of `{ address: HexString; amount: bigint }`
+  - `rpcUrls?`: string[]
   - `service`: AvailableDZapServices
   - `mode?`: ApprovalMode (defaults to `ApprovalModes.AutoPermit`)
 - **Output:**
@@ -256,7 +268,7 @@ const dZap = DZapClient.getInstance();
 
 ---
 
-#### `approve({ chainId, signer, sender, rpcUrls, data, service, mode, approvalTxnCallback })`
+#### `approve({ chainId, signer, sender, rpcUrls, tokens, service, mode, approvalTxnCallback })`
 
 - **Purpose:** Approves tokens for spending based on the specified approval mode.
 - **Input:**
@@ -264,7 +276,7 @@ const dZap = DZapClient.getInstance();
   - `signer`: `Signer` or `WalletClient`
   - `sender`: HexString
   - `rpcUrls?`: string[]
-  - `data`: Array of `{ srcToken: HexString; amountToApprove: bigint }`
+  - `tokens`: Array of `{ address: HexString; amount: bigint }`
   - `service`: AvailableDZapServices
   - `mode?`: ApprovalMode (defaults to `ApprovalModes.AutoPermit`)
   - `approvalTxnCallback?`: callback for transaction status updates
@@ -275,25 +287,23 @@ const dZap = DZapClient.getInstance();
 
 ---
 
-#### `sign({ chainId, sender, data, rpcUrls, service, signer, spender, permitType, signatureCallback })`
+#### `sign({ chainId, sender, tokens, rpcUrls, service, signer, spender, permitType, signatureCallback })`
 
 - **Purpose:** Signs EIP-2612Permit/Permit2 data for gas-less token approvals.
 - **Input:**
   - `chainId`: number
-  - `sender`: string
-  - `data`: Array of `{ srcToken: string; permitData?: string; amount: string }`
+  - `sender`: HexString
+  - `tokens`: Array of `{ address: HexString; amount: string }`
   - `service`: AvailableDZapServices
   - `signer`: `Signer` or `WalletClient`
-  - `spender`: string
-  - `permitType?`: PermitModeType (defaults to `PermitMode.AutoPermit`)
+  - `spender`: HexString
+  - `permitType?`: PermitMode (defaults to `PermitTypes.AutoPermit`)
   - `rpcUrls?`: string[]
   - `signatureCallback?`: Callback function for each signature result
 - **Output:**
   - `{ status, code, data }` with permit signatures populated
 - **Description:**
   Signs permit data for gas-less approvals. Automatically handles EIP2612 or Permit2 based on token support and permit type.
-
----
 
 ## Token Approval Mechanism
 

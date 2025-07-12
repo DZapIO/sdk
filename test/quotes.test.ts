@@ -1,5 +1,5 @@
-import DZapClient from '../src/client';
-import { QuotesRequest } from '../src/types';
+import DZapClient from '../src/dZapClient';
+import { TradeQuotesRequest } from '../src/types';
 
 describe('DZapClient - getQuotes', () => {
   let client: DZapClient;
@@ -9,7 +9,7 @@ describe('DZapClient - getQuotes', () => {
   });
 
   it('should return quotes for a cross-chain swap', async () => {
-    const request: QuotesRequest = {
+    const request: TradeQuotesRequest = {
       fromChain: 42161,
       account: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
       data: [
@@ -26,7 +26,7 @@ describe('DZapClient - getQuotes', () => {
       integratorId: 'dzap',
     };
 
-    const quotes = await client.getQuotes(request);
+    const quotes = await client.getTradeQuotes(request);
     const quoteKeys = Object.keys(quotes);
     expect(quoteKeys.length).toBeGreaterThan(0);
     const firstQuote = quotes[quoteKeys[0]];
@@ -37,7 +37,7 @@ describe('DZapClient - getQuotes', () => {
   });
 
   it('should return quotes for a same-chain swap', async () => {
-    const request: QuotesRequest = {
+    const request: TradeQuotesRequest = {
       fromChain: 42161,
       account: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
       data: [
@@ -54,7 +54,7 @@ describe('DZapClient - getQuotes', () => {
       integratorId: 'dzap',
     };
 
-    const quotes = await client.getQuotes(request);
+    const quotes = await client.getTradeQuotes(request);
     const quoteKeys = Object.keys(quotes);
     expect(quoteKeys.length).toBeGreaterThan(0);
     const firstQuote = quotes[quoteKeys[0]];

@@ -1,5 +1,5 @@
 import { HexString } from 'src/types';
-import { zapStepAction } from '../constants/step';
+import { zapStepAction } from '../../zap/constants/step';
 
 export type StepAction = keyof typeof zapStepAction;
 

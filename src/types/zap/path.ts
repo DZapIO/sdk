@@ -1,5 +1,5 @@
 import { HexString, ProviderDetails } from 'src/types';
-import { zapPathAction } from '../constants/path';
+import { zapPathAction } from '../../zap/constants/path';
 
 export type ZapPathAction = keyof typeof zapPathAction;
 

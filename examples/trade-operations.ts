@@ -1,7 +1,7 @@
 import { createWalletClient, http } from 'viem';
 import { arbitrum } from 'viem/chains';
 import { DZapClient } from '../src'; // Corrected: Named import
-import { BuildTxRequest, Quote, QuotesRequest, StatusResponse } from '../src/types';
+import { TradeBuildTxnRequest, TradeQuote, TradeQuotesRequest, TradeStatusResponse } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
 
@@ -13,14 +13,14 @@ const walletClient = createWalletClient({
   chain: arbitrum,
 });
 
-async function runSwapAndBridgeExamples() {
+async function runTradeExamples() {
   console.log('Running Swap and Bridge examples...');
 
   // A. GET QUOTES
 
   console.log('\nFetching quotes...');
   const userAddress = walletClient.account.address; // Replace with your actual wallet address
-  const quotesRequest: QuotesRequest = {
+  const quotesRequest: TradeQuotesRequest = {
     integratorId: 'DZap',
     fromChain: 42161,
     data: [
@@ -38,7 +38,7 @@ async function runSwapAndBridgeExamples() {
   };
 
   try {
-    const quotesResponse = await dZapClient.getQuotes(quotesRequest);
+    const quotesResponse = await dZapClient.getTradeQuotes(quotesRequest);
     console.log('Quotes received:', JSON.stringify(quotesResponse, null, 2));
 
     // The response is an object with keys for each requested pair.
@@ -52,7 +52,7 @@ async function runSwapAndBridgeExamples() {
 
     // recommendedSource gives the key for the best quote (e.g., "paraswap", "okx", etc.)
     const bestRouteKey = pairQuoteData.recommendedSource!;
-    const bestQuote: Quote = pairQuoteData.quoteRates[bestRouteKey];
+    const bestQuote: TradeQuote = pairQuoteData.quoteRates[bestRouteKey];
     console.log(`\nBest route found via ${bestRouteKey}`);
 
     // B. APPROVALS (See documentation for details)
@@ -61,7 +61,7 @@ async function runSwapAndBridgeExamples() {
     // C. BUILD AND SEND TRANSACTION
 
     console.log('\nBuilding and sending transaction...');
-    const buildTxRequest: BuildTxRequest = {
+    const buildTxRequest: TradeBuildTxnRequest = {
       integratorId: 'DZap',
       fromChain: 42161,
       sender: userAddress,
@@ -81,7 +81,7 @@ async function runSwapAndBridgeExamples() {
       ],
     };
 
-    const txResult = await dZapClient.buildAndSendTransaction({
+    const txResult = await dZapClient.trade({
       chainId: 42161,
       request: buildTxRequest,
       signer: walletClient,
@@ -97,10 +97,10 @@ async function runSwapAndBridgeExamples() {
       console.log('\nFetching transaction status in 15 seconds...');
       setTimeout(async () => {
         try {
-          const statusResponse = (await dZapClient.getStatus({
+          const statusResponse = (await dZapClient.getTradeTxnStatus({
             txHash: txResult.txnHash,
             chainId: '42161',
-          })) as StatusResponse;
+          })) as TradeStatusResponse;
           console.log('Transaction status:', JSON.stringify(statusResponse, null, 2));
         } catch (e) {
           console.error('Error getting status:', e);
@@ -114,4 +114,4 @@ async function runSwapAndBridgeExamples() {
   }
 }
 
-runSwapAndBridgeExamples();
+runTradeExamples();

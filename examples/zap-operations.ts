@@ -1,7 +1,7 @@
 import { createWalletClient, http } from 'viem';
 import { arbitrum } from 'viem/chains';
 import { DZapClient, TxnStatus } from '../src';
-import { ZapQuoteRequest } from '../src/zap/types';
+import { ZapQuoteRequest } from '../src/types/zap';
 
 // 1. INITIALIZATION
 
@@ -50,17 +50,13 @@ async function runZapExamples() {
 
     // C. EXECUTE ZAP
 
-    // The `zap` method takes the transaction steps from the quote and executes them.
+    // The `zap` method takes the request and executes, building steps if needed.
     console.log('\nExecuting zap...');
     if (walletClient.account) {
       try {
-        // The `data` for the `zap` method is the array of steps from the quote response.
-        const zapBuildResponse = await dZapClient.buildZapTransaction({
-          ...zapQuoteRequest,
-        });
+        // The `zap` method can take the request and optionally pre-built steps
         const zapResult = await dZapClient.zap({
-          chainId: 42161,
-          steps: zapBuildResponse.steps,
+          request: zapQuoteRequest,
           signer: walletClient,
         });
         console.log('Zap execution result:', zapResult);

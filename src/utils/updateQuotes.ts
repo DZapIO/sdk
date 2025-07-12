@@ -1,15 +1,15 @@
-import { QuotesRequest, QuotesResponse, ChainData } from 'src/types';
+import { TradeQuotesRequest, TradeQuotesResponse, ChainData } from 'src/types';
 import Decimal from 'decimal.js';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from './amount';
 import { PriceService } from 'src/service/price';
 import { priceProviders } from 'src/service/price/types/IPriceProvider';
 
 export const updateQuotes = async (
-  quotes: QuotesResponse,
-  request: QuotesRequest,
+  quotes: TradeQuotesResponse,
+  request: TradeQuotesRequest,
   priceService: PriceService,
   chainConfig: ChainData,
-): Promise<QuotesResponse> => {
+): Promise<TradeQuotesResponse> => {
   const tokensWithoutPrice: Record<number, Set<string>> = {};
 
   Object.values(quotes).forEach((quote) => {

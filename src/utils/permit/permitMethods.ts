@@ -14,17 +14,17 @@ import { generateDeadline } from '../date';
  * Check if a token supports EIP-2612 permits by checking for required functions
  */
 export const checkEIP2612PermitSupport = async ({
-  tokenAddress,
+  address,
   chainId,
   rpcUrls,
 }: {
-  tokenAddress: HexString;
+  address: HexString;
   chainId: number;
   rpcUrls?: string[];
 }): Promise<{ supportsPermit: boolean; domainSeparator?: HexString; version?: string }> => {
   const contract = getContract({
     abi: erc20PermitAbi,
-    address: tokenAddress,
+    address: address,
     client: getPublicClient({ chainId, rpcUrls }),
   });
   const [domainSeparatorResult, nonceResult, versionResult] = await Promise.allSettled([
@@ -72,13 +72,13 @@ export const getEIP2612PermitSignature = async ({
   signer: WalletClient | Wallet;
 }): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
-    const tokenAddress = token as HexString;
+    const address = token as HexString;
     const owner = account as HexString;
     const deadline = sigDeadline;
 
     const contract = getContract({
       abi: erc20PermitAbi,
-      address: tokenAddress,
+      address: address,
       client: getPublicClient({ chainId, rpcUrls }),
     });
 
@@ -100,7 +100,7 @@ export const getEIP2612PermitSignature = async ({
       name,
       version,
       chainId,
-      verifyingContract: tokenAddress,
+      verifyingContract: address,
     };
 
     const message = {

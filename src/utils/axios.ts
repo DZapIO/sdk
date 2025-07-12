@@ -1,6 +1,6 @@
 import { CancelToken, Method } from 'axios';
-import AxiosClient from 'src/client/axios';
-import { baseApiClient, baseZapApiClient } from 'src/client/axios/baseClient';
+import AxiosClient from 'src/axios';
+import { baseApiClient, baseZapApiClient } from 'src/axios/baseClient';
 import { GET, POST } from 'src/constants/httpMethods';
 import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
 

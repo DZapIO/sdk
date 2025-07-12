@@ -1,5 +1,5 @@
-import DZapClient from '../src/client';
-import { BuildTxRequest } from '../src/types';
+import DZapClient from '../src/dZapClient';
+import { TradeBuildTxnRequest } from '../src/types';
 
 describe('DZapClient - buildTxn', () => {
   let client: DZapClient;
@@ -9,7 +9,7 @@ describe('DZapClient - buildTxn', () => {
   });
 
   it('should build a cross-chain transaction', async () => {
-    const request: BuildTxRequest = {
+    const request: TradeBuildTxnRequest = {
       fromChain: 42161,
       data: [
         {
@@ -30,7 +30,7 @@ describe('DZapClient - buildTxn', () => {
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
     };
 
-    const result = await client.buildTxn(request);
+    const result = await client.buildTradeTxn(request);
     expect(result).toBeDefined();
     expect(result.data).toBeDefined();
     expect(result.to).toBeDefined();
@@ -39,7 +39,7 @@ describe('DZapClient - buildTxn', () => {
   });
 
   it('should build a same-chain transaction', async () => {
-    const request: BuildTxRequest = {
+    const request: TradeBuildTxnRequest = {
       fromChain: 42161,
       data: [
         {
@@ -60,7 +60,7 @@ describe('DZapClient - buildTxn', () => {
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
     };
 
-    const result = await client.buildTxn(request);
+    const result = await client.buildTradeTxn(request);
     expect(result).toBeDefined();
     expect(result.data).toBeDefined();
     expect(result.to).toBeDefined();

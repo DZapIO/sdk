@@ -13,7 +13,7 @@ if (typeof process !== 'undefined' && process.env) {
 
 const baseUrl = BASE_API_URL || 'https://api.dzap.io';
 
-const zapBaseUrl = ZAP_API_URL || 'https://zap.dzap.io/v1';
+const zapBaseUrl = ZAP_API_URL || 'https://zap.dzap.io';
 
 export const appEnv = APP_ENV || AppEnv.development;
 export const versionPostfix = 'v1/';
@@ -22,7 +22,7 @@ export const getBaseUrl = (): string => {
 };
 
 export const getBaseZapUrl = (): string => {
-  return zapBaseUrl;
+  return `${zapBaseUrl}/${versionPostfix}`;
 };
 
 export type DeFiContract = {

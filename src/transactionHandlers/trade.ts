@@ -1,6 +1,6 @@
-import { buildTransaction } from 'src/api';
+import { fetchTradeBuildTxnData } from 'src/api';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { BuildTxRequest, BuildTxResponse, ContractErrorResponse, DZapTransactionResponse, HexString } from '../types';
+import { TradeBuildTxnRequest, TradeBuildTxnResponse, ContractErrorResponse, DZapTransactionResponse, HexString } from '../types';
 import { isTypeSigner } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 
@@ -8,34 +8,24 @@ import { Signer } from 'ethers';
 import { viemChainsById } from 'src/utils/chains';
 import { WalletClient } from 'viem';
 
-class ContractHandler {
-  private static instance: ContractHandler;
-  // private constructor() {}
-
-  public static getInstance(): ContractHandler {
-    if (!ContractHandler.instance) {
-      ContractHandler.instance = new ContractHandler();
-    }
-    return ContractHandler.instance;
-  }
-
-  public async buildAndSendTransaction({
+class TradeTxnHandler {
+  public static buildAndSendTransaction = async ({
     chainId,
     request,
     signer,
     txnData,
   }: {
     chainId: number;
-    request: BuildTxRequest;
+    request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
-    txnData?: BuildTxResponse;
-  }): Promise<DZapTransactionResponse> {
+    txnData?: TradeBuildTxnResponse;
+  }): Promise<DZapTransactionResponse> => {
     try {
-      let buildTxnResponseData: BuildTxResponse;
+      let buildTxnResponseData: TradeBuildTxnResponse;
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
-        buildTxnResponseData = await buildTransaction(request);
+        buildTxnResponseData = await fetchTradeBuildTxnData(request);
       }
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       if (isTypeSigner(signer)) {
@@ -91,57 +81,7 @@ class ContractHandler {
       }
       return handleViemTransactionError({ error });
     }
-  }
-
-  public async sendTransaction({
-    chainId,
-    signer,
-    from,
-    to,
-    data,
-    value,
-  }: {
-    chainId: number;
-    signer: Signer | WalletClient;
-    from: HexString;
-    to: HexString;
-    data: HexString;
-    value: string;
-  }) {
-    try {
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        const txnRes = await signer.sendTransaction({
-          from,
-          to,
-          data,
-          value,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash: txnRes.hash as HexString,
-        };
-      } else {
-        console.log('Using viem walletClient.');
-        const txnHash = await signer.sendTransaction({
-          chain: viemChainsById[chainId],
-          account: from as HexString,
-          to: to as HexString,
-          data: data as HexString,
-          value: BigInt(value),
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash,
-        };
-      }
-    } catch (error: any) {
-      console.log({ error });
-      return handleViemTransactionError({ error });
-    }
-  }
+  };
 }
 
-export default ContractHandler;
+export default TradeTxnHandler;

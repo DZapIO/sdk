@@ -9,10 +9,14 @@ import {
   GET_TOKEN_PRICE,
   QUOTES_URL,
 } from 'src/constants/urlConstants';
-import { invoke } from 'src/utils/axios';
-import { BuildTxRequest, CalculatePointsRequest, QuotesRequest } from '../types';
+import { invoke, invokeZap } from 'src/utils/axios';
+import { TradeBuildTxnRequest, CalculatePointsRequest, TradeQuotesRequest } from '../types';
+import { CancelToken } from 'axios';
+import { getBaseZapUrl } from 'src/config';
+import { ZapBuildTxnRequest, ZapQuoteRequest, ZapTxnStatusRequest } from 'src/types/zap';
+import { ZAP_BUILD_TX_URL, ZAP_QUOTE_URL, ZAP_TXN_STATUS_URL } from 'src/zap/constants/urls';
 
-export const fetchQuotes = (request: QuotesRequest) =>
+export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
     endpoint: QUOTES_URL,
     data: request,
@@ -20,11 +24,34 @@ export const fetchQuotes = (request: QuotesRequest) =>
     shouldRetry: true,
   });
 
-export const buildTransaction = (request: BuildTxRequest) =>
+export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
   invoke({
     endpoint: BUILD_TX_URL,
     data: request,
     method: POST,
+  });
+
+export const fetchZapBuildTxnData = (request: ZapBuildTxnRequest, cancelToken?: CancelToken) =>
+  invokeZap({
+    endpoint: `${getBaseZapUrl()}/${ZAP_BUILD_TX_URL}`,
+    data: request,
+    method: POST,
+    cancelToken,
+  });
+
+export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToken) =>
+  invokeZap({
+    endpoint: `${getBaseZapUrl()}/${ZAP_QUOTE_URL}`,
+    data: request,
+    method: POST,
+    cancelToken,
+  });
+
+export const fetchZapTxnStatus = (request: ZapTxnStatusRequest) =>
+  invokeZap({
+    endpoint: `${getBaseZapUrl()}/${ZAP_TXN_STATUS_URL}`,
+    data: request,
+    method: GET,
   });
 
 export const fetchAllSupportedChains = () =>
