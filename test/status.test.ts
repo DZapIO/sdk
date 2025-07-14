@@ -34,7 +34,7 @@ describe('DZapClient - getStatus', () => {
 
   it('should fetch status for a single transaction', async () => {
     const txHash = '0x3c48cb39902c215e5b055235ed2d11b0190e3f4b1f73566862359e334a96b166';
-    const chainId = '8453';
+    const chainId = 8453;
 
     const result = await client.getTradeTxnStatus({ txHash, chainId });
     expect(result).toBeDefined();

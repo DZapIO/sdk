@@ -84,7 +84,7 @@ export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
     method: GET,
   });
 
-export const fetchStatus = ({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: string }) =>
+export const fetchStatus = ({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }) =>
   invoke({
     endpoint: GET_STATUS,
     data: {

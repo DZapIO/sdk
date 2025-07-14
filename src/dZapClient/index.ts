@@ -162,7 +162,7 @@ class DZapClient {
    *   fromChain: 1,
    *   data: [{
    *     amount: '1000000', // 1 USDC
-   *     srcToken: '0xA0b86a33E6441E',
+   *     srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
    *     destToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
    *     srcDecimals: 6,
    *     destDecimals: 18,
@@ -199,7 +199,7 @@ class DZapClient {
    *   refundee: '0x...',
    *   data: [{
    *     amount: '1000000',
-   *     srcToken: '0xA0b86a33E6441E',
+   *     srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
    *     destToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
    *     selectedRoute: 'uniswap',
    *     recipient: '0x...',
@@ -244,7 +244,7 @@ class DZapClient {
   }: {
     txHash?: string;
     txIds?: string;
-    chainId?: string;
+    chainId?: number;
   }): Promise<TradeStatusResponse | Record<string, TradeStatusResponse>> {
     return fetchStatus({ txHash, txIds, chainId });
   }
@@ -319,13 +319,13 @@ class DZapClient {
    * ```typescript
    * // Get basic token details
    * const tokenInfo = await client.getTokenDetails(
-   *   '0xA0b86a33E6441E', // USDC
+   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
    *   1 // Ethereum
    * );
    *
    * // Get token details with balance and price
    * const fullTokenInfo = await client.getTokenDetails(
-   *   '0xA0b86a33E6441E',
+   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
    *   1,
    *   '0x...', // user address
    *   true, // include balance
@@ -347,16 +347,16 @@ class DZapClient {
    *
    * @example
    * ```typescript
-   * const prices = await client.getTokenPrice([
-   *   '0xA0b86a33E6441E', // USDC
+   * const prices = await client.getTokenPrices([
+   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
    *   '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' // WETH
    * ], 1);
    *
-   * console.log('USDC price:', prices['0xA0b86a33E6441E']);
+   * console.log('USDC price:', prices['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48']);
    * console.log('WETH price:', prices['0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2']);
    * ```
    */
-  public async getTokenPrice(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>> {
+  public async getTokenPrices(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>> {
     const chainConfig = await DZapClient.getChainConfig();
     return await this.priceService.getPrices({ chainId, tokenAddresses, chainConfig });
   }
@@ -368,7 +368,6 @@ class DZapClient {
    * If txnData is not provided, it first builds the transaction using the request data, then executes it.
    *
    * @param params - Configuration object for the trade operation
-   * @param params.chainId - The source chain ID where the transaction will be executed
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
@@ -378,14 +377,13 @@ class DZapClient {
    * ```typescript
    * // Execute a swap trade
    * const result = await dZapClient.trade({
-   *   chainId: 1,
    *   request: {
    *     integratorId: 'dzap',
    *     fromChain: 1,
    *     sender: '0x...',
    *     data: [{
    *       amount: '1000000', // 1 USDC
-   *       srcToken: '0xA0b86a33E6441E', // USDC
+   *       srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
    *       destToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
    *       // ... other trade parameters
    *     }]
@@ -395,17 +393,15 @@ class DZapClient {
    * ```
    */
   public async trade({
-    chainId,
     request,
     signer,
     txnData,
   }: {
-    chainId: number;
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ chainId, request, signer, txnData });
+    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData });
   }
 
   /**
@@ -528,8 +524,7 @@ class DZapClient {
       throw new Error(`No contracts found for chain: ${chainId}`);
     }
     const contractMap: Record<AvailableDZapServices, string | undefined> = {
-      [Services.bridge]: chainData.contracts.router,
-      [Services.swap]: chainData.contracts.router,
+      [Services.trade]: chainData.contracts.router,
       [Services.dca]: chainData.contracts.dca,
       [Services.zap]: chainData.contracts.zap,
     };
@@ -563,7 +558,7 @@ class DZapClient {
    *   chainId: 1,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86a33E6441E', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2
@@ -621,7 +616,7 @@ class DZapClient {
    *   signer: walletClient,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86a33E6441E', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2,
@@ -682,7 +677,6 @@ class DZapClient {
    * @param params.tokens - Array of token objects containing address and amount information
    * @param params.service - The DZap service that will use the permit
    * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
-   * @param params.spender - The contract address that will be authorized to spend tokens
    * @param params.signer - The wallet signer to sign permit messages
    * @param params.permitType - Optional permit type (defaults to AutoPermit for optimal compatibility)
    * @param params.signatureCallback - Optional callback function for each completed signature
@@ -694,10 +688,9 @@ class DZapClient {
    *   chainId: 1,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86a33E6441E', amount: '1000000' }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
-   *   spender: '0x...',
    *   signer: walletClient,
    *   permitType: PermitTypes.Permit2,
    *   signatureCallback: async ({ permitData, srcToken }) => {
@@ -713,7 +706,6 @@ class DZapClient {
     rpcUrls,
     service,
     signer,
-    spender,
     permitType = PermitTypes.AutoPermit,
     signatureCallback,
   }: {
@@ -725,11 +717,15 @@ class DZapClient {
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    spender: HexString;
     signer: WalletClient | Wallet;
     permitType?: PermitMode;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
+    const spender =
+      permitType === PermitTypes.Permit2 || permitType === PermitTypes.AutoPermit
+        ? getPermit2Address(chainId)
+        : ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+
     return await PermitTxnHandler.signPermit({
       chainId,
       sender,
@@ -799,7 +795,7 @@ class DZapClient {
    *   srcChainId: 1,
    *   destChainId: 1,
    *   account: '0x...',
-   *   srcToken: '0xA0b86a33E6441E', // USDC
+   *   srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
    *   destToken: '0x...', // LP token or protocol-specific token
    *   amount: '1000000',
    *   recipient: '0x...',
@@ -833,7 +829,7 @@ class DZapClient {
    *   srcChainId: 1,
    *   destChainId: 1,
    *   account: '0x...',
-   *   srcToken: '0xA0b86a33E6441E',
+   *   srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
    *   destToken: '0x...',
    *   amount: '1000000',
    *   recipient: '0x...',

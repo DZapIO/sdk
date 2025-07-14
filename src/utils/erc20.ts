@@ -144,9 +144,7 @@ export const getAllowance = async ({
   dZapContractAddress: HexString;
   mode?: ApprovalMode;
 }) => {
-  const tokenAllowances: { [key: string]: { allowance: bigint; approvalNeeded: boolean } } = {};
-  let noOfApprovalsRequired = 0;
-  let noOfSignaturesRequired = 0;
+  const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
@@ -174,11 +172,11 @@ export const getAllowance = async ({
   );
 
   for (const { address } of nativeTokens) {
-    tokenAllowances[address] = { allowance: maxUint256, approvalNeeded: false };
+    data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false };
   }
 
   if (erc20Tokens.length === 0) {
-    return { status: TxnStatus.success, code: StatusCodes.Success, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
+    return { status: TxnStatus.success, code: StatusCodes.Success, data };
   }
   try {
     const { data: allowances } = await batchGetAllowances({
@@ -192,21 +190,13 @@ export const getAllowance = async ({
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
-      tokenAllowances[token] = { allowance, approvalNeeded };
-
-      if (approvalNeeded && (mode === ApprovalModes.Permit2 || mode === ApprovalModes.Default || mode === ApprovalModes.AutoPermit)) {
-        noOfApprovalsRequired++;
-      }
-
-      // Count signatures only for Permit2 mode
-      if (mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit) {
-        noOfSignaturesRequired++;
-      }
+      const signatureNeeded = mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit;
+      data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
 
-    return { status: TxnStatus.success, code: StatusCodes.Success, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
+    return { status: TxnStatus.success, code: StatusCodes.Success, data };
   } catch (error: any) {
     console.error('Multicall allowance check failed:', error);
-    return { status: TxnStatus.error, code: StatusCodes.Error, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } };
+    return { status: TxnStatus.error, code: StatusCodes.Error, data };
   }
 };

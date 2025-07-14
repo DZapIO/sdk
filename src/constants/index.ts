@@ -24,8 +24,7 @@ export const OtherAbis = {
 } as const;
 
 export const Services = {
-  swap: 'swap',
-  bridge: 'bridge',
+  trade: 'trade',
   dca: 'dca',
   zap: 'zap',
 } as const;

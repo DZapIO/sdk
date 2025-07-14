@@ -71,7 +71,7 @@ async function runZapExamples() {
 
         setTimeout(async () => {
           try {
-            const statusResponse = await dZapClient.getZapTxnStatus({ chainId: '42161', txnHash });
+            const statusResponse = await dZapClient.getZapTxnStatus({ chainId: 42161, txnHash });
             console.log('Zap transaction status:', JSON.stringify(statusResponse, null, 2));
           } catch (e) {
             console.error('Error getting zap status:', e);

@@ -46,7 +46,7 @@ async function runTokenUtilsExamples() {
   ];
   console.log(`\nFetching prices for ${tokensToPrice.length} tokens...`);
   try {
-    const tokenPrices = await dZapClient.getTokenPrice(tokensToPrice, arbitrumChainId);
+    const tokenPrices = await dZapClient.getTokenPrices(tokensToPrice, arbitrumChainId);
     console.log('Token prices:', JSON.stringify(tokenPrices, null, 2));
   } catch (error) {
     console.error('Error fetching token prices:', error);

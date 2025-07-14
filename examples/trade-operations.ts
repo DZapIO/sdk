@@ -82,7 +82,6 @@ async function runTradeExamples() {
     };
 
     const txResult = await dZapClient.trade({
-      chainId: 42161,
       request: buildTxRequest,
       signer: walletClient,
     });
@@ -99,7 +98,7 @@ async function runTradeExamples() {
         try {
           const statusResponse = (await dZapClient.getTradeTxnStatus({
             txHash: txResult.txnHash,
-            chainId: '42161',
+            chainId: 42161,
           })) as TradeStatusResponse;
           console.log('Transaction status:', JSON.stringify(statusResponse, null, 2));
         } catch (e) {

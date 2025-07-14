@@ -69,7 +69,7 @@ export type ZapTxnStatusResponse = {
 };
 
 export type ZapTxnStatusRequest = {
-  chainId: string;
+  chainId: number;
   txnHash: string;
 };
 

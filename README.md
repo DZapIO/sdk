@@ -31,7 +31,7 @@ pnpm add @dzapio/dzap-sdk
     - [Get Zap Transaction Status](#get-zap-transaction-status)
   - [Token Utilities](#token-utilities)
   - [Chain Utilities](#chain-utilities)
-  - [Permit Utilities](#permit-utilities)
+  - [Approval and Signature Utilities](#approval-and-signature-utilities)
 - [Token Approval Mechanism](#token-approval-mechanism)
 - [Types](#types)
 - [License](#license)
@@ -76,8 +76,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Description:**
   Returns the best available quotes for the requested operation, with prices updated using the SDK's price service.
 
----
-
 #### Build Trade Transaction
 
 > **Note:** This method requires token approval. See [Token Approval Mechanism](#token-approval-mechanism).
@@ -92,17 +90,14 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Description:**
   Prepares the transaction data required to execute the requested operation on-chain.
 
----
-
 #### Trade
 
 > **Note:** This method requires token approval. See [Token Approval Mechanism](#token-approval-mechanism).
 
-##### `trade({ chainId, request, signer, txnData })`
+##### `trade({ request, signer, txnData })`
 
 - **Purpose:** Builds and sends a trade transaction in one step.
 - **Input:**
-  - `chainId`: number
   - `request`: `TradeBuildTxnRequest`
   - `signer`: `Signer` or `WalletClient`
   - `txnData?`: `TradeBuildTxnResponse`
@@ -110,8 +105,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - Transaction result
 - **Description:**
   Combines building and sending a transaction for convenience.
-
----
 
 #### Get Trade Transaction Status
 
@@ -144,8 +137,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Description:**
   Returns the best available quote for the requested Zap.
 
----
-
 #### Build Zap Transaction
 
 ##### `buildZapTxn(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse>`
@@ -157,8 +148,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - `Promise<ZapBuildTxnResponse>`
 - **Description:**
   Prepares the transaction steps required to execute the requested Zap operation on-chain.
-
----
 
 #### Zap
 
@@ -175,8 +164,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - Transaction result
 - **Description:**
   Runs a series of Zap steps as a single operation, building steps from request if not provided.
-
----
 
 #### Get Zap Transaction Status
 
@@ -206,8 +193,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Description:**
   Returns a list of tokens for the specified chain, with up-to-date prices.
 
----
-
 #### `getTokenDetails(tokenAddress: string, chainId: number, account?: string, includeBalance?: boolean, includePrice?: boolean)`
 
 - **Purpose:** Fetches details for a specific token.
@@ -221,8 +206,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - Token details object
 - **Description:**
   Returns metadata, balance, and/or price for a token.
-
----
 
 #### `getTokenPrices(tokenAddresses: string[], chainId: number): Promise<Record<string, string | null>>`
 
@@ -249,7 +232,7 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 
 ---
 
-### Permit Utilities
+### Approval and Signature Utilities
 
 #### `getAllowance({ chainId, sender, tokens, rpcUrls, service, mode })`
 
@@ -265,8 +248,6 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - `{ status, code, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } }`
 - **Description:**
   Returns the current allowance for each token and indicates how many approvals/signatures are needed.
-
----
 
 #### `approve({ chainId, signer, sender, rpcUrls, tokens, service, mode, approvalTxnCallback })`
 
@@ -285,9 +266,7 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Description:**
   Sends approval transactions for the specified tokens. The spender is automatically determined based on the approval mode.
 
----
-
-#### `sign({ chainId, sender, tokens, rpcUrls, service, signer, spender, permitType, signatureCallback })`
+#### `sign({ chainId, sender, tokens, rpcUrls, service, signer, permitType, signatureCallback })`
 
 - **Purpose:** Signs EIP-2612Permit/Permit2 data for gas-less token approvals.
 - **Input:**
@@ -296,14 +275,15 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - `tokens`: Array of `{ address: HexString; amount: string }`
   - `service`: AvailableDZapServices
   - `signer`: `Signer` or `WalletClient`
-  - `spender`: HexString
   - `permitType?`: PermitMode (defaults to `PermitTypes.AutoPermit`)
   - `rpcUrls?`: string[]
   - `signatureCallback?`: Callback function for each signature result
 - **Output:**
   - `{ status, code, data }` with permit signatures populated
 - **Description:**
-  Signs permit data for gas-less approvals. Automatically handles EIP2612 or Permit2 based on token support and permit type.
+  Signs permit data for gas-less approvals. Automatically handles EIP2612 or Permit2 based on token support and permit type. The spender is automatically determined based on the permit type.
+
+---
 
 ## Token Approval Mechanism
 

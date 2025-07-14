@@ -40,7 +40,7 @@ export type CalculatePointsRequest = {
   providers: string[];
   chainId: number;
   account: string;
-  txType: keyof typeof Services.swap | keyof typeof Services.bridge;
+  txType: 'swap' | 'bridge';
 };
 
 export type Chain = {

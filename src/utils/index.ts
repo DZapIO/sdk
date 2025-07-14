@@ -181,8 +181,7 @@ export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTo
 
 export const getDZapAbi = (service: AvailableDZapServices) => {
   switch (service) {
-    case Services.swap:
-    case Services.bridge:
+    case Services.trade:
       return ABI[DZapAbis.dZapCoreAbi];
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];

@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `getZapQuote()` - Get quotes for Zap operations
 - `getAllTokens()` - Fetch all tokens for a chain
 - `getTokenDetails()` - Get detailed token information
-- `getTokenPrice()` - Fetch token prices
+- `getTokenPrices()` - Fetch token prices
 - `getAllSupportedChains()` - Get supported blockchain networks
 - `getPermitAllowance()` - Check Permit2 allowances
 - `approvePermit()` - Approve tokens via Permit2

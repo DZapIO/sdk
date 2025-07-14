@@ -30,25 +30,25 @@ async function runPermitExamples() {
     const allowanceResponse = await dZapClient.getAllowance({
       chainId,
       sender: senderAddress,
-      service: Services.swap,
+      service: Services.trade,
       tokens: [{ address: tokenToApprove, amount: amountToTrade }],
       rpcUrls,
       mode: ApprovalModes.Permit2,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
-    const tokenAllowance = allowanceResponse.data.tokenAllowances;
+    const { approvalNeeded } = allowanceResponse.data[tokenToApprove];
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 
-    if (walletClient.account && tokenAllowance && BigInt(tokenAllowance[tokenToApprove].allowance) < amountToTrade) {
+    if (walletClient.account && approvalNeeded) {
       console.log('\nAllowance is insufficient. Requesting approval...');
       try {
         await dZapClient.approve({
           chainId,
           signer: walletClient,
           sender: senderAddress,
-          service: Services.swap,
+          service: Services.trade,
           mode: ApprovalModes.Permit2,
           tokens: [{ address: tokenToApprove, amount: amountToTrade }],
           approvalTxnCallback: async ({
@@ -81,17 +81,11 @@ async function runPermitExamples() {
   console.log('\nSigning permit...');
   if (walletClient.account) {
     try {
-      const routerAddress = (await dZapClient.getAllSupportedChains())[chainId].contracts?.router;
-
-      if (!routerAddress) {
-        throw new Error(`Router address not found for chain ID ${chainId}`);
-      }
       const signResponse = await dZapClient.sign({
         chainId,
         signer: walletClient,
         sender: senderAddress,
-        service: 'swap',
-        spender: routerAddress as HexString,
+        service: Services.trade,
         permitType: PermitTypes.Permit2,
         tokens: [
           {

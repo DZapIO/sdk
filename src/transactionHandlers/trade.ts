@@ -10,17 +10,16 @@ import { WalletClient } from 'viem';
 
 class TradeTxnHandler {
   public static buildAndSendTransaction = async ({
-    chainId,
     request,
     signer,
     txnData,
   }: {
-    chainId: number;
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
   }): Promise<DZapTransactionResponse> => {
     try {
+      const chainId = request.fromChain;
       let buildTxnResponseData: TradeBuildTxnResponse;
       if (txnData) {
         buildTxnResponseData = txnData;
