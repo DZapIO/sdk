@@ -4,7 +4,7 @@ import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
 import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../constants/axioslient';
 
 class AxiosClient {
-  private static instance: AxiosClient | null = null;
+  private static instances: Map<string, AxiosClient> = new Map();
   private axiosInstance: AxiosInstance;
 
   private constructor(baseURL: string) {
@@ -37,10 +37,10 @@ class AxiosClient {
   }
 
   public static getInstance(baseURL: string): AxiosInstance {
-    if (!AxiosClient.instance) {
-      AxiosClient.instance = new AxiosClient(baseURL);
+    if (!AxiosClient.instances.has(baseURL)) {
+      AxiosClient.instances.set(baseURL, new AxiosClient(baseURL));
     }
-    return AxiosClient.instance.axiosInstance;
+    return AxiosClient.instances.get(baseURL)!.axiosInstance;
   }
 }
 

@@ -1,3 +1,4 @@
+import { CancelToken } from 'axios';
 import { GET, POST } from 'src/constants/httpMethods';
 import {
   BUILD_TX_URL,
@@ -9,12 +10,10 @@ import {
   GET_TOKEN_PRICE,
   QUOTES_URL,
 } from 'src/constants/urlConstants';
-import { invoke, invokeZap } from 'src/utils/axios';
-import { TradeBuildTxnRequest, CalculatePointsRequest, TradeQuotesRequest } from '../types';
-import { CancelToken } from 'axios';
-import { getBaseZapUrl } from 'src/config';
 import { ZapBuildTxnRequest, ZapQuoteRequest, ZapTxnStatusRequest } from 'src/types/zap';
+import { invoke, invokeZap } from 'src/utils/axios';
 import { ZAP_BUILD_TX_URL, ZAP_QUOTE_URL, ZAP_TXN_STATUS_URL } from 'src/zap/constants/urls';
+import { CalculatePointsRequest, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
@@ -33,7 +32,7 @@ export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
 
 export const fetchZapBuildTxnData = (request: ZapBuildTxnRequest, cancelToken?: CancelToken) =>
   invokeZap({
-    endpoint: `${getBaseZapUrl()}/${ZAP_BUILD_TX_URL}`,
+    endpoint: ZAP_BUILD_TX_URL,
     data: request,
     method: POST,
     cancelToken,
@@ -41,7 +40,7 @@ export const fetchZapBuildTxnData = (request: ZapBuildTxnRequest, cancelToken?: 
 
 export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToken) =>
   invokeZap({
-    endpoint: `${getBaseZapUrl()}/${ZAP_QUOTE_URL}`,
+    endpoint: ZAP_QUOTE_URL,
     data: request,
     method: POST,
     cancelToken,
@@ -49,7 +48,7 @@ export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToke
 
 export const fetchZapTxnStatus = (request: ZapTxnStatusRequest) =>
   invokeZap({
-    endpoint: `${getBaseZapUrl()}/${ZAP_TXN_STATUS_URL}`,
+    endpoint: ZAP_TXN_STATUS_URL,
     data: request,
     method: GET,
   });
@@ -101,3 +100,22 @@ export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
     data: request,
     method: POST,
   });
+
+const test = async () => {
+  try {
+    await fetchZapQuote({} as ZapQuoteRequest);
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+};
+
+const test1 = async () => {
+  try {
+    await fetchTradeQuotes({} as TradeQuotesRequest);
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+};
+
+test1();
+test();
