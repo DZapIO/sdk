@@ -100,22 +100,3 @@ export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
     data: request,
     method: POST,
   });
-
-const test = async () => {
-  try {
-    await fetchZapQuote({} as ZapQuoteRequest);
-  } catch (error) {
-    console.error('An error occurred:', error);
-  }
-};
-
-const test1 = async () => {
-  try {
-    await fetchTradeQuotes({} as TradeQuotesRequest);
-  } catch (error) {
-    console.error('An error occurred:', error);
-  }
-};
-
-test1();
-test();
