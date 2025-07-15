@@ -135,13 +135,13 @@ export const getAllowance = async ({
   tokens,
   rpcUrls,
   mode = ApprovalModes.Default,
-  dZapContractAddress,
+  spender,
 }: {
   chainId: number;
   sender: HexString;
   tokens: { address: HexString; amount: bigint }[];
+  spender: HexString;
   rpcUrls?: string[];
-  dZapContractAddress: HexString;
   mode?: ApprovalMode;
 }) => {
   const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
@@ -162,12 +162,12 @@ export const getAllowance = async ({
         });
         return {
           token: address,
-          spender: eip2612PermitData.supportsPermit ? dZapContractAddress : getPermit2Address(chainId), // @dev: not needed, but added for consistency
+          spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId), // @dev: not needed, but added for consistency
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
         };
       }
-      return { token: address, spender: dZapContractAddress, amount };
+      return { token: address, spender, amount };
     }),
   );
 

@@ -550,6 +550,7 @@ class DZapClient {
    * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @param params.service - The DZap service that will spend the tokens
    * @param params.mode - Optional approval mode (defaults to AutoPermit for optimal UX)
+   * @param params.spender - Optional custom spender address (if not using default DZap contract)
    * @returns Promise resolving to allowance information including current allowances and required actions
    *
    * @example
@@ -571,31 +572,33 @@ class DZapClient {
     chainId,
     sender,
     tokens,
-    rpcUrls,
     service,
+    rpcUrls,
+    spender,
     mode = ApprovalModes.AutoPermit,
   }: {
     chainId: number;
     sender: HexString;
     tokens: { address: HexString; amount: bigint }[];
-    rpcUrls?: string[];
     service: AvailableDZapServices;
+    rpcUrls?: string[];
+    spender?: HexString; // Optional custom spender address
     mode?: ApprovalMode;
   }) {
-    const dZapContractAddress = (await this.getDZapContractAddress({ chainId, service })) as HexString;
+    const spenderAddress = (spender || (await this.getDZapContractAddress({ chainId, service }))) as HexString;
     return await getAllowance({
       chainId,
       sender,
       tokens,
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       mode,
-      dZapContractAddress,
+      spender: spenderAddress,
     });
   }
 
   /**
    * Approves tokens for spending by DZap contracts with support for multiple approval modes.
-   * This method automatically determines the appropriate spender address based on the approval mode
+   * This method automatically determines the appropriate spender address based on the approval mode (if not specified)
    * and handles transaction submission with optional callback for status updates.
    *
    * @param params - Configuration object for token approval
@@ -606,6 +609,7 @@ class DZapClient {
    * @param params.tokens - Array of token objects containing address and amount to approve
    * @param params.approvalTxnCallback - Optional callback function for approval transaction status updates
    * @param params.mode - Optional approval mode (defaults to AutoPermit for optimal UX)
+   * @param params.spender - Optional custom spender address (if not using default DZap contract)
    * @param params.service - The DZap service that will spend the approved tokens
    * @returns Promise resolving to approval transaction results
    *
@@ -630,16 +634,16 @@ class DZapClient {
     chainId,
     signer,
     sender,
-    rpcUrls,
     tokens,
     approvalTxnCallback,
-    mode = ApprovalModes.AutoPermit,
     service,
+    mode = ApprovalModes.AutoPermit,
+    rpcUrls,
+    spender,
   }: {
     chainId: number;
     signer: WalletClient | Signer;
     sender: HexString;
-    rpcUrls?: string[];
     tokens: { address: HexString; amount: bigint }[];
     approvalTxnCallback?: ({
       txnDetails,
@@ -648,11 +652,13 @@ class DZapClient {
       txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
     }) => Promise<TxnStatus | void>;
-    mode?: ApprovalMode;
     service: AvailableDZapServices;
+    spender?: HexString; // Optional custom spender address
+    rpcUrls?: string[];
+    mode?: ApprovalMode;
   }) {
-    const spender =
-      mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit
+    const spenderAddress =
+      spender || mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit
         ? getPermit2Address(chainId)
         : ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     return await approveToken({
@@ -662,7 +668,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       tokens,
       approvalTxnCallback,
-      spender,
+      spender: spenderAddress,
     });
   }
 
@@ -680,6 +686,7 @@ class DZapClient {
    * @param params.signer - The wallet signer to sign permit messages
    * @param params.permitType - Optional permit type (defaults to AutoPermit for optimal compatibility)
    * @param params.signatureCallback - Optional callback function for each completed signature
+   * @param params.spender - Optional custom spender address (if not using default DZap contract)
    * @returns Promise resolving to permit signatures and related data
    *
    * @example
@@ -703,8 +710,9 @@ class DZapClient {
     chainId,
     sender,
     tokens,
-    rpcUrls,
     service,
+    spender,
+    rpcUrls,
     signer,
     permitType = PermitTypes.AutoPermit,
     signatureCallback,
@@ -716,13 +724,14 @@ class DZapClient {
       amount: string;
     }[];
     service: AvailableDZapServices;
-    rpcUrls?: string[];
     signer: WalletClient | Wallet;
+    spender?: HexString; // Optional custom spender address
+    rpcUrls?: string[];
     permitType?: PermitMode;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
-    const spender =
-      permitType === PermitTypes.Permit2 || permitType === PermitTypes.AutoPermit
+    const spenderAddress =
+      spender || permitType === PermitTypes.Permit2 || permitType === PermitTypes.AutoPermit
         ? getPermit2Address(chainId)
         : ((await this.getDZapContractAddress({ chainId, service })) as HexString);
 
@@ -733,7 +742,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       service,
       signer,
-      spender,
+      spender: spenderAddress,
       permitType,
       signatureCallback,
     });
