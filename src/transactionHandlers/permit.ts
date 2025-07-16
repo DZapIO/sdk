@@ -2,7 +2,7 @@ import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Address, getPermit2Signature } from 'src/utils/permit/permit2Methods';
+import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
 import { WalletClient } from 'viem';
 
@@ -35,12 +35,13 @@ class PermitTxnHandler {
     permitType: PermitMode;
     signer: WalletClient | Wallet;
     service: AvailableDZapServices;
-  }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString }> => {
+  }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
     if (isDZapNativeToken(token.address)) {
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,
         permitData: DEFAULT_PERMIT_DATA,
+        permitType: PermitTypes.EIP2612Permit,
       };
     }
 
@@ -60,6 +61,7 @@ class PermitTxnHandler {
           status: TxnStatus.success,
           code: StatusCodes.Success,
           permitData: DEFAULT_PERMIT_DATA,
+          permitType: PermitTypes.EIP2612Permit,
         };
       }
       const { permitData, status, code } = await getEIP2612PermitSignature({
@@ -76,6 +78,7 @@ class PermitTxnHandler {
         status,
         code,
         permitData: permitData as HexString,
+        permitType: PermitTypes.EIP2612Permit,
       };
     } else {
       if (oneToMany && !isFirstToken) {
@@ -83,13 +86,14 @@ class PermitTxnHandler {
           status: TxnStatus.success,
           code: StatusCodes.Success,
           permitData: DEFAULT_PERMIT2_DATA,
+          permitType: PermitTypes.Permit2,
         };
       } else {
         const { status, code, permitData } = await getPermit2Signature({
           chainId,
           account: sender,
           token: token.address,
-          spender: getPermit2Address(chainId),
+          spender,
           amount,
           service,
           signer,
@@ -99,6 +103,7 @@ class PermitTxnHandler {
           status,
           code,
           permitData: permitData as HexString,
+          permitType: PermitTypes.Permit2,
         };
       }
     }
@@ -125,7 +130,17 @@ class PermitTxnHandler {
     service: AvailableDZapServices;
     rpcUrls?: string[];
     signer: WalletClient | Wallet;
-    signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: HexString; amount: bigint }) => Promise<void>;
+    signatureCallback?: ({
+      permitData,
+      srcToken,
+      amount,
+      permitType,
+    }: {
+      permitData: HexString;
+      srcToken: HexString;
+      amount: bigint;
+      permitType: PermitMode;
+    }) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
   }): Promise<{
@@ -144,7 +159,12 @@ class PermitTxnHandler {
 
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
-      const { status, code, permitData } = await PermitTxnHandler.generatePermitDataForToken({
+      const {
+        status,
+        code,
+        permitData,
+        permitType: permitTypeForToken,
+      } = await PermitTxnHandler.generatePermitDataForToken({
         token: tokens[dataIdx],
         isFirstToken,
         oneToMany,
@@ -170,6 +190,7 @@ class PermitTxnHandler {
           permitData,
           srcToken: tokens[dataIdx].address as HexString,
           amount,
+          permitType: permitTypeForToken,
         });
       }
     }

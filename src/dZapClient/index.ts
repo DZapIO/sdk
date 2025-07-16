@@ -725,7 +725,17 @@ class DZapClient {
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
     permitType?: PermitMode;
-    signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
+    signatureCallback?: ({
+      permitData,
+      srcToken,
+      amount,
+      permitType,
+    }: {
+      permitData: HexString;
+      srcToken: string;
+      amount: bigint;
+      permitType: PermitMode;
+    }) => Promise<void>;
   }) {
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
 
