@@ -632,7 +632,6 @@ class DZapClient {
   public async approve({
     chainId,
     signer,
-    sender,
     tokens,
     approvalTxnCallback,
     service,
@@ -642,7 +641,6 @@ class DZapClient {
   }: {
     chainId: number;
     signer: WalletClient | Signer;
-    sender: HexString;
     tokens: { address: HexString; amount: bigint }[];
     approvalTxnCallback?: ({
       txnDetails,
@@ -660,7 +658,6 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      sender,
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       tokens,
       approvalTxnCallback,

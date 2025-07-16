@@ -11,7 +11,7 @@ export const erc20Functions = {
   approve: 'approve',
   transfer: 'transfer',
   transferFrom: 'transferFrom',
-  balanceof: 'balanceOf',
+  balanceOf: 'balanceOf',
   decimals: 'decimals',
   symbol: 'symbol',
 } as const;

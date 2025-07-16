@@ -24,10 +24,8 @@ export const signTypedData = async ({
   let signature: HexString;
 
   if (isTypeSigner(signer)) {
-    console.log('Using ethers signer for permit.');
     signature = (await signer._signTypedData(domain, types, message)) as HexString;
   } else {
-    console.log('Using viem signer for permit.');
     signature = await signer.signTypedData({
       account: account as HexString,
       domain,

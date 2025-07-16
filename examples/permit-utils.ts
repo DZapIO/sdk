@@ -47,7 +47,6 @@ async function runPermitExamples() {
         await dZapClient.approve({
           chainId,
           signer: walletClient,
-          sender: senderAddress,
           service: Services.trade,
           mode: ApprovalModes.Permit2,
           tokens: [{ address: tokenToApprove, amount: amountToTrade }],

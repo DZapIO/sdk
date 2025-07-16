@@ -21,7 +21,7 @@ async function runTokenUtilsExamples() {
 
   // B. GET DETAILS FOR A SPECIFIC TOKEN
 
-  const usdcAddress = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'; // USDC on arbitrum
+  const usdcAddress = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'; // USDC on arbitrum
   const userAddress = '0xYourWalletAddress'; // Replace with your address to check balance
   console.log(`\nFetching details for USDC on arbitrum...`);
   try {

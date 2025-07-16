@@ -21,7 +21,6 @@ export const approveToken = async ({
 }: {
   chainId: number;
   signer: WalletClient | Signer;
-  sender: HexString;
   mode: ApprovalMode;
   tokens: { address: HexString; amount: bigint }[];
   rpcUrls?: string[];
@@ -40,7 +39,6 @@ export const approveToken = async ({
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
     let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
     if (isTypeSigner(signer)) {
-      console.log('Using ethers signer.');
       const from = await signer.getAddress();
       const callData = encodeFunctionData({
         abi: erc20Abi,
