@@ -29,7 +29,6 @@ import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteRespo
 import { ZapTransactionStep } from 'src/types/zap/step';
 import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
 import { approveToken, getAllowance } from 'src/utils/erc20';
-import { getPermit2Address } from 'src/utils/permit/permit2Methods';
 import { updateTokenListPrices } from 'src/utils/tokens';
 import { updateQuotes } from 'src/utils/updateQuotes';
 import { TransactionReceipt, WalletClient } from 'viem';
@@ -657,10 +656,7 @@ class DZapClient {
     rpcUrls?: string[];
     mode?: ApprovalMode;
   }) {
-    const spenderAddress =
-      spender || mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit
-        ? getPermit2Address(chainId)
-        : ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     return await approveToken({
       chainId,
       signer,
@@ -668,6 +664,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       tokens,
       approvalTxnCallback,
+      mode,
       spender: spenderAddress,
     });
   }
@@ -730,10 +727,7 @@ class DZapClient {
     permitType?: PermitMode;
     signatureCallback?: ({ permitData, srcToken, amount }: { permitData: HexString; srcToken: string; amount: bigint }) => Promise<void>;
   }) {
-    const spenderAddress =
-      spender || permitType === PermitTypes.Permit2 || permitType === PermitTypes.AutoPermit
-        ? getPermit2Address(chainId)
-        : ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
 
     return await PermitTxnHandler.signPermit({
       chainId,

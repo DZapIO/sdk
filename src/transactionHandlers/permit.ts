@@ -2,7 +2,7 @@ import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
+import { getPermit2Address, getPermit2Signature } from 'src/utils/permit/permit2Methods';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
 import { WalletClient } from 'viem';
 
@@ -89,7 +89,7 @@ class PermitTxnHandler {
           chainId,
           account: sender,
           token: token.address,
-          spender,
+          spender: getPermit2Address(chainId),
           amount,
           service,
           signer,

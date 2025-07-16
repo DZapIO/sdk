@@ -14,6 +14,7 @@ export const approveToken = async ({
   chainId,
   signer,
   rpcUrls,
+  mode,
   tokens,
   approvalTxnCallback,
   spender,
@@ -21,6 +22,7 @@ export const approveToken = async ({
   chainId: number;
   signer: WalletClient | Signer;
   sender: HexString;
+  mode: ApprovalMode;
   tokens: { address: HexString; amount: bigint }[];
   rpcUrls?: string[];
   approvalTxnCallback?: ({
@@ -32,6 +34,9 @@ export const approveToken = async ({
   }) => Promise<TxnStatus | void>;
   spender: HexString;
 }) => {
+  if (mode === ApprovalModes.AutoPermit || mode === ApprovalModes.Permit2) {
+    spender = getPermit2Address(chainId);
+  }
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
     let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
     if (isTypeSigner(signer)) {
