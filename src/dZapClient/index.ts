@@ -25,7 +25,7 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from 'src/types';
-import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapTxnStatusRequest, ZapTxnStatusResponse } from 'src/types/zap';
+import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapStatusRequest, ZapStatusResponse } from 'src/types/zap';
 import { ZapTransactionStep } from 'src/types/zap/step';
 import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
 import { approveToken, getAllowance } from 'src/utils/erc20';
@@ -879,8 +879,8 @@ class DZapClient {
    * console.log('Current step:', zapStatus.currentStep);
    * ```
    */
-  public async getZapTxnStatus(request: ZapTxnStatusRequest): Promise<ZapTxnStatusResponse> {
-    const status: ZapTxnStatusResponse = (await fetchZapTxnStatus(request)).data;
+  public async getZapTxnStatus(request: ZapStatusRequest): Promise<ZapStatusResponse> {
+    const status: ZapStatusResponse = (await fetchZapTxnStatus(request)).data;
     return status;
   }
 }

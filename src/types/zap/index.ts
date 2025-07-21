@@ -45,30 +45,30 @@ export type ZapRouteRequestPoolDetails = {
   metadata?: unknown;
 };
 
-export type ZapTxnStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 
-export type ZapTransactionAsset = {
+export type ZapStatusAsset = {
   asset: ZapPathAsset;
   amount: string;
   amountUSD: string;
 };
 
-export type ZapTxnStatusStep = {
+export type ZapStatusStep = {
   chainId: number;
   hash?: string;
-  status: ZapTxnStatus;
+  status: ZapStatus;
   action: string;
   protocol: ProviderDetails;
-  input: ZapTransactionAsset[];
-  output: ZapTransactionAsset[];
+  input: ZapStatusAsset[];
+  output: ZapStatusAsset[];
 };
 
-export type ZapTxnStatusResponse = {
-  status: ZapTxnStatus;
-  steps: ZapTxnStatusStep[];
+export type ZapStatusResponse = {
+  status: ZapStatus;
+  steps: ZapStatusStep[];
 };
 
-export type ZapTxnStatusRequest = {
+export type ZapStatusRequest = {
   chainId: number;
   txnHash: string;
 };

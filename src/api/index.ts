@@ -10,7 +10,7 @@ import {
   GET_TOKEN_PRICE,
   QUOTES_URL,
 } from 'src/constants/urlConstants';
-import { ZapBuildTxnRequest, ZapQuoteRequest, ZapTxnStatusRequest } from 'src/types/zap';
+import { ZapBuildTxnRequest, ZapQuoteRequest, ZapStatusRequest } from 'src/types/zap';
 import { invoke, invokeZap } from 'src/utils/axios';
 import { ZAP_BUILD_TX_URL, ZAP_QUOTE_URL, ZAP_TXN_STATUS_URL } from 'src/zap/constants/urls';
 import { CalculatePointsRequest, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
@@ -46,7 +46,7 @@ export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToke
     cancelToken,
   });
 
-export const fetchZapTxnStatus = (request: ZapTxnStatusRequest) =>
+export const fetchZapTxnStatus = (request: ZapStatusRequest) =>
   invokeZap({
     endpoint: ZAP_TXN_STATUS_URL,
     data: request,
