@@ -122,12 +122,9 @@ export const getEIP2612PermitSignature = async ({
 
     const sig = ethers.utils.splitSignature(signature);
 
-    const data = ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
-      [owner, spender, amount, deadline, sig.v, sig.r, sig.s],
-    );
+    const dZapPermitData = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
 
-    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, data as HexString]);
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, dZapPermitData as HexString]);
 
     return {
       status: TxnStatus.success,

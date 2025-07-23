@@ -9,9 +9,10 @@ export enum ZapPermitType {
 }
 
 export enum PermitType {
-  PERMIT,
-  PERMIT2_TRANSFER_FROM,
+  PERMIT, // EIP2612
   PERMIT2_APPROVE,
+  PERMIT2_WITNESS_TRANSFER,
+  BATCH_PERMIT2_WITNESS_TRANSFER,
 }
 
 export enum TxnStatus {

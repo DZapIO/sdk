@@ -88,22 +88,23 @@ export async function getPermit2Signature({
       account,
       primaryType: 'PermitSingle',
     });
+
     const customPermitDataForTransfer = encodeAbiParameters(
-      parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
+      parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
       [
-        BigInt(permitApprove.details.amount.toString()),
         Number(permitApprove.details.nonce.toString()),
         Number(permitApprove.details.expiration.toString()),
         BigInt(permitApprove.sigDeadline.toString()),
         signature,
       ],
     );
+
     const permitType = service === Services.zap ? ZapPermitType.PERMIT2 : PermitType.PERMIT2_APPROVE;
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitType, customPermitDataForTransfer]);
     return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
   } catch (e: any) {
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, permitdata: null };
+      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest, permitData: null };
     }
     return { status: TxnStatus.error, code: e.code, permitData: null };
   }
