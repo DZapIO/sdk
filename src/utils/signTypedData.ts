@@ -1,6 +1,6 @@
 import { TypedDataField, Wallet } from 'ethers';
-import { TypedDataDomain, WalletClient } from 'viem';
 import { HexString } from 'src/types';
+import { TypedDataDomain, WalletClient } from 'viem';
 import { isTypeSigner } from './index';
 
 /**
@@ -18,7 +18,7 @@ export const signTypedData = async ({
   domain: TypedDataDomain;
   types: Record<string, Array<TypedDataField>>;
   message: Record<string, any>;
-  account: string;
+  account: HexString;
   primaryType: string;
 }): Promise<HexString> => {
   let signature: HexString;
@@ -27,7 +27,7 @@ export const signTypedData = async ({
     signature = (await signer._signTypedData(domain, types, message)) as HexString;
   } else {
     signature = await signer.signTypedData({
-      account: account as HexString,
+      account,
       domain,
       message,
       primaryType,

@@ -1,8 +1,8 @@
 import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
+import { ApprovalModes } from 'src/constants/approval';
+import { PermitTypes } from 'src/constants/permit';
 import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
 import { PsbtInput, PsbtOutput } from './btc';
-import { PermitTypes } from 'src/constants/permit';
-import { ApprovalModes } from 'src/constants/approval';
 
 export type HexString = `0x${string}`;
 
@@ -323,3 +323,22 @@ export type TradeStatusResponse = {
 
 export type PermitMode = keyof typeof PermitTypes;
 export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;
+
+export type SinglePermitCallbackParams = {
+  permitData: HexString;
+  srcToken: HexString;
+  amount: bigint;
+  permitType: Exclude<PermitMode, keyof typeof PermitTypes.PermitBatchWitnessTransferFrom>;
+};
+
+export type BatchPermitCallbackParams = {
+  batchPermitData: HexString;
+  tokens: {
+    address: HexString;
+    permitData?: HexString;
+    amount: string;
+  }[];
+  permitType: keyof typeof PermitTypes.PermitBatchWitnessTransferFrom;
+};
+
+export type SignatureCallback = SinglePermitCallbackParams | BatchPermitCallbackParams;

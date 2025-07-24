@@ -33,7 +33,7 @@ export const approveToken = async ({
   }) => Promise<TxnStatus | void>;
   spender: HexString;
 }) => {
-  if (mode === ApprovalModes.AutoPermit || mode === ApprovalModes.Permit2) {
+  if (mode !== ApprovalModes.Default) {
     spender = getPermit2Address(chainId);
   }
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
@@ -154,10 +154,7 @@ export const getAllowance = async ({
 
   const approvalData = await Promise.all(
     erc20Tokens.map(async ({ address, amount }) => {
-      if (mode === ApprovalModes.Permit2) {
-        const permit2Address = getPermit2Address(chainId);
-        return { token: address, spender: permit2Address, amount };
-      } else if (mode === ApprovalModes.AutoPermit) {
+      if (mode === ApprovalModes.AutoPermit) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
           address,
           chainId,
@@ -169,8 +166,10 @@ export const getAllowance = async ({
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
         };
-      }
-      return { token: address, spender, amount };
+      } else if (mode !== ApprovalModes.Default) {
+        const permit2Address = getPermit2Address(chainId);
+        return { token: address, spender: permit2Address, amount };
+      } else return { token: address, spender, amount };
     }),
   );
 
@@ -193,7 +192,7 @@ export const getAllowance = async ({
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
-      const signatureNeeded = mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit;
+      const signatureNeeded = mode !== ApprovalModes.Default;
       data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
 

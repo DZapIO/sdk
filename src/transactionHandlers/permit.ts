@@ -1,4 +1,7 @@
+import { Wallet } from 'ethers';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
+import { PermitTypes } from 'src/constants/permit';
+import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
@@ -6,11 +9,42 @@ import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
 import { WalletClient } from 'viem';
 
-import { Wallet } from 'ethers';
-import { PermitTypes } from 'src/constants/permit';
-import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
-
 class PermitTxnHandler {
+  static generateBatchPermitDataForTokens = async ({
+    tokens,
+    chainId,
+    rpcUrls,
+    sender,
+    spender,
+    signer,
+    service,
+  }: {
+    tokens: { address: HexString; amount: string }[];
+    chainId: number;
+    rpcUrls?: string[];
+    sender: HexString;
+    spender: HexString;
+    signer: WalletClient | Wallet;
+    service: AvailableDZapServices;
+  }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
+    const { status, code, permitData } = await getPermit2Signature({
+      chainId,
+      account: sender,
+      tokens,
+      spender,
+      service,
+      signer,
+      rpcUrls,
+      permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+    });
+    return {
+      status,
+      code,
+      permitData: permitData as HexString,
+      permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+    };
+  };
+
   static generatePermitDataForToken = async ({
     token,
     isFirstToken,
@@ -86,24 +120,29 @@ class PermitTxnHandler {
           status: TxnStatus.success,
           code: StatusCodes.Success,
           permitData: DEFAULT_PERMIT2_DATA,
-          permitType: PermitTypes.Permit2,
+          permitType: PermitTypes.PermitWitnessTransferFrom,
         };
       } else {
         const { status, code, permitData } = await getPermit2Signature({
           chainId,
           account: sender,
-          token: token.address,
+          tokens: [
+            {
+              address: token.address,
+              amount: token.amount,
+            },
+          ],
           spender,
-          amount,
           service,
           signer,
           rpcUrls,
+          permitType: PermitTypes.PermitWitnessTransferFrom,
         });
         return {
           status,
           code,
           permitData: permitData as HexString,
-          permitType: PermitTypes.Permit2,
+          permitType: PermitTypes.PermitWitnessTransferFrom,
         };
       }
     }
@@ -145,18 +184,46 @@ class PermitTxnHandler {
     permitType: PermitMode;
   }): Promise<{
     status: TxnStatus;
+    code: StatusCodes;
     tokens: {
       address: HexString;
       permitData?: HexString;
       amount: string;
     }[];
-    code: StatusCodes;
   }> => {
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
 
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
 
+    // use batch permit for many to one tokens, for permitType selected
+    // if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (tokens?.length > 1 && !oneToMany)) {
+    //   const {
+    //     status,
+    //     code,
+    //     permitData,
+    //     permitType: permitTypeForToken,
+    //   } = await PermitTxnHandler.generateBatchPermitDataForTokens({
+    //     tokens,
+    //     chainId,
+    //     rpcUrls,
+    //     sender,
+    //     spender,
+    //     signer,
+    //     service,
+    //   });
+    //   if (status !== TxnStatus.success) {
+    //     return { status, code, data: { batchPermitData: undefined } };
+    //   }
+    //   if (signatureCallback) {
+    //     await signatureCallback({
+    //       batchPermitData: permitData,
+    //       tokens,
+    //       permitType: permitTypeForToken,
+    //     } as unknown as BatchPermitCallbackParams);
+    //   }
+    //   return { status: TxnStatus.success, code: StatusCodes.Success, data: { batchPermitData: permitData } };
+    // }
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
       const {

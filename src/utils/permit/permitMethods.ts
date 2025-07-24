@@ -41,7 +41,7 @@ export const checkEIP2612PermitSupport = async ({
   const version = versionResult.status === 'fulfilled' ? versionResult.value : undefined; // sending undefined if version is not available
 
   return {
-    supportsPermit: true,
+    supportsPermit: false,
     domainSeparator,
     version,
   };

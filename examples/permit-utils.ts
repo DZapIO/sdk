@@ -33,7 +33,7 @@ async function runPermitExamples() {
       service: Services.trade,
       tokens: [{ address: tokenToApprove, amount: amountToTrade }],
       rpcUrls,
-      mode: ApprovalModes.Permit2,
+      mode: ApprovalModes.PermitSingle,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
@@ -48,7 +48,7 @@ async function runPermitExamples() {
           chainId,
           signer: walletClient,
           service: Services.trade,
-          mode: ApprovalModes.Permit2,
+          mode: ApprovalModes.PermitSingle,
           tokens: [{ address: tokenToApprove, amount: amountToTrade }],
           approvalTxnCallback: async ({
             txnDetails,
@@ -85,7 +85,7 @@ async function runPermitExamples() {
         signer: walletClient,
         sender: senderAddress,
         service: Services.trade,
-        permitType: PermitTypes.Permit2,
+        permitType: PermitTypes.PermitSingle,
         tokens: [
           {
             address: tokenToApprove,
