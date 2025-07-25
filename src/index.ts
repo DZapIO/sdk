@@ -29,6 +29,9 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
+  SignatureCallbackParams,
+  SinglePermitCallbackParams,
+  BatchPermitCallbackParams,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
@@ -89,4 +92,7 @@ export {
   TxnStatus,
   TradeStatusResponse,
   ZapStatusResponse,
+  SignatureCallbackParams,
+  SinglePermitCallbackParams,
+  BatchPermitCallbackParams,
 };

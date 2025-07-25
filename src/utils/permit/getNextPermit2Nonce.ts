@@ -218,7 +218,7 @@ export const getNextPermit2Nonce = async (permitAddress: HexString, account: Hex
     });
     return BigInt(nonce);
   } catch (error) {
-    console.log({ error });
-    return BigInt(0);
+    console.error('Unable to get next permit2 nonce', { error });
+    throw error;
   }
 };

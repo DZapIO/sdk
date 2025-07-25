@@ -3,7 +3,7 @@ import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
+import { AvailableDZapServices, BatchPermitCallbackParams, HexString, PermitMode, SignatureCallbackParams } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
 import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
@@ -169,61 +169,58 @@ class PermitTxnHandler {
     service: AvailableDZapServices;
     rpcUrls?: string[];
     signer: WalletClient | Wallet;
-    signatureCallback?: ({
-      permitData,
-      srcToken,
-      amount,
-      permitType,
-    }: {
-      permitData: HexString;
-      srcToken: HexString;
-      amount: bigint;
-      permitType: PermitMode;
-    }) => Promise<void>;
+    signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
-  }): Promise<{
-    status: TxnStatus;
-    code: StatusCodes;
-    tokens: {
-      address: HexString;
-      permitData?: HexString;
-      amount: string;
-    }[];
-  }> => {
+  }): Promise<
+    | {
+        status: TxnStatus;
+        code: StatusCodes;
+        tokens: {
+          address: HexString;
+          permitData?: HexString;
+          amount: string;
+        }[];
+      }
+    | {
+        status: TxnStatus;
+        code: StatusCodes;
+        batchPermitData: HexString | null;
+      }
+  > => {
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
 
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
 
     // use batch permit for many to one tokens, for permitType selected
-    // if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (tokens?.length > 1 && !oneToMany)) {
-    //   const {
-    //     status,
-    //     code,
-    //     permitData,
-    //     permitType: permitTypeForToken,
-    //   } = await PermitTxnHandler.generateBatchPermitDataForTokens({
-    //     tokens,
-    //     chainId,
-    //     rpcUrls,
-    //     sender,
-    //     spender,
-    //     signer,
-    //     service,
-    //   });
-    //   if (status !== TxnStatus.success) {
-    //     return { status, code, data: { batchPermitData: undefined } };
-    //   }
-    //   if (signatureCallback) {
-    //     await signatureCallback({
-    //       batchPermitData: permitData,
-    //       tokens,
-    //       permitType: permitTypeForToken,
-    //     } as unknown as BatchPermitCallbackParams);
-    //   }
-    //   return { status: TxnStatus.success, code: StatusCodes.Success, data: { batchPermitData: permitData } };
-    // }
+    if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (tokens?.length > 1 && !oneToMany)) {
+      const {
+        status,
+        code,
+        permitData,
+        permitType: permitTypeForToken,
+      } = await PermitTxnHandler.generateBatchPermitDataForTokens({
+        tokens,
+        chainId,
+        rpcUrls,
+        sender,
+        spender,
+        signer,
+        service,
+      });
+      if (status !== TxnStatus.success) {
+        return { status, code, batchPermitData: null };
+      }
+      if (signatureCallback) {
+        await signatureCallback({
+          batchPermitData: permitData,
+          tokens,
+          permitType: permitTypeForToken,
+        } as unknown as BatchPermitCallbackParams);
+      }
+      return { status: TxnStatus.success, code: StatusCodes.Success, batchPermitData: permitData };
+    }
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
       const {

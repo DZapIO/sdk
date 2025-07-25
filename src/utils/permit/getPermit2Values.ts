@@ -104,7 +104,6 @@ export const getPermitBatchTransferFromValues = async ({
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitBatchTransferFrom; nonce: bigint }> => {
   const nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
-  console.log('nonce', nonce);
   return {
     permit2Values: {
       permitted,

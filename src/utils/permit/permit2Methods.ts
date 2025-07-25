@@ -24,7 +24,7 @@ export const getPermit2Signature = async ({
   rpcUrls,
   sigDeadline = generateDeadline(SignatureExpiryInSecs),
   expiration = maxUint48,
-  permitType,
+  permitType: primaryType,
 }: {
   chainId: number;
   account: HexString;
@@ -59,21 +59,32 @@ export const getPermit2Signature = async ({
       },
     };
 
-    const primaryType =
-      permitType === PermitTypes.PermitSingle
+    const permit2Type =
+      primaryType === PermitTypes.PermitSingle
         ? permit2PrimaryType.PermitSingle
-        : permitType === PermitTypes.PermitWitnessTransferFrom
+        : primaryType === PermitTypes.PermitWitnessTransferFrom
           ? permit2PrimaryType.PermitWitnessTransferFrom
-          : permitType === PermitTypes.PermitBatchWitnessTransferFrom
+          : primaryType === PermitTypes.PermitBatchWitnessTransferFrom
             ? permit2PrimaryType.PermitBatchWitnessTransferFrom
             : null;
 
-    if (!primaryType) {
+    if (!permit2Type) {
+      throw new Error(`Invalid permit type: ${permit2Type}`);
+    }
+    const permitType =
+      permit2Type === permit2PrimaryType.PermitSingle
+        ? PermitType.PERMIT2_APPROVE
+        : permit2Type === permit2PrimaryType.PermitWitnessTransferFrom
+          ? PermitType.PERMIT2_WITNESS_TRANSFER
+          : permit2Type === permit2PrimaryType.PermitBatchWitnessTransferFrom
+            ? PermitType.BATCH_PERMIT2_WITNESS_TRANSFER
+            : null;
+
+    if (!permitType) {
       throw new Error(`Invalid permit type: ${permitType}`);
     }
-
     const { permit2Values, nonce } = await getPermit2Values({
-      primaryType,
+      primaryType: permit2Type,
       spender,
       account,
       deadline: sigDeadline,
@@ -83,10 +94,8 @@ export const getPermit2Signature = async ({
       permitted: updatedTokens,
       expiration,
     });
-    console.log('permit2Values', permit2Values);
-    const signTypedPermit2Data = getPermit2Data(permit2Values, permit2Address, chainId, witnessData);
 
-    console.log('signTypedPermit2Data', signTypedPermit2Data);
+    const signTypedPermit2Data = getPermit2Data(permit2Values, permit2Address, chainId, witnessData);
 
     const signature = await signTypedData({
       signer,
@@ -99,13 +108,8 @@ export const getPermit2Signature = async ({
 
     const dZapDataForTransfer = encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, sigDeadline, signature]);
 
-    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_WITNESS_TRANSFER, dZapDataForTransfer]);
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitType, dZapDataForTransfer]);
 
-    console.dir({
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      permitData,
-    });
     return {
       status: TxnStatus.success,
       code: StatusCodes.Success,
@@ -116,10 +120,6 @@ export const getPermit2Signature = async ({
     if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
       return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
     }
-    console.dir({
-      status: TxnStatus.error,
-      code: StatusCodes.Error,
-    });
     return { status: TxnStatus.error, code: StatusCodes.Error };
   }
 };

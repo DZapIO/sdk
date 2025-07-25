@@ -19,6 +19,7 @@ import {
   HexString,
   OtherAvailableAbis,
   PermitMode,
+  SignatureCallbackParams,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
   TradeQuotesRequest,
@@ -722,17 +723,7 @@ class DZapClient {
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
     permitType?: PermitMode;
-    signatureCallback?: ({
-      permitData,
-      srcToken,
-      amount,
-      permitType,
-    }: {
-      permitData: HexString;
-      srcToken: string;
-      amount: bigint;
-      permitType: PermitMode;
-    }) => Promise<void>;
+    signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
   }) {
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
 

@@ -335,10 +335,9 @@ export type BatchPermitCallbackParams = {
   batchPermitData: HexString;
   tokens: {
     address: HexString;
-    permitData?: HexString;
     amount: string;
   }[];
   permitType: keyof typeof PermitTypes.PermitBatchWitnessTransferFrom;
 };
 
-export type SignatureCallback = SinglePermitCallbackParams | BatchPermitCallbackParams;
+export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCallbackParams;
