@@ -2,7 +2,7 @@ import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
 import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
 import { StatusCodes, TxnStatus } from '../src/enums';
-import { HexString } from '../src/types';
+import { HexString, SignatureCallbackParams } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
 
@@ -92,8 +92,8 @@ async function runPermitExamples() {
             amount: amountToTrade.toString(),
           },
         ],
-        signatureCallback: async ({ permitData, srcToken }) => {
-          console.log(`Signature received for ${srcToken}:`, permitData);
+        signatureCallback: async (params: SignatureCallbackParams) => {
+          console.log(`Signature received for`, params);
         },
       });
       console.log('Sign response:', signResponse);
