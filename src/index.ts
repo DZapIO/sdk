@@ -1,6 +1,6 @@
 import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
 import { SignatureExpiryInSecs } from './constants/permit2';
-import { PermitType, StatusCodes, TxnStatus } from './enums';
+import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
   ApiRpcResponse,
   ApprovalMode,
@@ -66,7 +66,7 @@ export {
   HexString,
   OtherAbis,
   PermitMode,
-  PermitType,
+  DZapPermitMode,
   PermitTypes,
   ProviderDetails,
   PsbtInput,

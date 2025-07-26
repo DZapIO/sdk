@@ -2,7 +2,7 @@ import { ethers, Wallet } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
 import { zeroAddress } from 'src/constants/address';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { PermitType, StatusCodes, TxnStatus } from 'src/enums';
+import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, WalletClient } from 'viem';
@@ -124,7 +124,7 @@ export const getEIP2612PermitSignature = async ({
 
     const dZapPermitData = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
 
-    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, dZapPermitData as HexString]);
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData as HexString]);
 
     return {
       status: TxnStatus.success,

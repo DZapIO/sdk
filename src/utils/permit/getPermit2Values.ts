@@ -3,7 +3,7 @@ import type { Address } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2.js';
 import { getPublicClient } from '../index.js';
 import { getNextPermit2Nonce } from './getNextPermit2Nonce.js';
-import { Permit2ValuesParams, PermitBatchTransferFrom, PermitSingle, PermitTransferFrom } from './types.js';
+import { Permit2ValuesParams, PermitBatchTransferFrom, PermitSingle, PermitTransferFrom } from '../../types/permit.js';
 import { erc20PermitFunctions } from 'src/constants/erc20';
 import { permit2PrimaryType } from 'src/constants/permit';
 
@@ -14,7 +14,7 @@ export const getPermitSingleValues = async ({
   rpcUrls,
   account,
   expiration,
-  permitted,
+  token,
   permit2Address,
 }: {
   spender: Address;
@@ -22,9 +22,10 @@ export const getPermitSingleValues = async ({
   chainId: number;
   account: HexString;
   expiration: bigint;
-  permitted: {
-    token: HexString;
+  token: {
+    address: HexString;
     amount: bigint;
+    index: number;
   };
   permit2Address: HexString;
   rpcUrls?: string[];
@@ -34,13 +35,13 @@ export const getPermitSingleValues = async ({
     address: permit2Address,
     abi: Permit2Abi,
     functionName: erc20PermitFunctions.allowance,
-    args: [account, permitted.token, spender],
+    args: [account, token.address, spender],
   });
   return {
     permit2Values: {
       details: {
-        token: permitted.token,
-        amount: permitted.amount,
+        token: token.address,
+        amount: token.amount,
         expiration,
         nonce: nonceResult[2],
       },
@@ -57,24 +58,37 @@ export const getPermitTransferFromValues = async ({
   chainId,
   rpcUrls,
   account,
-  permitted,
+  token,
   permit2Address,
+  firstTokenNonce,
 }: {
   spender: Address;
   deadline: bigint;
   chainId: number;
   account: HexString;
-  permitted: {
-    token: HexString;
+  token: {
+    address: HexString;
     amount: bigint;
+    index: number;
   };
   permit2Address: HexString;
+  firstTokenNonce?: bigint;
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitTransferFrom; nonce: bigint }> => {
-  const nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
+  let nonce;
+  if (token.index == 0) {
+    nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
+  } else if (!firstTokenNonce) {
+    throw new Error(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
+  } else {
+    nonce = firstTokenNonce + BigInt(token.index);
+  }
   return {
     permit2Values: {
-      permitted,
+      permitted: {
+        token: token.address,
+        amount: token.amount,
+      },
       spender,
       nonce,
       deadline,
@@ -90,23 +104,27 @@ export const getPermitBatchTransferFromValues = async ({
   rpcUrls,
   account,
   permit2Address,
-  permitted,
+  tokens,
 }: {
   spender: Address;
   deadline: bigint;
   chainId: number;
   account: HexString;
   permit2Address: HexString;
-  permitted: {
-    token: HexString;
+  tokens: {
+    address: HexString;
     amount: bigint;
+    index: number;
   }[];
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitBatchTransferFrom; nonce: bigint }> => {
   const nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
   return {
     permit2Values: {
-      permitted,
+      permitted: tokens.map((token) => ({
+        token: token.address,
+        amount: token.amount,
+      })),
       spender,
       nonce,
       deadline,
@@ -123,9 +141,9 @@ export async function getPermit2Values(
       if (!params.expiration) {
         throw new Error('Expiration is required for PermitSingle');
       }
-      return getPermitSingleValues({ ...params, permitted: params.permitted[0], expiration: params.expiration });
+      return getPermitSingleValues({ ...params, token: params.tokens[0], expiration: params.expiration });
     case permit2PrimaryType.PermitWitnessTransferFrom:
-      return getPermitTransferFromValues({ ...params, permitted: params.permitted[0] });
+      return getPermitTransferFromValues({ ...params, token: params.tokens[0] });
     case permit2PrimaryType.PermitBatchWitnessTransferFrom:
       return getPermitBatchTransferFromValues(params);
     default:

@@ -8,7 +8,7 @@ import {
   PermitTransferFrom,
   PermitTransferFromData,
   Witness,
-} from './types.js';
+} from '../../types/permit.js';
 
 function isPermitSingle(permit: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle): permit is PermitSingle {
   return 'details' in permit && permit.details !== undefined;

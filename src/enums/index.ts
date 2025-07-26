@@ -8,7 +8,7 @@ export enum ZapPermitType {
   PERMIT2,
 }
 
-export enum PermitType {
+export enum DZapPermitMode {
   PERMIT, // EIP2612
   PERMIT2_APPROVE,
   PERMIT2_WITNESS_TRANSFER,
