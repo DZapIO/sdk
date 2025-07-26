@@ -175,7 +175,7 @@ class PermitTxnHandler {
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
 
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
-    if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (tokens?.length > 1 && !oneToMany)) {
+    if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany)) {
       const resp = await PermitTxnHandler.generateBatchPermitDataForTokens({
         tokens,
         chainId,
