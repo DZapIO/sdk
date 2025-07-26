@@ -170,6 +170,7 @@ class PermitTxnHandler {
       }
   > => {
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
+    let firstTokenNonce: bigint | undefined;
 
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
@@ -204,9 +205,9 @@ class PermitTxnHandler {
         batchPermitData: permitData as HexString,
       };
     }
+
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
-      let firstTokenNonce: bigint | undefined;
       const res = await PermitTxnHandler.generatePermitDataForToken({
         token: {
           ...tokens[dataIdx],

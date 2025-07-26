@@ -109,6 +109,6 @@ export type Permit2ValuesParams = {
     index: number;
   }[];
   expiration?: bigint;
-  firstTokenNonce?: bigint;
+  firstTokenNonce: bigint | null;
   primaryType: Permit2PrimaryType;
 };

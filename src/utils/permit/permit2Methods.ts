@@ -67,7 +67,7 @@ export const getPermit2Signature = async ({
       rpcUrls,
       tokens: updatedTokens,
       expiration,
-      firstTokenNonce,
+      firstTokenNonce: firstTokenNonce ?? null,
     });
 
     const signTypedPermit2Data = getPermit2Data(permit2Values, permit2Address, chainId, witnessData);

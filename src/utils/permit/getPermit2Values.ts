@@ -72,16 +72,17 @@ export const getPermitTransferFromValues = async ({
     index: number;
   };
   permit2Address: HexString;
-  firstTokenNonce?: bigint;
+  firstTokenNonce: bigint | null;
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitTransferFrom; nonce: bigint }> => {
   let nonce;
   if (token.index == 0) {
     nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
-  } else if (!firstTokenNonce) {
+  } else if (firstTokenNonce == null) {
+    //don't use !firstTokenNonce because !0n -> true
     throw new Error(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
   } else {
-    nonce = firstTokenNonce + BigInt(token.index);
+    nonce = BigInt(firstTokenNonce) + BigInt(token.index);
   }
   return {
     permit2Values: {
