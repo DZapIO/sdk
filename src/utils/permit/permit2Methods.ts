@@ -1,6 +1,6 @@
 import { Wallet } from 'ethers';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { PermitToDZapPermitMode, witnessType, witnessTypeName } from 'src/constants/permit';
+import { permit2PrimaryType, PermitToDZapPermitMode, witnessType, witnessTypeName } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
@@ -81,7 +81,36 @@ export const getPermit2Signature = async ({
       primaryType: permitType,
     });
 
-    const dZapDataForTransfer = encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, sigDeadline, signature]);
+    const BatchPermitAbiParams = [
+      {
+        name: 'permit',
+        type: 'tuple',
+        components: [
+          {
+            name: 'permitted',
+            type: 'tuple[]',
+            components: [
+              { name: 'token', type: 'address' },
+              { name: 'amount', type: 'uint256' },
+            ],
+          },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+        ],
+      },
+      { name: 'permitSignature', type: 'bytes' },
+    ] as const;
+    const dZapDataForTransfer =
+      permitType == permit2PrimaryType.PermitBatchWitnessTransferFrom
+        ? encodeAbiParameters(BatchPermitAbiParams, [
+            {
+              permitted: updatedTokens.map((token) => ({ token: token.address, amount: token.amount })),
+              nonce,
+              deadline: sigDeadline,
+            },
+            signature,
+          ])
+        : encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, sigDeadline, signature]);
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [dzapPermitMode, dZapDataForTransfer]);
 
