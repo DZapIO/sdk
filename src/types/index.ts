@@ -297,25 +297,40 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type TradeStatusResponseData = {
-  srcChainId: number;
-  srcToken: string;
-  srcAmount: string;
-  srcAmountUSD: string;
-  srcTxHash: string;
-  destChainId: number;
-  destToken: string;
-  destAmount: string;
-  destAmountUSD: string;
-  destTxHash: string;
-  account: string;
-  recipient: string;
-  outputToken?: string;
-  refundTxHash?: string;
-  provider: string;
-  allowUserTxOnDestChain: boolean;
-  status: keyof typeof STATUS_RESPONSE;
+export type PartialStatusData = {
+  receiveToken?: string;
+  receiveAmount?: string;
+  receiveAmountUSD?: string;
 };
+
+export type RefundStatusData = {
+  refundTxHash?: string;
+  refundToken?: string;
+  refundAmount?: string;
+  refundAmountUSD?: string;
+  refundTimeStamp?: string;
+};
+
+export type TradeStatusResponseData = PartialStatusData &
+  RefundStatusData & {
+    srcChainId: number;
+    srcToken: string;
+    srcAmount: string;
+    srcAmountUSD: string;
+    srcTxHash: string;
+    destChainId: number;
+    destToken: string;
+    destAmount: string;
+    destAmountUSD: string;
+    destTxHash: string;
+    account: string;
+    recipient: string;
+    provider: string;
+    allowUserTxOnDestChain: boolean;
+    status: keyof typeof STATUS_RESPONSE;
+    outputToken?: string;
+    refundTxHash?: string;
+  };
 
 export type TradeStatusResponse = {
   [pair: string]: TradeStatusResponseData;
