@@ -5,12 +5,11 @@ import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, WalletClient } from 'viem';
-import { Permit2PrimaryType, PermitResponse } from '../../types/permit';
+import { BatchPermitAbiParams, Permit2PrimaryType, PermitResponse } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
 import { getPermit2Values } from './getPermit2Values';
 import { getPermit2Data } from './getPermitData';
-import { BatchPermitAbiParams } from 'src/artifacts/BatchPermitAbi';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;

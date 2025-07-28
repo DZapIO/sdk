@@ -45,7 +45,10 @@ export type GenerateBatchPermitParams = Omit<
 > & { tokens: PermitToken[] };
 
 export type Witness = {
-  witness: any;
+  witness: {
+    owner: HexString;
+    recipient: HexString;
+  };
   witnessTypeName: string;
   witnessType: Record<string, { name: string; type: string }[]>;
 };
@@ -112,3 +115,23 @@ export type Permit2ValuesParams = {
   firstTokenNonce: bigint | null;
   primaryType: Permit2PrimaryType;
 };
+
+export const BatchPermitAbiParams = [
+  {
+    name: 'permit',
+    type: 'tuple',
+    components: [
+      {
+        name: 'permitted',
+        type: 'tuple[]',
+        components: [
+          { name: 'token', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+      },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  },
+  { name: 'permitSignature', type: 'bytes' },
+] as const;
