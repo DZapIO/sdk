@@ -631,7 +631,8 @@ class DZapClient {
     spender?: HexString; // Optional custom spender address
     mode?: ApprovalMode;
   }) {
-    const spenderAddress = (spender || (await this.getDZapContractAddress({ chainId, service }))) as HexString;
+    const chainConfig = await DZapClient.getChainConfig();
+    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     return await getAllowance({
       chainId,
       sender,
@@ -639,6 +640,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       mode,
       spender: spenderAddress,
+      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
 
@@ -782,7 +784,7 @@ class DZapClient {
     }) => Promise<void>;
   }) {
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
-
+    const chainConfig = await DZapClient.getChainConfig();
     return await PermitTxnHandler.signPermit({
       chainId,
       sender,
@@ -793,6 +795,7 @@ class DZapClient {
       spender: spenderAddress,
       permitType,
       signatureCallback,
+      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
 

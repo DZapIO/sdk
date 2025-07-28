@@ -43,6 +43,8 @@ export type CalculatePointsRequest = {
   txType: 'swap' | 'bridge';
 };
 
+export type DisabledPermitTokens = { eip2612: string[] };
+
 export type Chain = {
   coinKey: string;
   chainId: number;
@@ -80,6 +82,7 @@ export type Chain = {
   isEnabled: boolean;
   mainnet: boolean;
   tags?: Tag[];
+  permitDisabledTokens?: DisabledPermitTokens;
 };
 
 export type ApiRpcResponse = {

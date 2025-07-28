@@ -140,6 +140,7 @@ export const getAllowance = async ({
   rpcUrls,
   mode = ApprovalModes.Default,
   spender,
+  permitEIP2612DisabledTokens,
 }: {
   chainId: number;
   sender: HexString;
@@ -147,6 +148,7 @@ export const getAllowance = async ({
   spender: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
+  permitEIP2612DisabledTokens?: string[];
 }) => {
   const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
@@ -163,6 +165,7 @@ export const getAllowance = async ({
           address,
           chainId,
           rpcUrls,
+          permitEIP2612DisabledTokens,
         });
         return {
           token: address,

@@ -23,6 +23,7 @@ class PermitTxnHandler {
     permitType,
     signer,
     service,
+    permitEIP2612DisabledTokens,
   }: {
     token: { address: HexString; amount: string };
     isFirstToken: boolean;
@@ -35,6 +36,7 @@ class PermitTxnHandler {
     permitType: PermitMode;
     signer: WalletClient | Wallet;
     service: AvailableDZapServices;
+    permitEIP2612DisabledTokens?: string[];
   }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
     if (isDZapNativeToken(token.address)) {
       return {
@@ -50,6 +52,7 @@ class PermitTxnHandler {
       address: token.address,
       chainId,
       rpcUrls,
+      permitEIP2612DisabledTokens,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
       if (!eip2612PermitData.supportsPermit) {
@@ -119,6 +122,7 @@ class PermitTxnHandler {
     signatureCallback,
     spender,
     permitType,
+    permitEIP2612DisabledTokens,
   }: {
     chainId: number;
     sender: HexString;
@@ -143,6 +147,7 @@ class PermitTxnHandler {
     }) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
+    permitEIP2612DisabledTokens?: string[];
   }): Promise<{
     status: TxnStatus;
     tokens: {
@@ -176,6 +181,7 @@ class PermitTxnHandler {
         permitType,
         signer,
         service,
+        permitEIP2612DisabledTokens,
       });
 
       if (status !== TxnStatus.success) {
