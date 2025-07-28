@@ -10,6 +10,7 @@ import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
 import { getPermit2Values } from './getPermit2Values';
 import { getPermit2Data } from './getPermitData';
+import { BatchPermitAbiParams } from 'src/artifacts/BatchPermitAbi';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -81,25 +82,6 @@ export const getPermit2Signature = async ({
       primaryType: permitType,
     });
 
-    const BatchPermitAbiParams = [
-      {
-        name: 'permit',
-        type: 'tuple',
-        components: [
-          {
-            name: 'permitted',
-            type: 'tuple[]',
-            components: [
-              { name: 'token', type: 'address' },
-              { name: 'amount', type: 'uint256' },
-            ],
-          },
-          { name: 'nonce', type: 'uint256' },
-          { name: 'deadline', type: 'uint256' },
-        ],
-      },
-      { name: 'permitSignature', type: 'bytes' },
-    ] as const;
     const dZapDataForTransfer =
       permitType == permit2PrimaryType.PermitBatchWitnessTransferFrom
         ? encodeAbiParameters(BatchPermitAbiParams, [

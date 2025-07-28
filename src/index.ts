@@ -40,7 +40,7 @@ import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
-import { checkEIP2612PermitSupport } from './utils/permit/permitMethods';
+import { checkEIP2612PermitSupport } from './utils/permit/eip2612Permit';
 import { ZapStatusResponse } from './types/zap';
 
 export * from './types/zap';

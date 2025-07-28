@@ -7,8 +7,8 @@ import { isDZapNativeToken } from 'src/utils';
 import { encodeFunctionData, erc20Abi, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { isTypeSigner, writeContract } from '.';
 import { multicall } from './multicall';
-import { getPermit2Address } from './permit/permit2Methods';
-import { checkEIP2612PermitSupport } from './permit/permitMethods';
+import { getPermit2Address } from './permit/permit2';
+import { checkEIP2612PermitSupport } from './permit/eip2612Permit';
 
 export const approveToken = async ({
   chainId,

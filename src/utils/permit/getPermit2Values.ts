@@ -148,6 +148,6 @@ export async function getPermit2Values(
     case permit2PrimaryType.PermitBatchWitnessTransferFrom:
       return getPermitBatchTransferFromValues(params);
     default:
-      throw new Error(`Invalid permit type: ${(params as any).primaryType}`);
+      throw new Error(`Invalid permit type: ${params.primaryType}`);
   }
 }
