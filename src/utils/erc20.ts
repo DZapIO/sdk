@@ -4,7 +4,8 @@ import { erc20Functions } from 'src/constants/erc20';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { ApprovalMode, HexString } from 'src/types';
 import { isDZapNativeToken } from 'src/utils';
-import { encodeFunctionData, erc20Abi, maxUint256, MulticallParameters, WalletClient } from 'viem';
+import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
+import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
 import { isTypeSigner, writeContract } from '.';
 import { multicall } from './multicall';
 import { getPermit2Address } from './permit/permit2';
@@ -139,6 +140,7 @@ export const getAllowance = async ({
   rpcUrls,
   mode = ApprovalModes.Default,
   spender,
+  permitEIP2612DisabledTokens,
 }: {
   chainId: number;
   sender: HexString;
@@ -146,6 +148,7 @@ export const getAllowance = async ({
   spender: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
+  permitEIP2612DisabledTokens?: string[];
 }) => {
   const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
@@ -159,6 +162,7 @@ export const getAllowance = async ({
           address,
           chainId,
           rpcUrls,
+          permitEIP2612DisabledTokens,
         });
         return {
           token: address,

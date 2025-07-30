@@ -48,6 +48,7 @@ class PermitTxnHandler {
     permitType,
     signer,
     service,
+    permitEIP2612DisabledTokens,
   }: GeneratePermitDataParams): Promise<PermitResponse> => {
     const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
@@ -65,6 +66,7 @@ class PermitTxnHandler {
       address: token.address,
       chainId,
       rpcUrls,
+      permitEIP2612DisabledTokens,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
       if (!eip2612PermitData.supportsPermit) {
@@ -139,6 +141,7 @@ class PermitTxnHandler {
     signatureCallback,
     spender,
     permitType,
+    permitEIP2612DisabledTokens,
   }: {
     chainId: number;
     sender: HexString;
@@ -153,6 +156,7 @@ class PermitTxnHandler {
     signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
+    permitEIP2612DisabledTokens?: string[];
   }): Promise<
     | {
         status: TxnStatus;
@@ -185,6 +189,7 @@ class PermitTxnHandler {
         spender,
         signer,
         service,
+        permitEIP2612DisabledTokens,
       });
 
       if (resp.status !== TxnStatus.success) {
@@ -223,6 +228,7 @@ class PermitTxnHandler {
         permitType,
         signer,
         service,
+        permitEIP2612DisabledTokens,
       });
 
       if (res.status !== TxnStatus.success) {

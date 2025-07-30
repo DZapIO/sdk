@@ -37,6 +37,7 @@ export type GeneratePermitDataParams = {
   firstTokenNonce?: bigint;
   oneToMany: boolean;
   totalSrcAmount: bigint;
+  permitEIP2612DisabledTokens?: string[];
   permitType: PermitMode;
 };
 export type GenerateBatchPermitParams = Omit<
