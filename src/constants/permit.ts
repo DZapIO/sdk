@@ -12,12 +12,39 @@ export const PermitTypes = {
   AutoPermit: 'AutoPermit',
 } as const;
 
-export const witnessTypeName = 'DZapTransferWitness';
-export const witnessType = {
-  DZapTransferWitness: [
-    { name: 'owner', type: 'address' },
-    { name: 'recipient', type: 'address' },
-  ],
+export const defaultWitness = {
+  witnessTypeName: 'DZapTransferWitness',
+  witnessType: {
+    DZapTransferWitness: [
+      { name: 'owner', type: 'address' },
+      { name: 'recipient', type: 'address' },
+    ],
+  },
+};
+
+export const swapGaslessWitness = {
+  witnessTypeName: 'DZapSwapWitness',
+  witnessType: {
+    DZapSwapWitness: [
+      { name: 'txId', type: 'bytes32' },
+      { name: 'user', type: 'address' },
+      { name: 'executorFeesHash', type: 'bytes32' },
+      { name: 'swapDataHash', type: 'bytes32' },
+    ],
+  },
+};
+
+export const bridgeGaslessWitness = {
+  witnessTypeName: 'DZapBridgeWitness',
+  witnessType: {
+    DZapBridgeWitness: [
+      { name: 'txId', type: 'bytes32' },
+      { name: 'user', type: 'address' },
+      { name: 'executorFeesHash', type: 'bytes32' },
+      { name: 'swapDataHash', type: 'bytes32' },
+      { name: 'adapterDataHash', type: 'bytes32' },
+    ],
+  },
 };
 
 export const PermitToDZapPermitMode = {

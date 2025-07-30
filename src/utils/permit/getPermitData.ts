@@ -53,13 +53,10 @@ export function getPermitTransferData(
   const domain = permit2Domain(permit2Address, chainId);
 
   const types = {
+    ...witness.witnessType,
     TokenPermissions: [
       { name: 'token', type: 'address' },
       { name: 'amount', type: 'uint256' },
-    ],
-    DZapTransferWitness: [
-      { name: 'owner', type: 'address' },
-      { name: 'recipient', type: 'address' },
     ],
     PermitWitnessTransferFrom: [
       { name: 'permitted', type: 'TokenPermissions' },

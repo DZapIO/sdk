@@ -3,6 +3,7 @@ import { GET, POST } from 'src/constants/httpMethods';
 import {
   BUILD_TX_URL,
   CALCULATE_POINTS_URL,
+  GASLESS_EXECUTE_TX_URL,
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
   GET_STATUS,
@@ -13,7 +14,7 @@ import {
 import { ZapBuildTxnRequest, ZapQuoteRequest, ZapStatusRequest } from 'src/types/zap';
 import { invoke, invokeZap } from 'src/utils/axios';
 import { ZAP_BUILD_TX_URL, ZAP_QUOTE_URL, ZAP_TXN_STATUS_URL } from 'src/zap/constants/urls';
-import { CalculatePointsRequest, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
+import { CalculatePointsRequest, HexString, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
@@ -26,6 +27,13 @@ export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
 export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
   invoke({
     endpoint: BUILD_TX_URL,
+    data: request,
+    method: POST,
+  });
+
+export const executeGaslessTxnData = (request: { chainId: number; encodedData: HexString; sender: HexString; batchPermitData: HexString }) =>
+  invoke({
+    endpoint: GASLESS_EXECUTE_TX_URL,
     data: request,
     method: POST,
   });

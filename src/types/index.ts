@@ -1,8 +1,11 @@
-import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
+import { DZapAbis, OtherAbis, GaslessTxType, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
 import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
 import { PsbtInput, PsbtOutput } from './btc';
+import { WalletClient } from 'viem';
+import { Wallet } from 'ethers';
+import { BridgeGaslessParams, SwapGaslessParams } from './permit';
 
 export type HexString = `0x${string}`;
 
@@ -227,6 +230,7 @@ export type TradeBuildTxnRequest = {
   refundee: HexString;
   integratorId: string;
   fromChain: number;
+  gasless: boolean;
   disableEstimation?: boolean;
   data: TradeBuildTxnRequestData[];
   publicKey?: string;
@@ -271,6 +275,7 @@ export type TradeBuildTxnResponse = ExecuteTxnData & {
 };
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
+export type GaslessTxTypes = (typeof GaslessTxType)[keyof typeof GaslessTxType];
 
 export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
 
@@ -341,3 +346,27 @@ export type BatchPermitCallbackParams = {
 };
 
 export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCallbackParams;
+
+export type BaseSignPermitData = {
+  chainId: number;
+  sender: HexString;
+  tokens: {
+    address: HexString;
+    permitData?: HexString;
+    amount: string;
+  }[];
+  service: AvailableDZapServices;
+  rpcUrls?: string[];
+  signer: WalletClient | Wallet;
+  signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
+  spender: HexString;
+  permitType: PermitMode;
+};
+
+export type GasSignPermitData = BaseSignPermitData & {
+  gasless: false;
+};
+
+export type GaslessSignPermitData = (BaseSignPermitData & BridgeGaslessParams) | (BaseSignPermitData & SwapGaslessParams);
+
+export type SignPermitData = GasSignPermitData | GaslessSignPermitData;

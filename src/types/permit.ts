@@ -1,8 +1,9 @@
 import { TypedDataField, Wallet } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
-import { permit2PrimaryType } from 'src/constants/permit';
+import { bridgeGaslessWitness, defaultWitness, permit2PrimaryType, swapGaslessWitness } from 'src/constants/permit';
 import { Address, TypedDataDomain, WalletClient } from 'viem';
 import { AvailableDZapServices } from '.';
+import { GaslessTxType } from 'src/constants';
 
 export type Permit2PrimaryType = (typeof permit2PrimaryType)[keyof typeof permit2PrimaryType];
 
@@ -25,33 +26,91 @@ export type PermitToken = {
 
 export type PermitTokenWithIndex = PermitToken & { index: number };
 
-// generatePermitDataParams defines the parameters required for generating permit data, including tokens, chain ID, RPC URLs, sender, spender, signer, and service.
-export type GeneratePermitDataParams = {
+type BasePermit2Params = {
   chainId: number;
-  rpcUrls?: string[];
-  sender: HexString;
-  spender: HexString;
-  signer: WalletClient | Wallet;
+  account: HexString;
+  tokens: { address: HexString; amount?: string; index: number }[];
   service: AvailableDZapServices;
-  token: PermitTokenWithIndex;
+  spender: HexString;
+  rpcUrls?: string[];
+  sigDeadline?: bigint;
+  signer: WalletClient | Wallet;
+  expiration?: bigint;
+  permitType: Permit2PrimaryType;
   firstTokenNonce?: bigint;
+};
+
+type DefaultParams = BasePermit2Params & {
+  gasless: false;
+};
+
+export type SwapGaslessParams = {
+  gasless: true;
+  txType: typeof GaslessTxType.swap;
+  swapDataHash: HexString;
+  executorFeesHash: HexString;
+  txId: HexString;
+};
+
+export type BridgeGaslessParams = {
+  gasless: true;
+  txType: typeof GaslessTxType.bridge;
+  swapDataHash: HexString;
+  adapterDataHash: HexString;
+  executorFeesHash: HexString;
+  txId: HexString;
+};
+
+type SwapGaslessPermitParams = BasePermit2Params & SwapGaslessParams;
+type BridgeGaslessPermitParams = BasePermit2Params & BridgeGaslessParams;
+
+export type Permit2Params = DefaultParams | SwapGaslessPermitParams | BridgeGaslessPermitParams;
+
+export type GeneratePermitDataParams = Omit<BasePermit2Params, 'permitType' | 'tokens'> & {
   oneToMany: boolean;
+  token: PermitTokenWithIndex;
   totalSrcAmount: bigint;
   permitType: PermitMode;
-};
-export type GenerateBatchPermitParams = Omit<
-  GeneratePermitDataParams,
-  'firstTokenNonce' | 'oneToMany' | 'totalSrcAmount' | 'permitType' | 'token'
-> & { tokens: PermitToken[] };
+} & ({ gasless: false } | SwapGaslessParams | BridgeGaslessParams);
 
-export type Witness = {
+export type GenerateBatchPermitParams = Omit<BasePermit2Params, 'permitType'> & {
+  tokens: PermitToken[];
+  permitType: PermitMode;
+} & ({ gasless: false } | SwapGaslessParams | BridgeGaslessParams);
+
+export type SwapAndBridgeWitness = {
   witness: {
     owner: HexString;
     recipient: HexString;
   };
-  witnessTypeName: string;
-  witnessType: Record<string, { name: string; type: string }[]>;
+  witnessTypeName: typeof defaultWitness.witnessTypeName;
+  witnessType: typeof defaultWitness.witnessType;
 };
+
+export type SwapGaslessWitness = {
+  witness: {
+    txId: HexString;
+    user: HexString;
+    executorFeesHash: HexString;
+    swapDataHash: HexString;
+  };
+  witnessTypeName: typeof swapGaslessWitness.witnessTypeName;
+  witnessType: typeof swapGaslessWitness.witnessType;
+};
+
+export type BridgeGaslessWitness = {
+  witness: {
+    txId: HexString;
+    user: HexString;
+    executorFeesHash: HexString;
+    swapDataHash: HexString;
+    adapterDataHash: HexString;
+  };
+  witnessTypeName: typeof bridgeGaslessWitness.witnessTypeName;
+  witnessType: typeof bridgeGaslessWitness.witnessType;
+};
+
+export type Witness = SwapAndBridgeWitness | SwapGaslessWitness | BridgeGaslessWitness;
 
 export type TokenPermissions = {
   token: Address;

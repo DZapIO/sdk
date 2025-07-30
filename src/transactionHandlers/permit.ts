@@ -1,33 +1,17 @@
-import { Wallet } from 'ethers';
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, GaslessTxType } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, BatchPermitCallbackParams, HexString, PermitMode, SignatureCallbackParams } from 'src/types';
+import { BatchPermitCallbackParams, HexString, SignPermitData } from 'src/types';
 import { BatchPermitResponse, GenerateBatchPermitParams, GeneratePermitDataParams, PermitResponse } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Signature } from 'src/utils/permit/permit2';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
-import { WalletClient } from 'viem';
+import { getPermit2Signature } from 'src/utils/permit/permit2';
 
 class PermitTxnHandler {
-  static generateBatchPermitDataForTokens = async ({
-    tokens,
-    chainId,
-    rpcUrls,
-    sender,
-    spender,
-    signer,
-    service,
-  }: GenerateBatchPermitParams): Promise<BatchPermitResponse> => {
+  static generateBatchPermitDataForTokens = async (params: GenerateBatchPermitParams): Promise<BatchPermitResponse> => {
     const resp = await getPermit2Signature({
-      chainId,
-      account: sender,
-      tokens: tokens.map((token, index) => ({ ...token, index })),
-      spender,
-      service,
-      signer,
-      rpcUrls,
+      ...params,
       permitType: PermitTypes.PermitBatchWitnessTransferFrom,
     });
     return {
@@ -36,19 +20,8 @@ class PermitTxnHandler {
     };
   };
 
-  static generatePermitDataForToken = async ({
-    token,
-    firstTokenNonce,
-    oneToMany,
-    totalSrcAmount,
-    chainId,
-    rpcUrls,
-    sender,
-    spender,
-    permitType,
-    signer,
-    service,
-  }: GeneratePermitDataParams): Promise<PermitResponse> => {
+  static generatePermitDataForToken = async (params: GeneratePermitDataParams): Promise<PermitResponse> => {
+    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, account, spender, permitType, signer } = params;
     const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
       return {
@@ -82,7 +55,7 @@ class PermitTxnHandler {
       }
       const { permitData, status, code } = await getEIP2612PermitSignature({
         chainId,
-        account: sender,
+        account,
         token: token.address,
         spender,
         amount,
@@ -111,15 +84,9 @@ class PermitTxnHandler {
         };
       } else {
         const resp = await getPermit2Signature({
-          chainId,
-          account: sender,
+          ...params,
           tokens: [token],
-          spender,
-          service,
-          signer,
-          rpcUrls,
           permitType: normalizedPermitType,
-          firstTokenNonce,
         });
         return {
           ...resp,
@@ -129,31 +96,9 @@ class PermitTxnHandler {
     }
   };
 
-  public static signPermit = async ({
-    chainId,
-    tokens,
-    rpcUrls,
-    sender,
-    signer,
-    service,
-    signatureCallback,
-    spender,
-    permitType,
-  }: {
-    chainId: number;
-    sender: HexString;
-    tokens: {
-      address: HexString;
-      permitData?: HexString;
-      amount: string;
-    }[];
-    service: AvailableDZapServices;
-    rpcUrls?: string[];
-    signer: WalletClient | Wallet;
-    signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
-    spender: HexString;
-    permitType: PermitMode;
-  }): Promise<
+  public static signPermit = async (
+    signPermitReq: SignPermitData,
+  ): Promise<
     | {
         status: TxnStatus;
         code: StatusCodes;
@@ -169,6 +114,7 @@ class PermitTxnHandler {
         batchPermitData: HexString | null;
       }
   > => {
+    const { chainId, tokens, rpcUrls, sender, signer, service, signatureCallback, spender, permitType } = signPermitReq;
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
     let firstTokenNonce: bigint | undefined;
 
@@ -177,15 +123,43 @@ class PermitTxnHandler {
 
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
     if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany)) {
-      const resp = await PermitTxnHandler.generateBatchPermitDataForTokens({
-        tokens,
+      const basePermitDataReq = {
+        tokens: tokens.map((token, index) => ({ ...token, index })),
+        firstTokenNonce,
         chainId,
         rpcUrls,
-        sender,
+        account: sender,
         spender,
+        permitType,
         signer,
         service,
-      });
+      };
+
+      const permitDataReq: GenerateBatchPermitParams = signPermitReq.gasless
+        ? signPermitReq.txType === GaslessTxType.bridge
+          ? {
+              ...basePermitDataReq,
+              gasless: true,
+              txType: GaslessTxType.bridge,
+              swapDataHash: signPermitReq.swapDataHash,
+              executorFeesHash: signPermitReq.executorFeesHash,
+              txId: signPermitReq.txId,
+              adapterDataHash: signPermitReq.adapterDataHash,
+            }
+          : {
+              ...basePermitDataReq,
+              gasless: true,
+              txType: GaslessTxType.swap,
+              swapDataHash: signPermitReq.swapDataHash,
+              executorFeesHash: signPermitReq.executorFeesHash,
+              txId: signPermitReq.txId,
+            }
+        : {
+            ...basePermitDataReq,
+            gasless: false,
+          };
+
+      const resp = await PermitTxnHandler.generateBatchPermitDataForTokens(permitDataReq);
 
       if (resp.status !== TxnStatus.success) {
         return { status: resp.status, code: resp.code, batchPermitData: null };
@@ -208,7 +182,7 @@ class PermitTxnHandler {
 
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
-      const res = await PermitTxnHandler.generatePermitDataForToken({
+      const basePermitDataReq = {
         token: {
           ...tokens[dataIdx],
           index: dataIdx,
@@ -218,12 +192,38 @@ class PermitTxnHandler {
         totalSrcAmount,
         chainId,
         rpcUrls,
-        sender,
+        account: sender,
         spender,
         permitType,
         signer,
         service,
-      });
+      };
+
+      const permitDataReq: GeneratePermitDataParams = signPermitReq.gasless
+        ? signPermitReq.txType === GaslessTxType.bridge
+          ? {
+              ...basePermitDataReq,
+              gasless: true,
+              txType: GaslessTxType.bridge,
+              swapDataHash: signPermitReq.swapDataHash,
+              executorFeesHash: signPermitReq.executorFeesHash,
+              txId: signPermitReq.executorFeesHash,
+              adapterDataHash: signPermitReq.adapterDataHash,
+            }
+          : {
+              ...basePermitDataReq,
+              gasless: true,
+              txType: GaslessTxType.swap,
+              swapDataHash: signPermitReq.swapDataHash,
+              executorFeesHash: signPermitReq.executorFeesHash,
+              txId: signPermitReq.executorFeesHash,
+            }
+        : {
+            ...basePermitDataReq,
+            gasless: false,
+          };
+
+      const res = await PermitTxnHandler.generatePermitDataForToken(permitDataReq);
 
       if (res.status !== TxnStatus.success) {
         return { status: res.status, code: res.code, tokens };
