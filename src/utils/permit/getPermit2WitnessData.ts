@@ -37,7 +37,5 @@ export const getPermit2WitnessData = (params: Permit2Params) => {
         witnessType: defaultWitness.witnessType,
       };
 
-  // const witnessHash = ethers.utils._TypedDataEncoder.from(witnessData.witnessType).hash(witnessData.witness);
-
   return { witnessData };
 };
