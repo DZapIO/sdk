@@ -46,6 +46,8 @@ export type CalculatePointsRequest = {
   txType: 'swap' | 'bridge';
 };
 
+export type DisabledPermitTokens = { eip2612: string[] };
+
 export type Chain = {
   coinKey: string;
   chainId: number;
@@ -83,6 +85,7 @@ export type Chain = {
   isEnabled: boolean;
   mainnet: boolean;
   tags?: Tag[];
+  permitDisabledTokens?: DisabledPermitTokens;
 };
 
 export type ApiRpcResponse = {
@@ -311,25 +314,40 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type TradeStatusResponseData = {
-  srcChainId: number;
-  srcToken: string;
-  srcAmount: string;
-  srcAmountUSD: string;
-  srcTxHash: string;
-  destChainId: number;
-  destToken: string;
-  destAmount: string;
-  destAmountUSD: string;
-  destTxHash: string;
-  account: string;
-  recipient: string;
-  outputToken?: string;
-  refundTxHash?: string;
-  provider: string;
-  allowUserTxOnDestChain: boolean;
-  status: keyof typeof STATUS_RESPONSE;
+export type PartialStatusData = {
+  receiveToken?: string;
+  receiveAmount?: string;
+  receiveAmountUSD?: string;
 };
+
+export type RefundStatusData = {
+  refundTxHash?: string;
+  refundToken?: string;
+  refundAmount?: string;
+  refundAmountUSD?: string;
+  refundTimeStamp?: string;
+};
+
+export type TradeStatusResponseData = PartialStatusData &
+  RefundStatusData & {
+    srcChainId: number;
+    srcToken: string;
+    srcAmount: string;
+    srcAmountUSD: string;
+    srcTxHash: string;
+    destChainId: number;
+    destToken: string;
+    destAmount: string;
+    destAmountUSD: string;
+    destTxHash: string;
+    account: string;
+    recipient: string;
+    provider: string;
+    allowUserTxOnDestChain: boolean;
+    status: keyof typeof STATUS_RESPONSE;
+    outputToken?: string;
+    refundTxHash?: string;
+  };
 
 export type TradeStatusResponse = {
   [pair: string]: TradeStatusResponseData;
@@ -370,6 +388,7 @@ export type BaseSignPermitData = {
   signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
   spender: HexString;
   permitType: PermitMode;
+  permitEIP2612DisabledTokens?: string[];
 };
 
 export type GasSignPermitData = BaseSignPermitData & {

@@ -214,4 +214,4 @@ export const abi = [
     name: 'Transfer',
     type: 'event',
   },
-];
+] as const;

@@ -20,6 +20,7 @@ import {
   HexString,
   OtherAvailableAbis,
   SignPermitData,
+  TokenInfo,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
   TradeQuotesRequest,
@@ -333,8 +334,54 @@ class DZapClient {
    * );
    * ```
    */
-  public async getTokenDetails(tokenAddress: string, chainId: number, account?: string, includeBalance?: boolean, includePrice?: boolean) {
+  public async getTokenDetails(
+    tokenAddress: string,
+    chainId: number,
+    account?: string,
+    includeBalance?: boolean,
+    includePrice?: boolean,
+  ): Promise<TokenInfo> {
     return await fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
+  }
+
+  /**
+   * Fetches comprehensive details for multiple tokens on a blockchain network.
+   * Can include token metadata, current market price, and user-specific balance information.
+   *
+   * @param tokenAddresses - Array of contract addresses of the tokens to fetch details for
+   * @param chainId - The blockchain network ID where the tokens exist
+   * @param account - Optional wallet address to include balance information
+   * @param includeBalance - Optional flag to include user balance data
+   * @param includePrice - Optional flag to include current market price
+   * @returns Promise resolving to detailed token information object
+   *
+   * @example
+   * ```typescript
+   * // Get basic token details
+   * const tokenInfo = await client.getTokenDetails(
+   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
+   *   1 // Ethereum
+   * );
+   *
+   * // Get token details with balance and price
+   * const fullTokenInfo = await client.getTokenDetails(
+   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+   *   1,
+   *   '0x...', // user address
+   *   true, // include balance
+   *   true  // include price
+   * );
+   * ```
+   */
+
+  public async getTokensDetails(
+    tokenAddresses: string[],
+    chainId: number,
+    account?: string,
+    includeBalance?: boolean,
+    includePrice?: boolean,
+  ): Promise<Record<string, TokenInfo>> {
+    return await fetchTokenDetails(tokenAddresses, chainId, account, includeBalance, includePrice);
   }
 
   /**
@@ -635,7 +682,8 @@ class DZapClient {
     spender?: HexString; // Optional custom spender address
     mode?: ApprovalMode;
   }) {
-    const spenderAddress = (spender || (await this.getDZapContractAddress({ chainId, service }))) as HexString;
+    const chainConfig = await DZapClient.getChainConfig();
+    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     return await getAllowance({
       chainId,
       sender,
@@ -643,6 +691,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       mode,
       spender: spenderAddress,
+      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
 
@@ -754,12 +803,14 @@ class DZapClient {
   public async sign(params: Omit<SignPermitData, 'spender' | 'PermitType'> & { spender?: HexString }) {
     const { spender, service, chainId } = params;
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const chainConfig = await DZapClient.getChainConfig();
 
     const baseRequest = {
       ...params,
       rpcUrls: params.rpcUrls || this.rpcUrlsByChainId[chainId],
       permitType: PermitTypes.AutoPermit,
       spender: spenderAddress,
+      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     } as SignPermitData;
     return await PermitTxnHandler.signPermit(baseRequest);
   }

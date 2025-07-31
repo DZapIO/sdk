@@ -21,7 +21,7 @@ class PermitTxnHandler {
   };
 
   static generatePermitDataForToken = async (params: GeneratePermitDataParams): Promise<PermitResponse> => {
-    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, account, spender, permitType, signer } = params;
+    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, account, spender, permitType, signer, permitEIP2612DisabledTokens } = params;
     const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
       return {
@@ -38,6 +38,7 @@ class PermitTxnHandler {
       address: token.address,
       chainId,
       rpcUrls,
+      permitEIP2612DisabledTokens,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
       if (!eip2612PermitData.supportsPermit) {

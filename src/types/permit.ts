@@ -70,6 +70,7 @@ export type GeneratePermitDataParams = Omit<BasePermit2Params, 'permitType' | 't
   oneToMany: boolean;
   token: PermitTokenWithIndex;
   totalSrcAmount: bigint;
+  permitEIP2612DisabledTokens?: string[];
   permitType: PermitMode;
 } & ({ gasless: false } | SwapGaslessParams | BridgeGaslessParams);
 
