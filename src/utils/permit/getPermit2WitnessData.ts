@@ -1,11 +1,11 @@
 import { GaslessTxType } from 'src/constants';
-import { bridgeGaslessWitness, defaultWitness, swapGaslessWitness } from 'src/constants/permit';
-import { Permit2Params, Witness } from 'src/types/permit';
+import { bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from 'src/constants/permit';
+import { Permit2Params, WitnessData } from 'src/types/permit';
 
 export const getPermit2WitnessData = (params: Permit2Params) => {
   const { gasless, account, spender } = params;
 
-  const witnessData: Witness = gasless
+  const witnessData: WitnessData = gasless
     ? params.txType === GaslessTxType.swap
       ? {
           witness: {
@@ -14,8 +14,8 @@ export const getPermit2WitnessData = (params: Permit2Params) => {
             executorFeesHash: params.executorFeesHash,
             swapDataHash: params.swapDataHash,
           },
-          witnessTypeName: swapGaslessWitness.witnessTypeName,
-          witnessType: swapGaslessWitness.witnessType,
+          witnessTypeName: swapGaslessWitnessType.typeName,
+          witnessType: swapGaslessWitnessType.type,
         }
       : {
           witness: {
@@ -25,16 +25,16 @@ export const getPermit2WitnessData = (params: Permit2Params) => {
             swapDataHash: params.swapDataHash,
             adapterDataHash: params.adapterDataHash,
           },
-          witnessTypeName: bridgeGaslessWitness.witnessTypeName,
-          witnessType: bridgeGaslessWitness.witnessType,
+          witnessTypeName: bridgeGaslessWitnessType.typeName,
+          witnessType: bridgeGaslessWitnessType.type,
         }
     : {
         witness: {
           owner: account,
           recipient: spender,
         },
-        witnessTypeName: defaultWitness.witnessTypeName,
-        witnessType: defaultWitness.witnessType,
+        witnessTypeName: defaultWitnessType.typeName,
+        witnessType: defaultWitnessType.type,
       };
 
   return { witnessData };

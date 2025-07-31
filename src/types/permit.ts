@@ -1,9 +1,9 @@
 import { TypedDataField, Wallet } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
-import { bridgeGaslessWitness, defaultWitness, permit2PrimaryType, swapGaslessWitness } from 'src/constants/permit';
+import { GaslessTxType } from 'src/constants';
+import { bridgeGaslessWitnessType, defaultWitnessType, permit2PrimaryType, swapGaslessWitnessType } from 'src/constants/permit';
 import { Address, TypedDataDomain, WalletClient } from 'viem';
 import { AvailableDZapServices } from '.';
-import { GaslessTxType } from 'src/constants';
 
 export type Permit2PrimaryType = (typeof permit2PrimaryType)[keyof typeof permit2PrimaryType];
 
@@ -44,7 +44,7 @@ type DefaultParams = BasePermit2Params & {
   gasless: false;
 };
 
-export type SwapGaslessParams = {
+export type SwapGaslessSignatureParams = {
   gasless: true;
   txType: typeof GaslessTxType.swap;
   swapDataHash: HexString;
@@ -52,7 +52,7 @@ export type SwapGaslessParams = {
   txId: HexString;
 };
 
-export type BridgeGaslessParams = {
+export type BridgeGaslessSignatureParams = {
   gasless: true;
   txType: typeof GaslessTxType.bridge;
   swapDataHash: HexString;
@@ -61,45 +61,51 @@ export type BridgeGaslessParams = {
   txId: HexString;
 };
 
-type SwapGaslessPermitParams = BasePermit2Params & SwapGaslessParams;
-type BridgeGaslessPermitParams = BasePermit2Params & BridgeGaslessParams;
+type SwapGaslessPermitParams = BasePermit2Params &
+  SwapGaslessSignatureParams & {
+    gasless: true;
+  };
+type BridgeGaslessPermitParams = BasePermit2Params &
+  BridgeGaslessSignatureParams & {
+    gasless: true;
+  };
 
 export type Permit2Params = DefaultParams | SwapGaslessPermitParams | BridgeGaslessPermitParams;
 
-export type GeneratePermitDataParams = Omit<BasePermit2Params, 'permitType' | 'tokens'> & {
+export type PermitDataParams = Omit<BasePermit2Params, 'permitType' | 'tokens'> & {
   oneToMany: boolean;
   token: PermitTokenWithIndex;
   totalSrcAmount: bigint;
   permitEIP2612DisabledTokens?: string[];
   permitType: PermitMode;
-} & ({ gasless: false } | SwapGaslessParams | BridgeGaslessParams);
+} & ({ gasless: false } | SwapGaslessSignatureParams | BridgeGaslessSignatureParams);
 
-export type GenerateBatchPermitParams = Omit<BasePermit2Params, 'permitType'> & {
+export type BatchPermitParams = Omit<BasePermit2Params, 'permitType'> & {
   tokens: PermitToken[];
   permitType: PermitMode;
-} & ({ gasless: false } | SwapGaslessParams | BridgeGaslessParams);
+} & ({ gasless: false } | SwapGaslessSignatureParams | BridgeGaslessSignatureParams);
 
-export type SwapAndBridgeWitness = {
+export type SwapAndBridgeWitnessData = {
   witness: {
     owner: HexString;
     recipient: HexString;
   };
-  witnessTypeName: typeof defaultWitness.witnessTypeName;
-  witnessType: typeof defaultWitness.witnessType;
+  witnessTypeName: typeof defaultWitnessType.typeName;
+  witnessType: typeof defaultWitnessType.type;
 };
 
-export type SwapGaslessWitness = {
+export type SwapGaslessWitnessData = {
   witness: {
     txId: HexString;
     user: HexString;
     executorFeesHash: HexString;
     swapDataHash: HexString;
   };
-  witnessTypeName: typeof swapGaslessWitness.witnessTypeName;
-  witnessType: typeof swapGaslessWitness.witnessType;
+  witnessTypeName: typeof swapGaslessWitnessType.typeName;
+  witnessType: typeof swapGaslessWitnessType.type;
 };
 
-export type BridgeGaslessWitness = {
+export type BridgeGaslessWitnessData = {
   witness: {
     txId: HexString;
     user: HexString;
@@ -107,11 +113,11 @@ export type BridgeGaslessWitness = {
     swapDataHash: HexString;
     adapterDataHash: HexString;
   };
-  witnessTypeName: typeof bridgeGaslessWitness.witnessTypeName;
-  witnessType: typeof bridgeGaslessWitness.witnessType;
+  witnessTypeName: typeof bridgeGaslessWitnessType.typeName;
+  witnessType: typeof bridgeGaslessWitnessType.type;
 };
 
-export type Witness = SwapAndBridgeWitness | SwapGaslessWitness | BridgeGaslessWitness;
+export type WitnessData = SwapAndBridgeWitnessData | SwapGaslessWitnessData | BridgeGaslessWitnessData;
 
 export type TokenPermissions = {
   token: Address;
@@ -175,23 +181,3 @@ export type Permit2ValuesParams = {
   firstTokenNonce: bigint | null;
   primaryType: Permit2PrimaryType;
 };
-
-export const BatchPermitAbiParams = [
-  {
-    name: 'permit',
-    type: 'tuple',
-    components: [
-      {
-        name: 'permitted',
-        type: 'tuple[]',
-        components: [
-          { name: 'token', type: 'address' },
-          { name: 'amount', type: 'uint256' },
-        ],
-      },
-      { name: 'nonce', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' },
-    ],
-  },
-  { name: 'permitSignature', type: 'bytes' },
-] as const;

@@ -12,9 +12,9 @@ export const PermitTypes = {
   AutoPermit: 'AutoPermit',
 } as const;
 
-export const defaultWitness = {
-  witnessTypeName: 'DZapTransferWitness',
-  witnessType: {
+export const defaultWitnessType = {
+  typeName: 'DZapTransferWitness',
+  type: {
     DZapTransferWitness: [
       { name: 'owner', type: 'address' },
       { name: 'recipient', type: 'address' },
@@ -22,9 +22,9 @@ export const defaultWitness = {
   },
 };
 
-export const swapGaslessWitness = {
-  witnessTypeName: 'DZapSwapWitness',
-  witnessType: {
+export const swapGaslessWitnessType = {
+  typeName: 'DZapSwapWitness',
+  type: {
     DZapSwapWitness: [
       { name: 'txId', type: 'bytes32' },
       { name: 'user', type: 'address' },
@@ -34,9 +34,9 @@ export const swapGaslessWitness = {
   },
 };
 
-export const bridgeGaslessWitness = {
-  witnessTypeName: 'DZapBridgeWitness',
-  witnessType: {
+export const bridgeGaslessWitnessType = {
+  typeName: 'DZapBridgeWitness',
+  type: {
     DZapBridgeWitness: [
       { name: 'txId', type: 'bytes32' },
       { name: 'user', type: 'address' },
@@ -46,6 +46,26 @@ export const bridgeGaslessWitness = {
     ],
   },
 };
+
+export const BatchPermitAbiParams = [
+  {
+    name: 'permit',
+    type: 'tuple',
+    components: [
+      {
+        name: 'permitted',
+        type: 'tuple[]',
+        components: [
+          { name: 'token', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+      },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  },
+  { name: 'permitSignature', type: 'bytes' },
+] as const;
 
 export const PermitToDZapPermitMode = {
   [PermitTypes.EIP2612Permit]: DZapPermitMode.PERMIT,

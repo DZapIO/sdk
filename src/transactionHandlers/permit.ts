@@ -2,14 +2,14 @@ import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, GaslessTxType } from 'src/co
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { BatchPermitCallbackParams, HexString, SignPermitData } from 'src/types';
-import { BatchPermitResponse, GenerateBatchPermitParams, GeneratePermitDataParams, PermitResponse } from 'src/types/permit';
+import { BatchPermitCallbackParams, HexString, PermitMode, SignatureParams } from 'src/types';
+import { BatchPermitParams, BatchPermitResponse, PermitDataParams, PermitResponse } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
 import { getPermit2Signature } from 'src/utils/permit/permit2';
 
 class PermitTxnHandler {
-  static generateBatchPermitDataForTokens = async (params: GenerateBatchPermitParams): Promise<BatchPermitResponse> => {
+  static generateBatchPermitDataForTokens = async (params: BatchPermitParams): Promise<BatchPermitResponse> => {
     const resp = await getPermit2Signature({
       ...params,
       permitType: PermitTypes.PermitBatchWitnessTransferFrom,
@@ -20,7 +20,7 @@ class PermitTxnHandler {
     };
   };
 
-  static generatePermitDataForToken = async (params: GeneratePermitDataParams): Promise<PermitResponse> => {
+  static generatePermitDataForToken = async (params: PermitDataParams): Promise<PermitResponse> => {
     const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, account, spender, permitType, signer, permitEIP2612DisabledTokens } = params;
     const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
@@ -98,7 +98,10 @@ class PermitTxnHandler {
   };
 
   public static signPermit = async (
-    signPermitReq: SignPermitData,
+    signPermitReq: SignatureParams & {
+      permitType: PermitMode;
+      spender: HexString;
+    },
   ): Promise<
     | {
         status: TxnStatus;
@@ -136,7 +139,7 @@ class PermitTxnHandler {
         service,
       };
 
-      const permitDataReq: GenerateBatchPermitParams = signPermitReq.gasless
+      const permitDataReq: BatchPermitParams = signPermitReq.gasless
         ? signPermitReq.txType === GaslessTxType.bridge
           ? {
               ...basePermitDataReq,
@@ -200,7 +203,7 @@ class PermitTxnHandler {
         service,
       };
 
-      const permitDataReq: GeneratePermitDataParams = signPermitReq.gasless
+      const permitDataReq: PermitDataParams = signPermitReq.gasless
         ? signPermitReq.txType === GaslessTxType.bridge
           ? {
               ...basePermitDataReq,

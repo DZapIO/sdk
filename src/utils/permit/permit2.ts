@@ -1,10 +1,10 @@
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { permit2PrimaryType, PermitToDZapPermitMode } from 'src/constants/permit';
+import { BatchPermitAbiParams, permit2PrimaryType, PermitToDZapPermitMode } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
-import { BatchPermitAbiParams, Permit2Params, PermitResponse } from '../../types/permit';
+import { Permit2Params, PermitResponse } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
 import { getPermit2Values } from './getPermit2Values';

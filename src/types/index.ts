@@ -1,11 +1,11 @@
-import { DZapAbis, OtherAbis, GaslessTxType, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
+import { Wallet } from 'ethers';
+import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
 import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
-import { PsbtInput, PsbtOutput } from './btc';
 import { WalletClient } from 'viem';
-import { Wallet } from 'ethers';
-import { BridgeGaslessParams, SwapGaslessParams } from './permit';
+import { PsbtInput, PsbtOutput } from './btc';
+import { BridgeGaslessSignatureParams, SwapGaslessSignatureParams } from './permit';
 
 export type HexString = `0x${string}`;
 
@@ -277,13 +277,13 @@ export type TradeBuildTxnResponse = ExecuteTxnData & {
   updatedQuotes: Record<string, string>;
 };
 
-export type GaslessTxnParamsResponse = {
+export type GaslessTradeBuildTxnResponse = {
   txId: HexString;
   keccakTxId: HexString;
   executorFeesHash: HexString;
   swapDataHash: HexString;
-  txType: typeof GaslessTxType.swap;
-  encodedData: HexString;
+  adapterDataHash: HexString;
+  txType: keyof typeof GaslessTxType;
 };
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
@@ -374,7 +374,7 @@ export type BatchPermitCallbackParams = {
 
 export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCallbackParams;
 
-export type BaseSignPermitData = {
+export type SignatureParamsBase = {
   chainId: number;
   sender: HexString;
   tokens: {
@@ -386,15 +386,17 @@ export type BaseSignPermitData = {
   rpcUrls?: string[];
   signer: WalletClient | Wallet;
   signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
-  spender: HexString;
-  permitType: PermitMode;
+  spender?: HexString;
   permitEIP2612DisabledTokens?: string[];
 };
 
-export type GasSignPermitData = BaseSignPermitData & {
+export type GasSignatureParams = SignatureParamsBase & {
   gasless: false;
+  permitType: PermitMode;
 };
 
-export type GaslessSignPermitData = (BaseSignPermitData & BridgeGaslessParams) | (BaseSignPermitData & SwapGaslessParams);
+export type GaslessSignatureParams = ((SignatureParamsBase & BridgeGaslessSignatureParams) | (SignatureParamsBase & SwapGaslessSignatureParams)) & {
+  gasless: true;
+};
 
-export type SignPermitData = GasSignPermitData | GaslessSignPermitData;
+export type SignatureParams = GasSignatureParams | GaslessSignatureParams;

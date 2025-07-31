@@ -16,10 +16,11 @@ import {
   Chain,
   ChainData,
   ExecuteTxnData,
-  GaslessTxnParamsResponse,
+  GaslessTradeBuildTxnResponse,
   HexString,
   OtherAvailableAbis,
-  SignPermitData,
+  PermitMode,
+  SignatureParams,
   TokenInfo,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
@@ -409,7 +410,7 @@ class DZapClient {
   }
 
   /**
-   * Executes a complete trade operation (swap/bridge) with automatic transaction building and sending.
+   * Executes a complete trade operation (swap/bridge) with transaction building and sending.
    * This is a convenience method that combines building and executing a transaction in one call.
    * If txnData is provided, it skips the build step and directly executes the transaction.
    * If txnData is not provided, it first builds the transaction using the request data, then executes it.
@@ -452,7 +453,7 @@ class DZapClient {
   }
 
   /**
-   * Executes a complete gasless trade operation (swap/bridge) with automatic transaction building and sending.
+   * Executes a complete gasless trade operation (swap/bridge) with transaction building and sending.
    * This is a convenience method that combines building and executing a transaction with permit in one call.
    * If txnData is provided, it skips the build step and directly executes the transaction.
    * If txnData is not provided, it first builds the transaction using the request data, then executes it.
@@ -489,7 +490,7 @@ class DZapClient {
   }: {
     request: TradeBuildTxnRequest;
     signer: Wallet | WalletClient;
-    txnData?: GaslessTxnParamsResponse;
+    txnData?: GaslessTradeBuildTxnResponse;
   }) {
     const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
@@ -800,19 +801,21 @@ class DZapClient {
    * });
    * ```
    */
-  public async sign(params: Omit<SignPermitData, 'spender' | 'PermitType'> & { spender?: HexString }) {
+  public async sign(params: SignatureParams) {
     const { spender, service, chainId } = params;
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();
 
-    const baseRequest = {
+    const permitType = params.gasless ? PermitTypes.PermitBatchWitnessTransferFrom : params.permitType || PermitTypes.AutoPermit;
+
+    const request = {
       ...params,
       rpcUrls: params.rpcUrls || this.rpcUrlsByChainId[chainId],
-      permitType: PermitTypes.AutoPermit,
+      permitType,
       spender: spenderAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
-    } as SignPermitData;
-    return await PermitTxnHandler.signPermit(baseRequest);
+    } as SignatureParams & { spender: HexString; permitType: PermitMode };
+    return await PermitTxnHandler.signPermit(request);
   }
 
   /**

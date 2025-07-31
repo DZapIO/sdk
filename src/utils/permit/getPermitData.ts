@@ -7,7 +7,7 @@ import {
   PermitSingleData,
   PermitTransferFrom,
   PermitTransferFromData,
-  Witness,
+  WitnessData,
 } from '../../types/permit.js';
 
 function isPermitSingle(permit: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle): permit is PermitSingle {
@@ -48,7 +48,7 @@ export function getPermitTransferData(
   permit: PermitTransferFrom,
   permit2Address: Address,
   chainId: number,
-  witness: Witness,
+  witness: WitnessData,
 ): PermitTransferFromData {
   const domain = permit2Domain(permit2Address, chainId);
 
@@ -80,7 +80,7 @@ export function getPermitBatchTransferData(
   permit: PermitBatchTransferFrom,
   permit2Address: Address,
   chainId: number,
-  witness: Witness,
+  witness: WitnessData,
 ): PermitBatchTransferFromData {
   const domain = permit2Domain(permit2Address, chainId);
 
@@ -110,7 +110,7 @@ export function getPermit2Data(
   permit: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle,
   permit2Address: Address,
   chainId: number,
-  witness?: Witness,
+  witness?: WitnessData,
 ): PermitTransferFromData | PermitBatchTransferFromData | PermitSingleData {
   if (isPermitSingle(permit)) {
     return getPermitSingleData(permit, permit2Address, chainId);

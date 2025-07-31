@@ -1,20 +1,20 @@
+import { Signer, Wallet } from 'ethers';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from 'src/api';
+import { GaslessTxType, Services } from 'src/constants';
+import { PermitTypes } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
+import { viemChainsById } from 'src/utils/chains';
+import { WalletClient } from 'viem';
 import {
   ContractErrorResponse,
   DZapTransactionResponse,
-  GaslessTxnParamsResponse,
+  GaslessTradeBuildTxnResponse,
   HexString,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
 } from '../types';
 import { isTypeSigner } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
-import { Signer, Wallet } from 'ethers';
-import { GaslessTxType, Services } from 'src/constants';
-import { PermitTypes } from 'src/constants/permit';
-import { viemChainsById } from 'src/utils/chains';
-import { WalletClient } from 'viem';
 import PermitTxnHandler from './permit';
 
 class TradeTxnHandler {
@@ -101,12 +101,12 @@ class TradeTxnHandler {
     signer: Wallet | WalletClient;
     rpcUrls: string[];
     spender: HexString;
-    txnData?: GaslessTxnParamsResponse;
+    txnData?: GaslessTradeBuildTxnResponse;
   }): Promise<DZapTransactionResponse> => {
     try {
       const chainId = request.fromChain;
 
-      let buildTxnResponseData: GaslessTxnParamsResponse;
+      let buildTxnResponseData: GaslessTradeBuildTxnResponse;
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
@@ -116,7 +116,7 @@ class TradeTxnHandler {
         });
       }
 
-      const { swapDataHash, executorFeesHash, keccakTxId, txId } = buildTxnResponseData;
+      const { swapDataHash, executorFeesHash, keccakTxId, txId, adapterDataHash } = buildTxnResponseData;
       const resp = await PermitTxnHandler.signPermit({
         tokens: request.data.map((req, index) => {
           return {
@@ -133,10 +133,11 @@ class TradeTxnHandler {
         signer,
         service: Services.trade,
         gasless: true,
-        txType: GaslessTxType.swap,
+        txType: request.fromChain === request.data[0].toChain ? GaslessTxType.swap : GaslessTxType.bridge,
         swapDataHash,
         executorFeesHash,
         txId: keccakTxId,
+        adapterDataHash,
       });
 
       if (resp.status === TxnStatus.success && 'batchPermitData' in resp && resp.batchPermitData) {
