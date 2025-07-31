@@ -1,9 +1,15 @@
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from 'src/api';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { ContractErrorResponse, DZapTransactionResponse, HexString, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../types';
+import {
+  ContractErrorResponse,
+  DZapTransactionResponse,
+  GaslessTxnParamsResponse,
+  HexString,
+  TradeBuildTxnRequest,
+  TradeBuildTxnResponse,
+} from '../types';
 import { isTypeSigner } from '../utils';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
-
 import { Signer, Wallet } from 'ethers';
 import { GaslessTxType, Services } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
@@ -89,29 +95,28 @@ class TradeTxnHandler {
     signer,
     rpcs,
     spender,
+    txnData,
   }: {
     request: TradeBuildTxnRequest;
     signer: Wallet | WalletClient;
     rpcs: string[];
     spender: HexString;
+    txnData?: GaslessTxnParamsResponse;
   }): Promise<DZapTransactionResponse> => {
     try {
       const chainId = request.fromChain;
-      const buildTxnResponseData: {
-        data: {
-          txId: HexString;
-          executorFeesHash: HexString;
-          swapDataHash: HexString;
-          txType: typeof GaslessTxType.swap;
-          encodedData: HexString;
-        };
-      } = await fetchTradeBuildTxnData({
-        ...request,
-        gasless: true,
-      });
 
-      const { txId, executorFeesHash, swapDataHash, encodedData } = buildTxnResponseData.data;
+      let buildTxnResponseData: GaslessTxnParamsResponse;
+      if (txnData) {
+        buildTxnResponseData = txnData;
+      } else {
+        buildTxnResponseData = await fetchTradeBuildTxnData({
+          ...request,
+          gasless: true,
+        });
+      }
 
+      const { swapDataHash, executorFeesHash, keccakTxId, txId } = buildTxnResponseData;
       const resp = await PermitTxnHandler.signPermit({
         tokens: request.data.map((req, index) => {
           return {
@@ -131,17 +136,26 @@ class TradeTxnHandler {
         txType: GaslessTxType.swap,
         swapDataHash,
         executorFeesHash,
-        txId,
+        txId: keccakTxId,
       });
 
       if (resp.status === TxnStatus.success && 'batchPermitData' in resp) {
-        const gaslessTxResp = await executeGaslessTxnData({
+        const gaslessTxResp: {
+          status: TxnStatus;
+          txnHash: HexString;
+        } = await executeGaslessTxnData({
           chainId: request.fromChain,
-          encodedData,
-          sender: request.sender,
+          txId,
           batchPermitData: resp.batchPermitData as HexString,
         });
-        console.log({ gaslessTxResp });
+        if (gaslessTxResp.status !== TxnStatus.success) {
+          throw new Error('Unable to sign permit');
+        }
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash: gaslessTxResp.txnHash as HexString,
+        };
       }
       throw new Error('Unable to sign permit');
     } catch (error: any) {

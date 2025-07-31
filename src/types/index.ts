@@ -274,6 +274,15 @@ export type TradeBuildTxnResponse = ExecuteTxnData & {
   updatedQuotes: Record<string, string>;
 };
 
+export type GaslessTxnParamsResponse = {
+  txId: HexString;
+  keccakTxId: HexString;
+  executorFeesHash: HexString;
+  swapDataHash: HexString;
+  txType: typeof GaslessTxType.swap;
+  encodedData: HexString;
+};
+
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
 export type GaslessTxTypes = (typeof GaslessTxType)[keyof typeof GaslessTxType];
 

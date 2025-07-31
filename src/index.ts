@@ -32,6 +32,7 @@ import {
   SignatureCallbackParams,
   SinglePermitCallbackParams,
   BatchPermitCallbackParams,
+  GaslessTxnParamsResponse,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
@@ -95,4 +96,5 @@ export {
   SignatureCallbackParams,
   SinglePermitCallbackParams,
   BatchPermitCallbackParams,
+  GaslessTxnParamsResponse,
 };

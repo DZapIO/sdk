@@ -16,6 +16,7 @@ import {
   Chain,
   ChainData,
   ExecuteTxnData,
+  GaslessTxnParamsResponse,
   HexString,
   OtherAvailableAbis,
   SignPermitData,
@@ -434,13 +435,22 @@ class DZapClient {
    * });
    * ```
    */
-  public async tradeGasless({ request, signer }: { request: TradeBuildTxnRequest; signer: Wallet | WalletClient }) {
+  public async tradeGasless({
+    request,
+    signer,
+    txnData,
+  }: {
+    request: TradeBuildTxnRequest;
+    signer: Wallet | WalletClient;
+    txnData?: GaslessTxnParamsResponse;
+  }) {
     const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
       request,
       signer,
       rpcs: this.rpcUrlsByChainId[request.fromChain],
       spender,
+      txnData,
     });
   }
 
@@ -741,7 +751,7 @@ class DZapClient {
    * });
    * ```
    */
-  public async sign(params: Exclude<SignPermitData, 'PermitType'>) {
+  public async sign(params: Omit<SignPermitData, 'spender' | 'PermitType'> & { spender?: HexString }) {
     const { spender, service, chainId } = params;
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
 
@@ -750,7 +760,7 @@ class DZapClient {
       rpcUrls: params.rpcUrls || this.rpcUrlsByChainId[chainId],
       permitType: PermitTypes.AutoPermit,
       spender: spenderAddress,
-    };
+    } as SignPermitData;
     return await PermitTxnHandler.signPermit(baseRequest);
   }
 

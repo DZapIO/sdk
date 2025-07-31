@@ -31,7 +31,7 @@ export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
     method: POST,
   });
 
-export const executeGaslessTxnData = (request: { chainId: number; encodedData: HexString; sender: HexString; batchPermitData: HexString }) =>
+export const executeGaslessTxnData = (request: { chainId: number; txId: HexString; batchPermitData: HexString }) =>
   invoke({
     endpoint: GASLESS_EXECUTE_TX_URL,
     data: request,
