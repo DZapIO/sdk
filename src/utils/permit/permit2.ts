@@ -46,32 +46,6 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<Omit<P
 
     const signTypedPermit2Data = getPermit2Data(permit2Values, permit2Address, chainId, witnessData);
 
-    console.log(
-      JSON.stringify(
-        {
-          signer,
-          domain: signTypedPermit2Data.domain,
-          message: Object.fromEntries(
-            Object.entries(signTypedPermit2Data.message).map(([key, value]) => {
-              if (typeof value === 'bigint') {
-                return [key, value.toString()];
-              }
-              return [key, value];
-            }),
-          ),
-          types: signTypedPermit2Data.types,
-          account,
-          primaryType: permitType,
-        },
-        (key, value) => {
-          if (typeof value === 'bigint') {
-            return value.toString();
-          }
-          return value;
-        },
-        2,
-      ),
-    );
     const signature = await signTypedData({
       signer,
       domain: signTypedPermit2Data.domain,

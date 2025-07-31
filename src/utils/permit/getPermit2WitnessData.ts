@@ -4,6 +4,7 @@ import { Permit2Params, Witness } from 'src/types/permit';
 
 export const getPermit2WitnessData = (params: Permit2Params) => {
   const { gasless, account, spender } = params;
+
   const witnessData: Witness = gasless
     ? params.txType === GaslessTxType.swap
       ? {

@@ -93,13 +93,13 @@ class TradeTxnHandler {
   public static buildGaslessTxAndSignPermit = async ({
     request,
     signer,
-    rpcs,
+    rpcUrls,
     spender,
     txnData,
   }: {
     request: TradeBuildTxnRequest;
     signer: Wallet | WalletClient;
-    rpcs: string[];
+    rpcUrls: string[];
     spender: HexString;
     txnData?: GaslessTxnParamsResponse;
   }): Promise<DZapTransactionResponse> => {
@@ -126,7 +126,7 @@ class TradeTxnHandler {
           };
         }),
         chainId,
-        rpcUrls: rpcs,
+        rpcUrls,
         sender: request.sender,
         spender,
         permitType: PermitTypes.PermitBatchWitnessTransferFrom,
@@ -139,17 +139,17 @@ class TradeTxnHandler {
         txId: keccakTxId,
       });
 
-      if (resp.status === TxnStatus.success && 'batchPermitData' in resp) {
+      if (resp.status === TxnStatus.success && 'batchPermitData' in resp && resp.batchPermitData) {
         const gaslessTxResp: {
           status: TxnStatus;
           txnHash: HexString;
         } = await executeGaslessTxnData({
           chainId: request.fromChain,
           txId,
-          batchPermitData: resp.batchPermitData as HexString,
+          batchPermitData: resp.batchPermitData,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
-          throw new Error('Unable to sign permit');
+          throw new Error('Failed to sign permit');
         }
         return {
           status: TxnStatus.success,
@@ -157,7 +157,7 @@ class TradeTxnHandler {
           txnHash: gaslessTxResp.txnHash as HexString,
         };
       }
-      throw new Error('Unable to sign permit');
+      throw new Error('Gasless Transaction Failed');
     } catch (error: any) {
       console.log({ error });
       if (isAxiosError(error)) {

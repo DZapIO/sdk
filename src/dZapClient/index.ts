@@ -448,7 +448,7 @@ class DZapClient {
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
       request,
       signer,
-      rpcs: this.rpcUrlsByChainId[request.fromChain],
+      rpcUrls: this.rpcUrlsByChainId[request.fromChain],
       spender,
       txnData,
     });

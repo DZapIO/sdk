@@ -207,7 +207,7 @@ class PermitTxnHandler {
               txType: GaslessTxType.bridge,
               swapDataHash: signPermitReq.swapDataHash,
               executorFeesHash: signPermitReq.executorFeesHash,
-              txId: signPermitReq.executorFeesHash,
+              txId: signPermitReq.txId,
               adapterDataHash: signPermitReq.adapterDataHash,
             }
           : {
@@ -216,7 +216,7 @@ class PermitTxnHandler {
               txType: GaslessTxType.swap,
               swapDataHash: signPermitReq.swapDataHash,
               executorFeesHash: signPermitReq.executorFeesHash,
-              txId: signPermitReq.executorFeesHash,
+              txId: signPermitReq.txId,
             }
         : {
             ...basePermitDataReq,
