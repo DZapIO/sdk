@@ -1,6 +1,6 @@
 import { Signer, Wallet } from 'ethers';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from 'src/api';
-import { GaslessTxType, Services } from 'src/constants';
+import { Services } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { viemChainsById } from 'src/utils/chains';
@@ -116,7 +116,7 @@ class TradeTxnHandler {
         });
       }
 
-      const { swapDataHash, executorFeesHash, keccakTxId, txId, adapterDataHash } = buildTxnResponseData;
+      const { swapDataHash, executorFeesHash, keccakTxId, txId, adapterDataHash, txType } = buildTxnResponseData;
       const resp = await PermitTxnHandler.signPermit({
         tokens: request.data.map((req, index) => {
           return {
@@ -133,7 +133,7 @@ class TradeTxnHandler {
         signer,
         service: Services.trade,
         gasless: true,
-        txType: request.fromChain === request.data[0].toChain ? GaslessTxType.swap : GaslessTxType.bridge,
+        txType,
         swapDataHash,
         executorFeesHash,
         txId: keccakTxId,
