@@ -1,6 +1,5 @@
 import { Signer, Wallet } from 'ethers';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from 'src/api';
-import { Services } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { viemChainsById } from 'src/utils/chains';
@@ -131,7 +130,6 @@ class TradeTxnHandler {
         spender,
         permitType: PermitTypes.PermitBatchWitnessTransferFrom,
         signer,
-        service: Services.trade,
         gasless: true,
         txType,
         swapDataHash,

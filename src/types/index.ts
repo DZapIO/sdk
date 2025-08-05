@@ -5,7 +5,7 @@ import { PermitTypes } from 'src/constants/permit';
 import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
 import { WalletClient } from 'viem';
 import { PsbtInput, PsbtOutput } from './btc';
-import { BridgeGaslessSignatureParams, SwapGaslessSignatureParams } from './permit';
+import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
 export type HexString = `0x${string}`;
 
@@ -176,6 +176,7 @@ export type TradeQuote = {
   fee: Fee;
   priceImpactPercent: string;
   duration: string;
+  gasless: boolean;
   steps: TradeStep[];
   path: TradePath[];
   tags?: Tag[];
@@ -377,25 +378,24 @@ export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCa
 export type SignatureParamsBase = {
   chainId: number;
   sender: HexString;
+  signer: WalletClient | Wallet;
   tokens: {
     address: HexString;
     permitData?: HexString;
     amount: string;
   }[];
-  service: AvailableDZapServices;
-  rpcUrls?: string[];
-  signer: WalletClient | Wallet;
+  spender: HexString;
+  rpcUrls: string[];
+  permitType: PermitMode;
   signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
-  spender?: HexString;
   permitEIP2612DisabledTokens?: string[];
 };
 
 export type GasSignatureParams = SignatureParamsBase & {
   gasless: false;
-  permitType: PermitMode;
 };
 
-export type GaslessSignatureParams = ((SignatureParamsBase & BridgeGaslessSignatureParams) | (SignatureParamsBase & SwapGaslessSignatureParams)) & {
+export type GaslessSignatureParams = ((SignatureParamsBase & GaslessBridgeParams) | (SignatureParamsBase & GaslessSwapParams)) & {
   gasless: true;
 };
 

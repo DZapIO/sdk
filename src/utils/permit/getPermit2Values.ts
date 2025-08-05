@@ -1,11 +1,27 @@
 import { HexString } from 'src';
 import type { Address } from 'viem';
-import { abi as Permit2Abi } from '../../artifacts/Permit2.js';
-import { getPublicClient } from '../index.js';
-import { getNextPermit2Nonce } from './getNextPermit2Nonce.js';
-import { Permit2ValuesParams, PermitBatchTransferFrom, PermitSingle, PermitTransferFrom } from '../../types/permit.js';
+import { abi as Permit2Abi } from '../../artifacts/Permit2';
+import { getPublicClient } from '../index';
+import { getNextPermit2Nonce } from './getNextPermit2Nonce';
 import { erc20PermitFunctions } from 'src/constants/erc20';
 import { permit2PrimaryType } from 'src/constants/permit';
+import {
+  BasePermitParams,
+  TokenWithBigIntAndIndex,
+  Permit2PrimaryType,
+  PermitBatchTransferFromValues,
+  PermitSingleValues,
+  PermitTransferFromValues,
+} from 'src/types/permit';
+
+type Permit2ValuesParams = {
+  deadline: bigint;
+  permit2Address: HexString;
+  tokens: TokenWithBigIntAndIndex[];
+  expiration?: bigint;
+  firstTokenNonce: bigint | null;
+  primaryType: Permit2PrimaryType;
+} & Omit<BasePermitParams, 'deadline' | 'signer'>;
 
 export const getPermitSingleValues = async ({
   spender,
@@ -29,7 +45,7 @@ export const getPermitSingleValues = async ({
   };
   permit2Address: HexString;
   rpcUrls?: string[];
-}): Promise<{ permit2Values: PermitSingle; nonce: bigint }> => {
+}): Promise<{ permit2Values: PermitSingleValues; nonce: bigint }> => {
   const publicClient = getPublicClient({ chainId, rpcUrls });
   const nonceResult = await publicClient.readContract({
     address: permit2Address,
@@ -74,7 +90,7 @@ export const getPermitTransferFromValues = async ({
   permit2Address: HexString;
   firstTokenNonce: bigint | null;
   rpcUrls?: string[];
-}): Promise<{ permit2Values: PermitTransferFrom; nonce: bigint }> => {
+}): Promise<{ permit2Values: PermitTransferFromValues; nonce: bigint }> => {
   let nonce;
   if (token.index == 0) {
     nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
@@ -118,7 +134,7 @@ export const getPermitBatchTransferFromValues = async ({
     index: number;
   }[];
   rpcUrls?: string[];
-}): Promise<{ permit2Values: PermitBatchTransferFrom; nonce: bigint }> => {
+}): Promise<{ permit2Values: PermitBatchTransferFromValues; nonce: bigint }> => {
   const nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
   return {
     permit2Values: {
@@ -136,7 +152,7 @@ export const getPermitBatchTransferFromValues = async ({
 
 export async function getPermit2Values(
   params: Permit2ValuesParams,
-): Promise<{ permit2Values: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle; nonce: bigint }> {
+): Promise<{ permit2Values: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues; nonce: bigint }> {
   switch (params.primaryType) {
     case permit2PrimaryType.PermitSingle:
       if (!params.expiration) {
