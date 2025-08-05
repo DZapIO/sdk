@@ -1,11 +1,12 @@
 import { ethers } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
+import { GaslessTxType } from 'src/constants';
 import { zeroAddress } from 'src/constants/address';
+import { DZAP_SALT } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { EIP2612Types } from 'src/types/eip-2612';
-
+import { EIP2612BridgeTypes, EIP2612DefaultTypes, EIP2612SwapTypes } from 'src/types/eip-2612';
 import { Permit2612Config } from 'src/types/permit';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
 import { generateDeadline } from '../date';
@@ -57,20 +58,12 @@ export const checkEIP2612PermitSupport = async ({
 /**
  * Generate EIP-2612 permit signature
  */
-export const getEIP2612PermitSignature = async ({
-  chainId,
-  spender,
-  account,
-  token,
-  signer,
-  rpcUrls,
-  version,
-  deadline: sigDeadline = generateDeadline(SignatureExpiryInSecs),
-}: Permit2612Config): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+export const getEIP2612PermitSignature = async (
+  params: Permit2612Config,
+): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
+    const { chainId, spender, account, token, signer, rpcUrls, version, gasless, deadline = generateDeadline(SignatureExpiryInSecs) } = params;
     const { address, amount = maxUint256 } = token;
-    const owner = account as HexString;
-    const deadline = sigDeadline;
 
     const contract = getContract({
       abi: erc20PermitAbi,
@@ -78,7 +71,7 @@ export const getEIP2612PermitSignature = async ({
       client: getPublicClient({ chainId, rpcUrls }),
     });
 
-    const [tokenNameResult, nonceResult] = await Promise.allSettled([contract.read.name(), contract.read.nonces([owner])]);
+    const [tokenNameResult, nonceResult] = await Promise.allSettled([contract.read.name(), contract.read.nonces([account])]);
 
     if (tokenNameResult.status === 'rejected' || nonceResult.status === 'rejected') {
       return {
@@ -97,22 +90,43 @@ export const getEIP2612PermitSignature = async ({
       version,
       chainId,
       verifyingContract: address,
+      ...(gasless && { salt: DZAP_SALT }),
     };
 
-    const message = {
-      owner,
-      spender,
-      value: amount,
-      nonce,
-      deadline,
-    };
+    const message = gasless
+      ? params.txType === GaslessTxType.swap
+        ? {
+            txId: params.txId,
+            user: account,
+            executorFeesHash: params.executorFeesHash,
+            swapDataHash: params.swapDataHash,
+            nonce,
+            deadline,
+          }
+        : {
+            txId: params.txId,
+            user: account,
+            nonce,
+            deadline,
+            executorFeesHash: params.executorFeesHash,
+            swapDataHash: params.swapDataHash,
+            adapterDataHash: params.adapterDataHash,
+          }
+      : {
+          owner: account,
+          spender,
+          value: amount,
+          nonce,
+          deadline,
+        };
 
+    const types = gasless ? (params.txType === GaslessTxType.swap ? EIP2612SwapTypes : EIP2612BridgeTypes) : EIP2612DefaultTypes;
     const signature = await signTypedData({
       signer,
       domain,
       message,
-      types: EIP2612Types,
-      account: owner,
+      types,
+      account,
       primaryType: 'Permit',
     });
 

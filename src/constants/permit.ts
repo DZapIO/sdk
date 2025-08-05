@@ -1,5 +1,7 @@
 import { DZapPermitMode } from 'src/enums';
+import { encodePacked, keccak256 } from 'viem';
 
+export const DZAP_SALT = keccak256(encodePacked(['string'], ['DZap-v0.1']));
 export const permit2PrimaryType = {
   PermitSingle: 'PermitSingle',
   PermitWitnessTransferFrom: 'PermitWitnessTransferFrom',
@@ -11,61 +13,6 @@ export const PermitTypes = {
   EIP2612Permit: 'EIP2612Permit',
   AutoPermit: 'AutoPermit',
 } as const;
-
-export const defaultWitnessType = {
-  typeName: 'DZapTransferWitness',
-  type: {
-    DZapTransferWitness: [
-      { name: 'owner', type: 'address' },
-      { name: 'recipient', type: 'address' },
-    ],
-  },
-};
-
-export const swapGaslessWitnessType = {
-  typeName: 'DZapSwapWitness',
-  type: {
-    DZapSwapWitness: [
-      { name: 'txId', type: 'bytes32' },
-      { name: 'user', type: 'address' },
-      { name: 'executorFeesHash', type: 'bytes32' },
-      { name: 'swapDataHash', type: 'bytes32' },
-    ],
-  },
-};
-
-export const bridgeGaslessWitnessType = {
-  typeName: 'DZapBridgeWitness',
-  type: {
-    DZapBridgeWitness: [
-      { name: 'txId', type: 'bytes32' },
-      { name: 'user', type: 'address' },
-      { name: 'executorFeesHash', type: 'bytes32' },
-      { name: 'swapDataHash', type: 'bytes32' },
-      { name: 'adapterDataHash', type: 'bytes32' },
-    ],
-  },
-};
-
-export const BatchPermitAbiParams = [
-  {
-    name: 'permit',
-    type: 'tuple',
-    components: [
-      {
-        name: 'permitted',
-        type: 'tuple[]',
-        components: [
-          { name: 'token', type: 'address' },
-          { name: 'amount', type: 'uint256' },
-        ],
-      },
-      { name: 'nonce', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' },
-    ],
-  },
-  { name: 'permitSignature', type: 'bytes' },
-] as const;
 
 export const PermitToDZapPermitMode = {
   [PermitTypes.EIP2612Permit]: DZapPermitMode.PERMIT,

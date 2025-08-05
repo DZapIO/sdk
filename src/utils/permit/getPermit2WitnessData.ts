@@ -1,6 +1,5 @@
 import { GaslessTxType } from 'src/constants';
-import { bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from 'src/constants/permit';
-import { Permit2Params, WitnessData } from 'src/types/permit';
+import { bridgeGaslessWitnessType, defaultWitnessType, Permit2Params, swapGaslessWitnessType, WitnessData } from 'src/types/permit';
 
 export const getPermit2WitnessData = (params: Permit2Params) => {
   const { gasless, account, spender } = params;

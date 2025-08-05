@@ -1,11 +1,65 @@
 import { Wallet } from 'ethers';
 import { GaslessTxType } from 'src/constants';
-import { bridgeGaslessWitnessType, defaultWitnessType, permit2PrimaryType, swapGaslessWitnessType } from 'src/constants/permit';
+import { permit2PrimaryType } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { Address, WalletClient } from 'viem';
 import { HexString, PermitMode } from '.';
 
-//common types for permit
+//const types
+export const defaultWitnessType = {
+  typeName: 'DZapTransferWitness',
+  type: {
+    DZapTransferWitness: [
+      { name: 'owner', type: 'address' },
+      { name: 'recipient', type: 'address' },
+    ],
+  },
+};
+
+export const swapGaslessWitnessType = {
+  typeName: 'DZapSwapWitness',
+  type: {
+    DZapSwapWitness: [
+      { name: 'txId', type: 'bytes32' },
+      { name: 'user', type: 'address' },
+      { name: 'executorFeesHash', type: 'bytes32' },
+      { name: 'swapDataHash', type: 'bytes32' },
+    ],
+  },
+};
+
+export const bridgeGaslessWitnessType = {
+  typeName: 'DZapBridgeWitness',
+  type: {
+    DZapBridgeWitness: [
+      { name: 'txId', type: 'bytes32' },
+      { name: 'user', type: 'address' },
+      { name: 'executorFeesHash', type: 'bytes32' },
+      { name: 'swapDataHash', type: 'bytes32' },
+      { name: 'adapterDataHash', type: 'bytes32' },
+    ],
+  },
+};
+
+export const BatchPermitAbiParams = [
+  {
+    name: 'permit',
+    type: 'tuple',
+    components: [
+      {
+        name: 'permitted',
+        type: 'tuple[]',
+        components: [
+          { name: 'token', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+      },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  },
+  { name: 'permitSignature', type: 'bytes' },
+] as const;
 
 /**
  * Base token for permit, address and amount
