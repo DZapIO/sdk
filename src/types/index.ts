@@ -192,7 +192,8 @@ export type TradeQuotesResponse = {
     status?: string;
     message?: string;
     recommendedSource: string;
-    fastestSource: string;
+    fastestSource?: string; // only for bridge quotes
+    bestReturnSource: string;
     questSource?: string;
     quoteRates?: TradeQuotesByProviderId;
     tokensWithoutPrice: Record<number, string[]>;
