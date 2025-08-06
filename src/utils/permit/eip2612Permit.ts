@@ -1,17 +1,98 @@
 import { ethers } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
-import { GaslessTxType } from 'src/constants';
 import { zeroAddress } from 'src/constants/address';
-import { DZAP_SALT } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { EIP2612BridgeTypes, EIP2612DefaultTypes, EIP2612SwapTypes } from 'src/types/eip-2612';
-import { Permit2612Config } from 'src/types/permit';
-import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
+import { EIP2612DefaultTypes } from 'src/types/eip-2612';
+import { Eip2612Permit } from 'src/types/permit';
+import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, PublicClient } from 'viem';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
+
+/**
+ * Check if a token supports is support standard EIP2612 Compliant
+ */
+export async function isStandardEIP2612StylePermit(
+  client: PublicClient,
+  tokenAddress: HexString,
+  message: {
+    owner: HexString;
+    spender: HexString;
+    value: bigint;
+    nonce: bigint;
+    deadline: bigint;
+  },
+  sig: {
+    v: number;
+    r: string;
+    s: string;
+  },
+): Promise<boolean> {
+  try {
+    await client.simulateContract({
+      address: tokenAddress,
+      abi: erc20PermitAbi,
+      functionName: 'permit',
+      args: [
+        message.owner, // owner
+        message.spender, // spender
+        message.value, // value
+        message.deadline, // deadline
+        sig.v, // v
+        sig.r as HexString, // r
+        sig.s as HexString, // s
+      ],
+    });
+    return true; // Supports EIP-2612
+  } catch (error) {
+    console.log(error);
+    return false; // Doesn't support EIP-2612
+  }
+}
+
+/**
+ * Check if a token supports is support DAI-style EIP2612 Compliant
+ */
+export async function isDaiStylePermit(
+  client: PublicClient,
+  tokenAddress: HexString,
+  message: {
+    owner: HexString;
+    spender: HexString;
+    value: bigint;
+    nonce: bigint;
+    deadline: bigint;
+  },
+  sig: {
+    v: number;
+    r: string;
+    s: string;
+  },
+): Promise<boolean> {
+  try {
+    await client.simulateContract({
+      address: tokenAddress,
+      abi: erc20PermitAbi,
+      functionName: 'permit',
+      args: [
+        message.owner, // holder
+        message.spender, // spender
+        message.nonce, // nonce
+        message.deadline, // expiry
+        true, // allowed (DAI style uses boolean)
+        sig.v, // v
+        sig.r as HexString, // r
+        sig.s as HexString, // s
+      ],
+    });
+    return true; // Supports EIP-2612
+  } catch (error) {
+    console.log(error);
+    return false; // Doesn't support EIP-2612
+  }
+}
 
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
@@ -49,7 +130,7 @@ export const checkEIP2612PermitSupport = async ({
   const version = versionResult.status === 'fulfilled' ? versionResult.value : undefined; // sending undefined if version is not available
 
   return {
-    supportsPermit: false,
+    supportsPermit: true,
     domainSeparator,
     version,
   };
@@ -58,11 +139,9 @@ export const checkEIP2612PermitSupport = async ({
 /**
  * Generate EIP-2612 permit signature
  */
-export const getEIP2612PermitSignature = async (
-  params: Permit2612Config,
-): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+export const getEIP2612PermitSignature = async (params: Eip2612Permit): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
-    const { chainId, spender, account, token, signer, rpcUrls, version, gasless, deadline = generateDeadline(SignatureExpiryInSecs) } = params;
+    const { chainId, spender, account, token, signer, rpcUrls, version, deadline = generateDeadline(SignatureExpiryInSecs) } = params;
     const { address, amount = maxUint256 } = token;
 
     const contract = getContract({
@@ -90,37 +169,17 @@ export const getEIP2612PermitSignature = async (
       version,
       chainId,
       verifyingContract: address,
-      ...(gasless && { salt: DZAP_SALT }),
     };
 
-    const message = gasless
-      ? params.txType === GaslessTxType.swap
-        ? {
-            txId: params.txId,
-            user: account,
-            executorFeesHash: params.executorFeesHash,
-            swapDataHash: params.swapDataHash,
-            nonce,
-            deadline,
-          }
-        : {
-            txId: params.txId,
-            user: account,
-            nonce,
-            deadline,
-            executorFeesHash: params.executorFeesHash,
-            swapDataHash: params.swapDataHash,
-            adapterDataHash: params.adapterDataHash,
-          }
-      : {
-          owner: account,
-          spender,
-          value: amount,
-          nonce,
-          deadline,
-        };
+    const message = {
+      owner: account,
+      spender,
+      value: amount,
+      nonce,
+      deadline,
+    };
 
-    const types = gasless ? (params.txType === GaslessTxType.swap ? EIP2612SwapTypes : EIP2612BridgeTypes) : EIP2612DefaultTypes;
+    const types = EIP2612DefaultTypes;
     const signature = await signTypedData({
       signer,
       domain,

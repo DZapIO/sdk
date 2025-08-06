@@ -115,8 +115,10 @@ class TradeTxnHandler {
         });
       }
 
+      const permitType = request.hasPermit2ApprovalForAllTokens ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
+
       const { swapDataHash, executorFeesHash, keccakTxId, txId, adapterDataHash, txType } = buildTxnResponseData;
-      const resp = await PermitTxnHandler.signPermit({
+      const resp = await PermitTxnHandler.signGaslessUserIntent({
         tokens: request.data.map((req, index) => {
           return {
             address: req.srcToken as HexString,
@@ -128,7 +130,7 @@ class TradeTxnHandler {
         rpcUrls,
         sender: request.sender,
         spender,
-        permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+        permitType,
         signer,
         gasless: true,
         txType,
@@ -138,14 +140,30 @@ class TradeTxnHandler {
         adapterDataHash,
       });
 
-      if (resp.status === TxnStatus.success && 'batchPermitData' in resp && resp.batchPermitData) {
+      if (resp.status === TxnStatus.success && resp.userIntentData) {
+        const permit =
+          'batchPermitData' in resp.userIntentData
+            ? {
+                batchPermitData: resp.userIntentData.batchPermitData,
+              }
+            : {
+                permitData: request.data.map((req) => {
+                  return {
+                    token: req.srcToken as HexString,
+                    amount: BigInt(req.amount),
+                    permit: req.permitData as HexString,
+                  };
+                }),
+                userGaslessIntentSignature: resp.userIntentData.signature,
+                gaslessIntentDeadline: resp.userIntentData.deadline,
+              };
         const gaslessTxResp: {
           status: TxnStatus;
           txnHash: HexString;
         } = await executeGaslessTxnData({
           chainId: request.fromChain,
           txId,
-          batchPermitData: resp.batchPermitData,
+          permit,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
           throw new Error('Failed to sign permit');

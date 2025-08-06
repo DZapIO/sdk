@@ -118,38 +118,29 @@ export type BasePermitParams = {
   signer: WalletClient | Wallet;
 };
 
-//EIP-2612 PERMIT TYPES
-
 /**
- * Base configuration for EIP-2612 permit operations
+ * Traditional EIP-2612 permit (user pays gas)
  */
-type Permit2612Base = {
+export type Eip2612Permit = {
   token: TokenWithOptionalAmount;
+  gasless: false;
   version: string;
 } & BasePermitParams;
 
 /**
- * Traditional EIP-2612 permit (user pays gas)
+ * Custom DZAP gasless signature permit for swap operations
  */
-type DefaultPermit2612 = {
-  gasless: false;
-} & Permit2612Base;
+type DzapGaslessSwapPermit = {} & BasePermitParams & GaslessSwapParams;
 
 /**
- * Gasless EIP-2612 permit for swap operations
+ * Custom DZAP gasless signature permit for bridge operations
  */
-type GaslessSwapPermit2612 = {} & Permit2612Base & GaslessSwapParams;
+type DzapGaslessBridgePermit = {} & BasePermitParams & GaslessBridgeParams;
 
 /**
- * Gasless EIP-2612 permit for bridge operations
+ * Union of all custom DZAP gasless permit configurations
  */
-type GaslessBridgePermit2612 = {} & Permit2612Base & GaslessBridgeParams;
-
-/**
- * Union of all EIP-2612 permit configurations
- * Supports both gasless and traditional permit flows
- */
-export type Permit2612Config = DefaultPermit2612 | GaslessSwapPermit2612 | GaslessBridgePermit2612;
+export type GaslessDzapPermit = DzapGaslessSwapPermit | DzapGaslessBridgePermit;
 
 export type BasePermit2Params = {
   tokens: { address: HexString; amount?: string; index: number }[];
@@ -182,7 +173,7 @@ export type Permit2Params = DefaultPermit2Params | GaslessSwapPermit2Params | Ga
  *     ├── GaslessSwapPermit2 (gasless: true, txType: swap)
  *     └── GaslessBridgePermit2 (gasless: true, txType: bridge)
  */
-export type PermitParams = Permit2612Config | Permit2Params;
+export type PermitParams = Eip2612Permit | Permit2Params | GaslessDzapPermit;
 
 //Core permit operation response data
 export type BasePermitResponse = {

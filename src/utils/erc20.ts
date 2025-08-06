@@ -1,15 +1,25 @@
 import { Signer } from 'ethers';
+import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
 import { ApprovalModes } from 'src/constants/approval';
 import { erc20Functions } from 'src/constants/erc20';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { ApprovalMode, HexString } from 'src/types';
 import { isDZapNativeToken } from 'src/utils';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
 import { isTypeSigner, writeContract } from '.';
 import { multicall } from './multicall';
-import { getPermit2Address } from './permit/permit2';
 import { checkEIP2612PermitSupport } from './permit/eip2612Permit';
+import { getPermit2Address } from './permit/permit2';
+
+type AllowanceParams = {
+  chainId: number;
+  sender: HexString;
+  tokens: { address: HexString; amount: bigint }[];
+  spender: HexString;
+  rpcUrls?: string[];
+  mode?: ApprovalMode;
+  permitEIP2612DisabledTokens?: string[];
+};
 
 export const approveToken = async ({
   chainId,
@@ -141,23 +151,15 @@ export const getAllowance = async ({
   mode = ApprovalModes.Default,
   spender,
   permitEIP2612DisabledTokens,
-}: {
-  chainId: number;
-  sender: HexString;
-  tokens: { address: HexString; amount: bigint }[];
-  spender: HexString;
-  rpcUrls?: string[];
-  mode?: ApprovalMode;
-  permitEIP2612DisabledTokens?: string[];
-}) => {
-  const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
+}: AllowanceParams) => {
+  const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean; approvalFailed: boolean } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
   const approvalData = await Promise.all(
     erc20Tokens.map(async ({ address, amount }) => {
-      if (mode === ApprovalModes.AutoPermit) {
+      if (mode === ApprovalModes.AutoPermit || mode === ApprovalModes.Default) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
           address,
           chainId,
@@ -170,15 +172,15 @@ export const getAllowance = async ({
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
         };
-      } else if (mode !== ApprovalModes.Default) {
+      } else {
         const permit2Address = getPermit2Address(chainId);
         return { token: address, spender: permit2Address, amount };
-      } else return { token: address, spender, amount };
+      }
     }),
   );
 
   for (const { address } of nativeTokens) {
-    data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false };
+    data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false, approvalFailed: false };
   }
 
   if (erc20Tokens.length === 0) {
@@ -197,12 +199,41 @@ export const getAllowance = async ({
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
       const signatureNeeded = mode !== ApprovalModes.Default;
-      data[token] = { allowance, approvalNeeded, signatureNeeded };
+      // @dev: mode is default(eip2612) and token is not supported by eip2612 then approval failed
+      const approvalFailed = mode === ApprovalModes.Default && isEIP2612PermitSupported == false ? true : false;
+      data[token] = { allowance, approvalNeeded, signatureNeeded, approvalFailed };
     }
 
     return { status: TxnStatus.success, code: StatusCodes.Success, data };
   } catch (error: any) {
     console.error('Multicall allowance check failed:', error);
     return { status: TxnStatus.error, code: StatusCodes.Error, data };
+  }
+};
+
+/**
+ * Checks if all tokens are approved for Permit2 via gasless approval (PermitSingle)
+ */
+export const hasPermit2ApprovalForAllTokens = async (params: Omit<AllowanceParams, 'mode'>) => {
+  try {
+    const permit2Allowance = await getAllowance({
+      ...params,
+      mode: ApprovalModes.PermitSingle,
+    });
+
+    const allApproved = Object.values(permit2Allowance.data).every((tokenAllowance) => tokenAllowance.approvalNeeded === false);
+
+    return {
+      status: TxnStatus.success,
+      code: StatusCodes.Success,
+      isAllTokenApproved: allApproved,
+    };
+  } catch (error: any) {
+    console.error('Permit2 gasless approval check failed:', error);
+    return {
+      status: TxnStatus.error,
+      code: StatusCodes.Error,
+      isAllTokenApproved: false,
+    };
   }
 };

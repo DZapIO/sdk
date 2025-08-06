@@ -1,7 +1,11 @@
 import { DZapPermitMode } from 'src/enums';
 import { encodePacked, keccak256 } from 'viem';
 
-export const DZAP_SALT = keccak256(encodePacked(['string'], ['DZap-v0.1']));
+export const eip2612GaslessDomain = {
+  name: 'DZapVerifier',
+  version: '1',
+  salt: keccak256(encodePacked(['string'], ['DZap-v0.1'])),
+};
 export const permit2PrimaryType = {
   PermitSingle: 'PermitSingle',
   PermitWitnessTransferFrom: 'PermitWitnessTransferFrom',

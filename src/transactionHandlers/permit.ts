@@ -1,18 +1,11 @@
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, GaslessTxType } from 'src/constants';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { BatchPermitCallbackParams, HexString, PermitMode, SignatureParams } from 'src/types';
-import {
-  BatchPermitResponse,
-  GaslessBridgeParams,
-  GaslessSwapParams,
-  Permit2Params,
-  PermitParams,
-  PermitResponse,
-  TokenWithIndex,
-} from 'src/types/permit';
+import { BatchPermitCallbackParams, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode } from 'src/types';
+import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithIndex } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
+import { signGaslessDzapUserIntent } from 'src/utils/permit/dzapUserIntentSign';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
 import { getPermit2Signature } from 'src/utils/permit/permit2';
 
@@ -34,7 +27,7 @@ type BaseBatchPermitParams = {
 type BatchPermitParams = BaseBatchPermitParams & ({ gasless: false } | GaslessSwapParams | GaslessBridgeParams);
 
 class PermitTxnHandler {
-  static generateBatchPermitDataForTokens = async (params: Exclude<Permit2Params, 'permitType'>): Promise<BatchPermitResponse> => {
+  static generateBatchPermitDataForTokens = async (params: BatchPermitParams): Promise<BatchPermitResponse> => {
     const resp = await getPermit2Signature(params);
     return {
       ...resp,
@@ -83,6 +76,7 @@ class PermitTxnHandler {
           amount: amount.toString(),
           index: 0,
         },
+        gasless: false,
         version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
       });
       return {
@@ -118,8 +112,37 @@ class PermitTxnHandler {
     }
   };
 
+  public static signGaslessUserIntent = async (signPermitReq: GaslessSignatureParams) => {
+    const { tokens, sender, permitType, isBatchPermitAllowed } = signPermitReq;
+
+    const type =
+      permitType === PermitTypes.AutoPermit && isBatchPermitAllowed ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
+
+    if (type === PermitTypes.EIP2612Permit) {
+      return signGaslessDzapUserIntent({
+        ...signPermitReq,
+        account: sender,
+      });
+    }
+    const resp = await getPermit2Signature({
+      ...signPermitReq,
+      tokens: tokens.map((token, index) => ({ ...token, index })),
+      account: sender,
+      permitType: type,
+    });
+    return {
+      status: resp.status,
+      code: resp.code,
+      userIntentData: resp.permitData
+        ? {
+            batchPermitData: resp.permitData,
+          }
+        : undefined,
+    };
+  };
+
   public static signPermit = async (
-    signPermitReq: SignatureParams,
+    signPermitReq: GasSignatureParams,
   ): Promise<
     | {
         status: TxnStatus;
@@ -145,7 +168,8 @@ class PermitTxnHandler {
 
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
     if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany)) {
-      const basePermitDataReq = {
+      const permitDataReq = {
+        ...signPermitReq,
         tokens: tokens.map((token, index) => ({ ...token, index })),
         firstTokenNonce,
         chainId,
@@ -155,30 +179,6 @@ class PermitTxnHandler {
         signer,
         permitType: PermitTypes.PermitBatchWitnessTransferFrom, //override because only PermitBatchWitnessTransferFrom supports batch
       };
-
-      const permitDataReq: BatchPermitParams = signPermitReq.gasless
-        ? signPermitReq.txType === GaslessTxType.bridge
-          ? {
-              ...basePermitDataReq,
-              gasless: true,
-              txType: GaslessTxType.bridge,
-              swapDataHash: signPermitReq.swapDataHash,
-              executorFeesHash: signPermitReq.executorFeesHash,
-              txId: signPermitReq.txId,
-              adapterDataHash: signPermitReq.adapterDataHash,
-            }
-          : {
-              ...basePermitDataReq,
-              gasless: true,
-              txType: GaslessTxType.swap,
-              swapDataHash: signPermitReq.swapDataHash,
-              executorFeesHash: signPermitReq.executorFeesHash,
-              txId: signPermitReq.txId,
-            }
-        : {
-            ...basePermitDataReq,
-            gasless: false,
-          };
 
       const resp = await PermitTxnHandler.generateBatchPermitDataForTokens(permitDataReq);
 
@@ -203,7 +203,8 @@ class PermitTxnHandler {
 
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
-      const basePermitDataReq = {
+      const permitDataReq = {
+        ...signPermitReq,
         token: {
           ...tokens[dataIdx],
           index: dataIdx,
@@ -218,30 +219,6 @@ class PermitTxnHandler {
         permitType,
         signer,
       };
-
-      const permitDataReq: PermitDataParams = signPermitReq.gasless
-        ? signPermitReq.txType === GaslessTxType.bridge
-          ? {
-              ...basePermitDataReq,
-              gasless: true,
-              txType: GaslessTxType.bridge,
-              swapDataHash: signPermitReq.swapDataHash,
-              executorFeesHash: signPermitReq.executorFeesHash,
-              txId: signPermitReq.txId,
-              adapterDataHash: signPermitReq.adapterDataHash,
-            }
-          : {
-              ...basePermitDataReq,
-              gasless: true,
-              txType: GaslessTxType.swap,
-              swapDataHash: signPermitReq.swapDataHash,
-              executorFeesHash: signPermitReq.executorFeesHash,
-              txId: signPermitReq.txId,
-            }
-        : {
-            ...basePermitDataReq,
-            gasless: false,
-          };
 
       const res = await PermitTxnHandler.generatePermitDataForToken(permitDataReq);
 
