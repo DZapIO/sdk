@@ -23,8 +23,8 @@ export const EIP2612DefaultTypes = {
   ],
 };
 
-export const EIP2612SwapTypes = {
-  Permit: [
+export const DzapUserIntentSwapTypes = {
+  SignedGasLessSwapData: [
     { name: 'txId', type: 'bytes32' },
     { name: 'user', type: 'address' },
     { name: 'nonce', type: 'uint256' },
@@ -34,8 +34,8 @@ export const EIP2612SwapTypes = {
   ],
 };
 
-export const EIP2612BridgeTypes = {
-  Permit: [
+export const DzapUserIntentBridgeTypes = {
+  SignedGasLessBridgeData: [
     { name: 'txId', type: 'bytes32' },
     { name: 'user', type: 'address' },
     { name: 'nonce', type: 'uint256' },
@@ -45,8 +45,8 @@ export const EIP2612BridgeTypes = {
   ],
 };
 
-export const EIP2612SwapBridgeTypes = {
-  Permit: [
+export const DzapUserIntentSwapBridgeTypes = {
+  SignedGasLessSwapBridgeData: [
     { name: 'txId', type: 'bytes32' },
     { name: 'user', type: 'address' },
     { name: 'nonce', type: 'uint256' },

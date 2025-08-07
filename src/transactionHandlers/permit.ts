@@ -113,10 +113,9 @@ class PermitTxnHandler {
   };
 
   public static signGaslessUserIntent = async (signPermitReq: GaslessSignatureParams) => {
-    const { tokens, sender, permitType, isBatchPermitAllowed } = signPermitReq;
+    const { tokens, sender, permitType } = signPermitReq;
 
-    const type =
-      permitType === PermitTypes.AutoPermit && isBatchPermitAllowed ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
+    const type = permitType === PermitTypes.AutoPermit ? PermitTypes.PermitBatchWitnessTransferFrom : permitType;
 
     if (type === PermitTypes.EIP2612Permit) {
       return signGaslessDzapUserIntent({
@@ -159,7 +158,7 @@ class PermitTxnHandler {
         batchPermitData: HexString | null;
       }
   > => {
-    const { chainId, tokens, rpcUrls, sender, signer, signatureCallback, spender, permitType } = signPermitReq;
+    const { chainId, tokens, rpcUrls, sender, signer, signatureCallback, spender, permitType, isBatchPermitAllowed } = signPermitReq;
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
     let firstTokenNonce: bigint | undefined;
 
@@ -167,7 +166,10 @@ class PermitTxnHandler {
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
 
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
-    if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany)) {
+    if (
+      isBatchPermitAllowed &&
+      (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany))
+    ) {
       const permitDataReq = {
         ...signPermitReq,
         tokens: tokens.map((token, index) => ({ ...token, index })),

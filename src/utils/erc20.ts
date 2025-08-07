@@ -198,7 +198,7 @@ export const getAllowance = async ({
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
-      const signatureNeeded = mode !== ApprovalModes.Default;
+      const signatureNeeded = true;
       // @dev: mode is default(eip2612) and token is not supported by eip2612 then approval failed
       const approvalFailed = mode === ApprovalModes.Default && isEIP2612PermitSupported == false ? true : false;
       data[token] = { allowance, approvalNeeded, signatureNeeded, approvalFailed };

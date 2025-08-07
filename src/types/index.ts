@@ -359,11 +359,12 @@ export type TradeStatusResponse = {
 export type EIP2612GaslessExecuteTxParams = {
   permitData: {
     token: HexString;
-    amount: bigint;
+    amount: string;
     permit: HexString;
   }[];
   userGaslessIntentSignature: HexString;
-  gaslessIntentDeadline: bigint;
+  gaslessIntentDeadline: string;
+  userNonce: string;
 };
 export type BatchGaslessExecuteTxParams = {
   batchPermitData: HexString;

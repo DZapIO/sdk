@@ -31,7 +31,7 @@ import {
 import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapStatusRequest, ZapStatusResponse } from 'src/types/zap';
 import { ZapTransactionStep } from 'src/types/zap/step';
 import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
-import { approveToken, getAllowance } from 'src/utils/erc20';
+import { approveToken, getAllowance, hasPermit2ApprovalForAllTokens } from 'src/utils/erc20';
 import { updateTokenListPrices } from 'src/utils/tokens';
 import { updateQuotes } from 'src/utils/updateQuotes';
 import { TransactionReceipt, WalletClient } from 'viem';
@@ -635,7 +635,68 @@ class DZapClient {
 
     return contractAddress;
   }
+  /**
+   * Checks if all provided tokens are already approved for gasless usage via Permit2.
+   *
+   * This utility verifies whether the sender has granted sufficient Permit2 allowances
+   * for each token in the provided list. It exclusively uses the `Permit2` mode under
+   * the Permit2 standard and returns a boolean indicating whether any additional approval is needed.
+   *
+   * @param params - Configuration object for allowance checking
+   * @param params.chainId - The blockchain network ID to check allowances on
+   * @param params.sender - The wallet address whose Permit2 allowances are being checked
+   * @param params.tokens - Array of token objects containing address and required amount
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
+   * @param params.service - The DZap service that will spend the tokens
+   * @param params.spender - Optional custom spender address (defaults to DZap Permit2 contract)
+   *
+   * @returns Promise resolving to an object indicating whether all tokens are approved
+   *
+   * @example
+   * ```typescript
+   * const { isAllTokenApproved } = await hasPermit2ApprovalForAllTokens({
+   *   chainId: 1,
+   *   sender: '0x...',
+   *   tokens: [
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *   ],
+   *   service: 'swap',
+   * });
+   *
+   * if (isAllTokenApproved) {
+   *   console.log('All tokens are already approved via Permit2');
+   * } else {
+   *   console.log('Some tokens require Permit2 approvals');
+   * }
+   * ```
+   */
 
+  public async hasPermit2ApprovalForAllTokens({
+    chainId,
+    sender,
+    tokens,
+    service,
+    rpcUrls,
+    spender,
+  }: {
+    chainId: number;
+    sender: HexString;
+    tokens: { address: HexString; amount: bigint }[];
+    service: AvailableDZapServices;
+    rpcUrls?: string[];
+    spender?: HexString; // Optional custom spender address
+  }) {
+    const chainConfig = await DZapClient.getChainConfig();
+    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    return await hasPermit2ApprovalForAllTokens({
+      chainId,
+      sender,
+      tokens,
+      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      spender: spenderAddress,
+      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
+    });
+  }
   /**
    * Checks current token allowances for a sender address across multiple tokens.
    * This method supports different approval modes (ERC20, Permit2, AutoPermit) and provides

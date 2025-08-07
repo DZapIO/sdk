@@ -6,6 +6,13 @@ export const eip2612GaslessDomain = {
   version: '1',
   salt: keccak256(encodePacked(['string'], ['DZap-v0.1'])),
 };
+
+export const dZapIntentPrimaryType = {
+  SignedGasLessSwapData: 'SignedGasLessSwapData',
+  SignedGasLessSwapBridgeData: 'SignedGasLessSwapBridgeData',
+  SignedGasLessBridgeData: 'SignedGasLessBridgeData',
+};
+
 export const permit2PrimaryType = {
   PermitSingle: 'PermitSingle',
   PermitWitnessTransferFrom: 'PermitWitnessTransferFrom',

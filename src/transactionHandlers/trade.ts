@@ -150,12 +150,13 @@ class TradeTxnHandler {
                 permitData: request.data.map((req) => {
                   return {
                     token: req.srcToken as HexString,
-                    amount: BigInt(req.amount),
+                    amount: req.amount,
                     permit: req.permitData as HexString,
                   };
                 }),
+                userNonce: resp.userIntentData.nonce.toString(),
                 userGaslessIntentSignature: resp.userIntentData.signature,
-                gaslessIntentDeadline: resp.userIntentData.deadline,
+                gaslessIntentDeadline: resp.userIntentData.deadline.toString(),
               };
         const gaslessTxResp: {
           status: TxnStatus;

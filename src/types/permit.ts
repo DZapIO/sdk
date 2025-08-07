@@ -5,7 +5,6 @@ import { StatusCodes, TxnStatus } from 'src/enums';
 import { Address, WalletClient } from 'viem';
 import { HexString, PermitMode } from '.';
 
-//const types
 export const defaultWitnessType = {
   typeName: 'DZapTransferWitness',
   type: {
@@ -93,16 +92,17 @@ type GaslessBaseParams = {
   gasless: true;
   txId: HexString;
   executorFeesHash: HexString;
-  swapDataHash: HexString;
 };
 
 export type GaslessSwapParams = {
   txType: typeof GaslessTxType.swap;
+  swapDataHash: HexString;
 } & GaslessBaseParams;
 
 export type GaslessBridgeParams = {
   txType: typeof GaslessTxType.bridge;
   adapterDataHash: HexString;
+  swapDataHash?: HexString;
 } & GaslessBaseParams;
 
 /**
@@ -158,21 +158,6 @@ type GaslessBridgePermit2Params = {} & BasePermit2Params & GaslessBridgeParams;
 
 export type Permit2Params = DefaultPermit2Params | GaslessSwapPermit2Params | GaslessBridgePermit2Params;
 
-/**
- * Complete permit configuration union
- * Supports both EIP-2612 and Permit2 operations with all gasless variants
- *
- * Type Hierarchy:
- * PermitConfiguration
- * ├── Permit2612Config (EIP-2612 permits)
- * │   ├── StandardPermit2612 (gasless: false)
- * │   ├── GaslessSwapPermit2612 (gasless: true, txType: swap)
- * │   └── GaslessBridgePermit2612 (gasless: true, txType: bridge)
- * └── Permit2Config (Permit2 batch permits)
- *     ├── StandardPermit2 (gasless: false)
- *     ├── GaslessSwapPermit2 (gasless: true, txType: swap)
- *     └── GaslessBridgePermit2 (gasless: true, txType: bridge)
- */
 export type PermitParams = Eip2612Permit | Permit2Params | GaslessDzapPermit;
 
 //Core permit operation response data
