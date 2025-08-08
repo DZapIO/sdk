@@ -122,6 +122,7 @@ export type QuoteFilter = keyof typeof QuoteFilters;
 export type TradeQuotesRequest = {
   integratorId: string;
   fromChain: number;
+  gasless?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
