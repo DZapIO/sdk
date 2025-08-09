@@ -98,12 +98,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dzapio/dzap-sdk.git"
+    "url": "git+https://github.com/dzapio/sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/dzapio/dzap-sdk/issues"
+    "url": "https://github.com/dzapio/sdk/issues"
   },
-  "homepage": "https://github.com/dzapio/dzap-sdk#readme",
+  "homepage": "https://github.com/dzapio/sdk#readme",
   "microbundle": {
     "entry": "src/index.ts",
     "output": "dist",
