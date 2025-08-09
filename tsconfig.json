@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "declaration": true,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": false,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "moduleResolution": "Node",
+    "skipLibCheck": true,
+    "strict": true,
+    "lib": ["ES2021", "DOM"]
+  },
+  "include": ["src/**/*", "examples/**/*", "test/**/*"],
+  "exclude": ["node_modules", "lib", "**/*spec.tx"]
+}
