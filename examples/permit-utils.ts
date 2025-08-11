@@ -20,7 +20,7 @@ async function runPermitExamples() {
   // Replace with your actual address
   const senderAddress = '0xYourWalletAddress' as HexString;
   const tokenToApprove = '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1' as HexString; // DAI
-  const amountToTrade = parseUnits('1000', 18); // 1000 DAI
+  const amountToTrade = parseUnits('1000', 18).toString(); // 1000 DAI
   const rpcUrls = ['https://eth.llamarpc.com'];
 
   // A. CHECK ALLOWANCE
