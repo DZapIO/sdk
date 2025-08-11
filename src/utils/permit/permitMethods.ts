@@ -1,4 +1,4 @@
-import { ethers, Wallet } from 'ethers';
+import { ethers, Signer } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
 import { zeroAddress } from 'src/constants/address';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
@@ -74,7 +74,7 @@ export const getEIP2612PermitSignature = async ({
   rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
 }): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
     const address = token as HexString;
