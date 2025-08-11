@@ -1,4 +1,4 @@
-import { Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { Services } from 'src/constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
 import { erc20PermitFunctions } from 'src/constants/erc20';
@@ -7,9 +7,9 @@ import { PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
 import { WalletClient, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
+import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
-import { generateDeadline } from '../date';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -35,7 +35,7 @@ export async function getPermit2Signature({
   rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
   expiration?: bigint;
 }) {
   try {

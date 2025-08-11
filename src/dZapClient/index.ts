@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer, Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { Services } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
@@ -607,7 +607,7 @@ class DZapClient {
    *   chainId: 1,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2
@@ -627,7 +627,7 @@ class DZapClient {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString; // Optional custom spender address
@@ -670,7 +670,7 @@ class DZapClient {
    *   signer: walletClient,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2,
@@ -692,7 +692,7 @@ class DZapClient {
   }: {
     chainId: number;
     signer: WalletClient | Signer;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     approvalTxnCallback?: ({
       txnDetails,
       address,
@@ -769,7 +769,7 @@ class DZapClient {
       amount: string;
     }[];
     service: AvailableDZapServices;
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
     permitType?: PermitMode;
@@ -781,7 +781,7 @@ class DZapClient {
     }: {
       permitData: HexString;
       srcToken: string;
-      amount: bigint;
+      amount: string;
       permitType: PermitMode;
     }) => Promise<void>;
   }) {
