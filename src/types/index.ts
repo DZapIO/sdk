@@ -129,9 +129,9 @@ export type TradeQuotesRequest = {
 export type TradeQuotesRequestData = {
   amount: string;
   srcToken: string;
-  srcDecimals: number;
+  srcDecimals?: number;
   destToken: string;
-  destDecimals: number;
+  destDecimals?: number;
   toChain: number;
   slippage: number;
   selectedSource?: string;
@@ -239,9 +239,9 @@ export type TradeBuildTxnRequest = {
 export type TradeBuildTxnRequestData = {
   amount: string;
   srcToken: string;
-  srcDecimals: number;
+  srcDecimals?: number;
   destToken: string;
-  destDecimals: number;
+  destDecimals?: number;
   toChain: number;
   selectedRoute: string;
   recipient: string;
