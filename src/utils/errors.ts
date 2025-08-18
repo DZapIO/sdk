@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
+import { HexString, OnChainError } from 'src/types';
 import { decodeAbiParameters, parseAbiParameters } from 'viem';
 
 export const BRIDGE_ERRORS = {
@@ -25,8 +25,9 @@ export const isAxiosError = (error: unknown): error is AxiosError => {
   return Boolean(error) && (error as AxiosError).isAxiosError;
 };
 
-export const handleViemTransactionError = ({ error }: { error: any }) => {
-  if (error?.code === StatusCodes.WalletRPCFailure || error?.cause?.code === StatusCodes.WalletRPCFailure) {
+export const handleViemTransactionError = ({ error }: { error: unknown }) => {
+  const errorDetails = error as OnChainError;
+  if (errorDetails?.code === StatusCodes.WalletRPCFailure || errorDetails?.cause?.code === StatusCodes.WalletRPCFailure) {
     return {
       error,
       errorMsg: 'Too many requests, failure on user wallet',
@@ -34,7 +35,7 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
       status: TxnStatus.error,
     };
   }
-  if (error?.code === StatusCodes.UserRejectedRequest || error?.cause?.code === StatusCodes.UserRejectedRequest) {
+  if (errorDetails?.code === StatusCodes.UserRejectedRequest || errorDetails?.cause?.code === StatusCodes.UserRejectedRequest) {
     return {
       error,
       errorMsg: 'Rejected by User',
@@ -42,15 +43,18 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
       status: TxnStatus.rejected,
     };
   }
-  let errMsg = error.shortMessage;
+  let errMsg = errorDetails.shortMessage;
 
-  const errName = getErrorName(error.metaMessages[0]);
+  const errName = getErrorName(errorDetails.metaMessages[0]);
 
   if (errName == BRIDGE_ERRORS.BridgeCallFailed) {
-    let msg = error.metaMessages[1];
+    let msg = errorDetails.metaMessages[1];
     try {
-      msg = getRevertMsg(error.metaMessages[1].match(/\((.*?)\)/)[1]);
-    } catch (err) {
+      const match = errorDetails.metaMessages[1].match(/\((.*?)\)/);
+      if (match) {
+        msg = getRevertMsg(match[1]);
+      }
+    } catch {
       // pass
     }
     errMsg = `${BRIDGE_ERRORS.BridgeCallFailed} : ${msg}`;

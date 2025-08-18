@@ -17,7 +17,7 @@ export const signTypedData = async ({
   signer: WalletClient | Signer;
   domain: TypedDataDomain;
   types: Record<string, Array<TypedDataField>>;
-  message: Record<string, any>;
+  message: Record<string, unknown>;
   account: string;
   primaryType: string;
 }): Promise<HexString> => {

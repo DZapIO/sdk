@@ -3,7 +3,7 @@ import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
 import { zeroAddress } from 'src/constants/address';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { PermitType, StatusCodes, TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
+import { HexString, OnChainError } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, WalletClient } from 'viem';
 import { generateDeadline } from '../date';
@@ -139,9 +139,10 @@ export const getEIP2612PermitSignature = async ({
       code: StatusCodes.Success,
       permitData,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.log('Error generating permit signature:', error);
-    if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
+    const onChainError = error as OnChainError;
+    if (onChainError?.cause?.code === StatusCodes.UserRejectedRequest || onChainError?.code === StatusCodes.UserRejectedRequest) {
       return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
     }
     return { status: TxnStatus.error, code: StatusCodes.Error };

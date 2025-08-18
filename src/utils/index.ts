@@ -11,11 +11,10 @@ import {
   http,
   isAddress,
   parseEventLogs,
-  stringToHex,
 } from 'viem';
 import * as ABI from '../artifacts';
 import { batchSwapIntegrators } from '../config';
-import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
+import { AvailableDZapServices, Chain, HexString, OnChainError, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
 import { nativeTokens, zeroAddress } from 'src/constants/address';
@@ -89,9 +88,9 @@ export const readContract = async ({
       args,
     });
     return { data: result, status: TxnStatus.success, code: StatusCodes.Success };
-  } catch (e: any) {
+  } catch (e) {
     console.log({ e });
-    return { status: TxnStatus.error, code: e.code || StatusCodes.Error };
+    return { status: TxnStatus.error, code: (e as OnChainError)?.code || StatusCodes.Error };
   }
 };
 
@@ -126,12 +125,12 @@ export const writeContract = async ({
     });
     const hash = await signer.writeContract(request);
     return { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
-  } catch (e: any) {
-    console.log({ e });
-    if (e?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, code: e?.code, txnHash: '' };
+  } catch (e) {
+    const onChainError = e as OnChainError;
+    if (onChainError?.code === StatusCodes.UserRejectedRequest) {
+      return { status: TxnStatus.rejected, code: onChainError?.code, txnHash: '' };
     }
-    return { status: TxnStatus.error, code: e?.code, txnHash: '' };
+    return { status: TxnStatus.error, code: onChainError?.code || StatusCodes.Error, txnHash: '' };
   }
 };
 
@@ -145,35 +144,9 @@ export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: strin
 
 export const getIntegratorInfo = (integrator: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
 
-export const generateUUID = () => {
-  let d = new Date().getTime();
-  let d2 = (typeof performance !== 'undefined' && performance.now && performance.now() * 1000) || 0;
-  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx'.replace(/[xy]/g, (c) => {
-    let r = Math.random() * 16;
-    if (d > 0) {
-      r = (d + r) % 16 | 0;
-      d = Math.floor(d / 16);
-    } else {
-      r = (d2 + r) % 16 | 0;
-      d2 = Math.floor(d2 / 16);
-    }
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-  const uuidInBytes = stringToHex(uuid, { size: 32 });
-  return uuidInBytes;
-};
-
-export const getTrxId = (account: string) => {
-  const uuid = `${account.slice(0, 6)}...${account.slice(36, 42)}-${Date.now()}`;
-  console.log(uuid);
-
-  const uuidInBytes = stringToHex(uuid, { size: 32 });
-  return uuidInBytes;
-};
-
 export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
-export const isTypeSigner = (variable: any): variable is Signer => {
+export const isTypeSigner = (variable: unknown): variable is Signer => {
   return variable instanceof Signer;
 };
 
@@ -196,18 +169,18 @@ export const handleDecodeTxnData = (
   service: AvailableDZapServices,
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
-  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
+  let events: ParseEventLogsReturnType<Abi, undefined, true, string> = [];
   const dZapAbi = getDZapAbi(service);
   try {
     events = parseEventLogs({
       abi: dZapAbi,
       logs: data.logs,
     });
-  } catch (e) {
+  } catch {
     events = [];
   }
 
-  events = events?.filter((item: any) => item !== null);
+  events = events?.filter((item) => item !== null);
   const txLogArgs = events[0]?.args as { swapInfo: SwapInfo | SwapInfo[] };
   const swapFailPairs: string[] = [];
 

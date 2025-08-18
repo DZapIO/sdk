@@ -34,6 +34,14 @@ export type ContractErrorResponse = {
   action: keyof typeof contractErrorActions;
   details?: unknown;
 };
+
+export type OnChainError = {
+  code?: number;
+  cause?: { code?: number };
+  shortMessage: string;
+  metaMessages: string[];
+};
+
 export type CalculatePointsRequest = {
   srcTokens: { amount: string; address: string; decimals: number }[];
   destTokens: { amount: string; address: string; decimals: number }[];

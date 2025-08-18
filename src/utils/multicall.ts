@@ -1,4 +1,5 @@
 import { StatusCodes, TxnStatus } from 'src/enums';
+import { OnChainError } from 'src/types';
 import { MulticallParameters } from 'viem';
 import { getPublicClient } from './index';
 
@@ -28,11 +29,11 @@ export const multicall = async ({
       code: StatusCodes.Success,
       data: results,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Multicall failed:', error);
     return {
       status: TxnStatus.error,
-      code: error.code || StatusCodes.Error,
+      code: (error as OnChainError)?.code || StatusCodes.Error,
       data: [],
     };
   }

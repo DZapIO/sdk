@@ -59,7 +59,7 @@ class TradeTxnHandler {
           additionalInfo,
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       console.log({ error });
       if (isAxiosError(error)) {
         if (error?.response?.status === StatusCodes.SimulationFailure) {
@@ -73,7 +73,7 @@ class TradeTxnHandler {
         }
         return {
           status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
+          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as ContractErrorResponse).message),
           error: error?.response?.data ?? error,
           code: error?.response?.status ?? StatusCodes.Error,
         };

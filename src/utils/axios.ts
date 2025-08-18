@@ -6,7 +6,7 @@ import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
 
 type Invoke = {
   endpoint: string;
-  data?: any;
+  data?: unknown;
   method?: Method;
   cancelToken?: CancelToken;
   shouldRetry?: boolean;
