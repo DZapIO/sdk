@@ -30,15 +30,15 @@ import {
   TradeStatusResponse,
   TradeStep,
 } from './types';
-import { PsbtInput, PsbtOutput } from './types/btc';
+import type { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
 
 import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
-import { WalletCallReceipt } from './types/wallet';
-import { ZapStatusResponse } from './types/zap';
+import type { WalletCallReceipt } from './types/wallet';
+import type { ZapStatusResponse } from './types/zap';
 import { isBatchTxnSupportedByWallet } from './utils/eip-5792/isBatchTxnSupportedByWallet';
 import { checkEIP2612PermitSupport } from './utils/permit/permitMethods';
 
@@ -46,36 +46,41 @@ export * from './types/zap';
 export * from './zap/constants';
 
 export {
-  ApiRpcResponse,
-  ApprovalMode,
   ApprovalModes,
-  Chain,
-  ChainData,
   checkEIP2612PermitSupport,
-  contractErrorActions,
-  ContractErrorResponse,
   DZapClient,
-  DZapTransactionResponse,
   erc20Functions,
-  ExecuteTxnData,
-  Fee,
-  FeeDetails,
   formatToken,
   getTokensPairKey,
-  HexString,
   OtherAbis,
-  PermitMode,
   PermitType,
   PermitTypes,
-  ProviderDetails,
-  PsbtInput,
-  PsbtOutput,
-  QuoteFilter,
   QuoteFilters,
   Services,
   SignatureExpiryInSecs,
   STATUS,
   StatusCodes,
+  TxnStatus,
+  isBatchTxnSupportedByWallet,
+};
+
+export type {
+  ApiRpcResponse,
+  ApprovalMode,
+  Chain,
+  ChainData,
+  contractErrorActions,
+  ContractErrorResponse,
+  DZapTransactionResponse,
+  ExecuteTxnData,
+  Fee,
+  FeeDetails,
+  HexString,
+  PermitMode,
+  ProviderDetails,
+  PsbtInput,
+  PsbtOutput,
+  QuoteFilter,
   SwapInfo,
   Token,
   TokenInfo,
@@ -89,8 +94,6 @@ export {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
-  TxnStatus,
   ZapStatusResponse,
   WalletCallReceipt,
-  isBatchTxnSupportedByWallet,
 };

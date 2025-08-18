@@ -1002,7 +1002,7 @@ class DZapClient {
    * const calls  = [{
    *   to: '0x...',
    *   data: '0x...',
-   *   value: '0x...',
+   *   value: 0n,
    * }]
    * const result = await client.sendBatchCalls({
    *   walletClient: walletClient,
@@ -1010,7 +1010,7 @@ class DZapClient {
    * });
    * ```
    */
-  public async sendBatchCalls({ walletClient, calls }: { walletClient: WalletClient; calls: BatchCallParams[]; atomicRequired?: boolean }) {
+  public async sendBatchCalls({ walletClient, calls }: { walletClient: WalletClient; calls: BatchCallParams[] }) {
     return await sendBatchCalls(walletClient, calls);
   }
 }

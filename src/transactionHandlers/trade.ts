@@ -83,8 +83,11 @@ class TradeTxnHandler {
 
     const batchResult = await sendBatchCalls(signer, batchCalls);
     if (!batchResult) {
-      console.log('Batch calls failed, falling back to regular transaction.');
-      return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+      return {
+        status: TxnStatus.error,
+        errorMsg: 'Batch call failed',
+        code: StatusCodes.Error,
+      };
     }
 
     console.log('Waiting for batch transaction completion...');
