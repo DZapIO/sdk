@@ -37,8 +37,10 @@ import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
-import { checkEIP2612PermitSupport } from './utils/permit/permitMethods';
+import { WalletCallReceipt } from './types/wallet';
 import { ZapStatusResponse } from './types/zap';
+import { isBatchTxnSupportedByWallet } from './utils/eip-5792/isBatchTxnSupportedByWallet';
+import { checkEIP2612PermitSupport } from './utils/permit/permitMethods';
 
 export * from './types/zap';
 export * from './zap/constants';
@@ -85,8 +87,10 @@ export {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeStatusResponse,
   TradeStep,
   TxnStatus,
-  TradeStatusResponse,
   ZapStatusResponse,
+  WalletCallReceipt,
+  isBatchTxnSupportedByWallet,
 };
