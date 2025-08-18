@@ -61,6 +61,7 @@ export {
   STATUS,
   StatusCodes,
   TxnStatus,
+  contractErrorActions,
   isBatchTxnSupportedByWallet,
 };
 
@@ -69,7 +70,6 @@ export type {
   ApprovalMode,
   Chain,
   ChainData,
-  contractErrorActions,
   ContractErrorResponse,
   DZapTransactionResponse,
   ExecuteTxnData,
