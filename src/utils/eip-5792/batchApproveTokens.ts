@@ -1,4 +1,3 @@
-import { Signer } from 'ethers';
 import { HexString } from 'src/types';
 import { type WalletClient } from 'viem';
 import { encodeApproveCallData } from '../encodeApproveCall';
@@ -53,7 +52,7 @@ export async function generateApprovalBatchCalls({
  * Batch approve multiple tokens using EIP-5792 if supported.
  */
 export async function batchApproveTokens(
-  walletClient: WalletClient | Signer,
+  walletClient: WalletClient,
   tokens: Array<{
     address: HexString;
     amount: bigint;
@@ -73,7 +72,7 @@ export async function batchApproveTokens(
   if (approveCalls.length === 0) {
     return { success: true };
   }
-  const batchResult = await sendBatchCalls(walletClient as WalletClient, approveCalls);
+  const batchResult = await sendBatchCalls(walletClient, approveCalls);
   return {
     success: Boolean(batchResult),
     batchId: batchResult?.id,
