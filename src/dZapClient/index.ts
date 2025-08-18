@@ -421,6 +421,7 @@ class DZapClient {
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
    * @param params.batchTransaction - Optional flag to enable batch transaction. If true, the transaction will be sent as a batch transaction with EIP-5792.
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to the transaction execution result
    *
    * @example
@@ -447,13 +448,15 @@ class DZapClient {
     signer,
     txnData,
     batchTransaction = false,
+    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
     batchTransaction?: boolean;
+    rpcUrls?: string[];
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction });
+    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction, rpcUrls });
   }
 
   /**

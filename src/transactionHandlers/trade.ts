@@ -56,6 +56,7 @@ class TradeTxnHandler {
     chainId: number,
     additionalInfo: AdditionalInfo | undefined,
     updatedQuotes: Record<string, string>,
+    rpcUrls?: string[],
   ): Promise<DZapTransactionResponse> => {
     const approvalBatchCalls = await generateApprovalBatchCalls({
       tokens: request.data.map((token) => ({
@@ -65,6 +66,7 @@ class TradeTxnHandler {
       chainId,
       sender: txnParams.from as HexString,
       spender: txnParams.to as HexString,
+      rpcUrls,
     });
 
     const batchCalls: BatchCallParams[] = [
@@ -107,11 +109,13 @@ class TradeTxnHandler {
     signer,
     txnData,
     batchTransaction = false,
+    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
     batchTransaction: boolean;
+    rpcUrls?: string[];
   }): Promise<DZapTransactionResponse> => {
     try {
       const chainId = request.fromChain;
@@ -129,7 +133,7 @@ class TradeTxnHandler {
 
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
-        return this.sendTxnWithBatch(request, signer, txnParams, chainId, additionalInfo, updatedQuotes);
+        return this.sendTxnWithBatch(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, rpcUrls);
       }
 
       console.log('Using viem walletClient - sending regular transaction.');
