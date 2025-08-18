@@ -995,7 +995,6 @@ class DZapClient {
    * @param params
    * @param params.walletClient - The wallet client
    * @param params.calls - The calls to send
-   * @param params.atomicRequired - Whether atomic is required
    * @returns Promise resolving to batch call result
    *
    * @example

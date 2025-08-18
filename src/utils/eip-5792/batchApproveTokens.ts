@@ -1,6 +1,6 @@
 import { Signer } from 'ethers';
 import { HexString } from 'src/types';
-import { type Hash, type WalletClient } from 'viem';
+import { type WalletClient } from 'viem';
 import { encodeApproveCallData } from '../encodeApproveCall';
 import { getAllowance } from '../erc20';
 import { isDZapNativeToken } from '../index';
@@ -50,7 +50,7 @@ export async function generateApprovalBatchCalls({
 }
 
 /**
- * Batch approve multiple tokens using EIP-5792 if supported, fallback to individual approvals
+ * Batch approve multiple tokens using EIP-5792 if supported.
  */
 export async function batchApproveTokens(
   walletClient: WalletClient | Signer,
@@ -62,7 +62,7 @@ export async function batchApproveTokens(
   spender: HexString,
   sender: HexString,
   rpcUrls?: string[],
-): Promise<{ success: boolean; txHash?: Hash; batchId?: string }> {
+): Promise<{ success: boolean; batchId?: string }> {
   const approveCalls = await generateApprovalBatchCalls({
     tokens,
     chainId,

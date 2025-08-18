@@ -23,7 +23,7 @@ export async function sendBatchCalls(walletClient: WalletClient, calls: BatchCal
       calls: calls.map((call) => ({
         to: call.to,
         data: call.data,
-        value: call.value || BigInt(0),
+        value: call.value ?? BigInt(0),
       })),
     });
     return result;
