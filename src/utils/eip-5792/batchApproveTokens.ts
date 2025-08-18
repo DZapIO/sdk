@@ -17,7 +17,7 @@ export async function generateApprovalBatchCalls({
 }: {
   tokens: Array<{
     address: HexString;
-    amount: bigint;
+    amount: string;
   }>;
   chainId: number;
   sender: HexString;
@@ -42,7 +42,7 @@ export async function generateApprovalBatchCalls({
     to: token.address,
     data: encodeApproveCallData({
       spender,
-      amount: token.amount,
+      amount: BigInt(token.amount),
     }),
     value: BigInt(0),
   }));
@@ -55,7 +55,7 @@ export async function batchApproveTokens(
   walletClient: WalletClient,
   tokens: Array<{
     address: HexString;
-    amount: bigint;
+    amount: string;
   }>,
   chainId: number,
   spender: HexString,

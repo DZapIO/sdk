@@ -61,7 +61,7 @@ class TradeTxnHandler {
     const approvalBatchCalls = await generateApprovalBatchCalls({
       tokens: request.data.map((token) => ({
         address: token.srcToken as HexString,
-        amount: BigInt(token.amount),
+        amount: token.amount,
       })),
       chainId,
       sender: txnParams.from as HexString,
