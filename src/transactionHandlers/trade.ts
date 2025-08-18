@@ -118,7 +118,7 @@ class TradeTxnHandler {
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
-        buildTxnResponseData = await fetchTradeBuildTxnData({ ...request, disableEstimation: true });
+        buildTxnResponseData = await fetchTradeBuildTxnData(request);
       }
 
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
