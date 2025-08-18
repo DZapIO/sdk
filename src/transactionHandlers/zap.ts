@@ -52,7 +52,7 @@ class ZapTxnHandler {
           txnHash,
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
@@ -101,7 +101,7 @@ class ZapTxnHandler {
           txnHash,
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
@@ -152,7 +152,7 @@ class ZapTxnHandler {
         code: StatusCodes.Success,
         txnHash,
       };
-    } catch (error: any) {
+    } catch (error) {
       console.log({ error });
       return handleViemTransactionError({ error });
     }

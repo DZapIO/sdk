@@ -57,7 +57,7 @@ export const approveToken = async ({
         code: StatusCodes.Success,
       };
     } else {
-      txnDetails = await writeContract({
+      const result = await writeContract({
         chainId,
         contractAddress: tokens[dataIdx].address,
         abi: erc20Abi,
@@ -66,6 +66,10 @@ export const approveToken = async ({
         rpcUrls,
         signer,
       });
+      txnDetails = {
+        ...result,
+        code: result.code ?? StatusCodes.Error,
+      };
     }
     if (txnDetails.code !== StatusCodes.Success) {
       return {
@@ -202,7 +206,7 @@ export const getAllowance = async ({
     }
 
     return { status: TxnStatus.success, code: StatusCodes.Success, data };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Multicall allowance check failed:', error);
     return { status: TxnStatus.error, code: StatusCodes.Error, data };
   }
