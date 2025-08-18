@@ -66,10 +66,7 @@ export const approveToken = async ({
         rpcUrls,
         signer,
       });
-      txnDetails = {
-        ...result,
-        code: result.code ?? StatusCodes.Error,
-      };
+      txnDetails = result;
     }
     if (txnDetails.code !== StatusCodes.Success) {
       return {

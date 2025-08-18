@@ -130,7 +130,7 @@ export const writeContract = async ({
     if (onChainError?.code === StatusCodes.UserRejectedRequest) {
       return { status: TxnStatus.rejected, code: onChainError?.code, txnHash: '' };
     }
-    return { status: TxnStatus.error, code: onChainError?.code, txnHash: '' };
+    return { status: TxnStatus.error, code: onChainError?.code || StatusCodes.Error, txnHash: '' };
   }
 };
 
