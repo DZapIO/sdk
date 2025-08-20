@@ -1,4 +1,17 @@
-export const ZAP_BUILD_TX_URL = 'buildTx';
-export const ZAP_QUOTE_URL = 'quote';
-
-export const ZAP_TXN_STATUS_URL = 'status';
+export const ZAP_ENDPOINTS = {
+  status: '/status',
+  config: {
+    chains: '/config/chains',
+    providers: '/config/providers',
+  },
+  pools: '/pools',
+  poolDetails: '/pool/details',
+  route: '/route',
+  positions: '/user/positions',
+  buildTx: '/buildTx',
+  quote: '/quote',
+  token: {
+    base: '/token',
+    details: (address: string, chainId: number) => `/token/details?address=${address}&chainId=${chainId}`,
+  },
+};
