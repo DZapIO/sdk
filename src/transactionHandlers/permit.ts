@@ -6,7 +6,7 @@ import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
 import { WalletClient } from 'viem';
 
-import { Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 
@@ -34,7 +34,7 @@ class PermitTxnHandler {
     sender: HexString;
     spender: HexString;
     permitType: PermitMode;
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     service: AvailableDZapServices;
     permitEIP2612DisabledTokens?: string[];
   }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
@@ -47,7 +47,7 @@ class PermitTxnHandler {
       };
     }
 
-    const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(token.amount);
+    const amount = oneToMany && isFirstToken ? totalSrcAmount : token.amount;
     const eip2612PermitData = await checkEIP2612PermitSupport({
       address: token.address,
       chainId,
@@ -72,7 +72,7 @@ class PermitTxnHandler {
         account: sender,
         token: token.address,
         spender,
-        amount,
+        amount: BigInt(amount),
         signer,
         rpcUrls,
         version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
@@ -97,7 +97,7 @@ class PermitTxnHandler {
           account: sender,
           token: token.address,
           spender,
-          amount,
+          amount: BigInt(amount),
           service,
           signer,
           rpcUrls,
@@ -133,7 +133,7 @@ class PermitTxnHandler {
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     signatureCallback?: ({
       permitData,
       srcToken,
@@ -142,7 +142,7 @@ class PermitTxnHandler {
     }: {
       permitData: HexString;
       srcToken: HexString;
-      amount: bigint;
+      amount: string;
       permitType: PermitMode;
     }) => Promise<void>;
     spender: HexString;
@@ -191,7 +191,7 @@ class PermitTxnHandler {
       tokens[dataIdx].permitData = permitData;
 
       if (signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
-        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokens[dataIdx].amount);
+        const amount = oneToMany && isFirstToken ? totalSrcAmount.toString() : tokens[dataIdx].amount;
         await signatureCallback({
           permitData,
           srcToken: tokens[dataIdx].address as HexString,
