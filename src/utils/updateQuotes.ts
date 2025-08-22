@@ -63,7 +63,7 @@ export const updateQuotes = async (
         data.destAmountUSD = calculateAmountUSD(data.destAmount, destDecimals, destTokenPricePerUnit);
       }
       if (Number(data.srcAmountUSD) && Number(data.destAmountUSD)) {
-        const priceImpact = new Decimal(data.destAmountUSD).minus(data.srcAmountUSD).div(data.srcAmountUSD).mul(100);
+        const priceImpact = new Decimal(data.srcAmountUSD).minus(data.destAmountUSD).div(data.srcAmountUSD).mul(100);
         data.priceImpactPercent = priceImpact.toFixed(2);
       }
       const { isUpdated, fee } = updateFee(data.fee, tokensPrice);

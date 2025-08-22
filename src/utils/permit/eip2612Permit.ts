@@ -1,11 +1,13 @@
-import { ethers, Wallet } from 'ethers';
+import { ethers } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
 import { zeroAddress } from 'src/constants/address';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
-import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, WalletClient } from 'viem';
+
+import { Permit2612Config } from 'src/types/permit';
+import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
@@ -61,23 +63,12 @@ export const getEIP2612PermitSignature = async ({
   account,
   token,
   signer,
-  version,
   rpcUrls,
-  amount = maxUint256,
-  sigDeadline = generateDeadline(SignatureExpiryInSecs),
-}: {
-  chainId: number;
-  account: HexString;
-  token: HexString;
-  spender: HexString;
-  version: string;
-  rpcUrls?: string[];
-  sigDeadline?: bigint;
-  amount?: bigint;
-  signer: WalletClient | Wallet;
-}): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+  version,
+  deadline: sigDeadline = generateDeadline(SignatureExpiryInSecs),
+}: Permit2612Config): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
-    const address = token as HexString;
+    const { address, amount = maxUint256 } = token;
     const owner = account as HexString;
     const deadline = sigDeadline;
 

@@ -4,7 +4,7 @@ import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
-import { Permit2Params, PermitResponse } from '../../types/permit';
+import { BasePermitResponse, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
 import { getPermit2Values } from './getPermit2Values';
@@ -15,9 +15,9 @@ export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
 }
 
-export const getPermit2Signature = async (params: Permit2Params): Promise<Omit<PermitResponse, 'permitType'>> => {
+export const getPermit2Signature = async (params: Permit2Params): Promise<BasePermitResponse> => {
   try {
-    const { chainId, account, tokens, spender, rpcUrls, sigDeadline, signer, permitType, firstTokenNonce } = params;
+    const { chainId, account, tokens, spender, rpcUrls, deadline: sigDeadline, signer, permitType, firstTokenNonce } = params;
     const deadline = sigDeadline ?? generateDeadline(SignatureExpiryInSecs);
     const expiration = params.expiration ?? maxUint48;
 
