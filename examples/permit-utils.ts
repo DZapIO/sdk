@@ -92,7 +92,6 @@ async function runPermitExamples() {
             amount: amountToTrade.toString(),
           },
         ],
-        gasless: false,
         signatureCallback: async (params: SignatureCallbackParams) => {
           console.log(`Signature received for`, params);
         },

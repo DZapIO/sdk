@@ -10,7 +10,6 @@ export const tonNativeToken = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c'
 export const artheraNativeToken = '0x000000000000000000000000000000000000aA09';
 export const suiNativeToken = '0x2::sui::SUI';
 export const aptosNativeToken = '0x1::aptos_coin::AptosCoin';
-export const celoNativeToken = '0x471EcE3750Da237f93B8E339c536989b8978a438';
 
 export const nativeTokens: string[] = [
   '0x0000000000000000000000000000000000001010',
@@ -24,5 +23,4 @@ export const nativeTokens: string[] = [
   artheraNativeToken,
   suiNativeToken,
   aptosNativeToken,
-  celoNativeToken,
 ];
