@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
+import { Signer, Wallet } from 'ethers';
 import { Services } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
@@ -19,6 +19,7 @@ import {
   HexString,
   OtherAvailableAbis,
   PermitMode,
+  SignatureCallbackParams,
   TokenInfo,
   TokenResponse,
   TradeBuildTxnRequest,
@@ -796,21 +797,11 @@ class DZapClient {
       amount: string;
     }[];
     service: AvailableDZapServices;
-    signer: WalletClient | Signer;
+    signer: WalletClient | Wallet;
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
     permitType?: PermitMode;
-    signatureCallback?: ({
-      permitData,
-      srcToken,
-      amount,
-      permitType,
-    }: {
-      permitData: HexString;
-      srcToken: string;
-      amount: string;
-      permitType: PermitMode;
-    }) => Promise<void>;
+    signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
   }) {
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();

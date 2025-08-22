@@ -1,19 +1,44 @@
+import { Wallet } from 'ethers';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
-import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
-import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
-import { WalletClient } from 'viem';
-
-import { Signer } from 'ethers';
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
+import { StatusCodes, TxnStatus } from 'src/enums';
+import { AvailableDZapServices, BatchPermitCallbackParams, HexString, PermitMode, SignatureCallbackParams } from 'src/types';
+import { BatchPermitResponse, GenerateBatchPermitParams, GeneratePermitDataParams, PermitResponse } from 'src/types/permit';
+import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
+import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
+import { getPermit2Signature } from 'src/utils/permit/permit2';
+import { WalletClient } from 'viem';
 
 class PermitTxnHandler {
+  static generateBatchPermitDataForTokens = async ({
+    tokens,
+    chainId,
+    rpcUrls,
+    sender,
+    spender,
+    signer,
+    service,
+  }: GenerateBatchPermitParams): Promise<BatchPermitResponse> => {
+    const resp = await getPermit2Signature({
+      chainId,
+      account: sender,
+      tokens: tokens.map((token, index) => ({ ...token, index })),
+      spender,
+      service,
+      signer,
+      rpcUrls,
+      permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+    });
+    return {
+      ...resp,
+      permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+    };
+  };
+
   static generatePermitDataForToken = async ({
     token,
-    isFirstToken,
+    firstTokenNonce,
     oneToMany,
     totalSrcAmount,
     chainId,
@@ -24,30 +49,19 @@ class PermitTxnHandler {
     signer,
     service,
     permitEIP2612DisabledTokens,
-  }: {
-    token: { address: HexString; amount: string };
-    isFirstToken: boolean;
-    oneToMany: boolean;
-    totalSrcAmount: bigint;
-    chainId: number;
-    rpcUrls?: string[];
-    sender: HexString;
-    spender: HexString;
-    permitType: PermitMode;
-    signer: WalletClient | Signer;
-    service: AvailableDZapServices;
-    permitEIP2612DisabledTokens?: string[];
-  }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
+  }: GeneratePermitDataParams): Promise<PermitResponse> => {
+    const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,
         permitData: DEFAULT_PERMIT_DATA,
+        nonce: BigInt(0), // For native tokens, nonce is not used
         permitType: PermitTypes.EIP2612Permit,
       };
     }
 
-    const amount = oneToMany && isFirstToken ? totalSrcAmount : token.amount;
+    const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(token.amount);
     const eip2612PermitData = await checkEIP2612PermitSupport({
       address: token.address,
       chainId,
@@ -64,6 +78,7 @@ class PermitTxnHandler {
           status: TxnStatus.success,
           code: StatusCodes.Success,
           permitData: DEFAULT_PERMIT_DATA,
+          nonce: BigInt(0), // For EIP2612 permits, nonce is not used it's already set in permitData
           permitType: PermitTypes.EIP2612Permit,
         };
       }
@@ -72,7 +87,7 @@ class PermitTxnHandler {
         account: sender,
         token: token.address,
         spender,
-        amount: BigInt(amount),
+        amount,
         signer,
         rpcUrls,
         version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
@@ -81,32 +96,36 @@ class PermitTxnHandler {
         status,
         code,
         permitData: permitData as HexString,
+        nonce: BigInt(0), // For EIP2612 permits, nonce is not used
         permitType: PermitTypes.EIP2612Permit,
       };
     } else {
+      // If permitType is AutoPermit, set to PermitWitnessTransferFrom; otherwise, use the selected permitType
+      const normalizedPermitType = permitType === PermitTypes.AutoPermit ? PermitTypes.PermitWitnessTransferFrom : permitType;
+
       if (oneToMany && !isFirstToken) {
         return {
           status: TxnStatus.success,
           code: StatusCodes.Success,
           permitData: DEFAULT_PERMIT2_DATA,
-          permitType: PermitTypes.Permit2,
+          nonce: BigInt(0), // For one-to-many non-first tokens, nonce is not used
+          permitType: normalizedPermitType,
         };
       } else {
-        const { status, code, permitData } = await getPermit2Signature({
+        const resp = await getPermit2Signature({
           chainId,
           account: sender,
-          token: token.address,
+          tokens: [token],
           spender,
-          amount: BigInt(amount),
           service,
           signer,
           rpcUrls,
+          permitType: normalizedPermitType,
+          firstTokenNonce,
         });
         return {
-          status,
-          code,
-          permitData: permitData as HexString,
-          permitType: PermitTypes.Permit2,
+          ...resp,
+          permitType: normalizedPermitType,
         };
       }
     }
@@ -133,45 +152,73 @@ class PermitTxnHandler {
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    signer: WalletClient | Signer;
-    signatureCallback?: ({
-      permitData,
-      srcToken,
-      amount,
-      permitType,
-    }: {
-      permitData: HexString;
-      srcToken: HexString;
-      amount: string;
-      permitType: PermitMode;
-    }) => Promise<void>;
+    signer: WalletClient | Wallet;
+    signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
     permitEIP2612DisabledTokens?: string[];
-  }): Promise<{
-    status: TxnStatus;
-    tokens: {
-      address: HexString;
-      permitData?: HexString;
-      amount: string;
-    }[];
-    code: StatusCodes;
-  }> => {
+  }): Promise<
+    | {
+        status: TxnStatus;
+        code: StatusCodes;
+        tokens: {
+          address: HexString;
+          permitData?: HexString;
+          amount: string;
+        }[];
+      }
+    | {
+        status: TxnStatus;
+        code: StatusCodes;
+        batchPermitData: HexString | null;
+      }
+  > => {
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
+    let firstTokenNonce: bigint | undefined;
 
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
 
+    // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
+    if (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany)) {
+      const resp = await PermitTxnHandler.generateBatchPermitDataForTokens({
+        tokens,
+        chainId,
+        rpcUrls,
+        sender,
+        spender,
+        signer,
+        service,
+        permitEIP2612DisabledTokens,
+      });
+
+      if (resp.status !== TxnStatus.success) {
+        return { status: resp.status, code: resp.code, batchPermitData: null };
+      }
+
+      const { permitData, permitType: permitTypeForToken } = resp;
+      if (signatureCallback) {
+        await signatureCallback({
+          batchPermitData: permitData,
+          tokens,
+          permitType: permitTypeForToken,
+        } as BatchPermitCallbackParams);
+      }
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        batchPermitData: permitData as HexString,
+      };
+    }
+
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       const isFirstToken = dataIdx === 0;
-      const {
-        status,
-        code,
-        permitData,
-        permitType: permitTypeForToken,
-      } = await PermitTxnHandler.generatePermitDataForToken({
-        token: tokens[dataIdx],
-        isFirstToken,
+      const res = await PermitTxnHandler.generatePermitDataForToken({
+        token: {
+          ...tokens[dataIdx],
+          index: dataIdx,
+        },
+        firstTokenNonce,
         oneToMany,
         totalSrcAmount,
         chainId,
@@ -184,16 +231,22 @@ class PermitTxnHandler {
         permitEIP2612DisabledTokens,
       });
 
-      if (status !== TxnStatus.success) {
-        return { status, code, tokens };
+      if (res.status !== TxnStatus.success) {
+        return { status: res.status, code: res.code, tokens };
+      }
+      const { permitData, nonce, permitType: permitTypeForToken } = res;
+
+      tokens[dataIdx].permitData = res.permitData;
+
+      // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
+      if (isFirstToken) {
+        firstTokenNonce = nonce;
       }
 
-      tokens[dataIdx].permitData = permitData;
-
       if (signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
-        const amount = oneToMany && isFirstToken ? totalSrcAmount.toString() : tokens[dataIdx].amount;
+        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokens[dataIdx].amount);
         await signatureCallback({
-          permitData,
+          permitData: permitData as HexString,
           srcToken: tokens[dataIdx].address as HexString,
           amount,
           permitType: permitTypeForToken,

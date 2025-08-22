@@ -1,9 +1,10 @@
 import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
 import { SignatureExpiryInSecs } from './constants/permit2';
-import { PermitType, StatusCodes, TxnStatus } from './enums';
+import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
   ApiRpcResponse,
   ApprovalMode,
+  BatchPermitCallbackParams,
   Chain,
   ChainData,
   contractErrorActions,
@@ -16,6 +17,8 @@ import {
   PermitMode,
   ProviderDetails,
   QuoteFilter,
+  SignatureCallbackParams,
+  SinglePermitCallbackParams,
   SwapInfo,
   Token,
   TokenInfo,
@@ -30,57 +33,53 @@ import {
   TradeStatusResponse,
   TradeStep,
 } from './types';
-import type { PsbtInput, PsbtOutput } from './types/btc';
+import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
 
 import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
-import type { WalletCallReceipt } from './types/wallet';
-import type { ZapStatusResponse } from './types/zap';
-import { isBatchTxnSupportedByWallet } from './utils/eip-5792/isBatchTxnSupportedByWallet';
-import { checkEIP2612PermitSupport } from './utils/permit/permitMethods';
+import { ZapStatusResponse } from './types/zap';
+import { checkEIP2612PermitSupport } from './utils/permit/eip2612Permit';
 
 export * from './types/zap';
 export * from './zap/constants';
 
 export {
-  ApprovalModes,
-  checkEIP2612PermitSupport,
-  DZapClient,
-  erc20Functions,
-  formatToken,
-  getTokensPairKey,
-  OtherAbis,
-  PermitType,
-  PermitTypes,
-  QuoteFilters,
-  Services,
-  SignatureExpiryInSecs,
-  STATUS,
-  StatusCodes,
-  TxnStatus,
-  contractErrorActions,
-  isBatchTxnSupportedByWallet,
-};
-
-export type {
   ApiRpcResponse,
   ApprovalMode,
+  ApprovalModes,
+  BatchPermitCallbackParams,
   Chain,
   ChainData,
+  checkEIP2612PermitSupport,
+  contractErrorActions,
   ContractErrorResponse,
+  DZapClient,
+  DZapPermitMode,
   DZapTransactionResponse,
+  erc20Functions,
   ExecuteTxnData,
   Fee,
   FeeDetails,
+  formatToken,
+  getTokensPairKey,
   HexString,
+  OtherAbis,
   PermitMode,
+  PermitTypes,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,
   QuoteFilter,
+  QuoteFilters,
+  Services,
+  SignatureCallbackParams,
+  SignatureExpiryInSecs,
+  SinglePermitCallbackParams,
+  STATUS,
+  StatusCodes,
   SwapInfo,
   Token,
   TokenInfo,
@@ -94,6 +93,6 @@ export type {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
+  TxnStatus,
   ZapStatusResponse,
-  WalletCallReceipt,
 };
