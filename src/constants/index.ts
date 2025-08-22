@@ -29,6 +29,11 @@ export const Services = {
   zap: 'zap',
 } as const;
 
+export const GaslessTxType = {
+  swap: 'swap',
+  bridge: 'bridge',
+} as const;
+
 export const QuoteFilters = {
   fastest: 'fastest',
   best: 'best',
