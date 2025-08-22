@@ -5,11 +5,11 @@ A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing ut
 ## Installation
 
 ```bash
-npm install @dzapio/dzap-sdk
+npm install @dzapio/sdk
 # or
-yarn add @dzapio/dzap-sdk
+yarn add @dzapio/sdk
 # or
-pnpm add @dzapio/dzap-sdk
+pnpm add @dzapio/sdk
 ```
 
 ---
@@ -41,7 +41,7 @@ pnpm add @dzapio/dzap-sdk
 ## Initialization
 
 ```typescript
-import { DZapClient } from '@dzapio/dzap-sdk';
+import { DZapClient } from '@dzapio/sdk';
 
 // Basic initialization
 const dZap = DZapClient.getInstance();

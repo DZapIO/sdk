@@ -129,9 +129,9 @@ export type TradeQuotesRequest = {
 export type TradeQuotesRequestData = {
   amount: string;
   srcToken: string;
-  srcDecimals: number;
+  srcDecimals?: number;
   destToken: string;
-  destDecimals: number;
+  destDecimals?: number;
   toChain: number;
   slippage: number;
   selectedSource?: string;
@@ -188,7 +188,8 @@ export type TradeQuotesResponse = {
     status?: string;
     message?: string;
     recommendedSource: string;
-    fastestSource: string;
+    fastestSource?: string; // only for bridge quotes
+    bestReturnSource: string;
     questSource?: string;
     quoteRates?: TradeQuotesByProviderId;
     tokensWithoutPrice: Record<number, string[]>;
@@ -238,9 +239,9 @@ export type TradeBuildTxnRequest = {
 export type TradeBuildTxnRequestData = {
   amount: string;
   srcToken: string;
-  srcDecimals: number;
+  srcDecimals?: number;
   destToken: string;
-  destDecimals: number;
+  destDecimals?: number;
   toChain: number;
   selectedRoute: string;
   recipient: string;

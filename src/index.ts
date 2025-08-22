@@ -4,6 +4,7 @@ import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
   ApiRpcResponse,
   ApprovalMode,
+  BatchPermitCallbackParams,
   Chain,
   ChainData,
   contractErrorActions,
@@ -16,6 +17,8 @@ import {
   PermitMode,
   ProviderDetails,
   QuoteFilter,
+  SignatureCallbackParams,
+  SinglePermitCallbackParams,
   SwapInfo,
   Token,
   TokenInfo,
@@ -29,9 +32,6 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
-  SignatureCallbackParams,
-  SinglePermitCallbackParams,
-  BatchPermitCallbackParams,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
@@ -40,8 +40,8 @@ import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
-import { checkEIP2612PermitSupport } from './utils/permit/eip2612Permit';
 import { ZapStatusResponse } from './types/zap';
+import { checkEIP2612PermitSupport } from './utils/permit/eip2612Permit';
 
 export * from './types/zap';
 export * from './zap/constants';
@@ -50,12 +50,14 @@ export {
   ApiRpcResponse,
   ApprovalMode,
   ApprovalModes,
+  BatchPermitCallbackParams,
   Chain,
   ChainData,
   checkEIP2612PermitSupport,
   contractErrorActions,
   ContractErrorResponse,
   DZapClient,
+  DZapPermitMode,
   DZapTransactionResponse,
   erc20Functions,
   ExecuteTxnData,
@@ -66,7 +68,6 @@ export {
   HexString,
   OtherAbis,
   PermitMode,
-  DZapPermitMode,
   PermitTypes,
   ProviderDetails,
   PsbtInput,
@@ -74,7 +75,9 @@ export {
   QuoteFilter,
   QuoteFilters,
   Services,
+  SignatureCallbackParams,
   SignatureExpiryInSecs,
+  SinglePermitCallbackParams,
   STATUS,
   StatusCodes,
   SwapInfo,
@@ -88,11 +91,8 @@ export {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeStatusResponse,
   TradeStep,
   TxnStatus,
-  TradeStatusResponse,
   ZapStatusResponse,
-  SignatureCallbackParams,
-  SinglePermitCallbackParams,
-  BatchPermitCallbackParams,
 };

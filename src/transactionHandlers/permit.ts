@@ -6,8 +6,8 @@ import { StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, BatchPermitCallbackParams, HexString, PermitMode, SignatureCallbackParams } from 'src/types';
 import { BatchPermitResponse, GenerateBatchPermitParams, GeneratePermitDataParams, PermitResponse } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Signature } from 'src/utils/permit/permit2';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
+import { getPermit2Signature } from 'src/utils/permit/permit2';
 import { WalletClient } from 'viem';
 
 class PermitTxnHandler {

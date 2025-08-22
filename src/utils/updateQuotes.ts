@@ -45,12 +45,9 @@ export const updateQuotes = async (
     }
     let isSorted = true;
     for (const data of Object.values(quote.quoteRates)) {
-      const tokensDetails = request.data.find((d) => d.srcToken === data.srcToken.address && d.destToken === data.destToken.address);
-      if (!tokensDetails) {
-        continue;
-      }
-
-      const { srcDecimals, destDecimals, toChain } = tokensDetails;
+      const srcDecimals = data.srcToken.decimals;
+      const destDecimals = data.destToken.decimals;
+      const toChain = data.destToken.chainId;
 
       if (!Number(data.srcAmountUSD)) {
         isSorted = false;

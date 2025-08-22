@@ -5,6 +5,7 @@ import {
   CALCULATE_POINTS_URL,
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
+  GET_BALANCES,
   GET_STATUS,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
@@ -115,3 +116,11 @@ export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
     data: request,
     method: POST,
   });
+
+export const fetchBalances = (chainId: number, account: string) => {
+  return invoke({
+    endpoint: GET_BALANCES,
+    data: { chainId, account },
+    method: GET,
+  });
+};
