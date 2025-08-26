@@ -14,7 +14,7 @@ export enum PermitType {
   PERMIT2_APPROVE,
 }
 
-export enum DZapPermitMode {
+export enum V2PermitMode {
   PERMIT,
   PERMIT2_APPROVE,
 }

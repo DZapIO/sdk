@@ -3,7 +3,7 @@ import { Services } from 'src/constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
 import { erc20PermitFunctions } from 'src/constants/erc20';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { ContractVersion, DZapPermitMode, PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
+import { ContractVersion, V2PermitMode, PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
 import { WalletClient, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
@@ -111,7 +111,7 @@ export async function getPermit2Signature({
         ? ZapPermitType.PERMIT2
         : contractVersion === ContractVersion.v1
           ? PermitType.PERMIT2_APPROVE
-          : DZapPermitMode.PERMIT2_APPROVE;
+          : V2PermitMode.PERMIT2_APPROVE;
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitType, customPermitDataForTransfer]);
 
