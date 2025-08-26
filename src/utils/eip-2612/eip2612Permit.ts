@@ -5,7 +5,7 @@ import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612DefaultTypes } from 'src/types/eip-2612';
-import { Eip2612Permit } from 'src/types/permit';
+import { DefaultPermit2612Params } from 'src/types/permit';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
@@ -56,7 +56,9 @@ export const checkEIP2612PermitSupport = async ({
 /**
  * Generate EIP-2612 permit signature
  */
-export const getEIP2612PermitSignature = async (params: Eip2612Permit): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+export const getEIP2612PermitSignature = async (
+  params: DefaultPermit2612Params,
+): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
     const { chainId, spender, account, token, signer, rpcUrls, version, deadline = generateDeadline(SignatureExpiryInSecs) } = params;
     const { address, amount = maxUint256 } = token;

@@ -7,7 +7,7 @@ import {
   PermitBatchTransferFromValues,
   PermitSingleValues,
   PermitTransferFromValues,
-  TokenWithBigIntAndIndex,
+  TokenWithIndex,
 } from 'src/types/permit';
 import type { Address } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
@@ -17,7 +17,7 @@ import { getNextPermit2Nonce } from './getNonce';
 type Permit2ValuesParams = {
   deadline: bigint;
   permit2Address: HexString;
-  tokens: TokenWithBigIntAndIndex[];
+  tokens: TokenWithIndex[];
   expiration?: bigint;
   firstTokenNonce: bigint | null;
   primaryType: Permit2PrimaryType;
@@ -38,11 +38,7 @@ export const getPermitSingleValues = async ({
   chainId: number;
   account: HexString;
   expiration: bigint;
-  token: {
-    address: HexString;
-    amount: bigint;
-    index: number;
-  };
+  token: TokenWithIndex;
   permit2Address: HexString;
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitSingleValues; nonce: bigint }> => {
@@ -57,7 +53,7 @@ export const getPermitSingleValues = async ({
     permit2Values: {
       details: {
         token: token.address,
-        amount: token.amount,
+        amount: BigInt(token.amount),
         expiration,
         nonce: nonceResult[2],
       },
@@ -82,11 +78,7 @@ export const getPermitTransferFromValues = async ({
   deadline: bigint;
   chainId: number;
   account: HexString;
-  token: {
-    address: HexString;
-    amount: bigint;
-    index: number;
-  };
+  token: TokenWithIndex;
   permit2Address: HexString;
   firstTokenNonce: bigint | null;
   rpcUrls?: string[];
@@ -104,7 +96,7 @@ export const getPermitTransferFromValues = async ({
     permit2Values: {
       permitted: {
         token: token.address,
-        amount: token.amount,
+        amount: BigInt(token.amount),
       },
       spender,
       nonce,
@@ -128,11 +120,7 @@ export const getPermitBatchTransferFromValues = async ({
   chainId: number;
   account: HexString;
   permit2Address: HexString;
-  tokens: {
-    address: HexString;
-    amount: bigint;
-    index: number;
-  }[];
+  tokens: TokenWithIndex[];
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitBatchTransferFromValues; nonce: bigint }> => {
   const nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
@@ -140,7 +128,7 @@ export const getPermitBatchTransferFromValues = async ({
     permit2Values: {
       permitted: tokens.map((token) => ({
         token: token.address,
-        amount: token.amount,
+        amount: BigInt(token.amount),
       })),
       spender,
       nonce,

@@ -4,14 +4,14 @@ import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from 'src/types/eip-2612';
-import { GaslessDzapPermit } from 'src/types/permit';
+import { Gasless2612PermitParams } from 'src/types/permit';
 import { getContract } from 'viem';
 import { generateDeadline } from '../date';
 import { getDZapAbi, getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
 
 const getSignTypedData = (
-  params: GaslessDzapPermit & {
+  params: Gasless2612PermitParams & {
     nonce: bigint;
   },
 ) => {
@@ -67,7 +67,7 @@ const getSignTypedData = (
  * Generate Gasless DZap user intent signature
  */
 export const signGaslessDzapUserIntent = async (
-  params: GaslessDzapPermit,
+  params: Gasless2612PermitParams,
 ): Promise<{
   status: TxnStatus;
   code: StatusCodes;
