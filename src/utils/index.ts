@@ -14,7 +14,6 @@ import {
   stringToHex,
 } from 'viem';
 import * as ABI from '../artifacts';
-import { batchSwapIntegrators } from '../config';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
@@ -142,8 +141,6 @@ export const calcTotalSrcTokenAmount = (data: { amount: string }[]) => {
 };
 
 export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: string) => firstTokenAddress === secondTokenAddress;
-
-export const getIntegratorInfo = (integrator: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
 
 export const generateUUID = () => {
   let d = new Date().getTime();
