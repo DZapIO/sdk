@@ -1,4 +1,4 @@
-import { Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
@@ -132,9 +132,9 @@ export type TradeQuotesRequest = {
 export type TradeQuotesRequestData = {
   amount: string;
   srcToken: string;
-  srcDecimals: number;
+  srcDecimals?: number;
   destToken: string;
-  destDecimals: number;
+  destDecimals?: number;
   toChain: number;
   slippage: number;
   selectedSource?: string;
@@ -192,7 +192,8 @@ export type TradeQuotesResponse = {
     status?: string;
     message?: string;
     recommendedSource: string;
-    fastestSource: string;
+    fastestSource?: string; // only for bridge quotes
+    bestReturnSource: string;
     questSource?: string;
     quoteRates?: TradeQuotesByProviderId;
     tokensWithoutPrice: Record<number, string[]>;
@@ -243,9 +244,9 @@ export type TradeBuildTxnRequest = {
 export type TradeBuildTxnRequestData = {
   amount: string;
   srcToken: string;
-  srcDecimals: number;
+  srcDecimals?: number;
   destToken: string;
-  destDecimals: number;
+  destDecimals?: number;
   toChain: number;
   selectedRoute: string;
   recipient: string;
@@ -278,17 +279,18 @@ export type TradeBuildTxnResponse = ExecuteTxnData & {
   updatedQuotes: Record<string, string>;
 };
 
+export type GaslessTxTypes = keyof typeof GaslessTxType;
+
 export type GaslessTradeBuildTxnResponse = {
   txId: HexString;
   keccakTxId: HexString;
   executorFeesHash: HexString;
   swapDataHash: HexString;
   adapterDataHash: HexString;
-  txType: keyof typeof GaslessTxType;
+  txType: GaslessTxTypes;
 };
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
-export type GaslessTxTypes = (typeof GaslessTxType)[keyof typeof GaslessTxType];
 
 export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
 
@@ -360,7 +362,7 @@ export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;
 export type SinglePermitCallbackParams = {
   permitData: HexString;
   srcToken: HexString;
-  amount: bigint;
+  amount: string;
   permitType: Exclude<PermitMode, keyof typeof PermitTypes.PermitBatchWitnessTransferFrom>;
 };
 
@@ -370,7 +372,7 @@ export type BatchPermitCallbackParams = {
     address: HexString;
     amount: string;
   }[];
-  permitType: keyof typeof PermitTypes.PermitBatchWitnessTransferFrom;
+  permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
 };
 
 export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCallbackParams;
@@ -378,7 +380,7 @@ export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCa
 export type SignatureParamsBase = {
   chainId: number;
   sender: HexString;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
   tokens: {
     address: HexString;
     permitData?: HexString;

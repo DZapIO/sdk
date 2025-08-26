@@ -1,9 +1,8 @@
-import { Wallet } from 'ethers';
+import { Signer } from 'ethers';
+import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
 import { GaslessTxType } from 'src/constants';
 import { bridgeGaslessWitnessType, defaultWitnessType, permit2PrimaryType, swapGaslessWitnessType } from 'src/constants/permit';
-import { StatusCodes, TxnStatus } from 'src/enums';
 import { Address, WalletClient } from 'viem';
-import { HexString, PermitMode } from '.';
 
 //common types for permit
 
@@ -61,7 +60,7 @@ export type BasePermitParams = {
   spender: HexString;
   rpcUrls?: string[];
   deadline?: bigint;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
 };
 
 //EIP-2612 PERMIT TYPES

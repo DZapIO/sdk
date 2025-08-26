@@ -23,7 +23,7 @@ export const approveToken = async ({
   chainId: number;
   signer: WalletClient | Signer;
   mode: ApprovalMode;
-  tokens: { address: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: string }[];
   rpcUrls?: string[];
   approvalTxnCallback?: ({
     txnDetails,
@@ -44,7 +44,7 @@ export const approveToken = async ({
       const callData = encodeFunctionData({
         abi: erc20Abi,
         functionName: erc20Functions.approve,
-        args: [spender, tokens[dataIdx].amount],
+        args: [spender, BigInt(tokens[dataIdx].amount)],
       });
       await signer.sendTransaction({
         from,
@@ -144,7 +144,7 @@ export const getAllowance = async ({
 }: {
   chainId: number;
   sender: HexString;
-  tokens: { address: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: string }[];
   spender: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
@@ -195,7 +195,7 @@ export const getAllowance = async ({
     for (let i = 0; i < approvalData.length; i++) {
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
-      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
+      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
       const signatureNeeded = mode !== ApprovalModes.Default;
       data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
