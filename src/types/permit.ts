@@ -18,14 +18,6 @@ export type TokenWithIndex = {
   index: number;
 } & BaseToken;
 
-export type TokenWithBigIntAndIndex = {
-  amount: bigint;
-} & Omit<TokenWithIndex, 'amount'>;
-
-type TokenWithOptionalAmount = {
-  amount?: string;
-} & Omit<TokenWithIndex, 'amount'>;
-
 type TokenPermissions = {
   token: Address;
   amount: bigint;
@@ -68,33 +60,35 @@ export type BasePermitParams = {
 /**
  * Base configuration for EIP-2612 permit operations
  */
-type Permit2612Base = {
-  token: TokenWithOptionalAmount;
+type Permit2612BaseParams = {
+  token: {
+    amount?: bigint;
+  } & Omit<TokenWithIndex, 'amount'>;
   version: string;
 } & BasePermitParams;
 
 /**
  * Traditional EIP-2612 permit (user pays gas)
  */
-type DefaultPermit2612 = {
+type DefaultPermit2612Params = {
   gasless: false;
-} & Permit2612Base;
+} & Permit2612BaseParams;
 
 /**
  * Gasless EIP-2612 permit for swap operations
  */
-type GaslessSwapPermit2612 = {} & Permit2612Base & GaslessSwapParams;
+type GaslessSwapPermit2612 = Permit2612BaseParams & GaslessSwapParams;
 
 /**
  * Gasless EIP-2612 permit for bridge operations
  */
-type GaslessBridgePermit2612 = {} & Permit2612Base & GaslessBridgeParams;
+type GaslessBridgePermit2612 = Permit2612BaseParams & GaslessBridgeParams;
 
 /**
  * Union of all EIP-2612 permit configurations
  * Supports both gasless and traditional permit flows
  */
-export type Permit2612Config = DefaultPermit2612 | GaslessSwapPermit2612 | GaslessBridgePermit2612;
+export type Permit2612Params = DefaultPermit2612Params | GaslessSwapPermit2612 | GaslessBridgePermit2612;
 
 export type BasePermit2Params = {
   tokens: { address: HexString; amount?: string; index: number }[];
@@ -106,9 +100,9 @@ export type BasePermit2Params = {
 type DefaultPermit2Params = {
   gasless: false;
 } & BasePermit2Params;
-type GaslessSwapPermit2Params = {} & BasePermit2Params & GaslessSwapParams;
+type GaslessSwapPermit2Params = BasePermit2Params & GaslessSwapParams;
 
-type GaslessBridgePermit2Params = {} & BasePermit2Params & GaslessBridgeParams;
+type GaslessBridgePermit2Params = BasePermit2Params & GaslessBridgeParams;
 
 export type Permit2Params = DefaultPermit2Params | GaslessSwapPermit2Params | GaslessBridgePermit2Params;
 
@@ -118,16 +112,16 @@ export type Permit2Params = DefaultPermit2Params | GaslessSwapPermit2Params | Ga
  *
  * Type Hierarchy:
  * PermitConfiguration
- * ├── Permit2612Config (EIP-2612 permits)
+ * ├── Permit2612Params (EIP-2612 permits)
  * │   ├── StandardPermit2612 (gasless: false)
  * │   ├── GaslessSwapPermit2612 (gasless: true, txType: swap)
  * │   └── GaslessBridgePermit2612 (gasless: true, txType: bridge)
- * └── Permit2Config (Permit2 batch permits)
+ * └── Permit2Params (Permit2 batch permits)
  *     ├── StandardPermit2 (gasless: false)
  *     ├── GaslessSwapPermit2 (gasless: true, txType: swap)
  *     └── GaslessBridgePermit2 (gasless: true, txType: bridge)
  */
-export type PermitParams = Permit2612Config | Permit2Params;
+export type PermitParams = Permit2612Params | Permit2Params;
 
 //Core permit operation response data
 export type BasePermitResponse = {
@@ -157,11 +151,6 @@ type BaseWitnessStructure<T, N extends string, TType> = {
   witnessType: TType;
 };
 
-type DefaultWitnessData = {
-  owner: HexString;
-  recipient: HexString;
-};
-
 type GaslessWitnessData = {
   txId: HexString;
   user: HexString;
@@ -173,7 +162,14 @@ type BridgeWitnessData = {
   adapterDataHash: HexString;
 } & GaslessWitnessData;
 
-export type SwapAndBridgeWitnessData = BaseWitnessStructure<DefaultWitnessData, typeof defaultWitnessType.typeName, typeof defaultWitnessType.type>;
+export type DefaultWitnessData = BaseWitnessStructure<
+  {
+    owner: HexString;
+    recipient: HexString;
+  },
+  typeof defaultWitnessType.typeName,
+  typeof defaultWitnessType.type
+>;
 
 export type SwapGaslessWitnessData = BaseWitnessStructure<
   GaslessWitnessData,
@@ -187,7 +183,7 @@ export type BridgeGaslessWitnessData = BaseWitnessStructure<
   typeof bridgeGaslessWitnessType.type
 >;
 
-export type WitnessData = SwapAndBridgeWitnessData | SwapGaslessWitnessData | BridgeGaslessWitnessData;
+export type WitnessData = DefaultWitnessData | SwapGaslessWitnessData | BridgeGaslessWitnessData;
 
 export type PermitSingleValues = {
   details: {

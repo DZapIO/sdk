@@ -16,16 +16,7 @@
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/lines-between-class-members": "off",
     "no-multiple-empty-lines": ["error", { "max": 1, "maxEOF": 0, "maxBOF": 0 }],
-    "object-curly-spacing": ["error", "always"],
-    "@typescript-eslint/ban-types": [
-      "error",
-      {
-        "extendDefaults": true,
-        "types": {
-          "{}": false
-        }
-      }
-    ]
+    "object-curly-spacing": ["error", "always"]
   },
   "env": {
     "browser": true,

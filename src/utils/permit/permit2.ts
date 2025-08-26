@@ -25,7 +25,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
     const updatedTokens = tokens.map((token) => {
       return {
         ...token,
-        amount: BigInt(token.amount || maxUint256),
+        amount: BigInt(token.amount || maxUint256).toString(),
       };
     });
     const { witnessData } = getPermit2WitnessData(params);
@@ -59,7 +59,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
       permitType == permit2PrimaryType.PermitBatchWitnessTransferFrom
         ? encodeAbiParameters(BatchPermitAbiParams, [
             {
-              permitted: updatedTokens.map((token) => ({ token: token.address, amount: token.amount })),
+              permitted: updatedTokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
               nonce,
               deadline,
             },

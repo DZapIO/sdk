@@ -864,7 +864,7 @@ class DZapClient {
       rpcUrls: params?.rpcUrls || this.rpcUrlsByChainId[chainId],
       permitType,
       spender: spenderAddress,
-      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
+      permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
     } as SignatureParams;
     return await PermitTxnHandler.signPermit(request);
   }

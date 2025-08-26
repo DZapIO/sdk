@@ -6,7 +6,7 @@ import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
 
-import { Permit2612Config } from 'src/types/permit';
+import { Permit2612Params } from 'src/types/permit';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
@@ -66,7 +66,7 @@ export const getEIP2612PermitSignature = async ({
   rpcUrls,
   version,
   deadline: sigDeadline = generateDeadline(SignatureExpiryInSecs),
-}: Permit2612Config): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+}: Permit2612Params): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
     const { address, amount = maxUint256 } = token;
     const owner = account as HexString;

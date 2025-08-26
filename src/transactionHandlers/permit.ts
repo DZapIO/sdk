@@ -80,7 +80,7 @@ class PermitTxnHandler {
         ...params,
         token: {
           address: token.address as HexString,
-          amount: amount.toString(),
+          amount: BigInt(amount),
           index: 0,
         },
         version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
