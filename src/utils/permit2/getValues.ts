@@ -1,11 +1,27 @@
-import { HexString } from '../../types';
-import type { Address } from 'viem';
-import { abi as Permit2Abi } from '../../artifacts/Permit2.js';
-import { getPublicClient } from '../index.js';
-import { getNextPermit2Nonce } from './getNextPermit2Nonce.js';
-import { Permit2ValuesParams, PermitBatchTransferFrom, PermitSingle, PermitTransferFrom } from '../../types/permit.js';
+import { HexString } from 'src';
 import { erc20PermitFunctions } from 'src/constants/erc20';
 import { permit2PrimaryType } from 'src/constants/permit';
+import {
+  BasePermitParams,
+  Permit2PrimaryType,
+  PermitBatchTransferFromValues,
+  PermitSingleValues,
+  PermitTransferFromValues,
+  TokenWithIndex,
+} from 'src/types/permit';
+import type { Address } from 'viem';
+import { abi as Permit2Abi } from '../../artifacts/Permit2';
+import { getPublicClient } from '../index';
+import { getNextPermit2Nonce } from './getNonce';
+
+type Permit2ValuesParams = {
+  deadline: bigint;
+  permit2Address: HexString;
+  tokens: TokenWithIndex[];
+  expiration?: bigint;
+  firstTokenNonce: bigint | null;
+  primaryType: Permit2PrimaryType;
+} & Omit<BasePermitParams, 'deadline' | 'signer'>;
 
 export const getPermitSingleValues = async ({
   spender,
@@ -22,14 +38,10 @@ export const getPermitSingleValues = async ({
   chainId: number;
   account: HexString;
   expiration: bigint;
-  token: {
-    address: HexString;
-    amount: bigint;
-    index: number;
-  };
+  token: TokenWithIndex;
   permit2Address: HexString;
   rpcUrls?: string[];
-}): Promise<{ permit2Values: PermitSingle; nonce: bigint }> => {
+}): Promise<{ permit2Values: PermitSingleValues; nonce: bigint }> => {
   const publicClient = getPublicClient({ chainId, rpcUrls });
   const nonceResult = await publicClient.readContract({
     address: permit2Address,
@@ -41,7 +53,7 @@ export const getPermitSingleValues = async ({
     permit2Values: {
       details: {
         token: token.address,
-        amount: token.amount,
+        amount: BigInt(token.amount),
         expiration,
         nonce: nonceResult[2],
       },
@@ -66,15 +78,11 @@ export const getPermitTransferFromValues = async ({
   deadline: bigint;
   chainId: number;
   account: HexString;
-  token: {
-    address: HexString;
-    amount: bigint;
-    index: number;
-  };
+  token: TokenWithIndex;
   permit2Address: HexString;
   firstTokenNonce: bigint | null;
   rpcUrls?: string[];
-}): Promise<{ permit2Values: PermitTransferFrom; nonce: bigint }> => {
+}): Promise<{ permit2Values: PermitTransferFromValues; nonce: bigint }> => {
   let nonce;
   if (token.index === 0) {
     nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
@@ -88,7 +96,7 @@ export const getPermitTransferFromValues = async ({
     permit2Values: {
       permitted: {
         token: token.address,
-        amount: token.amount,
+        amount: BigInt(token.amount),
       },
       spender,
       nonce,
@@ -112,19 +120,15 @@ export const getPermitBatchTransferFromValues = async ({
   chainId: number;
   account: HexString;
   permit2Address: HexString;
-  tokens: {
-    address: HexString;
-    amount: bigint;
-    index: number;
-  }[];
+  tokens: TokenWithIndex[];
   rpcUrls?: string[];
-}): Promise<{ permit2Values: PermitBatchTransferFrom; nonce: bigint }> => {
+}): Promise<{ permit2Values: PermitBatchTransferFromValues; nonce: bigint }> => {
   const nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
   return {
     permit2Values: {
       permitted: tokens.map((token) => ({
         token: token.address,
-        amount: token.amount,
+        amount: BigInt(token.amount),
       })),
       spender,
       nonce,
@@ -136,7 +140,7 @@ export const getPermitBatchTransferFromValues = async ({
 
 export async function getPermit2Values(
   params: Permit2ValuesParams,
-): Promise<{ permit2Values: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle; nonce: bigint }> {
+): Promise<{ permit2Values: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues; nonce: bigint }> {
   switch (params.primaryType) {
     case permit2PrimaryType.PermitSingle:
       if (!params.expiration) {

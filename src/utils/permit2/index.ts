@@ -1,67 +1,41 @@
-import { Signer } from 'ethers';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { permit2PrimaryType, PermitToDZapPermitMode, witnessType, witnessTypeName } from 'src/constants/permit';
+import { permit2PrimaryType, PermitToDZapPermitMode } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString } from 'src/types';
-import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, WalletClient } from 'viem';
-import { BatchPermitAbiParams, Permit2PrimaryType, PermitResponse } from '../../types/permit';
+import { HexString } from 'src/types';
+import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
+import { BasePermitResponse, BatchPermitAbiParams, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
-import { getPermit2Values } from './getPermit2Values';
 import { getPermit2Data } from './getPermitData';
+import { getPermit2Values } from './getValues';
+import { getPermit2WitnessData } from './getWitnessData';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
 }
 
-export const getPermit2Signature = async ({
-  chainId,
-  spender,
-  account,
-  tokens,
-  signer,
-  rpcUrls,
-  sigDeadline = generateDeadline(SignatureExpiryInSecs),
-  expiration = maxUint48,
-  permitType,
-  firstTokenNonce,
-}: {
-  chainId: number;
-  account: HexString;
-  tokens: { address: HexString; amount?: string; index: number }[];
-  service: AvailableDZapServices;
-  spender: HexString;
-  rpcUrls?: string[];
-  sigDeadline?: bigint;
-  signer: WalletClient | Signer;
-  expiration?: bigint;
-  permitType: Permit2PrimaryType;
-  firstTokenNonce: bigint | null;
-}): Promise<Omit<PermitResponse, 'permitType'>> => {
+export const getPermit2Signature = async (params: Permit2Params): Promise<BasePermitResponse> => {
   try {
+    const { chainId, account, tokens, spender, rpcUrls, deadline: sigDeadline, signer, permitType, firstTokenNonce } = params;
+    const deadline = sigDeadline ?? generateDeadline(SignatureExpiryInSecs);
+    const expiration = params.expiration ?? maxUint48;
+
     const permit2Address = getPermit2Address(chainId);
     const updatedTokens = tokens.map((token) => {
       return {
         ...token,
-        amount: BigInt(token.amount || maxUint256),
+        amount: BigInt(token.amount || maxUint256).toString(),
       };
     });
-    const witnessData = {
-      witness: {
-        owner: account,
-        recipient: spender,
-      },
-      witnessTypeName: witnessTypeName,
-      witnessType: witnessType,
-    };
+    const { witnessData } = getPermit2WitnessData(params);
 
     const dzapPermitMode = PermitToDZapPermitMode[permitType];
     const { permit2Values, nonce } = await getPermit2Values({
       primaryType: permitType,
       spender,
       account,
-      deadline: sigDeadline,
+      deadline,
       chainId,
       permit2Address,
       rpcUrls,
@@ -82,16 +56,21 @@ export const getPermit2Signature = async ({
     });
 
     const dZapDataForTransfer =
-      permitType == permit2PrimaryType.PermitBatchWitnessTransferFrom
+      permitType === permit2PrimaryType.PermitBatchWitnessTransferFrom
         ? encodeAbiParameters(BatchPermitAbiParams, [
             {
-              permitted: updatedTokens.map((token) => ({ token: token.address, amount: token.amount })),
+              permitted: updatedTokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
               nonce,
-              deadline: sigDeadline,
+              deadline,
             },
             signature,
           ])
-        : encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, sigDeadline, signature]);
+        : permitType === permit2PrimaryType.PermitWitnessTransferFrom
+          ? encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature])
+          : encodeAbiParameters(
+              parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
+              [BigInt(updatedTokens[0].amount), Number(nonce), Number(deadline), BigInt(deadline), signature],
+            );
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [dzapPermitMode, dZapDataForTransfer]);
 

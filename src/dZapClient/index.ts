@@ -16,10 +16,11 @@ import {
   Chain,
   ChainData,
   ExecuteTxnData,
+  GaslessTradeBuildTxnResponse,
+  GasSignatureParams,
   HexString,
   OtherAvailableAbis,
   PermitMode,
-  SignatureCallbackParams,
   TokenInfo,
   TokenResponse,
   TradeBuildTxnRequest,
@@ -412,7 +413,7 @@ class DZapClient {
   }
 
   /**
-   * Executes a complete trade operation (swap/bridge) with automatic transaction building and sending.
+   * Executes a complete trade operation (swap/bridge) with transaction building and sending.
    * This is a convenience method that combines building and executing a transaction in one call.
    * If txnData is provided, it skips the build step and directly executes the transaction.
    * If txnData is not provided, it first builds the transaction using the request data, then executes it.
@@ -458,6 +459,71 @@ class DZapClient {
     rpcUrls?: string[];
   }) {
     return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction, rpcUrls });
+  }
+
+  /**
+   * Executes a complete gasless trade operation (swap/bridge) with transaction building and sending.
+   * This is a convenience method that combines building and executing a transaction with permit in one call.
+   * If txnData is provided, it skips the build step and directly executes the transaction.
+   * If txnData is not provided, it first builds the transaction using the request data, then executes it.
+   *
+   * @param params - Configuration object for the trade operation
+   * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
+   * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
+   * @param params.txnData - Optional pre-built gasless transaction data. If provided, skips the build step
+   * @returns Promise resolving to the transaction execution result
+   *
+   * @example
+   * ```typescript
+   * const result = await dZapClient.tradeGasless({
+   *   request: {
+   *     integratorId: 'dzap',
+   *     fromChain: 1,
+   *     sender: '0x...',
+   *     refundee: '0x...',
+   *     gasless: true,
+   *     data: [{
+   *       amount: '1000000',
+   *       srcToken: '0xA0b8...eB48',
+   *       destToken: '0xC02a...6Cc2',
+   *       srcDecimals: 6,
+   *       destDecimals: 18,
+   *       toChain: 42161,
+   *       selectedRoute: 'uniswap',
+   *       recipient: '0x...',
+   *       slippage: 1
+   *     }]
+   *   },
+   *   signer: walletClient,
+   *   // Optionally skip build:
+   *   txnData: {
+   *     txId: '0x...',
+   *     keccakTxId: '0x...',
+   *     executorFeesHash: '0x...',
+   *     swapDataHash: '0x...',
+   *     adapterDataHash: '0x...',
+   *     txType: 'swap' // example only; depends on GaslessTxType keys
+   *   }
+   * });
+   * ```
+   */
+  public async tradeGasless({
+    request,
+    signer,
+    txnData,
+  }: {
+    request: TradeBuildTxnRequest;
+    signer: Signer | WalletClient;
+    txnData?: GaslessTradeBuildTxnResponse;
+  }) {
+    const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
+    return await TradeTxnHandler.buildGaslessTxAndSignPermit({
+      request,
+      signer,
+      rpcUrls: this.rpcUrlsByChainId[request.fromChain],
+      spender,
+      txnData,
+    });
   }
 
   /**
@@ -779,44 +845,29 @@ class DZapClient {
    * });
    * ```
    */
-  public async sign({
-    chainId,
-    sender,
-    tokens,
-    service,
-    spender,
-    rpcUrls,
-    signer,
-    permitType = PermitTypes.AutoPermit,
-    signatureCallback,
-  }: {
-    chainId: number;
-    sender: HexString;
-    tokens: {
-      address: HexString;
-      amount: string;
-    }[];
-    service: AvailableDZapServices;
-    signer: WalletClient | Signer;
-    spender?: HexString; // Optional custom spender address
-    rpcUrls?: string[];
-    permitType?: PermitMode;
-    signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
-  }) {
-    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+  public async sign(
+    params: Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless'> & {
+      spender?: HexString;
+      permitType?: PermitMode;
+      rpcUrls?: string[];
+      service: AvailableDZapServices;
+    },
+  ) {
+    const { service, chainId } = params;
+    const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();
-    return await PermitTxnHandler.signPermit({
-      chainId,
-      sender,
-      tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
-      service,
-      signer,
-      spender: spenderAddress,
+
+    const permitType = params?.permitType || PermitTypes.AutoPermit;
+
+    const request = {
+      ...params,
+      rpcUrls: params?.rpcUrls || this.rpcUrlsByChainId[chainId],
       permitType,
-      signatureCallback,
-      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
-    });
+      spender: spenderAddress,
+      permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
+      gasless: false,
+    } as GasSignatureParams;
+    return await PermitTxnHandler.signPermit(request);
   }
 
   /**

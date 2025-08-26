@@ -1,24 +1,37 @@
-import type { Address } from 'viem';
+import { TypedDataField } from 'ethers';
+import { PermitBatchTransferFromValues, PermitSingleValues, PermitTransferFromValues, WitnessData } from 'src/types/permit';
+import type { Address, TypedDataDomain } from 'viem';
 import { permit2Domain } from './domain.js';
-import {
-  PermitBatchTransferFrom,
-  PermitBatchTransferFromData,
-  PermitSingle,
-  PermitSingleData,
-  PermitTransferFrom,
-  PermitTransferFromData,
-  Witness,
-} from '../../types/permit.js';
 
-function isPermitSingle(permit: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle): permit is PermitSingle {
+type PermitSingleData = {
+  domain: TypedDataDomain;
+  types: Record<string, Array<TypedDataField>>;
+  message: PermitSingleValues;
+};
+
+type PermitTransferFromData = {
+  domain: TypedDataDomain;
+  types: Record<string, Array<TypedDataField>>;
+  message: PermitTransferFromValues;
+};
+
+type PermitBatchTransferFromData = {
+  domain: TypedDataDomain;
+  types: Record<string, Array<TypedDataField>>;
+  message: PermitBatchTransferFromValues;
+};
+
+function isPermitSingle(permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues): permit is PermitSingleValues {
   return 'details' in permit && permit.details !== undefined;
 }
 
-function isPermitTransferFrom(permit: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle): permit is PermitTransferFrom {
+function isPermitTransferFrom(
+  permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues,
+): permit is PermitTransferFromValues {
   return 'permitted' in permit && !Array.isArray(permit.permitted);
 }
 
-export function getPermitSingleData(permit: PermitSingle, permit2Address: Address, chainId: number): PermitSingleData {
+export function getPermitSingleData(permit: PermitSingleValues, permit2Address: Address, chainId: number): PermitSingleData {
   const domain = permit2Domain(permit2Address, chainId);
 
   const types = {
@@ -45,21 +58,18 @@ export function getPermitSingleData(permit: PermitSingle, permit2Address: Addres
 }
 
 export function getPermitTransferData(
-  permit: PermitTransferFrom,
+  permit: PermitTransferFromValues,
   permit2Address: Address,
   chainId: number,
-  witness: Witness,
+  witness: WitnessData,
 ): PermitTransferFromData {
   const domain = permit2Domain(permit2Address, chainId);
 
   const types = {
+    ...witness.witnessType,
     TokenPermissions: [
       { name: 'token', type: 'address' },
       { name: 'amount', type: 'uint256' },
-    ],
-    DZapTransferWitness: [
-      { name: 'owner', type: 'address' },
-      { name: 'recipient', type: 'address' },
     ],
     PermitWitnessTransferFrom: [
       { name: 'permitted', type: 'TokenPermissions' },
@@ -80,10 +90,10 @@ export function getPermitTransferData(
 }
 
 export function getPermitBatchTransferData(
-  permit: PermitBatchTransferFrom,
+  permit: PermitBatchTransferFromValues,
   permit2Address: Address,
   chainId: number,
-  witness: Witness,
+  witness: WitnessData,
 ): PermitBatchTransferFromData {
   const domain = permit2Domain(permit2Address, chainId);
 
@@ -110,10 +120,10 @@ export function getPermitBatchTransferData(
 }
 
 export function getPermit2Data(
-  permit: PermitTransferFrom | PermitBatchTransferFrom | PermitSingle,
+  permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues,
   permit2Address: Address,
   chainId: number,
-  witness?: Witness,
+  witness?: WitnessData,
 ): PermitTransferFromData | PermitBatchTransferFromData | PermitSingleData {
   if (isPermitSingle(permit)) {
     return getPermitSingleData(permit, permit2Address, chainId);

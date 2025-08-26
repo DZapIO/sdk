@@ -1,8 +1,11 @@
-import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
+import { Signer } from 'ethers';
+import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
 import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
+import { WalletClient } from 'viem';
 import { PsbtInput, PsbtOutput } from './btc';
+import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
 export type HexString = `0x${string}`;
 
@@ -119,6 +122,7 @@ export type QuoteFilter = keyof typeof QuoteFilters;
 export type TradeQuotesRequest = {
   integratorId: string;
   fromChain: number;
+  gasless?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
@@ -173,6 +177,7 @@ export type TradeQuote = {
   fee: Fee;
   priceImpactPercent: string;
   duration: string;
+  gasless: boolean;
   steps: TradeStep[];
   path: TradePath[];
   tags?: Tag[];
@@ -231,9 +236,11 @@ export type TradeBuildTxnRequest = {
   refundee: HexString;
   integratorId: string;
   fromChain: number;
+  gasless: boolean;
   disableEstimation?: boolean;
   data: TradeBuildTxnRequestData[];
-  publicKey?: string;
+  hasPermit2ApprovalForAllTokens?: boolean; //@dev true if permit2 approval exists for all tokens
+  publicKey?: string; //@dev used for bitcoin chain only
 };
 
 export type TradeBuildTxnRequestData = {
@@ -272,6 +279,17 @@ export type TradeBuildTxnResponse = ExecuteTxnData & {
     lastValidBlockHeight: number;
   };
   updatedQuotes: Record<string, string>;
+};
+
+export type GaslessTxTypes = keyof typeof GaslessTxType;
+
+export type GaslessTradeBuildTxnResponse = {
+  txId: HexString;
+  keccakTxId: HexString;
+  executorFeesHash: HexString;
+  swapDataHash: HexString;
+  adapterDataHash: HexString;
+  txType: GaslessTxTypes;
 };
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
@@ -340,6 +358,22 @@ export type TradeStatusResponse = {
   [pair: string]: TradeStatusResponseData;
 };
 
+export type EIP2612GaslessExecuteTxParams = {
+  permitData: {
+    token: HexString;
+    amount: string;
+    permit: HexString;
+  }[];
+  gaslessIntentSignature: HexString;
+  gaslessIntentDeadline: string;
+  gaslessIntentNonce: string;
+};
+export type BatchGaslessExecuteTxParams = {
+  batchPermitData: HexString;
+};
+
+export type GaslessExecuteTxParams = { chainId: number; txId: HexString; permit: EIP2612GaslessExecuteTxParams | BatchGaslessExecuteTxParams };
+
 export type PermitMode = keyof typeof PermitTypes;
 export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;
 
@@ -360,3 +394,30 @@ export type BatchPermitCallbackParams = {
 };
 
 export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCallbackParams;
+
+export type SignatureParamsBase = {
+  chainId: number;
+  sender: HexString;
+  signer: WalletClient | Signer;
+  tokens: {
+    address: HexString;
+    permitData?: HexString;
+    amount: string;
+  }[];
+  spender: HexString;
+  rpcUrls: string[];
+  permitType: PermitMode;
+  isBatchPermitAllowed?: boolean;
+  signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
+  permitEIP2612DisabledTokens?: string[];
+};
+
+export type GasSignatureParams = SignatureParamsBase & {
+  gasless: false;
+};
+
+export type GaslessSignatureParams = ((SignatureParamsBase & GaslessBridgeParams) | (SignatureParamsBase & GaslessSwapParams)) & {
+  gasless: true;
+};
+
+export type SignatureParams = GasSignatureParams | GaslessSignatureParams;
