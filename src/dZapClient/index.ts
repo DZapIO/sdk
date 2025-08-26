@@ -825,7 +825,7 @@ class DZapClient {
       permitType,
       signatureCallback,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
-      contractVersion: chainConfig[chainId].version || ContractVersion.v2,
+      contractVersion: chainConfig[chainId].version || ContractVersion.v1,
     });
   }
 
