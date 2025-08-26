@@ -77,18 +77,18 @@ type DefaultPermit2612Params = {
 /**
  * Gasless EIP-2612 permit for swap operations
  */
-type GaslessSwapPermit2612 = Permit2612BaseParams & GaslessSwapParams;
+type GaslessSwapPermit2612Params = Permit2612BaseParams & GaslessSwapParams;
 
 /**
  * Gasless EIP-2612 permit for bridge operations
  */
-type GaslessBridgePermit2612 = Permit2612BaseParams & GaslessBridgeParams;
+type GaslessBridgePermit2612Params = Permit2612BaseParams & GaslessBridgeParams;
 
 /**
  * Union of all EIP-2612 permit configurations
  * Supports both gasless and traditional permit flows
  */
-export type Permit2612Params = DefaultPermit2612Params | GaslessSwapPermit2612 | GaslessBridgePermit2612;
+export type Permit2612Params = DefaultPermit2612Params | GaslessSwapPermit2612Params | GaslessBridgePermit2612Params;
 
 export type BasePermit2Params = {
   tokens: { address: HexString; amount?: string; index: number }[];
