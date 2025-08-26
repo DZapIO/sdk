@@ -1,6 +1,7 @@
 import { CancelToken, Method } from 'axios';
 import AxiosClient from 'src/axios';
 import { baseApiClient, baseZapApiClient } from 'src/axios/baseClient';
+import { apiKey } from 'src/config';
 import { GET, POST } from 'src/constants/httpMethods';
 import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
 
@@ -19,6 +20,10 @@ export const invoke = async ({ endpoint, data, method = POST, cancelToken, shoul
     url: endpoint,
     data: method === GET ? undefined : data,
     params: method === GET ? data : undefined,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { 'x-api-key': apiKey } : {}),
+    },
     cancelToken,
     shouldRetry,
   };
@@ -35,6 +40,10 @@ export const invokeZap = async ({ endpoint, data, method = POST, cancelToken, sh
     url: endpoint,
     data: method === GET ? undefined : data,
     params: method === GET ? data : undefined,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { 'x-api-key': apiKey } : {}),
+    },
     cancelToken,
     shouldRetry,
   };
