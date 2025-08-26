@@ -1,23 +1,23 @@
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { BatchPermitAbiParams, permit2PrimaryType, PermitToDZapPermitMode } from 'src/constants/permit';
+import { permit2PrimaryType, PermitToDZapPermitMode } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
-import { Permit2Params, PermitResponse } from '../../types/permit';
+import { BasePermitResponse, BatchPermitAbiParams, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
-import { getPermit2Values } from './getPermit2Values';
-import { getPermit2WitnessData } from './getPermit2WitnessData';
 import { getPermit2Data } from './getPermitData';
+import { getPermit2Values } from './getValues';
+import { getPermit2WitnessData } from './getWitnessData';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
 }
 
-export const getPermit2Signature = async (params: Permit2Params): Promise<Omit<PermitResponse, 'permitType'>> => {
+export const getPermit2Signature = async (params: Permit2Params): Promise<BasePermitResponse> => {
   try {
-    const { chainId, account, tokens, spender, rpcUrls, sigDeadline, signer, permitType, firstTokenNonce } = params;
+    const { chainId, account, tokens, spender, rpcUrls, deadline: sigDeadline, signer, permitType, firstTokenNonce } = params;
     const deadline = sigDeadline ?? generateDeadline(SignatureExpiryInSecs);
     const expiration = params.expiration ?? maxUint48;
 
@@ -25,7 +25,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<Omit<P
     const updatedTokens = tokens.map((token) => {
       return {
         ...token,
-        amount: BigInt(token.amount || maxUint256),
+        amount: BigInt(token.amount || maxUint256).toString(),
       };
     });
     const { witnessData } = getPermit2WitnessData(params);
@@ -56,16 +56,21 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<Omit<P
     });
 
     const dZapDataForTransfer =
-      permitType == permit2PrimaryType.PermitBatchWitnessTransferFrom
+      permitType === permit2PrimaryType.PermitBatchWitnessTransferFrom
         ? encodeAbiParameters(BatchPermitAbiParams, [
             {
-              permitted: updatedTokens.map((token) => ({ token: token.address, amount: token.amount })),
+              permitted: updatedTokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
               nonce,
               deadline,
             },
             signature,
           ])
-        : encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature]);
+        : permitType === permit2PrimaryType.PermitWitnessTransferFrom
+          ? encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature])
+          : encodeAbiParameters(
+              parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
+              [BigInt(updatedTokens[0].amount), Number(nonce), Number(deadline), BigInt(deadline), signature],
+            );
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [dzapPermitMode, dZapDataForTransfer]);
 

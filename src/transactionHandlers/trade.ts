@@ -1,6 +1,5 @@
 import { Signer } from 'ethers';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from 'src/api';
-import { Services } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { viemChainsById } from 'src/utils/chains';
@@ -196,8 +195,10 @@ class TradeTxnHandler {
         });
       }
 
-      const { swapDataHash, executorFeesHash, keccakTxId, txId, adapterDataHash, txType } = buildTxnResponseData;
-      const resp = await PermitTxnHandler.signPermit({
+      const permitType = request.hasPermit2ApprovalForAllTokens ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
+
+      const { swapDataHash, executorFeesHash, txId, adapterDataHash, txType } = buildTxnResponseData;
+      const resp = await PermitTxnHandler.signGaslessUserIntent({
         tokens: request.data.map((req, index) => {
           return {
             address: req.srcToken as HexString,
@@ -209,25 +210,41 @@ class TradeTxnHandler {
         rpcUrls,
         sender: request.sender,
         spender,
-        permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+        permitType,
         signer,
-        service: Services.trade,
         gasless: true,
         txType,
         swapDataHash,
         executorFeesHash,
-        txId: keccakTxId,
+        txId,
         adapterDataHash,
       });
 
-      if (resp.status === TxnStatus.success && 'batchPermitData' in resp && resp.batchPermitData) {
+      if (resp.status === TxnStatus.success && resp.data) {
+        const permit =
+          resp.data.type === PermitTypes.EIP2612Permit
+            ? {
+                permitData: request.data.map((req) => {
+                  return {
+                    token: req.srcToken as HexString,
+                    amount: req.amount,
+                    permit: req.permitData as HexString,
+                  };
+                }),
+                gaslessIntentNonce: resp.data.nonce?.toString(),
+                gaslessIntentSignature: resp.data.signature,
+                gaslessIntentDeadline: resp.data.deadline?.toString(),
+              }
+            : {
+                batchPermitData: resp.data.batchPermitData,
+              };
         const gaslessTxResp: {
           status: TxnStatus;
           txnHash: HexString;
         } = await executeGaslessTxnData({
           chainId: request.fromChain,
           txId,
-          batchPermitData: resp.batchPermitData,
+          permit,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
           throw new Error('Failed to sign permit');

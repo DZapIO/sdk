@@ -17,10 +17,10 @@ import {
   ChainData,
   ExecuteTxnData,
   GaslessTradeBuildTxnResponse,
+  GasSignatureParams,
   HexString,
   OtherAvailableAbis,
   PermitMode,
-  SignatureParams,
   TokenInfo,
   TokenResponse,
   TradeBuildTxnRequest,
@@ -845,20 +845,28 @@ class DZapClient {
    * });
    * ```
    */
-  public async sign(params: SignatureParams) {
-    const { spender, service, chainId } = params;
-    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+  public async sign(
+    params: Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless'> & {
+      spender?: HexString;
+      permitType?: PermitMode;
+      rpcUrls?: string[];
+      service: AvailableDZapServices;
+    },
+  ) {
+    const { service, chainId } = params;
+    const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();
 
-    const permitType = params.gasless ? PermitTypes.PermitBatchWitnessTransferFrom : params.permitType || PermitTypes.AutoPermit;
+    const permitType = params?.permitType || PermitTypes.AutoPermit;
 
     const request = {
       ...params,
-      rpcUrls: params.rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: params?.rpcUrls || this.rpcUrlsByChainId[chainId],
       permitType,
       spender: spenderAddress,
-      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
-    } as SignatureParams & { spender: HexString; permitType: PermitMode };
+      permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
+      gasless: false,
+    } as GasSignatureParams;
     return await PermitTxnHandler.signPermit(request);
   }
 
