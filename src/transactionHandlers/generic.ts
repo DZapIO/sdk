@@ -52,7 +52,7 @@ class GenericTxnHandler {
           txnHash,
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
