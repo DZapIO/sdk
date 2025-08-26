@@ -1,5 +1,5 @@
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
 import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
@@ -24,6 +24,7 @@ class PermitTxnHandler {
     signer,
     service,
     permitEIP2612DisabledTokens,
+    contractVersion,
   }: {
     token: { address: HexString; amount: string };
     isFirstToken: boolean;
@@ -37,6 +38,7 @@ class PermitTxnHandler {
     signer: WalletClient | Signer;
     service: AvailableDZapServices;
     permitEIP2612DisabledTokens?: string[];
+    contractVersion: ContractVersion;
   }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
     if (isDZapNativeToken(token.address)) {
       return {
@@ -76,6 +78,7 @@ class PermitTxnHandler {
         signer,
         rpcUrls,
         version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
+        contractVersion,
       });
       return {
         status,
@@ -101,6 +104,7 @@ class PermitTxnHandler {
           service,
           signer,
           rpcUrls,
+          contractVersion,
         });
         return {
           status,
@@ -123,6 +127,7 @@ class PermitTxnHandler {
     spender,
     permitType,
     permitEIP2612DisabledTokens,
+    contractVersion,
   }: {
     chainId: number;
     sender: HexString;
@@ -148,6 +153,7 @@ class PermitTxnHandler {
     spender: HexString;
     permitType: PermitMode;
     permitEIP2612DisabledTokens?: string[];
+    contractVersion: ContractVersion;
   }): Promise<{
     status: TxnStatus;
     tokens: {
@@ -182,6 +188,7 @@ class PermitTxnHandler {
         signer,
         service,
         permitEIP2612DisabledTokens,
+        contractVersion,
       });
 
       if (status !== TxnStatus.success) {

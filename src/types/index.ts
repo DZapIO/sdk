@@ -1,5 +1,5 @@
 import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
-import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
+import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import { PsbtInput, PsbtOutput } from './btc';
 import { PermitTypes } from 'src/constants/permit';
 import { ApprovalModes } from 'src/constants/approval';
@@ -82,6 +82,7 @@ export type Chain = {
   isEnabled: boolean;
   mainnet: boolean;
   tags?: Tag[];
+  version?: ContractVersion;
   permitDisabledTokens?: DisabledPermitTokens;
 };
 

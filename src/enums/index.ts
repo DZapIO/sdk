@@ -14,6 +14,16 @@ export enum PermitType {
   PERMIT2_APPROVE,
 }
 
+export enum DZapPermitMode {
+  PERMIT,
+  PERMIT2_APPROVE,
+}
+
+export enum ContractVersion {
+  v1 = 'v1',
+  v2 = 'v2',
+}
+
 export enum TxnStatus {
   mining = 'mining',
   success = 'success',

@@ -3,7 +3,7 @@ import { Signer } from 'ethers';
 import { Services } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import { PriceService } from 'src/service/price';
 import GenericTxnHandler from 'src/transactionHandlers/generic';
 import PermitTxnHandler from 'src/transactionHandlers/permit';
@@ -825,6 +825,7 @@ class DZapClient {
       permitType,
       signatureCallback,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
+      contractVersion: chainConfig[chainId].version || ContractVersion.v2,
     });
   }
 

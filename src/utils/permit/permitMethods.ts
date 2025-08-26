@@ -2,7 +2,7 @@ import { ethers, Signer } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
 import { zeroAddress } from 'src/constants/address';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { PermitType, StatusCodes, TxnStatus } from 'src/enums';
+import { ContractVersion, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, WalletClient } from 'viem';
@@ -65,6 +65,7 @@ export const getEIP2612PermitSignature = async ({
   rpcUrls,
   amount = maxUint256,
   sigDeadline = generateDeadline(SignatureExpiryInSecs),
+  contractVersion,
 }: {
   chainId: number;
   account: HexString;
@@ -75,6 +76,7 @@ export const getEIP2612PermitSignature = async ({
   sigDeadline?: bigint;
   amount?: bigint;
   signer: WalletClient | Signer;
+  contractVersion: ContractVersion;
 }): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
     const address = token as HexString;
@@ -127,10 +129,13 @@ export const getEIP2612PermitSignature = async ({
 
     const sig = ethers.utils.splitSignature(signature);
 
-    const data = ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
-      [owner, spender, amount, deadline, sig.v, sig.r, sig.s],
-    );
+    const data =
+      contractVersion === ContractVersion.v1
+        ? ethers.utils.defaultAbiCoder.encode(
+            ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
+            [owner, spender, amount, deadline, sig.v, sig.r, sig.s],
+          )
+        : ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, data as HexString]);
 
