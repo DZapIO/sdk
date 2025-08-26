@@ -34,7 +34,8 @@ export type GeneratePermitDataParams = {
   signer: WalletClient | Wallet;
   service: AvailableDZapServices;
   token: PermitTokenWithIndex;
-  firstTokenNonce?: bigint;
+  /** Optional nonce for the first token in batch or one-to-many permits */
+  firstTokenNonce: bigint | null;
   oneToMany: boolean;
   totalSrcAmount: bigint;
   permitEIP2612DisabledTokens?: string[];

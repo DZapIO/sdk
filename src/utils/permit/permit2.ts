@@ -37,7 +37,7 @@ export const getPermit2Signature = async ({
   signer: WalletClient | Wallet;
   expiration?: bigint;
   permitType: Permit2PrimaryType;
-  firstTokenNonce?: bigint;
+  firstTokenNonce: bigint | null;
 }): Promise<Omit<PermitResponse, 'permitType'>> => {
   try {
     const permit2Address = getPermit2Address(chainId);

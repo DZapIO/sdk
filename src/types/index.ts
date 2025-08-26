@@ -346,7 +346,7 @@ export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;
 export type SinglePermitCallbackParams = {
   permitData: HexString;
   srcToken: HexString;
-  amount: bigint;
+  amount: string;
   permitType: Exclude<PermitMode, keyof typeof PermitTypes.PermitBatchWitnessTransferFrom>;
 };
 
@@ -356,7 +356,7 @@ export type BatchPermitCallbackParams = {
     address: HexString;
     amount: string;
   }[];
-  permitType: keyof typeof PermitTypes.PermitBatchWitnessTransferFrom;
+  permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
 };
 
 export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCallbackParams;
