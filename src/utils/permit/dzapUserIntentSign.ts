@@ -18,7 +18,7 @@ export const signGaslessDzapUserIntent = async (
 ): Promise<{
   status: TxnStatus;
   code: StatusCodes;
-  userIntentData?: {
+  data?: {
     signature: HexString;
     nonce: bigint;
     deadline: bigint;
@@ -99,7 +99,7 @@ export const signGaslessDzapUserIntent = async (
     return {
       status: TxnStatus.success,
       code: StatusCodes.Success,
-      userIntentData: {
+      data: {
         signature,
         nonce,
         deadline,

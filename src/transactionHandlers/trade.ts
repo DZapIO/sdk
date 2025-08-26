@@ -117,7 +117,7 @@ class TradeTxnHandler {
 
       const permitType = request.hasPermit2ApprovalForAllTokens ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
 
-      const { swapDataHash, executorFeesHash, keccakTxId, txId, adapterDataHash, txType } = buildTxnResponseData;
+      const { swapDataHash, executorFeesHash, txId, adapterDataHash, txType } = buildTxnResponseData;
       const resp = await PermitTxnHandler.signGaslessUserIntent({
         tokens: request.data.map((req, index) => {
           return {
@@ -136,17 +136,14 @@ class TradeTxnHandler {
         txType,
         swapDataHash,
         executorFeesHash,
-        txId: keccakTxId,
+        txId,
         adapterDataHash,
       });
 
-      if (resp.status === TxnStatus.success && resp.userIntentData) {
+      if (resp.status === TxnStatus.success && resp.data) {
         const permit =
-          'batchPermitData' in resp.userIntentData
+          resp.data.type === PermitTypes.EIP2612Permit
             ? {
-                batchPermitData: resp.userIntentData.batchPermitData,
-              }
-            : {
                 permitData: request.data.map((req) => {
                   return {
                     token: req.srcToken as HexString,
@@ -154,9 +151,12 @@ class TradeTxnHandler {
                     permit: req.permitData as HexString,
                   };
                 }),
-                userNonce: resp.userIntentData.nonce.toString(),
-                userGaslessIntentSignature: resp.userIntentData.signature,
-                gaslessIntentDeadline: resp.userIntentData.deadline.toString(),
+                gaslessIntentNonce: resp.data.nonce?.toString(),
+                gaslessIntentSignature: resp.data.signature,
+                gaslessIntentDeadline: resp.data.deadline?.toString(),
+              }
+            : {
+                batchPermitData: resp.data.batchPermitData,
               };
         const gaslessTxResp: {
           status: TxnStatus;

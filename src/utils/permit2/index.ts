@@ -7,9 +7,9 @@ import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from '
 import { BasePermitResponse, BatchPermitAbiParams, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
-import { getPermit2Values } from './getPermit2Values';
-import { getPermit2WitnessData } from './getPermit2WitnessData';
 import { getPermit2Data } from './getPermitData';
+import { getPermit2Values } from './getValues';
+import { getPermit2WitnessData } from './getWitnessData';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;

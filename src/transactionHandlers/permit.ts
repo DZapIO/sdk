@@ -7,7 +7,7 @@ import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitPara
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
 import { signGaslessDzapUserIntent } from 'src/utils/permit/dzapUserIntentSign';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
-import { getPermit2Signature } from 'src/utils/permit/permit2';
+import { getPermit2Signature } from 'src/utils/permit2';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
@@ -118,10 +118,18 @@ class PermitTxnHandler {
     const type = permitType === PermitTypes.AutoPermit ? PermitTypes.PermitBatchWitnessTransferFrom : permitType;
 
     if (type === PermitTypes.EIP2612Permit) {
-      return signGaslessDzapUserIntent({
+      const resp = await signGaslessDzapUserIntent({
         ...signPermitReq,
         account: sender,
       });
+      return {
+        status: resp.status,
+        code: resp.code,
+        data: resp?.data && {
+          ...resp.data,
+          type,
+        },
+      };
     }
     const resp = await getPermit2Signature({
       ...signPermitReq,
@@ -132,11 +140,10 @@ class PermitTxnHandler {
     return {
       status: resp.status,
       code: resp.code,
-      userIntentData: resp.permitData
-        ? {
-            batchPermitData: resp.permitData,
-          }
-        : undefined,
+      data: resp.permitData && {
+        type: type,
+        batchPermitData: resp.permitData,
+      },
     };
   };
 
@@ -166,10 +173,13 @@ class PermitTxnHandler {
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
 
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
-    if (
-      isBatchPermitAllowed &&
-      (permitType === PermitTypes.PermitBatchWitnessTransferFrom || (permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany))
-    ) {
+    const isBatchPermitRequested = permitType === PermitTypes.PermitBatchWitnessTransferFrom;
+
+    const shouldAutoBatch = permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany;
+
+    const shouldUseBatchPermit = isBatchPermitAllowed && (isBatchPermitRequested || shouldAutoBatch);
+
+    if (shouldUseBatchPermit) {
       const permitDataReq = {
         ...signPermitReq,
         tokens: tokens.map((token, index) => ({ ...token, index })),

@@ -363,9 +363,9 @@ export type EIP2612GaslessExecuteTxParams = {
     amount: string;
     permit: HexString;
   }[];
-  userGaslessIntentSignature: HexString;
+  gaslessIntentSignature: HexString;
   gaslessIntentDeadline: string;
-  userNonce: string;
+  gaslessIntentNonce: string;
 };
 export type BatchGaslessExecuteTxParams = {
   batchPermitData: HexString;

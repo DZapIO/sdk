@@ -6,93 +6,10 @@ import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612DefaultTypes } from 'src/types/eip-2612';
 import { Eip2612Permit } from 'src/types/permit';
-import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, PublicClient } from 'viem';
+import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
-
-/**
- * Check if a token supports is support standard EIP2612 Compliant
- */
-export async function isStandardEIP2612StylePermit(
-  client: PublicClient,
-  tokenAddress: HexString,
-  message: {
-    owner: HexString;
-    spender: HexString;
-    value: bigint;
-    nonce: bigint;
-    deadline: bigint;
-  },
-  sig: {
-    v: number;
-    r: string;
-    s: string;
-  },
-): Promise<boolean> {
-  try {
-    await client.simulateContract({
-      address: tokenAddress,
-      abi: erc20PermitAbi,
-      functionName: 'permit',
-      args: [
-        message.owner, // owner
-        message.spender, // spender
-        message.value, // value
-        message.deadline, // deadline
-        sig.v, // v
-        sig.r as HexString, // r
-        sig.s as HexString, // s
-      ],
-    });
-    return true; // Supports EIP-2612
-  } catch (error) {
-    console.log(error);
-    return false; // Doesn't support EIP-2612
-  }
-}
-
-/**
- * Check if a token supports is support DAI-style EIP2612 Compliant
- */
-export async function isDaiStylePermit(
-  client: PublicClient,
-  tokenAddress: HexString,
-  message: {
-    owner: HexString;
-    spender: HexString;
-    value: bigint;
-    nonce: bigint;
-    deadline: bigint;
-  },
-  sig: {
-    v: number;
-    r: string;
-    s: string;
-  },
-): Promise<boolean> {
-  try {
-    await client.simulateContract({
-      address: tokenAddress,
-      abi: erc20PermitAbi,
-      functionName: 'permit',
-      args: [
-        message.owner, // holder
-        message.spender, // spender
-        message.nonce, // nonce
-        message.deadline, // expiry
-        true, // allowed (DAI style uses boolean)
-        sig.v, // v
-        sig.r as HexString, // r
-        sig.s as HexString, // s
-      ],
-    });
-    return true; // Supports EIP-2612
-  } catch (error) {
-    console.log(error);
-    return false; // Doesn't support EIP-2612
-  }
-}
 
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions

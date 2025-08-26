@@ -9,7 +9,7 @@ import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } fro
 import { isTypeSigner, writeContract } from '.';
 import { multicall } from './multicall';
 import { checkEIP2612PermitSupport } from './permit/eip2612Permit';
-import { getPermit2Address } from './permit/permit2';
+import { getPermit2Address } from './permit2';
 
 type AllowanceParams = {
   chainId: number;
@@ -221,7 +221,9 @@ export const hasPermit2ApprovalForAllTokens = async (params: Omit<AllowanceParam
       mode: ApprovalModes.PermitSingle,
     });
 
-    const allApproved = Object.values(permit2Allowance.data).every((tokenAllowance) => tokenAllowance.approvalNeeded === false);
+    const allApproved = Object.values(permit2Allowance.data).every(
+      (tokenAllowance) => !tokenAllowance.approvalNeeded && !tokenAllowance.approvalFailed,
+    );
 
     return {
       status: TxnStatus.success,
