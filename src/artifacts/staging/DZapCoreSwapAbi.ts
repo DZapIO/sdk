@@ -2,360 +2,6 @@ import { Abi } from 'viem';
 
 export const abi: Abi = [
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_relayReceiver',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: '_relaySolver',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'nonpayable',
-    type: 'constructor',
-  },
-  {
-    type: 'error',
-    name: 'CannotAuthorizeSelf',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'OnlyContractOwner',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'BridgeCallFailed',
-    inputs: [
-      {
-        type: 'bytes',
-        name: 'reason',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'CannotBridgeToSameNetwork',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InformationMismatch',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'amount',
-      },
-      {
-        type: 'uint256',
-        name: 'contractBalance',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'IntegratorNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidAmount',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidLength',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermit',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermitData',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NativeTransferFailed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoTransferToNullAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NotAContract',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAValidSpender',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAnERC20Token',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'UnAuthorizedCall',
-    inputs: [
-      {
-        type: 'address',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'CannotBridgeToSameNetwork',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InformationMismatch',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'amount',
-      },
-      {
-        type: 'uint256',
-        name: 'contractBalance',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'IntegratorNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidAmount',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidLength',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermit',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermitData',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NativeTransferFailed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoTransferToNullAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAnERC20Token',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'BridgeNotAdded',
-    inputs: [
-      {
-        type: 'address',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'CannotAuthorizeSelf',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'UnAuthorized',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'BridgeCallFailed',
-    inputs: [
-      {
-        type: 'bytes',
-        name: 'reason',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'CannotBridgeToSameNetwork',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'ContractCallNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InformationMismatch',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'amount',
-      },
-      {
-        type: 'uint256',
-        name: 'contractBalance',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'IntegratorNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidAmount',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidContract',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidLength',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermit',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermitData',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidSwapDetails',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NativeTransferFailed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoSwapFromZeroBalance',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoTransferToNullAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NotAContract',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAValidSpender',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAnERC20Token',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'SlippageTooLow',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'minAmount',
-      },
-      {
-        type: 'uint256',
-        name: 'returnAmount',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'SwapCallFailed',
-    inputs: [
-      {
-        type: 'bytes',
-        name: 'reason',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'UnAuthorizedCall',
-    inputs: [
-      {
-        type: 'address',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'CannotAuthorizeSelf',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidContract',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'UnAuthorized',
-    inputs: [],
-  },
-  {
     type: 'error',
     name: 'CalldataEmptyButInitNotZero',
     inputs: [],
@@ -417,1724 +63,48 @@ export const abi: Abi = [
   },
   {
     type: 'error',
-    name: 'OnlyContractOwner',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'AlreadyInitialized',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FeeTooHigh',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidFee',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'OnlyContractOwner',
-    inputs: [],
-  },
-  {
-    type: 'error',
     name: 'ZeroAddress',
     inputs: [],
   },
   {
     type: 'error',
-    name: 'CalldataEmptyButInitNotZero',
+    name: 'OnlyContractOwner',
     inputs: [],
   },
   {
-    type: 'error',
-    name: 'FacetAddressIsNotZero',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FacetAddressIsZero',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FacetContainsNoCode',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FunctionAlreadyExists',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FunctionDoesNotExist',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FunctionIsImmutable',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'IncorrectFacetCutAction',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InitReverted',
+    type: 'event',
+    anonymous: false,
+    name: 'DiamondCut',
     inputs: [
+      {
+        type: 'tuple[]',
+        name: '_diamondCut',
+        components: [
+          {
+            type: 'address',
+            name: 'facetAddress',
+          },
+          {
+            type: 'uint8',
+            name: 'action',
+          },
+          {
+            type: 'bytes4[]',
+            name: 'functionSelectors',
+          },
+        ],
+      },
+      {
+        type: 'address',
+        name: '_init',
+        indexed: false,
+      },
       {
         type: 'bytes',
-        name: 'reason',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'InitZeroButCalldataNotEmpty',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoSelectorsInFace',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'ZeroAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'FeeTooHigh',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'IntegratorNotActive',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'IntegratorNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'ShareTooHigh',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'UnAuthorized',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'ZeroAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'OnlyContractOwner',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'AllSwapsFailed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'ContractCallNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'amount',
-      },
-      {
-        type: 'uint256',
-        name: 'contractBalance',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'IntegratorNotAllowed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidAmount',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidContract',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermit',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InvalidPermitData',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NativeTransferFailed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoSwapFromZeroBalance',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoTransferToNullAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAValidSpender',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAnERC20Token',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'SlippageTooLow',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'minAmount',
-      },
-      {
-        type: 'uint256',
-        name: 'returnAmount',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'SwapCallFailed',
-    inputs: [
-      {
-        type: 'bytes',
-        name: 'reason',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'ZeroAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'amount',
-      },
-      {
-        type: 'uint256',
-        name: 'contractBalance',
-      },
-    ],
-  },
-  {
-    type: 'error',
-    name: 'NativeTransferFailed',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NoTransferToNullAddress',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NotAContract',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'NullAddrIsNotAnERC20Token',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'ReentrancyError',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'UnAuthorized',
-    inputs: [],
-  },
-  {
-    type: 'error',
-    name: 'WithdrawFailed',
-    inputs: [],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'DexAdded',
-    inputs: [
-      {
-        type: 'address',
-        name: 'dexAddress',
-        indexed: true,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'DexRemoved',
-    inputs: [
-      {
-        type: 'address',
-        name: 'dexAddress',
-        indexed: true,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'FunctionSignatureApprovalChanged',
-    inputs: [
-      {
-        type: 'address',
-        name: 'dex',
-        indexed: true,
-      },
-      {
-        type: 'bytes4',
-        name: 'functionSignature',
-        indexed: true,
-      },
-      {
-        type: 'bool',
-        name: 'approved',
-        indexed: true,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'AdaptersAdded',
-    inputs: [
-      {
-        type: 'address[]',
-        name: 'adapters',
+        name: '_calldata',
         indexed: false,
       },
     ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'AdaptersRemoved',
-    inputs: [
-      {
-        type: 'address[]',
-        name: 'adapters',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'BridgeAdded',
-    inputs: [
-      {
-        type: 'address[]',
-        name: 'bridges',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'BridgeRemoved',
-    inputs: [
-      {
-        type: 'address[]',
-        name: 'bridges',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SelectorToInfoUpdated',
-    inputs: [
-      {
-        type: 'address[]',
-        name: 'bridges',
-        indexed: false,
-      },
-      {
-        type: 'bytes4[]',
-        name: 'selectors',
-        indexed: false,
-      },
-      {
-        type: 'uint256[]',
-        name: 'info',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SetDzapFixedNativeFeeAmount',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'fee',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SetDzapTokenFee',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'fee',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SetFixedNativeFee',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'fee',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SetIntegrator',
-    inputs: [
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: false,
-      },
-      {
-        type: 'uint8[]',
-        name: 'feeType',
-        indexed: false,
-      },
-      {
-        type: 'tuple[]',
-        name: 'info',
-        indexed: false,
-        components: [
-          {
-            type: 'uint256',
-            name: 'tokenFee',
-          },
-          {
-            type: 'uint256',
-            name: 'fixedNativeFeeAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'dzapTokenShare',
-          },
-          {
-            type: 'uint256',
-            name: 'dzapFixedNativeShare',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SetMaxPlatformFee',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'fee',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SetPlatformFee',
-    inputs: [
-      {
-        type: 'uint256',
-        name: 'fee',
-        indexed: false,
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'MultiSwapped',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'recipient',
-        indexed: false,
-      },
-      {
-        type: 'tuple[]',
-        name: 'swapInfo',
-        indexed: false,
-        components: [
-          {
-            type: 'address',
-            name: 'dex',
-          },
-          {
-            type: 'address',
-            name: 'fromToken',
-          },
-          {
-            type: 'address',
-            name: 'toToken',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'leftOverFromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'returnToAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'Swapped',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'recipient',
-        indexed: false,
-      },
-      {
-        type: 'tuple',
-        name: 'swapInfo',
-        indexed: false,
-        components: [
-          {
-            type: 'address',
-            name: 'dex',
-          },
-          {
-            type: 'address',
-            name: 'fromToken',
-          },
-          {
-            type: 'address',
-            name: 'toToken',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'leftOverFromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'returnToAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SwappedSingleToken',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'recipient',
-        indexed: false,
-      },
-      {
-        type: 'tuple',
-        name: 'swapInfo',
-        indexed: false,
-        components: [
-          {
-            type: 'address',
-            name: 'dex',
-          },
-          {
-            type: 'address',
-            name: 'fromToken',
-          },
-          {
-            type: 'address',
-            name: 'toToken',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'leftOverFromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'returnToAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'BridgeTransferStarted',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple',
-        name: 'bridgeData',
-        indexed: false,
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'MultiTokenBridgeTransferStarted',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple[]',
-        name: 'bridgeData',
-        indexed: false,
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'SwapBridgeTransferStarted',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple[]',
-        name: 'bridgeData',
-        indexed: false,
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-      {
-        type: 'tuple[]',
-        name: 'swapInfo',
-        indexed: false,
-        components: [
-          {
-            type: 'address',
-            name: 'dex',
-          },
-          {
-            type: 'address',
-            name: 'fromToken',
-          },
-          {
-            type: 'address',
-            name: 'toToken',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'leftOverFromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'returnToAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'BatchBridgeTransferStart',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple[]',
-        name: 'bridgeData',
-        indexed: false,
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'BatchSwapAndBridgeTransferStart',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple[]',
-        name: 'bridgeData',
-        indexed: false,
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-      {
-        type: 'tuple[]',
-        name: 'swapInfo',
-        indexed: false,
-        components: [
-          {
-            type: 'address',
-            name: 'dex',
-          },
-          {
-            type: 'address',
-            name: 'fromToken',
-          },
-          {
-            type: 'address',
-            name: 'toToken',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'leftOverFromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'returnToAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'GasZipBridgeTransferStarted',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple',
-        name: 'gasZipData',
-        indexed: false,
-        components: [
-          {
-            type: 'bytes32',
-            name: 'recipient',
-          },
-          {
-            type: 'uint256',
-            name: 'destChains',
-          },
-          {
-            type: 'uint256',
-            name: 'depositAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    name: 'GasZipSwapBridgeTransferStarted',
-    inputs: [
-      {
-        type: 'bytes32',
-        name: 'transactionId',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'integrator',
-        indexed: true,
-      },
-      {
-        type: 'address',
-        name: 'sender',
-        indexed: true,
-      },
-      {
-        type: 'tuple',
-        name: 'gasZipData',
-        indexed: false,
-        components: [
-          {
-            type: 'bytes32',
-            name: 'recipient',
-          },
-          {
-            type: 'uint256',
-            name: 'destChains',
-          },
-          {
-            type: 'uint256',
-            name: 'depositAmount',
-          },
-        ],
-      },
-      {
-        type: 'tuple[]',
-        name: 'swapInfo',
-        indexed: false,
-        components: [
-          {
-            type: 'address',
-            name: 'dex',
-          },
-          {
-            type: 'address',
-            name: 'fromToken',
-          },
-          {
-            type: 'address',
-            name: 'toToken',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'leftOverFromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'returnToAmount',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'addressCanExecuteMethod',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'bytes4',
-        name: '_selector',
-      },
-      {
-        type: 'address',
-        name: '_executor',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'setBatchCanExecute',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'bytes4[]',
-        name: '_selector',
-      },
-      {
-        type: 'address[]',
-        name: '_executor',
-      },
-      {
-        type: 'bool[]',
-        name: '_canExecute',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'setCanExecute',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'bytes4',
-        name: '_selector',
-      },
-      {
-        type: 'address',
-        name: '_executor',
-      },
-      {
-        type: 'bool',
-        name: '_canExecute',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'addAggregatorsAndBridges',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address[]',
-        name: '_bridgeAddresses',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'getSelectorInfo',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_bridge',
-      },
-      {
-        type: 'bytes4',
-        name: '_selector',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-      {
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'isBridgeWhitelisted',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_bridge',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'removeAggregatorsAndBridges',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address[]',
-        name: '_bridgeAddresses',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'updateSelectorInfo',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address[]',
-        name: '_bridgeAddresses',
-      },
-      {
-        type: 'bytes4[]',
-        name: '_selectors',
-      },
-      {
-        type: 'uint256[]',
-        name: '_offset',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'bridge',
-    constant: false,
-    stateMutability: 'payable',
-    payable: true,
-    inputs: [
-      {
-        type: 'bytes32',
-        name: '_transactionId',
-      },
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'tuple',
-        name: '_bridgeData',
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-      {
-        type: 'tuple',
-        name: '_genericData',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'uint256',
-            name: 'extraNative',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-          {
-            type: 'bytes',
-            name: 'callData',
-          },
-        ],
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'bridgeMultipleTokens',
-    constant: false,
-    stateMutability: 'payable',
-    payable: true,
-    inputs: [
-      {
-        type: 'bytes32',
-        name: '_transactionId',
-      },
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'tuple[]',
-        name: '_bridgeData',
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-      {
-        type: 'tuple[]',
-        name: '_genericData',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'uint256',
-            name: 'extraNative',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-          {
-            type: 'bytes',
-            name: 'callData',
-          },
-        ],
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'swapAndBridge',
-    constant: false,
-    stateMutability: 'payable',
-    payable: true,
-    inputs: [
-      {
-        type: 'bytes32',
-        name: '_transactionId',
-      },
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'tuple[]',
-        name: '_bridgeData',
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-      {
-        type: 'tuple[]',
-        name: '_swapData',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
-      },
-      {
-        type: 'tuple[]',
-        name: '_genericData',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'uint256',
-            name: 'extraNative',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-          {
-            type: 'bytes',
-            name: 'callData',
-          },
-        ],
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'addDex',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_dex',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'batchAddDex',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address[]',
-        name: '_dexs',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'batchRemoveDex',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address[]',
-        name: '_dexs',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'batchSetFunctionApprovalBySignature',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address[]',
-        name: '_dexs',
-      },
-      {
-        type: 'bytes4[]',
-        name: '_signatures',
-      },
-      {
-        type: 'bool[]',
-        name: '_approval',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'isContractApproved',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_dex',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-        name: 'approved',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'isFunctionApproved',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_dex',
-      },
-      {
-        type: 'bytes4',
-        name: '_signature',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-        name: 'approved',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'removeDex',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_dex',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'setFunctionApprovalBySignature',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_dex',
-      },
-      {
-        type: 'bytes4',
-        name: '_signature',
-      },
-      {
-        type: 'bool',
-        name: '_approval',
-      },
-    ],
-    outputs: [],
   },
   {
     type: 'function',
@@ -2172,6 +142,16 @@ export const abi: Abi = [
     outputs: [],
   },
   {
+    type: 'error',
+    name: 'AlreadyInitialized',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'CannotAuthorizeSelf',
+    inputs: [],
+  },
+  {
     type: 'function',
     name: 'initialize',
     constant: false,
@@ -2179,19 +159,19 @@ export const abi: Abi = [
     inputs: [
       {
         type: 'address',
-        name: '_permit2',
-      },
-      {
-        type: 'address',
         name: '_protocolFeeVault',
       },
       {
-        type: 'uint256',
-        name: '_maxTokenFee',
+        type: 'address',
+        name: '_feeValidator',
       },
       {
-        type: 'uint256',
-        name: '_maxFixedNativeFeeAmount',
+        type: 'address',
+        name: '_refundVault',
+      },
+      {
+        type: 'address',
+        name: '_permit2',
       },
     ],
     outputs: [],
@@ -2287,244 +267,26 @@ export const abi: Abi = [
     outputs: [
       {
         type: 'bool',
+        name: '',
       },
     ],
   },
   {
-    type: 'constructor',
-    stateMutability: 'payable',
-    payable: true,
+    type: 'event',
+    anonymous: false,
+    name: 'OwnershipTransferred',
     inputs: [
       {
         type: 'address',
-        name: '_contractOwner',
+        name: 'previousOwner',
+        indexed: true,
       },
       {
         type: 'address',
-        name: '_diamondCutFacet',
+        name: 'newOwner',
+        indexed: true,
       },
     ],
-  },
-  {
-    type: 'function',
-    name: 'calcFixedNativeFees',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'uint8',
-        name: '_feeType',
-      },
-    ],
-    outputs: [
-      {
-        type: 'uint256',
-        name: 'fixedNativeFeeAmount',
-      },
-      {
-        type: 'uint256',
-        name: 'dzapShare',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'calcTokenFees',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'uint8',
-        name: '_feeType',
-      },
-      {
-        type: 'uint256',
-        name: '_amount',
-      },
-    ],
-    outputs: [
-      {
-        type: 'uint256',
-        name: 'totalFee',
-      },
-      {
-        type: 'uint256',
-        name: 'dzapShare',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'integratorFeeInfo',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'uint8',
-        name: '_feeType',
-      },
-    ],
-    outputs: [
-      {
-        type: 'tuple',
-        components: [
-          {
-            type: 'uint256',
-            name: 'tokenFee',
-          },
-          {
-            type: 'uint256',
-            name: 'fixedNativeFeeAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'dzapTokenShare',
-          },
-          {
-            type: 'uint256',
-            name: 'dzapFixedNativeShare',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'isIntegratorAllowed',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'maxFixedNativeFeeAmount',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [],
-    outputs: [
-      {
-        type: 'uint256',
-        name: '_maxFixedNativeFee',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'maxTokenFee',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [],
-    outputs: [
-      {
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'protocolFeeVault',
-    constant: true,
-    stateMutability: 'view',
-    payable: false,
-    inputs: [],
-    outputs: [
-      {
-        type: 'address',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'removeIntegrator',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'setIntegratorInfo',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'uint8[]',
-        name: '_feeTypes',
-      },
-      {
-        type: 'tuple[]',
-        name: '_feeInfo',
-        components: [
-          {
-            type: 'uint256',
-            name: 'tokenFee',
-          },
-          {
-            type: 'uint256',
-            name: 'fixedNativeFeeAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'dzapTokenShare',
-          },
-          {
-            type: 'uint256',
-            name: 'dzapFixedNativeShare',
-          },
-        ],
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'setProtocolFeeVault',
-    constant: false,
-    payable: false,
-    inputs: [
-      {
-        type: 'address',
-        name: '_protocolFeeVault',
-      },
-    ],
-    outputs: [],
   },
   {
     type: 'function',
@@ -2554,350 +316,720 @@ export const abi: Abi = [
     outputs: [],
   },
   {
-    type: 'function',
-    name: 'multiSwap',
-    constant: false,
-    stateMutability: 'payable',
-    payable: true,
+    type: 'event',
+    anonymous: false,
+    name: 'ExecutionAllowed',
     inputs: [
       {
-        type: 'bytes32',
-        name: '_transactionId',
-      },
-      {
         type: 'address',
-        name: '_integrator',
+        name: 'account',
+        indexed: true,
       },
       {
-        type: 'address',
-        name: '_recipient',
-      },
-      {
-        type: 'tuple[]',
-        name: '_data',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
+        type: 'bytes4',
+        name: 'method',
+        indexed: true,
       },
     ],
-    outputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'ExecutionDenied',
+    inputs: [
+      {
+        type: 'address',
+        name: 'account',
+        indexed: true,
+      },
+      {
+        type: 'bytes4',
+        name: 'method',
+        indexed: true,
+      },
+    ],
   },
   {
     type: 'function',
-    name: 'multiSwapWithoutRevert',
-    constant: false,
-    stateMutability: 'payable',
-    payable: true,
+    name: 'addressCanExecuteMethod',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
     inputs: [
       {
-        type: 'bytes32',
-        name: '_transactionId',
+        type: 'bytes4',
+        name: '_selector',
       },
       {
         type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'address',
-        name: '_recipient',
-      },
-      {
-        type: 'tuple[]',
-        name: '_data',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
+        name: '_executor',
       },
     ],
-    outputs: [],
+    outputs: [
+      {
+        type: 'bool',
+        name: '',
+      },
+    ],
   },
   {
     type: 'function',
-    name: 'swap',
-    constant: false,
-    stateMutability: 'payable',
-    payable: true,
-    inputs: [
-      {
-        type: 'bytes32',
-        name: '_transactionId',
-      },
-      {
-        type: 'address',
-        name: '_integrator',
-      },
-      {
-        type: 'address',
-        name: '_recipient',
-      },
-      {
-        type: 'tuple',
-        name: '_data',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
-      },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'swapErc20ToErc20',
+    name: 'setBatchCanExecute',
     constant: false,
     payable: false,
     inputs: [
       {
-        type: 'bytes32',
-        name: '_transactionId',
+        type: 'bytes4[]',
+        name: '_selector',
       },
       {
-        type: 'address',
-        name: '_recipient',
+        type: 'address[]',
+        name: '_executor',
       },
       {
-        type: 'tuple',
-        name: '_data',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
+        type: 'bool[]',
+        name: '_canExecute',
       },
     ],
     outputs: [],
   },
   {
     type: 'function',
-    name: 'swapErc20ToNative',
+    name: 'setCanExecute',
     constant: false,
     payable: false,
     inputs: [
       {
-        type: 'bytes32',
-        name: '_transactionId',
+        type: 'bytes4',
+        name: '_selector',
       },
       {
         type: 'address',
-        name: '_recipient',
+        name: '_executor',
       },
       {
-        type: 'tuple',
-        name: '_data',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
+        type: 'bool',
+        name: '_canExecute',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'error',
+    name: 'UnAuthorized',
+    inputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'ProtocolFeeVaultUpdated',
+    inputs: [
+      {
+        type: 'address',
+        name: 'protocolFeeVault',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'RefundVaultUpdated',
+    inputs: [
+      {
+        type: 'address',
+        name: 'refundVault',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'getProtocolFeeVault',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [],
+    outputs: [
+      {
+        type: 'address',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'getRefundVault',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [],
+    outputs: [
+      {
+        type: 'address',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'setProtocolFeeVault',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_protocolFeeVault',
       },
     ],
     outputs: [],
   },
   {
     type: 'function',
-    name: 'swapNativeToErc20',
+    name: 'setRefundVault',
     constant: false,
-    stateMutability: 'payable',
-    payable: true,
+    payable: false,
     inputs: [
       {
-        type: 'bytes32',
-        name: '_transactionId',
-      },
-      {
         type: 'address',
-        name: '_recipient',
-      },
-      {
-        type: 'tuple',
-        name: '_data',
-        components: [
-          {
-            type: 'address',
-            name: 'callTo',
-          },
-          {
-            type: 'address',
-            name: 'approveTo',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'fromAmount',
-          },
-          {
-            type: 'uint256',
-            name: 'minToAmount',
-          },
-          {
-            type: 'bytes',
-            name: 'swapCallData',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
+        name: '_refundVault',
       },
     ],
     outputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'FeeValidatorUpdated',
+    inputs: [
+      {
+        type: 'address',
+        name: 'feeValidator',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'getFeeValidator',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [],
+    outputs: [
+      {
+        type: 'address',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'getNonce',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_user',
+      },
+    ],
+    outputs: [
+      {
+        type: 'uint256',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'setFeeValidator',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_feeValidator',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'error',
+    name: 'AdapterNotWhitelisted',
+    inputs: [
+      {
+        type: 'address',
+        name: 'adapter',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'BridgeNotWhitelisted',
+    inputs: [
+      {
+        type: 'address',
+        name: 'bridge',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'DexNotWhitelised',
+    inputs: [
+      {
+        type: 'address',
+        name: 'dex',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'NotAContract',
+    inputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'AdapterAdded',
+    inputs: [
+      {
+        type: 'address',
+        name: 'adapter',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'AdapterRemoved',
+    inputs: [
+      {
+        type: 'address',
+        name: 'adapter',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'AdaptersAdded',
+    inputs: [
+      {
+        type: 'address[]',
+        name: 'adapters',
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'AdaptersRemoved',
+    inputs: [
+      {
+        type: 'address[]',
+        name: 'adapters',
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'BridgeAdded',
+    inputs: [
+      {
+        type: 'address',
+        name: 'bridge',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'BridgeRemoved',
+    inputs: [
+      {
+        type: 'address',
+        name: 'bridge',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'BridgesAdded',
+    inputs: [
+      {
+        type: 'address[]',
+        name: 'bridges',
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'BridgesRemoved',
+    inputs: [
+      {
+        type: 'address[]',
+        name: 'bridges',
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DexAdded',
+    inputs: [
+      {
+        type: 'address',
+        name: 'dex',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DexRemoved',
+    inputs: [
+      {
+        type: 'address',
+        name: 'dex',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DexesAdded',
+    inputs: [
+      {
+        type: 'address[]',
+        name: 'dexes',
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DexesRemoved',
+    inputs: [
+      {
+        type: 'address[]',
+        name: 'dexes',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'addAdapter',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_adapter',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'addAdapters',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_adapters',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'addBridge',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_bridge',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'addBridges',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_bridges',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'addDex',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_dex',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'addDexesAndBridges',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_dexs',
+      },
+      {
+        type: 'address[]',
+        name: '_bridges',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'addDexs',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_dexs',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'isAdapterWhitelisted',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_adapter',
+      },
+    ],
+    outputs: [
+      {
+        type: 'bool',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'isBridgeWhitelisted',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_bridge',
+      },
+    ],
+    outputs: [
+      {
+        type: 'bool',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'isDexWhitelisted',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_dex',
+      },
+    ],
+    outputs: [
+      {
+        type: 'bool',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'removeAdapter',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_adapter',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'removeAdapters',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_adapters',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'removeBridge',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_bridge',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'removeBridges',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_bridges',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'removeDex',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address',
+        name: '_dex',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'removeDexesAndBridges',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_dexs',
+      },
+      {
+        type: 'address[]',
+        name: '_bridges',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'removeDexs',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'address[]',
+        name: '_dexs',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'error',
+    name: 'InsufficientBalance',
+    inputs: [
+      {
+        type: 'uint256',
+        name: 'amount',
+      },
+      {
+        type: 'uint256',
+        name: 'contractBalance',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'NativeTransferFailed',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NoTransferToNullAddress',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'ReentrancyError',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'WithdrawFailed',
+    inputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'LogWithdraw',
+    inputs: [
+      {
+        type: 'address',
+        name: 'tokenAddress',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'to',
+        indexed: false,
+      },
+      {
+        type: 'uint256',
+        name: 'amount',
+        indexed: false,
+      },
+    ],
   },
   {
     type: 'function',
@@ -2950,65 +1082,294 @@ export const abi: Abi = [
     outputs: [],
   },
   {
+    type: 'error',
+    name: 'InvalidPermit',
+    inputs: [
+      {
+        type: 'string',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'InvalidPermitType',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NoSwapFromZeroAmount',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NullAddrIsNotAValidRecipient',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NullAddrIsNotAValidSpender',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'SlippageTooHigh',
+    inputs: [
+      {
+        type: 'uint256',
+        name: 'minAmount',
+      },
+      {
+        type: 'uint256',
+        name: 'returnAmount',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'SwapCallFailed',
+    inputs: [
+      {
+        type: 'address',
+        name: 'target',
+      },
+      {
+        type: 'bytes4',
+        name: 'funSig',
+      },
+      {
+        type: 'bytes',
+        name: 'reason',
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DZapBatchTokenSwapped',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'transactionId',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'sender',
+        indexed: true,
+      },
+      {
+        type: 'tuple[]',
+        name: 'swapInfo',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'fromToken',
+          },
+          {
+            type: 'address',
+            name: 'toToken',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'returnToAmount',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DZapTokenSwapped',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'transactionId',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'sender',
+        indexed: true,
+      },
+      {
+        type: 'tuple',
+        name: 'swapInfo',
+        indexed: false,
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'fromToken',
+          },
+          {
+            type: 'address',
+            name: 'toToken',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'returnToAmount',
+          },
+        ],
+      },
+    ],
+  },
+  {
     type: 'function',
-    name: 'bridgeMultipleTokensViaTransfer',
+    name: 'swap',
     constant: false,
     stateMutability: 'payable',
     payable: true,
     inputs: [
       {
-        type: 'bytes32',
+        type: 'bytes',
         name: '_transactionId',
       },
       {
-        type: 'address',
-        name: '_integrator',
+        type: 'bytes',
+        name: '_batchDepositSignature',
+      },
+      {
+        type: 'tuple',
+        name: '_tokenDepositDetails',
+        components: [
+          {
+            type: 'tuple[]',
+            name: 'permitted',
+            components: [
+              {
+                type: 'address',
+                name: 'token',
+              },
+              {
+                type: 'uint256',
+                name: 'amount',
+              },
+            ],
+          },
+          {
+            type: 'uint256',
+            name: 'nonce',
+          },
+          {
+            type: 'uint256',
+            name: 'deadline',
+          },
+        ],
       },
       {
         type: 'tuple[]',
-        name: '_bridgeData',
+        name: '_swapData',
         components: [
           {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
+            type: 'address',
+            name: 'recipient',
           },
           {
             type: 'address',
             name: 'from',
           },
           {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
+            type: 'address',
+            name: 'to',
           },
           {
             type: 'uint256',
-            name: 'minAmountIn',
+            name: 'fromAmount',
           },
           {
             type: 'uint256',
-            name: 'destinationChainId',
+            name: 'minToAmount',
           },
         ],
       },
       {
         type: 'tuple[]',
-        name: '_transferData',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'bool',
+        name: 'withoutRevert',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'swap',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'tuple[]',
+        name: '_inputTokens',
         components: [
           {
             type: 'address',
-            name: 'transferTo',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
           },
           {
             type: 'bytes',
@@ -3016,8 +1377,1649 @@ export const abi: Abi = [
           },
         ],
       },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'bool',
+        name: 'withoutRevert',
+      },
     ],
     outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'swap',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_tokenApprovalData',
+      },
+      {
+        type: 'tuple',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'error',
+    name: 'AdapterCallFailed',
+    inputs: [
+      {
+        type: 'address',
+        name: 'adapter',
+      },
+      {
+        type: 'bytes',
+        name: 'res',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'SigDeadlineExpired',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'UnauthorizedSigner',
+    inputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'BridgeStarted',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'transactionId',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'user',
+        indexed: true,
+      },
+      {
+        type: 'bytes',
+        name: 'receiver',
+        indexed: false,
+      },
+      {
+        type: 'string',
+        name: 'bridge',
+        indexed: false,
+      },
+      {
+        type: 'address',
+        name: 'bridgeAddress',
+        indexed: false,
+      },
+      {
+        type: 'address',
+        name: 'from',
+        indexed: false,
+      },
+      {
+        type: 'bytes',
+        name: 'to',
+        indexed: false,
+      },
+      {
+        type: 'uint256',
+        name: 'amount',
+        indexed: false,
+      },
+      {
+        type: 'uint256',
+        name: 'destinationChainId',
+        indexed: false,
+      },
+      {
+        type: 'bool',
+        name: 'hasDestinationCall',
+        indexed: false,
+      },
+    ],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DZapBridgeStarted',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'transactionId',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'user',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'integrator',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'bridge',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_feeData',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_deadline',
+      },
+      {
+        type: 'tuple[]',
+        name: '_erc20Token',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+          {
+            type: 'bytes',
+            name: 'permit',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+          {
+            type: 'bool',
+            name: 'updateBridgeInAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'bridge',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_feeData',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'bytes',
+        name: '_batchDepositSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_deadline',
+      },
+      {
+        type: 'tuple',
+        name: '_tokenDepositDetails',
+        components: [
+          {
+            type: 'tuple[]',
+            name: 'permitted',
+            components: [
+              {
+                type: 'address',
+                name: 'token',
+              },
+              {
+                type: 'uint256',
+                name: 'amount',
+              },
+            ],
+          },
+          {
+            type: 'uint256',
+            name: 'nonce',
+          },
+          {
+            type: 'uint256',
+            name: 'deadline',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+          {
+            type: 'bool',
+            name: 'updateBridgeInAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'bridge',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_feeData',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_deadline',
+      },
+      {
+        type: 'tuple',
+        name: '_intputTokens',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+          {
+            type: 'bytes',
+            name: 'permit',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+          {
+            type: 'bool',
+            name: 'updateBridgeInAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'bridge',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_feeData',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_deadline',
+      },
+      {
+        type: 'tuple',
+        name: '_intputTokens',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+          {
+            type: 'bytes',
+            name: 'permit',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'DZapGasLessStarted',
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'executor',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: '_user',
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'executeBridge',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_bridgeFeeData',
+      },
+      {
+        type: 'bytes',
+        name: '_userIntentSignature',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_userIntentDeadline',
+      },
+      {
+        type: 'uint256',
+        name: '_bridgeFeeDeadline',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'tuple',
+        name: '_inputToken',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+          {
+            type: 'bytes',
+            name: 'permit',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_executorFeeInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'executeMultiBridge',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_bridgeFeeData',
+      },
+      {
+        type: 'bytes',
+        name: '_userIntentSignature',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_userIntentDeadline',
+      },
+      {
+        type: 'uint256',
+        name: '_bridgeFeeDeadline',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'tuple[]',
+        name: '_inputTokens',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+          {
+            type: 'bytes',
+            name: 'permit',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_executorFeeInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+          {
+            type: 'bool',
+            name: 'updateBridgeInAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'executeMultiBridgeBatchWithPermit2Witness',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_bridgeFeeData',
+      },
+      {
+        type: 'bytes',
+        name: '_userIntentSignature',
+      },
+      {
+        type: 'bytes',
+        name: '_feeVerificationSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_bridgeFeeDeadline',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'tuple',
+        name: '_tokenDepositDetails',
+        components: [
+          {
+            type: 'tuple[]',
+            name: 'permitted',
+            components: [
+              {
+                type: 'address',
+                name: 'token',
+              },
+              {
+                type: 'uint256',
+                name: 'amount',
+              },
+            ],
+          },
+          {
+            type: 'uint256',
+            name: 'nonce',
+          },
+          {
+            type: 'uint256',
+            name: 'deadline',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_executorFeeInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+          {
+            type: 'bool',
+            name: 'updateBridgeInAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_adapterInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'adapter',
+          },
+          {
+            type: 'bytes',
+            name: 'adapterData',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'executeMultiSwap',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_userIntentSignature',
+      },
+      {
+        type: 'uint256',
+        name: '_userIntentDeadline',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'tuple[]',
+        name: '_inputTokens',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+          {
+            type: 'bytes',
+            name: 'permit',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_executorFeeInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'executeMultiSwapWithPermit2Witness',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_userIntentSignature',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'tuple',
+        name: '_tokenDepositDetails',
+        components: [
+          {
+            type: 'tuple[]',
+            name: 'permitted',
+            components: [
+              {
+                type: 'address',
+                name: 'token',
+              },
+              {
+                type: 'uint256',
+                name: 'amount',
+              },
+            ],
+          },
+          {
+            type: 'uint256',
+            name: 'nonce',
+          },
+          {
+            type: 'uint256',
+            name: 'deadline',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_executorFeeInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple[]',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'executeSwap',
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_userIntentSignature',
+      },
+      {
+        type: 'bytes',
+        name: '_tokenApprovalData',
+      },
+      {
+        type: 'uint256',
+        name: '_userIntentDeadline',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'tuple',
+        name: '_executorFeeInfo',
+        components: [
+          {
+            type: 'address',
+            name: 'token',
+          },
+          {
+            type: 'uint256',
+            name: 'amount',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_swapData',
+        components: [
+          {
+            type: 'address',
+            name: 'recipient',
+          },
+          {
+            type: 'address',
+            name: 'from',
+          },
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'fromAmount',
+          },
+          {
+            type: 'uint256',
+            name: 'minToAmount',
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: '_swapExecutionData',
+        components: [
+          {
+            type: 'string',
+            name: 'dex',
+          },
+          {
+            type: 'address',
+            name: 'callTo',
+          },
+          {
+            type: 'address',
+            name: 'approveTo',
+          },
+          {
+            type: 'bytes',
+            name: 'swapCallData',
+          },
+          {
+            type: 'bool',
+            name: 'isDirectTransfer',
+          },
+        ],
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'error',
+    name: 'CannotBridgeToSameNetwork',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'Erc20CallFailed',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'reason',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'InvalidEncodedAddress',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NativeCallFailed',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'reason',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'NoBridgeFromZeroAmount',
+    inputs: [],
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    name: 'RelayBridgeTransferStarted',
+    inputs: [
+      {
+        type: 'bytes',
+        name: 'transactionId',
+        indexed: true,
+      },
+      {
+        type: 'address',
+        name: 'user',
+        indexed: true,
+      },
+      {
+        type: 'bytes',
+        name: 'reciever',
+        indexed: false,
+      },
+      {
+        type: 'address',
+        name: 'from',
+        indexed: false,
+      },
+      {
+        type: 'bytes',
+        name: 'to',
+        indexed: false,
+      },
+      {
+        type: 'tuple',
+        name: 'relayData',
+        indexed: false,
+        components: [
+          {
+            type: 'uint256',
+            name: 'amountIn',
+          },
+          {
+            type: 'bytes32',
+            name: 'requestId',
+          },
+        ],
+      },
+      {
+        type: 'uint256',
+        name: 'destinationChainId',
+        indexed: false,
+      },
+      {
+        type: 'bool',
+        name: 'hasDestinationCall',
+        indexed: false,
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: '_RELAY_RECEIVER',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [],
+    outputs: [
+      {
+        type: 'address',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: '_RELAY_SOLVER',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [],
+    outputs: [
+      {
+        type: 'address',
+        name: '',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'bridgeViaRelay',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bool',
+        name: '_updateAmountIn',
+      },
+      {
+        type: 'address',
+        name: '_from',
+      },
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_receiver',
+      },
+      {
+        type: 'bytes',
+        name: '_to',
+      },
+      {
+        type: 'tuple',
+        name: '_relayData',
+        components: [
+          {
+            type: 'uint256',
+            name: 'amountIn',
+          },
+          {
+            type: 'bytes32',
+            name: 'requestId',
+          },
+        ],
+      },
+      {
+        type: 'uint256',
+        name: '_destinationChainId',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'bool',
+        name: '_hasDestinationCall',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'getRelayAddress',
+    constant: true,
+    stateMutability: 'view',
+    payable: false,
+    inputs: [],
+    outputs: [
+      {
+        type: 'address',
+        name: 'receiver',
+      },
+      {
+        type: 'address',
+        name: 'solver',
+      },
+    ],
+  },
+  {
+    type: 'error',
+    name: 'BridgeCallFailed',
+    inputs: [
+      {
+        type: 'address',
+        name: 'target',
+      },
+      {
+        type: 'bytes4',
+        name: 'funSig',
+      },
+      {
+        type: 'bytes',
+        name: 'reason',
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'bridgeViaGeneric',
+    constant: false,
+    stateMutability: 'payable',
+    payable: true,
+    inputs: [
+      {
+        type: 'bool',
+        name: '_updateAmountIn',
+      },
+      {
+        type: 'address',
+        name: '_from',
+      },
+      {
+        type: 'bytes',
+        name: '_transactionId',
+      },
+      {
+        type: 'bytes',
+        name: '_callData',
+      },
+      {
+        type: 'bytes',
+        name: '_receiver',
+      },
+      {
+        type: 'bytes',
+        name: '_to',
+      },
+      {
+        type: 'string',
+        name: '_bridge',
+      },
+      {
+        type: 'uint256',
+        name: '_amountIn',
+      },
+      {
+        type: 'uint256',
+        name: '_offset',
+      },
+      {
+        type: 'uint256',
+        name: '_extraNative',
+      },
+      {
+        type: 'uint256',
+        name: '_destinationChainId',
+      },
+      {
+        type: 'address',
+        name: '_user',
+      },
+      {
+        type: 'address',
+        name: '_callTo',
+      },
+      {
+        type: 'address',
+        name: '_approveTo',
+      },
+      {
+        type: 'bool',
+        name: '_hasDestinationCall',
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'error',
+    name: 'TransferAmountMismatch',
+    inputs: [],
   },
   {
     type: 'function',
@@ -3027,1214 +3029,50 @@ export const abi: Abi = [
     payable: true,
     inputs: [
       {
-        type: 'bytes32',
-        name: '_transactionId',
+        type: 'bool',
+        name: '_updateAmountIn',
       },
       {
         type: 'address',
-        name: '_integrator',
+        name: '_from',
       },
       {
-        type: 'tuple',
-        name: '_bridgeData',
-        components: [
-          {
-            type: 'string',
-            name: 'bridge',
-          },
-          {
-            type: 'bytes',
-            name: 'to',
-          },
-          {
-            type: 'bytes',
-            name: 'receiver',
-          },
-          {
-            type: 'address',
-            name: 'from',
-          },
-          {
-            type: 'bool',
-            name: 'hasSourceSwaps',
-          },
-          {
-            type: 'bool',
-            name: 'hasDestinationCall',
-          },
-          {
-            type: 'uint256',
-            name: 'minAmountIn',
-          },
-          {
-            type: 'uint256',
-            name: 'destinationChainId',
-          },
-        ],
-      },
-      {
-        type: 'tuple',
-        name: '_transferData',
-        components: [
-          {
-            type: 'address',
-            name: 'transferTo',
-          },
-          {
-            type: 'bytes',
-            name: 'permit',
-          },
-        ],
-      },
-    ],
-    outputs: [],
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: '_recipient',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_data',
-        type: 'tuple[]',
-      },
-    ],
-    name: 'multiSwapAndTransfer',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: '_recipient',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_data',
-        type: 'tuple[]',
-      },
-    ],
-    name: 'multiSwapAndTransferWithoutRevert',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: '_recipient',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData',
-        name: '_data',
-        type: 'tuple',
-      },
-    ],
-    name: 'swapAndTransfer',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: '_recipient',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_data',
-        type: 'tuple[]',
-      },
-      {
-        internalType: 'bool[]',
-        name: '_isDirectTransfer',
-        type: 'bool[]',
-      },
-    ],
-    name: 'batchSwap',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'string',
-            name: 'bridge',
-            type: 'string',
-          },
-          {
-            internalType: 'bytes',
-            name: 'to',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'receiver',
-            type: 'bytes',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasSourceSwaps',
-            type: 'bool',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasDestinationCall',
-            type: 'bool',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minAmountIn',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destinationChainId',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GenericBridgeData[]',
-        name: '_bridgeData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_swapData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'transferTo',
-            type: 'address',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct TransferData[]',
-        name: '_transferData',
-        type: 'tuple[]',
-      },
-    ],
-    name: 'swapAndBridgeViaTransfer',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'bytes32',
-            name: 'recipeint',
-            type: 'bytes32',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destChains',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'depositAmount',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GasZipData',
-        name: '_gasZipData',
-        type: 'tuple',
-      },
-    ],
-    name: 'bridgeTokensViaGasZip',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getGasZipRouter',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getGasZipRouter',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_swapData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'bytes32',
-            name: 'recipeint',
-            type: 'bytes32',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destChains',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'depositAmount',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GasZipData',
-        name: '_gasZipData',
-        type: 'tuple',
-      },
-    ],
-    name: 'swapAndBridgeTokensViaGasZip',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'RELAY_RECIEVER',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'RELAY_SOLVER',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'string',
-            name: 'bridge',
-            type: 'string',
-          },
-          {
-            internalType: 'bytes',
-            name: 'to',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'receiver',
-            type: 'bytes',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasSourceSwaps',
-            type: 'bool',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasDestinationCall',
-            type: 'bool',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minAmountIn',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destinationChainId',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GenericBridgeData[]',
-        name: '_bridgeData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'bytes32',
-            name: 'requestId',
-            type: 'bytes32',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct RelayData[]',
-        name: '_relayData',
-        type: 'tuple[]',
-      },
-    ],
-    name: 'bridgeMultipleTokensViaRelay',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'string',
-            name: 'bridge',
-            type: 'string',
-          },
-          {
-            internalType: 'bytes',
-            name: 'to',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'receiver',
-            type: 'bytes',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasSourceSwaps',
-            type: 'bool',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasDestinationCall',
-            type: 'bool',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minAmountIn',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destinationChainId',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GenericBridgeData',
-        name: '_bridgeData',
-        type: 'tuple',
-      },
-      {
-        components: [
-          {
-            internalType: 'bytes32',
-            name: 'requestId',
-            type: 'bytes32',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct RelayData',
-        name: '_relayData',
-        type: 'tuple',
-      },
-    ],
-    name: 'bridgeViaRelay',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getRelayAddress',
-    outputs: [
-      {
-        internalType: 'address',
-        name: 'reciever',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: 'solver',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'string',
-            name: 'bridge',
-            type: 'string',
-          },
-          {
-            internalType: 'bytes',
-            name: 'to',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'receiver',
-            type: 'bytes',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasSourceSwaps',
-            type: 'bool',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasDestinationCall',
-            type: 'bool',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minAmountIn',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destinationChainId',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GenericBridgeData[]',
-        name: '_bridgeData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_swapData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'bytes32',
-            name: 'requestId',
-            type: 'bytes32',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct RelayData[]',
-        name: '_relayData',
-        type: 'tuple[]',
-      },
-    ],
-    name: 'swapAndBridgeViaRelay',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_srcToken',
-        type: 'address',
-      },
-      {
-        internalType: 'uint256',
-        name: '_amount',
-        type: 'uint256',
-      },
-      {
-        internalType: 'bytes',
-        name: '_data',
         type: 'bytes',
-      },
-    ],
-    name: 'bridge',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
         name: '_transactionId',
-        type: 'bytes32',
       },
       {
-        internalType: 'address',
-        name: '_integrator',
+        type: 'bytes',
+        name: '_receiver',
+      },
+      {
+        type: 'bytes',
+        name: '_to',
+      },
+      {
+        type: 'string',
+        name: '_bridge',
+      },
+      {
+        type: 'uint256',
+        name: '_amountIn',
+      },
+      {
+        type: 'uint256',
+        name: '_destinationChainId',
+      },
+      {
         type: 'address',
+        name: '_user',
       },
       {
-        components: [
-          {
-            internalType: 'string',
-            name: 'bridge',
-            type: 'string',
-          },
-          {
-            internalType: 'bytes',
-            name: 'to',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'receiver',
-            type: 'bytes',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasSourceSwaps',
-            type: 'bool',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasDestinationCall',
-            type: 'bool',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minAmountIn',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destinationChainId',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GenericBridgeData[]',
-        name: '_bridgeData',
-        type: 'tuple[]',
+        type: 'address',
+        name: '_transferTo',
       },
       {
-        components: [
-          {
-            internalType: 'address',
-            name: 'adapter',
-            type: 'address',
-          },
-          {
-            internalType: 'bytes',
-            name: 'data',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct AdapterData[]',
-        name: '_data',
-        type: 'tuple[]',
+        type: 'bool',
+        name: '_hasDestinationCall',
       },
     ],
-    name: 'batchBridge',
     outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: '_transactionId',
-        type: 'bytes32',
-      },
-      {
-        internalType: 'address',
-        name: '_integrator',
-        type: 'address',
-      },
-      {
-        components: [
-          {
-            internalType: 'string',
-            name: 'bridge',
-            type: 'string',
-          },
-          {
-            internalType: 'bytes',
-            name: 'to',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'receiver',
-            type: 'bytes',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasSourceSwaps',
-            type: 'bool',
-          },
-          {
-            internalType: 'bool',
-            name: 'hasDestinationCall',
-            type: 'bool',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minAmountIn',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'destinationChainId',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct GenericBridgeData[]',
-        name: '_bridgeData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'callTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'approveTo',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'from',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'to',
-            type: 'address',
-          },
-          {
-            internalType: 'uint256',
-            name: 'fromAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'minToAmount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'bytes',
-            name: 'swapCallData',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct SwapData[]',
-        name: '_swapData',
-        type: 'tuple[]',
-      },
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'adapter',
-            type: 'address',
-          },
-          {
-            internalType: 'bytes',
-            name: 'data',
-            type: 'bytes',
-          },
-          {
-            internalType: 'bytes',
-            name: 'permit',
-            type: 'bytes',
-          },
-        ],
-        internalType: 'struct AdapterData[]',
-        name: '_data',
-        type: 'tuple[]',
-      },
-    ],
-    name: 'batchSwapAndBridge',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
   },
 ] as unknown as Abi;

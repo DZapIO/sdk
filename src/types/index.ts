@@ -122,6 +122,7 @@ export type QuoteFilter = keyof typeof QuoteFilters;
 export type TradeQuotesRequest = {
   integratorId: string;
   fromChain: number;
+  gasless?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
@@ -238,7 +239,8 @@ export type TradeBuildTxnRequest = {
   gasless: boolean;
   disableEstimation?: boolean;
   data: TradeBuildTxnRequestData[];
-  publicKey?: string;
+  hasPermit2ApprovalForAllTokens?: boolean; //@dev true if permit2 approval exists for all tokens
+  publicKey?: string; //@dev used for bitcoin chain only
 };
 
 export type TradeBuildTxnRequestData = {
@@ -356,6 +358,22 @@ export type TradeStatusResponse = {
   [pair: string]: TradeStatusResponseData;
 };
 
+export type EIP2612GaslessExecuteTxParams = {
+  permitData: {
+    token: HexString;
+    amount: string;
+    permit: HexString;
+  }[];
+  gaslessIntentSignature: HexString;
+  gaslessIntentDeadline: string;
+  gaslessIntentNonce: string;
+};
+export type BatchGaslessExecuteTxParams = {
+  batchPermitData: HexString;
+};
+
+export type GaslessExecuteTxParams = { chainId: number; txId: HexString; permit: EIP2612GaslessExecuteTxParams | BatchGaslessExecuteTxParams };
+
 export type PermitMode = keyof typeof PermitTypes;
 export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;
 
@@ -389,6 +407,7 @@ export type SignatureParamsBase = {
   spender: HexString;
   rpcUrls: string[];
   permitType: PermitMode;
+  isBatchPermitAllowed?: boolean;
   signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
   permitEIP2612DisabledTokens?: string[];
 };

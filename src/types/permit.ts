@@ -1,10 +1,63 @@
 import { Signer } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
 import { GaslessTxType } from 'src/constants';
-import { bridgeGaslessWitnessType, defaultWitnessType, permit2PrimaryType, swapGaslessWitnessType } from 'src/constants/permit';
+import { permit2PrimaryType } from 'src/constants/permit';
 import { Address, WalletClient } from 'viem';
 
-//common types for permit
+export const defaultWitnessType = {
+  typeName: 'DZapTransferWitness',
+  type: {
+    DZapTransferWitness: [
+      { name: 'owner', type: 'address' },
+      { name: 'recipient', type: 'address' },
+    ],
+  },
+};
+
+export const swapGaslessWitnessType = {
+  typeName: 'DZapSwapWitness',
+  type: {
+    DZapSwapWitness: [
+      { name: 'txId', type: 'bytes32' },
+      { name: 'user', type: 'address' },
+      { name: 'executorFeesHash', type: 'bytes32' },
+      { name: 'swapDataHash', type: 'bytes32' },
+    ],
+  },
+};
+
+export const bridgeGaslessWitnessType = {
+  typeName: 'DZapBridgeWitness',
+  type: {
+    DZapBridgeWitness: [
+      { name: 'txId', type: 'bytes32' },
+      { name: 'user', type: 'address' },
+      { name: 'executorFeesHash', type: 'bytes32' },
+      { name: 'swapDataHash', type: 'bytes32' },
+      { name: 'adapterDataHash', type: 'bytes32' },
+    ],
+  },
+};
+
+export const BatchPermitAbiParams = [
+  {
+    name: 'permit',
+    type: 'tuple',
+    components: [
+      {
+        name: 'permitted',
+        type: 'tuple[]',
+        components: [
+          { name: 'token', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+      },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  },
+  { name: 'permitSignature', type: 'bytes' },
+] as const;
 
 /**
  * Base token for permit, address and amount
@@ -30,16 +83,17 @@ type GaslessBaseParams = {
   gasless: true;
   txId: HexString;
   executorFeesHash: HexString;
-  swapDataHash: HexString;
 };
 
 export type GaslessSwapParams = {
   txType: typeof GaslessTxType.swap;
+  swapDataHash: HexString;
 } & GaslessBaseParams;
 
 export type GaslessBridgeParams = {
   txType: typeof GaslessTxType.bridge;
   adapterDataHash: HexString;
+  swapDataHash?: HexString;
 } & GaslessBaseParams;
 
 /**
@@ -55,10 +109,8 @@ export type BasePermitParams = {
   signer: WalletClient | Signer;
 };
 
-//EIP-2612 PERMIT TYPES
-
 /**
- * Base configuration for EIP-2612 permit operations
+ * Traditional EIP-2612 permit (user pays gas)
  */
 type Permit2612BaseParams = {
   token: {
@@ -67,28 +119,30 @@ type Permit2612BaseParams = {
   version: string;
 } & BasePermitParams;
 
-/**
- * Traditional EIP-2612 permit (user pays gas)
- */
-type DefaultPermit2612Params = {
+export type DefaultPermit2612Params = {
   gasless: false;
 } & Permit2612BaseParams;
 
 /**
- * Gasless EIP-2612 permit for swap operations
+ * Custom DZAP(Eip-2612) gasless signature permit for swap operations
  */
-type GaslessSwapPermit2612Params = Permit2612BaseParams & GaslessSwapParams;
+type GaslessSwapPermit2612Params = BasePermitParams & GaslessSwapParams;
 
 /**
- * Gasless EIP-2612 permit for bridge operations
+ * Custom DZAP gasless signature permit for bridge operations
  */
-type GaslessBridgePermit2612Params = Permit2612BaseParams & GaslessBridgeParams;
+type GaslessBridgePermit2612Params = BasePermitParams & GaslessBridgeParams;
+
+/**
+ * Union of all custom DZAP gasless permit configurations
+ */
+export type Gasless2612PermitParams = GaslessSwapPermit2612Params | GaslessBridgePermit2612Params;
 
 /**
  * Union of all EIP-2612 permit configurations
  * Supports both gasless and traditional permit flows
  */
-export type Permit2612Params = DefaultPermit2612Params | GaslessSwapPermit2612Params | GaslessBridgePermit2612Params;
+export type Permit2612Params = DefaultPermit2612Params | Gasless2612PermitParams;
 
 export type BasePermit2Params = {
   tokens: { address: HexString; amount?: string; index: number }[];

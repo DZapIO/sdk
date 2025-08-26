@@ -1,15 +1,25 @@
 import { Signer } from 'ethers';
+import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
 import { ApprovalModes } from 'src/constants/approval';
 import { erc20Functions } from 'src/constants/erc20';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { ApprovalMode, HexString } from 'src/types';
 import { isDZapNativeToken } from 'src/utils';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
 import { isTypeSigner, writeContract } from '.';
+import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
 import { multicall } from './multicall';
-import { getPermit2Address } from './permit/permit2';
-import { checkEIP2612PermitSupport } from './permit/eip2612Permit';
+import { getPermit2Address } from './permit2';
+
+type AllowanceParams = {
+  chainId: number;
+  sender: HexString;
+  tokens: { address: HexString; amount: string }[];
+  spender: HexString;
+  rpcUrls?: string[];
+  mode?: ApprovalMode;
+  permitEIP2612DisabledTokens?: string[];
+};
 
 export const approveToken = async ({
   chainId,
@@ -141,15 +151,7 @@ export const getAllowance = async ({
   mode = ApprovalModes.Default,
   spender,
   permitEIP2612DisabledTokens,
-}: {
-  chainId: number;
-  sender: HexString;
-  tokens: { address: HexString; amount: string }[];
-  spender: HexString;
-  rpcUrls?: string[];
-  mode?: ApprovalMode;
-  permitEIP2612DisabledTokens?: string[];
-}) => {
+}: AllowanceParams) => {
   const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
@@ -170,10 +172,12 @@ export const getAllowance = async ({
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
         };
-      } else if (mode !== ApprovalModes.Default) {
+      } else if (mode === ApprovalModes.Default) {
+        return { token: address, spender, amount };
+      } else {
         const permit2Address = getPermit2Address(chainId);
         return { token: address, spender: permit2Address, amount };
-      } else return { token: address, spender, amount };
+      }
     }),
   );
 
@@ -196,7 +200,7 @@ export const getAllowance = async ({
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
-      const signatureNeeded = mode !== ApprovalModes.Default;
+      const signatureNeeded = true;
       data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
 

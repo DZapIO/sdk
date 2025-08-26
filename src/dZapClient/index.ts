@@ -17,10 +17,10 @@ import {
   ChainData,
   ExecuteTxnData,
   GaslessTradeBuildTxnResponse,
+  GasSignatureParams,
   HexString,
   OtherAvailableAbis,
   PermitMode,
-  SignatureParams,
   TokenInfo,
   TokenResponse,
   TradeBuildTxnRequest,
@@ -846,7 +846,7 @@ class DZapClient {
    * ```
    */
   public async sign(
-    params: Omit<SignatureParams, 'spender' | 'permitType' | 'rpcUrls'> & {
+    params: Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless'> & {
       spender?: HexString;
       permitType?: PermitMode;
       rpcUrls?: string[];
@@ -865,7 +865,8 @@ class DZapClient {
       permitType,
       spender: spenderAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
-    } as SignatureParams;
+      gasless: false,
+    } as GasSignatureParams;
     return await PermitTxnHandler.signPermit(request);
   }
 

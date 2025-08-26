@@ -4,9 +4,8 @@ import { zeroAddress } from 'src/constants/address';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
 import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
-import { EIP2612Types } from 'src/types/eip-2612';
-
-import { Permit2612Params } from 'src/types/permit';
+import { EIP2612DefaultTypes } from 'src/types/eip-2612';
+import { DefaultPermit2612Params } from 'src/types/permit';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
@@ -48,7 +47,7 @@ export const checkEIP2612PermitSupport = async ({
   const version = versionResult.status === 'fulfilled' ? versionResult.value : undefined; // sending undefined if version is not available
 
   return {
-    supportsPermit: false,
+    supportsPermit: true,
     domainSeparator,
     version,
   };
@@ -57,20 +56,12 @@ export const checkEIP2612PermitSupport = async ({
 /**
  * Generate EIP-2612 permit signature
  */
-export const getEIP2612PermitSignature = async ({
-  chainId,
-  spender,
-  account,
-  token,
-  signer,
-  rpcUrls,
-  version,
-  deadline: sigDeadline = generateDeadline(SignatureExpiryInSecs),
-}: Permit2612Params): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+export const getEIP2612PermitSignature = async (
+  params: DefaultPermit2612Params,
+): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
+    const { chainId, spender, account, token, signer, rpcUrls, version, deadline = generateDeadline(SignatureExpiryInSecs) } = params;
     const { address, amount = maxUint256 } = token;
-    const owner = account as HexString;
-    const deadline = sigDeadline;
 
     const contract = getContract({
       abi: erc20PermitAbi,
@@ -78,7 +69,7 @@ export const getEIP2612PermitSignature = async ({
       client: getPublicClient({ chainId, rpcUrls }),
     });
 
-    const [tokenNameResult, nonceResult] = await Promise.allSettled([contract.read.name(), contract.read.nonces([owner])]);
+    const [tokenNameResult, nonceResult] = await Promise.allSettled([contract.read.name(), contract.read.nonces([account])]);
 
     if (tokenNameResult.status === 'rejected' || nonceResult.status === 'rejected') {
       return {
@@ -100,19 +91,20 @@ export const getEIP2612PermitSignature = async ({
     };
 
     const message = {
-      owner,
+      owner: account,
       spender,
       value: amount,
       nonce,
       deadline,
     };
 
+    const types = EIP2612DefaultTypes;
     const signature = await signTypedData({
       signer,
       domain,
       message,
-      types: EIP2612Types,
-      account: owner,
+      types,
+      account,
       primaryType: 'Permit',
     });
 
