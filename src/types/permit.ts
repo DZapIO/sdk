@@ -1,4 +1,4 @@
-import { TypedDataField, Wallet } from 'ethers';
+import { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
 import { GaslessTxType } from 'src/constants';
 import { bridgeGaslessWitnessType, defaultWitnessType, permit2PrimaryType, swapGaslessWitnessType } from 'src/constants/permit';
@@ -34,10 +34,10 @@ type BasePermit2Params = {
   spender: HexString;
   rpcUrls?: string[];
   sigDeadline?: bigint;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
   expiration?: bigint;
   permitType: Permit2PrimaryType;
-  firstTokenNonce?: bigint;
+  firstTokenNonce: bigint | null;
 };
 
 type DefaultParams = BasePermit2Params & {

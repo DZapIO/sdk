@@ -1,6 +1,6 @@
+import { permitProxyAbi } from 'src/artifacts/Permit2Proxy';
 import { HexString } from 'src/types';
 import { getPublicClient } from '..';
-import { permitProxyAbi } from 'src/artifacts/Permit2Proxy';
 
 const permitProxy: Record<number, HexString> = {
   42161: '0x89c6340B1a1f4b25D36cd8B063D49045caF3f818',
@@ -8,6 +8,8 @@ const permitProxy: Record<number, HexString> = {
 
 export const getNextPermit2Nonce = async (permitAddress: HexString, account: HexString, chainId: number, rpcUrls?: string[]) => {
   try {
+    const address = permitProxy[chainId];
+    if (!address) throw new Error(`No permit2 proxy address for chainId ${chainId}`);
     const nonce = await getPublicClient({ chainId, rpcUrls }).readContract({
       address: permitProxy[chainId],
       abi: permitProxyAbi,

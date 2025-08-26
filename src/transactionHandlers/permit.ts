@@ -13,6 +13,7 @@ class PermitTxnHandler {
     const resp = await getPermit2Signature({
       ...params,
       permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+      firstTokenNonce: null,
     });
     return {
       ...resp,
@@ -120,7 +121,7 @@ class PermitTxnHandler {
   > => {
     const { chainId, tokens, rpcUrls, sender, signer, service, signatureCallback, spender, permitType } = signPermitReq;
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
-    let firstTokenNonce: bigint | undefined;
+    let firstTokenNonce: bigint | null = null;
 
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
@@ -238,7 +239,7 @@ class PermitTxnHandler {
 
       // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
       if (isFirstToken) {
-        firstTokenNonce = nonce;
+        firstTokenNonce = nonce ?? null;
       }
 
       if (signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
@@ -246,7 +247,7 @@ class PermitTxnHandler {
         await signatureCallback({
           permitData: permitData as HexString,
           srcToken: tokens[dataIdx].address as HexString,
-          amount,
+          amount: amount.toString(),
           permitType: permitTypeForToken,
         });
       }
