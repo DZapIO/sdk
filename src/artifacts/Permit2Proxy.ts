@@ -1,4 +1,4 @@
-export const permitProxyAbi = [
+export const permit2ProxyAbi = [
   {
     inputs: [
       { internalType: 'address', name: '_lifiDiamond', type: 'address' },
