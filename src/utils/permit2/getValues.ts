@@ -92,7 +92,7 @@ export const getPermitTransferFromValues = async ({
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitTransferFromValues; nonce: bigint }> => {
   let nonce;
-  if (token.index == 0) {
+  if (token.index === 0) {
     nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
   } else if (firstTokenNonce == null) {
     //don't use !firstTokenNonce because !0n -> true

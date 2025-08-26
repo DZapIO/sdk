@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer, Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { Services } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
@@ -22,6 +22,7 @@ import {
   OtherAvailableAbis,
   PermitMode,
   TokenInfo,
+  TokenResponse,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
   TradeQuotesRequest,
@@ -31,6 +32,7 @@ import {
 import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapStatusRequest, ZapStatusResponse } from 'src/types/zap';
 import { ZapTransactionStep } from 'src/types/zap/step';
 import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
+import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from 'src/utils/eip-5792';
 import { approveToken, getAllowance, hasPermit2ApprovalForAllTokens } from 'src/utils/erc20';
 import { updateTokenListPrices } from 'src/utils/tokens';
 import { updateQuotes } from 'src/utils/updateQuotes';
@@ -38,6 +40,7 @@ import { TransactionReceipt, WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
   fetchAllTokens,
+  fetchBalances,
   fetchCalculatedPoints,
   fetchStatus,
   fetchTokenDetails,
@@ -419,6 +422,8 @@ class DZapClient {
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
+   * @param params.batchTransaction - Optional flag to enable batch transaction. If true, the transaction will be sent as a batch transaction with EIP-5792.
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to the transaction execution result
    *
    * @example
@@ -444,12 +449,16 @@ class DZapClient {
     request,
     signer,
     txnData,
+    batchTransaction = false,
+    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
+    batchTransaction?: boolean;
+    rpcUrls?: string[];
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData });
+    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction, rpcUrls });
   }
 
   /**
@@ -461,25 +470,40 @@ class DZapClient {
    * @param params - Configuration object for the trade operation
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
-   * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
+   * @param params.txnData - Optional pre-built gasless transaction data. If provided, skips the build step
    * @returns Promise resolving to the transaction execution result
    *
    * @example
    * ```typescript
-   * // Execute a swap trade
    * const result = await dZapClient.tradeGasless({
    *   request: {
    *     integratorId: 'dzap',
    *     fromChain: 1,
    *     sender: '0x...',
+   *     refundee: '0x...',
+   *     gasless: true,
    *     data: [{
-   *       txId: '1000000', // 1 USDC
-   *       keccaktxId: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
-   *       execution: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
-   *       // ... other trade parameters
+   *       amount: '1000000',
+   *       srcToken: '0xA0b8...eB48',
+   *       destToken: '0xC02a...6Cc2',
+   *       srcDecimals: 6,
+   *       destDecimals: 18,
+   *       toChain: 42161,
+   *       selectedRoute: 'uniswap',
+   *       recipient: '0x...',
+   *       slippage: 1
    *     }]
    *   },
-   *   signer: walletClient
+   *   signer: walletClient,
+   *   // Optionally skip build:
+   *   txnData: {
+   *     txId: '0x...',
+   *     keccakTxId: '0x...',
+   *     executorFeesHash: '0x...',
+   *     swapDataHash: '0x...',
+   *     adapterDataHash: '0x...',
+   *     txType: 'swap' // example only; depends on GaslessTxType keys
+   *   }
    * });
    * ```
    */
@@ -489,7 +513,7 @@ class DZapClient {
     txnData,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Wallet | WalletClient;
+    signer: Signer | WalletClient;
     txnData?: GaslessTradeBuildTxnResponse;
   }) {
     const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
@@ -532,6 +556,26 @@ class DZapClient {
       signer,
       ...txnData,
     });
+  }
+
+  /**
+   * Waits for a batch transaction to be mined and returns the transaction receipt.
+   *
+   * @param params - Configuration object for transaction sending
+   * @param params.walletClient - The wallet client
+   * @param params.batchHash - The hash of the batch transaction
+   * @returns Promise resolving to the transaction execution result
+   *
+   * @example
+   * ```typescript
+   * const result = await client.waitForBatchTransactionReceipt({
+   *   walletClient: walletClient,
+   *   batchHash: '0x...',
+   * });
+   * ```
+   */
+  public async waitForBatchTransactionReceipt({ walletClient, batchHash }: { walletClient: WalletClient; batchHash: HexString }) {
+    return await waitForBatchTransactionReceipt(walletClient, batchHash);
   }
 
   /**
@@ -681,7 +725,7 @@ class DZapClient {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString; // Optional custom spender address
@@ -718,7 +762,7 @@ class DZapClient {
    *   chainId: 1,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2
@@ -738,7 +782,7 @@ class DZapClient {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString; // Optional custom spender address
@@ -781,7 +825,7 @@ class DZapClient {
    *   signer: walletClient,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2,
@@ -803,7 +847,7 @@ class DZapClient {
   }: {
     chainId: number;
     signer: WalletClient | Signer;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     approvalTxnCallback?: ({
       txnDetails,
       address,
@@ -1020,6 +1064,60 @@ class DZapClient {
   public async getZapTxnStatus(request: ZapStatusRequest): Promise<ZapStatusResponse> {
     const status: ZapStatusResponse = (await fetchZapTxnStatus(request)).data;
     return status;
+  }
+
+  /**
+   * Fetches all token balances for a specific account on a given blockchain network.
+   * This method retrieves the complete portfolio of tokens held by the specified wallet address,
+   * including token metadata and current balance amounts for each token.
+   *
+   * @param chainId - The blockchain network ID to fetch balances from (e.g., 1 for Ethereum, 42161 for Arbitrum)
+   * @param account - The wallet address to fetch token balances for
+   * @returns Promise resolving to an object where each key is a token contract address and each value contains token balance and metadata (e.g., name, symbol, decimals).
+   *
+   * @example
+   * ```typescript
+   * // Get all token balances for a wallet on Base
+   * const balances = await client.getBalances(8453, '0x...');
+   *
+   * // Process the balances
+   * Object.entries(balances).forEach(([contractAddress, token]) => {
+   *   console.log(`${token.symbol}: ${token.balance}`);
+   *   console.log(`Contract: ${contractAddress}`);
+   * });
+   *
+   * // Get specific token balance
+   * const usdcBalance = balances['0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'];
+   * console.log(`USDC Balance: ${usdcBalance.balance}`);
+   * ```
+   */
+  public async getBalances(chainId: number, account: string): Promise<Record<string, TokenResponse>> {
+    const balanceData = await fetchBalances(chainId, account);
+    return balanceData.result;
+  }
+
+  /**
+   * Send batch calls
+   * @param params
+   * @param params.walletClient - The wallet client
+   * @param params.calls - The calls to send
+   * @returns Promise resolving to batch call result
+   *
+   * @example
+   * ```typescript
+   * const calls  = [{
+   *   to: '0x...',
+   *   data: '0x...',
+   *   value: 0n,
+   * }]
+   * const result = await client.sendBatchCalls({
+   *   walletClient: walletClient,
+   *   calls,
+   * });
+   * ```
+   */
+  public async sendBatchCalls({ walletClient, calls }: { walletClient: WalletClient; calls: BatchCallParams[] }) {
+    return await sendBatchCalls(walletClient, calls);
   }
 }
 

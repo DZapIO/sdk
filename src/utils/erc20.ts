@@ -8,13 +8,13 @@ import { isDZapNativeToken } from 'src/utils';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { isTypeSigner, writeContract } from '.';
 import { multicall } from './multicall';
-import { checkEIP2612PermitSupport } from './permit/eip2612Permit';
+import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
 import { getPermit2Address } from './permit2';
 
 type AllowanceParams = {
   chainId: number;
   sender: HexString;
-  tokens: { address: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: string }[];
   spender: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
@@ -33,7 +33,7 @@ export const approveToken = async ({
   chainId: number;
   signer: WalletClient | Signer;
   mode: ApprovalMode;
-  tokens: { address: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: string }[];
   rpcUrls?: string[];
   approvalTxnCallback?: ({
     txnDetails,
@@ -54,7 +54,7 @@ export const approveToken = async ({
       const callData = encodeFunctionData({
         abi: erc20Abi,
         functionName: erc20Functions.approve,
-        args: [spender, tokens[dataIdx].amount],
+        args: [spender, BigInt(tokens[dataIdx].amount)],
       });
       await signer.sendTransaction({
         from,
@@ -197,7 +197,7 @@ export const getAllowance = async ({
     for (let i = 0; i < approvalData.length; i++) {
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
-      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
+      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
       const signatureNeeded = true;
       // @dev: mode is default(eip2612) and token is not supported by eip2612 then approval failed
       const approvalFailed = mode === ApprovalModes.Default && isEIP2612PermitSupported == false ? true : false;

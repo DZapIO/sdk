@@ -5,8 +5,8 @@ import { StatusCodes, TxnStatus } from 'src/enums';
 import { BatchPermitCallbackParams, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode } from 'src/types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithIndex } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { signGaslessDzapUserIntent } from 'src/utils/permit/dzapUserIntentSign';
-import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/eip2612Permit';
+import { signGaslessDzapUserIntent } from 'src/utils/eip-2612/dzapUserIntentSign';
+import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/eip-2612/eip2612Permit';
 import { getPermit2Signature } from 'src/utils/permit2';
 
 type BasePermitDataParams = {
@@ -167,7 +167,7 @@ class PermitTxnHandler {
   > => {
     const { chainId, tokens, rpcUrls, sender, signer, signatureCallback, spender, permitType, isBatchPermitAllowed } = signPermitReq;
     if (tokens.length === 0) return { status: TxnStatus.success, code: StatusCodes.Success, tokens };
-    let firstTokenNonce: bigint | undefined;
+    let firstTokenNonce: bigint | null = null;
 
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
     const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
@@ -243,7 +243,7 @@ class PermitTxnHandler {
 
       // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
       if (isFirstToken) {
-        firstTokenNonce = nonce;
+        firstTokenNonce = nonce ?? null;
       }
 
       if (signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
@@ -251,7 +251,7 @@ class PermitTxnHandler {
         await signatureCallback({
           permitData: permitData as HexString,
           srcToken: tokens[dataIdx].address as HexString,
-          amount,
+          amount: amount.toString(),
           permitType: permitTypeForToken,
         });
       }

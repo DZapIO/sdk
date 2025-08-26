@@ -12,6 +12,8 @@ const permitProxy: Record<number, HexString> = {
 
 export const getNextPermit2Nonce = async (permitAddress: HexString, account: HexString, chainId: number, rpcUrls?: string[]) => {
   try {
+    const address = permitProxy[chainId];
+    if (!address) throw new Error(`No permit2 proxy address for chainId ${chainId}`);
     const nonce = await getPublicClient({ chainId, rpcUrls }).readContract({
       address: permitProxy[chainId],
       abi: permitProxyAbi,
