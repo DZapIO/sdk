@@ -1,4 +1,4 @@
-import { permitProxyAbi } from 'src/artifacts/Permit2Proxy';
+import { permit2ProxyAbi } from 'src/artifacts/Permit2Proxy';
 import { HexString } from 'src/types';
 import { getPublicClient } from '..';
 
@@ -16,7 +16,7 @@ export const getNextPermit2Nonce = async (permitAddress: HexString, account: Hex
     if (!address) throw new Error(`No permit2 proxy address for chainId ${chainId}`);
     const nonce = await getPublicClient({ chainId, rpcUrls }).readContract({
       address: permitProxy[chainId],
-      abi: permitProxyAbi,
+      abi: permit2ProxyAbi,
       functionName: 'nextNonce',
       args: [account],
     });

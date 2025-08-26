@@ -86,7 +86,7 @@ export const getPermitTransferFromValues = async ({
   let nonce;
   if (token.index === 0) {
     nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
-  } else if (firstTokenNonce == null) {
+  } else if (firstTokenNonce === null) {
     //don't use !firstTokenNonce because !0n -> true
     throw new Error(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
   } else {
