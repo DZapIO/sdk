@@ -7,8 +7,8 @@ import { ApprovalMode, HexString } from 'src/types';
 import { isDZapNativeToken } from 'src/utils';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { isTypeSigner, writeContract } from '.';
-import { multicall } from './multicall';
 import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
+import { multicall } from './multicall';
 import { getPermit2Address } from './permit2';
 
 type AllowanceParams = {
@@ -152,14 +152,14 @@ export const getAllowance = async ({
   spender,
   permitEIP2612DisabledTokens,
 }: AllowanceParams) => {
-  const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean; approvalFailed: boolean } } = {};
+  const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
   const approvalData = await Promise.all(
     erc20Tokens.map(async ({ address, amount }) => {
-      if (mode === ApprovalModes.AutoPermit || mode === ApprovalModes.Default) {
+      if (mode === ApprovalModes.AutoPermit) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
           address,
           chainId,
@@ -172,6 +172,8 @@ export const getAllowance = async ({
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
         };
+      } else if (mode === ApprovalModes.Default) {
+        return { token: address, spender, amount };
       } else {
         const permit2Address = getPermit2Address(chainId);
         return { token: address, spender: permit2Address, amount };
@@ -180,7 +182,7 @@ export const getAllowance = async ({
   );
 
   for (const { address } of nativeTokens) {
-    data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false, approvalFailed: false };
+    data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false };
   }
 
   if (erc20Tokens.length === 0) {
@@ -199,43 +201,12 @@ export const getAllowance = async ({
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
       const signatureNeeded = true;
-      // @dev: mode is default(eip2612) and token is not supported by eip2612 then approval failed
-      const approvalFailed = mode === ApprovalModes.Default && isEIP2612PermitSupported == false ? true : false;
-      data[token] = { allowance, approvalNeeded, signatureNeeded, approvalFailed };
+      data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
 
     return { status: TxnStatus.success, code: StatusCodes.Success, data };
   } catch (error: any) {
     console.error('Multicall allowance check failed:', error);
     return { status: TxnStatus.error, code: StatusCodes.Error, data };
-  }
-};
-
-/**
- * Checks if all tokens are approved for Permit2 via gasless approval (PermitSingle)
- */
-export const hasPermit2ApprovalForAllTokens = async (params: Omit<AllowanceParams, 'mode'>) => {
-  try {
-    const permit2Allowance = await getAllowance({
-      ...params,
-      mode: ApprovalModes.PermitSingle,
-    });
-
-    const allApproved = Object.values(permit2Allowance.data).every(
-      (tokenAllowance) => !tokenAllowance.approvalNeeded && !tokenAllowance.approvalFailed,
-    );
-
-    return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      isAllTokenApproved: allApproved,
-    };
-  } catch (error: any) {
-    console.error('Permit2 gasless approval check failed:', error);
-    return {
-      status: TxnStatus.error,
-      code: StatusCodes.Error,
-      isAllTokenApproved: false,
-    };
   }
 };

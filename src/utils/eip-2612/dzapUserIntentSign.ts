@@ -10,6 +10,59 @@ import { generateDeadline } from '../date';
 import { getDZapAbi, getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
 
+const getSignTypedData = (
+  params: GaslessDzapPermit & {
+    nonce: bigint;
+  },
+) => {
+  const { account, deadline, nonce, swapDataHash } = params;
+
+  if (params.txType === GaslessTxType.swap) {
+    return {
+      message: {
+        //swap
+        txId: params.txId,
+        user: account,
+        executorFeesHash: params.executorFeesHash,
+        swapDataHash: params.swapDataHash,
+        nonce,
+        deadline,
+      },
+      types: DzapUserIntentSwapTypes,
+      primaryType: dZapIntentPrimaryType.SignedGasLessSwapData,
+    };
+  } else if (swapDataHash) {
+    return {
+      message: {
+        //swapBridge
+        txId: params.txId,
+        user: account,
+        nonce,
+        deadline,
+        executorFeesHash: params.executorFeesHash,
+        swapDataHash: params.swapDataHash,
+        adapterDataHash: params.adapterDataHash,
+      },
+      types: DzapUserIntentSwapBridgeTypes,
+      primaryType: dZapIntentPrimaryType.SignedGasLessSwapBridgeData,
+    };
+  } else {
+    return {
+      message: {
+        //bridge
+        txId: params.txId,
+        user: account,
+        nonce,
+        deadline,
+        executorFeesHash: params.executorFeesHash,
+        adapterDataHash: params.adapterDataHash,
+      },
+      types: DzapUserIntentBridgeTypes,
+      primaryType: dZapIntentPrimaryType.SignedGasLessBridgeData,
+    };
+  }
+};
+
 /**
  * Generate Gasless DZap user intent signature
  */
@@ -25,7 +78,8 @@ export const signGaslessDzapUserIntent = async (
   };
 }> => {
   try {
-    const { chainId, spender, account, signer, rpcUrls, deadline = generateDeadline(SignatureExpiryInSecs), swapDataHash } = params;
+    const { chainId, spender, account, signer, rpcUrls } = params;
+    const deadline = params.deadline || generateDeadline(SignatureExpiryInSecs);
 
     const contract = getContract({
       abi: getDZapAbi('trade'),
@@ -43,49 +97,11 @@ export const signGaslessDzapUserIntent = async (
       salt: eip2612GaslessDomain.salt,
     };
 
-    const { message, types, primaryType } =
-      params.txType === GaslessTxType.swap
-        ? {
-            message: {
-              //swap
-              txId: params.txId,
-              user: account,
-              executorFeesHash: params.executorFeesHash,
-              swapDataHash: params.swapDataHash,
-              nonce,
-              deadline,
-            },
-            types: DzapUserIntentSwapTypes,
-            primaryType: dZapIntentPrimaryType.SignedGasLessSwapData,
-          }
-        : swapDataHash
-          ? {
-              message: {
-                //swapBridge
-                txId: params.txId,
-                user: account,
-                nonce,
-                deadline,
-                executorFeesHash: params.executorFeesHash,
-                swapDataHash: params.swapDataHash,
-                adapterDataHash: params.adapterDataHash,
-              },
-              types: DzapUserIntentSwapBridgeTypes,
-              primaryType: dZapIntentPrimaryType.SignedGasLessSwapBridgeData,
-            }
-          : {
-              message: {
-                //bridge
-                txId: params.txId,
-                user: account,
-                nonce,
-                deadline,
-                executorFeesHash: params.executorFeesHash,
-                adapterDataHash: params.adapterDataHash,
-              },
-              types: DzapUserIntentBridgeTypes,
-              primaryType: dZapIntentPrimaryType.SignedGasLessBridgeData,
-            };
+    const { message, types, primaryType } = getSignTypedData({
+      ...params,
+      deadline,
+      nonce,
+    });
 
     const signature = await signTypedData({
       signer,

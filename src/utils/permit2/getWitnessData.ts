@@ -3,38 +3,43 @@ import { bridgeGaslessWitnessType, defaultWitnessType, Permit2Params, swapGasles
 
 export const getPermit2WitnessData = (params: Permit2Params) => {
   const { gasless, account, spender } = params;
-  const witnessData: WitnessData =
-    gasless && params.swapDataHash
-      ? params.txType === GaslessTxType.swap
-        ? {
-            witness: {
-              txId: params.txId,
-              user: account,
-              executorFeesHash: params.executorFeesHash,
-              swapDataHash: params.swapDataHash,
-            },
-            witnessTypeName: swapGaslessWitnessType.typeName,
-            witnessType: swapGaslessWitnessType.type,
-          }
-        : {
-            witness: {
-              txId: params.txId,
-              user: account,
-              executorFeesHash: params.executorFeesHash,
-              swapDataHash: params.swapDataHash,
-              adapterDataHash: params.adapterDataHash,
-            },
-            witnessTypeName: bridgeGaslessWitnessType.typeName,
-            witnessType: bridgeGaslessWitnessType.type,
-          }
-      : {
-          witness: {
-            owner: account,
-            recipient: spender,
-          },
-          witnessTypeName: defaultWitnessType.typeName,
-          witnessType: defaultWitnessType.type,
-        };
+
+  let witnessData: WitnessData;
+  if (gasless && params.swapDataHash) {
+    if (params.txType === GaslessTxType.swap) {
+      witnessData = {
+        witness: {
+          txId: params.txId,
+          user: account,
+          executorFeesHash: params.executorFeesHash,
+          swapDataHash: params.swapDataHash,
+        },
+        witnessTypeName: swapGaslessWitnessType.typeName,
+        witnessType: swapGaslessWitnessType.type,
+      };
+    } else {
+      witnessData = {
+        witness: {
+          txId: params.txId,
+          user: account,
+          executorFeesHash: params.executorFeesHash,
+          swapDataHash: params.swapDataHash,
+          adapterDataHash: params.adapterDataHash,
+        },
+        witnessTypeName: bridgeGaslessWitnessType.typeName,
+        witnessType: bridgeGaslessWitnessType.type,
+      };
+    }
+  } else {
+    witnessData = {
+      witness: {
+        owner: account,
+        recipient: spender,
+      },
+      witnessTypeName: defaultWitnessType.typeName,
+      witnessType: defaultWitnessType.type,
+    };
+  }
 
   return { witnessData };
 };
