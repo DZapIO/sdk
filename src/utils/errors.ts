@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { HexString, OnChainError } from 'src/types';
-import { decodeAbiParameters, parseAbiParameters } from 'viem';
+import { AtomicReadyWalletRejectedUpgradeError, decodeAbiParameters, parseAbiParameters } from 'viem';
 
 export const BRIDGE_ERRORS = {
   BridgeCallFailed: 'BridgeCallFailed',
@@ -67,4 +67,16 @@ export const handleViemTransactionError = ({ error }: { error: unknown }) => {
     errorMsg: errMsg,
     code: StatusCodes.ContractExecutionError,
   };
+};
+
+export const isAtomicReadyWalletRejectedUpgradeError = (e: OnChainError) => {
+  if (e.cause?.code === AtomicReadyWalletRejectedUpgradeError.code) {
+    return true;
+  }
+  const details = e.cause?.details?.toLowerCase();
+  const isTransactionError = e.name === 'TransactionExecutionError' || e.cause?.name === 'TransactionExecutionError';
+  const hasRejectedUpgrade = details?.includes('rejected') && details?.includes('upgrade');
+  const has7702ErrorCode = details?.includes('7702');
+
+  return isTransactionError && (hasRejectedUpgrade || has7702ErrorCode);
 };

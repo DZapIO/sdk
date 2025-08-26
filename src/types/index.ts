@@ -37,7 +37,8 @@ export type ContractErrorResponse = {
 
 export type OnChainError = {
   code?: number;
-  cause?: { code?: number };
+  cause?: { code?: number; details?: string; name?: string };
+  name?: string;
   shortMessage: string;
   metaMessages: string[];
 };
