@@ -1,4 +1,4 @@
-import { TypedDataField, Wallet } from 'ethers';
+import { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
 import { permit2PrimaryType } from 'src/constants/permit';
 import { Address, TypedDataDomain, WalletClient } from 'viem';
@@ -31,7 +31,7 @@ export type GeneratePermitDataParams = {
   rpcUrls?: string[];
   sender: HexString;
   spender: HexString;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
   service: AvailableDZapServices;
   token: PermitTokenWithIndex;
   /** Optional nonce for the first token in batch or one-to-many permits */

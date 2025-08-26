@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer, Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { Services } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
@@ -797,7 +797,7 @@ class DZapClient {
       amount: string;
     }[];
     service: AvailableDZapServices;
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
     permitType?: PermitMode;

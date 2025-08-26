@@ -1,4 +1,4 @@
-import { Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
 import { permit2PrimaryType, PermitToDZapPermitMode, witnessType, witnessTypeName } from 'src/constants/permit';
 import { SignatureExpiryInSecs } from 'src/constants/permit2';
@@ -34,7 +34,7 @@ export const getPermit2Signature = async ({
   spender: HexString;
   rpcUrls?: string[];
   sigDeadline?: bigint;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
   expiration?: bigint;
   permitType: Permit2PrimaryType;
   firstTokenNonce: bigint | null;

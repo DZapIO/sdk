@@ -1,4 +1,4 @@
-import { Wallet } from 'ethers';
+import { Signer } from 'ethers';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
@@ -153,7 +153,7 @@ class PermitTxnHandler {
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
