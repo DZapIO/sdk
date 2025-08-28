@@ -10,10 +10,8 @@ export const exclusivePermit2Addresses: { [key: ExclusiveChainIds]: HexString } 
   [exclusiveChainIds.biFrost]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
   [exclusiveChainIds.flare]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
   [exclusiveChainIds.iotaEvm]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
-  [exclusiveChainIds.opbnb]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
   [exclusiveChainIds.zkFair]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
   [exclusiveChainIds.bahamut]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
-  [exclusiveChainIds.immutableZkevm]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
   [exclusiveChainIds.abstract]: '0x0000000000225e31D15943971F47aD3022F714Fa',
   [exclusiveChainIds.lens]: '0x0000000000225e31D15943971F47aD3022F714Fa',
 };

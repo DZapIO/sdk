@@ -26,7 +26,7 @@ export const checkEIP2612PermitSupport = async ({
   rpcUrls?: string[];
   permitEIP2612DisabledTokens?: string[];
 }): Promise<{ supportsPermit: boolean; domainSeparator?: HexString; version?: string }> => {
-  if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase())) {
+  if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase()) || eip2612DisabledChains.includes(chainId)) {
     return { supportsPermit: false };
   }
   const contract = getContract({
