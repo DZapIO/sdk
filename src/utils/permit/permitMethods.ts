@@ -6,10 +6,12 @@ import { ContractVersion, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters, WalletClient } from 'viem';
+import { katana } from 'viem/chains';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
 
+export const eip2612DisabledChains = [Number(katana.id)];
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
  */
@@ -46,7 +48,7 @@ export const checkEIP2612PermitSupport = async ({
   const version = versionResult.status === 'fulfilled' ? versionResult.value : undefined; // sending undefined if version is not available
 
   return {
-    supportsPermit: true,
+    supportsPermit: eip2612DisabledChains.includes(chainId) ? false : true,
     domainSeparator,
     version,
   };
