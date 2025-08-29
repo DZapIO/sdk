@@ -13,6 +13,7 @@ export async function generateApprovalBatchCalls({
   chainId,
   sender,
   spender,
+  multicallAddress,
   rpcUrls,
 }: {
   tokens: Array<{
@@ -22,6 +23,7 @@ export async function generateApprovalBatchCalls({
   chainId: number;
   sender: HexString;
   spender: HexString;
+  multicallAddress: HexString;
   rpcUrls?: string[];
 }): Promise<BatchCallParams[]> {
   const tokensToCheck = tokens.filter((token) => !isDZapNativeToken(token.address));
@@ -33,6 +35,7 @@ export async function generateApprovalBatchCalls({
     sender,
     tokens: tokensToCheck,
     spender,
+    multicallAddress,
     rpcUrls,
   });
 
@@ -57,6 +60,7 @@ export async function batchApproveTokens(
     address: HexString;
     amount: string;
   }>,
+  multicallAddress: HexString,
   chainId: number,
   spender: HexString,
   sender: HexString,
@@ -66,6 +70,7 @@ export async function batchApproveTokens(
     tokens,
     chainId,
     sender,
+    multicallAddress,
     spender,
     rpcUrls,
   });
