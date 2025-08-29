@@ -23,7 +23,7 @@ export async function generateApprovalBatchCalls({
   chainId: number;
   sender: HexString;
   spender: HexString;
-  multicallAddress: HexString;
+  multicallAddress?: HexString;
   rpcUrls?: string[];
 }): Promise<BatchCallParams[]> {
   const tokensToCheck = tokens.filter((token) => !isDZapNativeToken(token.address));

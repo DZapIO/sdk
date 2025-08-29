@@ -99,7 +99,7 @@ export const batchGetAllowances = async ({
   chainId: number;
   data: { token: HexString; spender: HexString }[];
   owner: HexString;
-  multicallAddress: HexString;
+  multicallAddress?: HexString;
   rpcUrls?: string[];
 }): Promise<{ status: TxnStatus; code: StatusCodes; data: Record<string, bigint> }> => {
   const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
@@ -150,7 +150,7 @@ export const getAllowance = async ({
   sender: HexString;
   tokens: { address: HexString; amount: string }[];
   spender: HexString;
-  multicallAddress: HexString;
+  multicallAddress?: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
   permitEIP2612DisabledTokens?: string[];

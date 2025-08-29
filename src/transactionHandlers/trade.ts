@@ -56,7 +56,7 @@ class TradeTxnHandler {
     chainId: number,
     additionalInfo: AdditionalInfo | undefined,
     updatedQuotes: Record<string, string>,
-    multicallAddress: HexString,
+    multicallAddress?: HexString,
     rpcUrls?: string[],
   ): Promise<DZapTransactionResponse> => {
     const approvalBatchCalls = await generateApprovalBatchCalls({
@@ -118,7 +118,7 @@ class TradeTxnHandler {
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
     batchTransaction: boolean;
-    multicallAddress: HexString;
+    multicallAddress?: HexString;
     rpcUrls?: string[];
   }): Promise<DZapTransactionResponse> => {
     try {

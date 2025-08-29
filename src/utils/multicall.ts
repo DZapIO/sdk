@@ -16,7 +16,7 @@ export const multicall = async ({
   chainId: number;
   contracts: MulticallParameters['contracts'];
   rpcUrls?: string[];
-  multicallAddress: HexString;
+  multicallAddress?: HexString;
   allowFailure?: boolean;
 }): Promise<{ status: TxnStatus; code: StatusCodes; data: unknown[] }> => {
   try {
