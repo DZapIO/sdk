@@ -55,7 +55,7 @@ export type Chain = {
   swapBridgeContract: string;
   logo: string;
   tokenlistUrl?: string;
-  multicallAddress: string;
+  multicallAddress?: HexString;
   blockExplorerUrl: string;
   nativeToken: NativeTokenInfo;
   rpcProviders: ApiRpcResponse[];

@@ -456,7 +456,16 @@ class DZapClient {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction, rpcUrls });
+    const chainConfig = await DZapClient.getChainConfig();
+
+    return await TradeTxnHandler.buildAndSendTransaction({
+      request,
+      signer,
+      txnData,
+      batchTransaction,
+      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
+      rpcUrls,
+    });
   }
 
   /**
@@ -662,6 +671,7 @@ class DZapClient {
   }) {
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
     return await getAllowance({
       chainId,
       sender,
@@ -669,6 +679,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       mode,
       spender: spenderAddress,
+      multicallAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
