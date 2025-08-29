@@ -12,6 +12,17 @@ export type ZapPathAsset = {
   price: string;
   type: string;
   name: string;
+  provider?: ProviderDetails;
+  underlyingTokens?: ZapPoolUnderlyingToken[];
+};
+
+export type ZapPoolUnderlyingToken = {
+  chainId: number;
+  address: HexString;
+  name?: string;
+  symbol: string;
+  decimals: number;
+  logo?: string | null;
 };
 
 export type ZapFee = {
