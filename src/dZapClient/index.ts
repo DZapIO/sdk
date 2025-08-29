@@ -463,7 +463,7 @@ class DZapClient {
       signer,
       txnData,
       batchTransaction,
-      multicallAddress: chainConfig[request.fromChain]?.multicallAddress,
+      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
       rpcUrls,
     });
   }
@@ -671,7 +671,7 @@ class DZapClient {
   }) {
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
-    const multicallAddress = chainConfig[chainId]?.multicallAddress;
+    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
     return await getAllowance({
       chainId,
       sender,
