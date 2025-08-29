@@ -60,10 +60,10 @@ export async function batchApproveTokens(
     address: HexString;
     amount: string;
   }>,
-  multicallAddress: HexString,
   chainId: number,
   spender: HexString,
   sender: HexString,
+  multicallAddress?: HexString,
   rpcUrls?: string[],
 ): Promise<{ success: boolean; batchId?: string }> {
   const approveCalls = await generateApprovalBatchCalls({
