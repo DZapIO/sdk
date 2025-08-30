@@ -6,11 +6,7 @@ export const ZAP_ENDPOINTS = {
   },
   pools: '/pools',
   poolDetails: '/pool/details',
-  route: '/route',
   positions: '/user/positions',
   buildTx: '/buildTx',
   quote: '/quote',
-  token: {
-    details: (address: string, chainId: number) => `/token/details?address=${address}&chainId=${chainId}`,
-  },
 };
