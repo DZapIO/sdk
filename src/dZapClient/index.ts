@@ -109,7 +109,7 @@ class DZapClient {
   }
 
   /**
-   * Fetches and caches all supported blockchain configurations from the DZap protocol.
+   * Fetches and caches all supported blockchain configurations by DZap.
    * The chain configuration includes contract addresses, supported features, and network details.
    * Results are cached to improve performance on subsequent calls.
    *
@@ -1083,10 +1083,6 @@ class DZapClient {
    *   offset: 0
    * });
    *
-   * // Find highest APY pools
-   * const sortedPools = pools.sort((a, b) => b.apy - a.apy);
-   * console.log('Highest APY pool:', sortedPools[0]);
-   * ```
    */
   public async getZapPools(request: ZapPoolsRequest): Promise<ZapPoolsResponse> {
     return (await fetchZapPools(request)).data;
@@ -1112,7 +1108,6 @@ class DZapClient {
    * console.log('Pool composition:', poolDetails.tokens);
    * console.log('Current APY:', poolDetails.apy);
    * console.log('Total Value Locked:', poolDetails.tvl);
-   * console.log('Fee tier:', poolDetails.feeTier);
    * ```
    */
   public async getZapPoolDetails(request: ZapPoolDetailsRequest): Promise<ZapPoolDetails> {
@@ -1121,20 +1116,17 @@ class DZapClient {
 
   /**
    * Fetches configuration information about supported blockchain networks for zap operations.
-   * This method returns network-specific settings, supported protocols, and operational parameters
-   * that affect zap transaction routing and execution.
    *
-   * @param request - The chains configuration request (typically empty object)
-   * @returns Promise resolving to chain configuration data including supported protocols and settings
+   * @returns Promise resolving to chain configuration data including supported providers
    *
    * @example
    * ```typescript
    * // Get zap-specific chain configurations
-   * const zapChains = await client.getZapChains({});
+   * const zapChains = await client.getZapChains();
    *
-   * // Check which protocols are supported on each chain
+   * // Check which providers are supported on each chain
    * zapChains.forEach(chain => {
-   *   console.log(`Chain ${chain.chainId}: ${chain.supportedProtocols.join(', ')}`);
+   *   console.log(`Chain ${chain.chainId}: ${chain.supportedProviders.join(', ')}`);
    * });
    * ```
    */
@@ -1143,28 +1135,17 @@ class DZapClient {
   }
 
   /**
-   * Fetches configuration information about supported protocol providers for zap operations.
-   * This method returns available protocols, their capabilities, supported features,
-   * and operational parameters for zap transaction planning.
+   * Fetches configuration information about supported providers for zap operations.
    *
-   * @param request - The providers configuration request with optional chain filtering
-   * @returns Promise resolving to provider configuration data including capabilities and supported features
+   * @returns Promise resolving to provider configuration data
    *
    * @example
    * ```typescript
    * // Get all zap providers
-   * const allProviders = await client.getZapProviders({});
+   * const allProviders = await client.getZapProviders();
    *
-   * // Get providers for specific chain
-   * const ethProviders = await client.getZapProviders({
-   *   chainId: 1
-   * });
-   *
-   * // Check provider capabilities
-   * ethProviders.forEach(provider => {
+   * allProviders.forEach(provider => {
    *   console.log(`Provider: ${provider.name}`);
-   *   console.log(`Supports: ${provider.supportedOperations.join(', ')}`);
-   *   console.log(`Fee: ${provider.fee}%`);
    * });
    * ```
    */
