@@ -21,6 +21,11 @@ export type ZapUnderlyingToken = {
   logo?: string | null;
 };
 
+export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {
+  amount: string;
+  amountUSD: string;
+};
+
 export * from './build';
 export * from './path';
 export * from './pool';

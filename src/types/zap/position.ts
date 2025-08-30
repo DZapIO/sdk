@@ -1,4 +1,4 @@
-import { ZapUnderlyingToken } from '.';
+import { ZapUnderlyingTokenWithAmount } from '.';
 import { HexString } from '..';
 
 export type ZapPositionsRequest = {
@@ -8,11 +8,7 @@ export type ZapPositionsRequest = {
 };
 
 export type ZapPosition = {
-  underlyingAssets: ZapUnderlyingToken &
-    {
-      amount: string;
-      amountUSD: string;
-    }[];
+  underlyingAssets: ZapUnderlyingTokenWithAmount[];
   address: string; // pool address
   apr: number;
   name: string;
