@@ -11,7 +11,6 @@ export const ZAP_ENDPOINTS = {
   buildTx: '/buildTx',
   quote: '/quote',
   token: {
-    base: '/token',
     details: (address: string, chainId: number) => `/token/details?address=${address}&chainId=${chainId}`,
   },
 };

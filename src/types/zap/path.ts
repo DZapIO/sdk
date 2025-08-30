@@ -1,4 +1,5 @@
 import { HexString, ProviderDetails } from 'src/types';
+import { ZapFee, ZapUnderlyingToken } from '.';
 import { zapPathAction } from '../../zap/constants/path';
 
 export type ZapPathAction = keyof typeof zapPathAction;
@@ -13,23 +14,7 @@ export type ZapPathAsset = {
   type: string;
   name: string;
   provider?: ProviderDetails;
-  underlyingTokens?: ZapPoolUnderlyingToken[];
-};
-
-export type ZapPoolUnderlyingToken = {
-  chainId: number;
-  address: HexString;
-  name?: string;
-  symbol: string;
-  decimals: number;
-  logo?: string | null;
-};
-
-export type ZapFee = {
-  amount: string;
-  amountUSD: string;
-  asset: ZapPathAsset;
-  included: boolean;
+  underlyingTokens?: ZapUnderlyingToken[];
 };
 
 export type ZapPath = {

@@ -11,16 +11,7 @@ import {
   GET_TOKEN_PRICE,
   QUOTES_URL,
 } from 'src/constants/urlConstants';
-import {
-  ZapBuildTxnRequest,
-  ZapQuoteRequest,
-  ZapStatusRequest,
-  ZapPositionsRequest,
-  ZapPoolsRequest,
-  ZapPoolDetailsRequest,
-  ZapRouteRequest,
-  ZapTokenDetailsRequest,
-} from 'src/types/zap';
+import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from 'src/types/zap';
 import { invoke, invokeZap } from 'src/utils/axios';
 import { ZAP_ENDPOINTS } from 'src/zap/constants/urls';
 import { CalculatePointsRequest, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
@@ -93,20 +84,6 @@ export const fetchZapChains = () =>
 export const fetchZapProviders = () =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.config.providers,
-    method: GET,
-  });
-
-export const fetchZapRoute = (request: ZapRouteRequest) =>
-  invokeZap({
-    endpoint: ZAP_ENDPOINTS.route,
-    data: request,
-    method: POST,
-  });
-
-export const fetchZapTokenDetails = (request: ZapTokenDetailsRequest) =>
-  invokeZap({
-    endpoint: ZAP_ENDPOINTS.token.details(request.address, request.chainId),
-    data: {},
     method: GET,
   });
 
