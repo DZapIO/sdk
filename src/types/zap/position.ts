@@ -8,10 +8,11 @@ export type ZapPositionsRequest = {
 };
 
 export type ZapPosition = {
-  underlyingAssets: ZapUnderlyingToken & {
-    amount: string;
-    amountUSD: string;
-  };
+  underlyingAssets: ZapUnderlyingToken &
+    {
+      amount: string;
+      amountUSD: string;
+    }[];
   address: string; // pool address
   apr: number;
   name: string;
