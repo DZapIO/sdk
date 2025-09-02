@@ -129,8 +129,8 @@ class DZapClient {
    * const bridgeAbi = DZapClient.getDZapAbi('bridge');
    * ```
    */
-  public static getDZapAbi(service: AvailableDZapServices) {
-    return getDZapAbi(service);
+  public static getDZapAbi(service: AvailableDZapServices, version: ContractVersion) {
+    return getDZapAbi(service, version);
   }
 
   /**
