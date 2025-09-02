@@ -27,7 +27,22 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from 'src/types';
-import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapQuoteRequest, ZapQuoteResponse, ZapStatusRequest, ZapStatusResponse } from 'src/types/zap';
+import {
+  ZapBuildTxnRequest,
+  ZapBuildTxnResponse,
+  ZapChains,
+  ZapPoolDetails,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPoolsResponse,
+  ZapPositionsRequest,
+  ZapPositionsResponse,
+  ZapProviders,
+  ZapQuoteRequest,
+  ZapQuoteResponse,
+  ZapStatusRequest,
+  ZapStatusResponse,
+} from 'src/types/zap';
 import { ZapTransactionStep } from 'src/types/zap/step';
 import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
 import { approveToken, getAllowance } from 'src/utils/erc20';
@@ -44,6 +59,11 @@ import {
   fetchTradeBuildTxnData,
   fetchTradeQuotes,
   fetchZapBuildTxnData,
+  fetchZapChains,
+  fetchZapPoolDetails,
+  fetchZapPools,
+  fetchZapPositions,
+  fetchZapProviders,
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
@@ -88,7 +108,7 @@ class DZapClient {
   }
 
   /**
-   * Fetches and caches all supported blockchain configurations from the DZap protocol.
+   * Fetches and caches all supported blockchain configurations by DZap.
    * The chain configuration includes contract addresses, supported features, and network details.
    * Results are cached to improve performance on subsequent calls.
    *
@@ -964,6 +984,122 @@ class DZapClient {
   public async getBalances(chainId: number, account: string): Promise<Record<string, TokenResponse>> {
     const balanceData = await fetchBalances(chainId, account);
     return balanceData.result;
+  }
+
+  /**
+   * Fetches user's zap positions across different protocols and pools on a specific blockchain.
+   * Positions include active liquidity provision, staking, farming, and other protocol-specific investments.
+   *
+   * @param request - The positions request containing user account and filtering parameters
+   * @returns Promise resolving to user's positions data including values, rewards, and metadata
+   *
+   * @example
+   * ```typescript
+   * // Get all positions for a user on Ethereum
+   * const positions = await client.getZapPositions({
+   *   account: '0x...',
+   *   chainId: 1,
+   *   provider: 'uniswap'
+   * });
+   *
+   * // Process positions
+   * positions.forEach(position => {
+   *   console.log(`Protocol: ${position.protocol}`);
+   *   console.log(`Value: ${position.totalValue}`);
+   *   console.log(`APY: ${position.apy}`);
+   * });
+   * ```
+   */
+  public async getZapPositions(request: ZapPositionsRequest): Promise<ZapPositionsResponse> {
+    return (await fetchZapPositions(request)).data;
+  }
+
+  /**
+   * Fetches available liquidity pools and investment opportunities for zap operations.
+   * This method returns pools from various protocols where users can provide liquidity,
+   * stake tokens, or participate in yield farming strategies.
+   *
+   * @param request - The pools request containing filtering parameters like chain and provider
+   * @returns Promise resolving to available pools with metadata, APY, TVL, and other relevant information
+   *
+   * @example
+   * ```typescript
+   * // Get Uniswap pools on Ethereum
+   * const pools = await client.getZapPools({
+   *   chainId: 1,
+   *   provider: 'uniswap',
+   *   limit: 50,
+   *   offset: 0
+   * });
+   *
+   */
+  public async getZapPools(request: ZapPoolsRequest): Promise<ZapPoolsResponse> {
+    return (await fetchZapPools(request)).data;
+  }
+
+  /**
+   * Fetches detailed information about a specific liquidity pool or protocol investment opportunity.
+   * This method provides comprehensive data including pool composition, fees, historical performance,
+   * and other metrics needed for informed investment decisions.
+   *
+   * @param request - The pool details request containing pool address, chain, and provider information
+   * @returns Promise resolving to detailed pool information including composition, fees, performance metrics
+   *
+   * @example
+   * ```typescript
+   * // Get detailed information about a specific Uniswap pool
+   * const poolDetails = await client.getZapPoolDetails({
+   *   address: '0x...',
+   *   chainId: 1,
+   *   provider: 'uniswap'
+   * });
+   *
+   * console.log('Pool composition:', poolDetails.tokens);
+   * console.log('Current APY:', poolDetails.apy);
+   * console.log('Total Value Locked:', poolDetails.tvl);
+   * ```
+   */
+  public async getZapPoolDetails(request: ZapPoolDetailsRequest): Promise<ZapPoolDetails> {
+    return (await fetchZapPoolDetails(request)).data;
+  }
+
+  /**
+   * Fetches configuration information about supported blockchain networks for zap operations.
+   *
+   * @returns Promise resolving to chain configuration data including supported providers
+   *
+   * @example
+   * ```typescript
+   * // Get zap-specific chain configurations
+   * const zapChains = await client.getZapChains();
+   *
+   * // Check which providers are supported on each chain
+   * zapChains.forEach(chain => {
+   *   console.log(`Chain ${chain.chainId}: ${chain.supportedProviders.join(', ')}`);
+   * });
+   * ```
+   */
+  public async getZapChains(): Promise<ZapChains> {
+    return (await fetchZapChains()).data;
+  }
+
+  /**
+   * Fetches configuration information about supported providers for zap operations.
+   *
+   * @returns Promise resolving to provider configuration data
+   *
+   * @example
+   * ```typescript
+   * // Get all zap providers
+   * const allProviders = await client.getZapProviders();
+   *
+   * allProviders.forEach(provider => {
+   *   console.log(`Provider: ${provider.name}`);
+   * });
+   * ```
+   */
+  public async getZapProviders(): Promise<ZapProviders> {
+    return (await fetchZapProviders()).data;
   }
 }
 
