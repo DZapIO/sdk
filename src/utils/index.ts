@@ -1,5 +1,5 @@
 import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import {
   Abi,
   ParseEventLogsReturnType,
@@ -176,10 +176,17 @@ export const isTypeSigner = (variable: any): variable is Signer => {
 
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
-export const getDZapAbi = (service: AvailableDZapServices) => {
+export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
   switch (service) {
     case Services.trade:
-      return ABI[DZapAbis.dZapCoreAbi];
+      switch (version) {
+        case ContractVersion.v1:
+          return ABI[DZapAbis.dZapCoreAbi];
+        case ContractVersion.v2:
+          return ABI[DZapAbis.dZapCoreV2Abi];
+        default:
+          throw new Error('Invalid Version for Trade');
+      }
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
     case Services.zap:
@@ -194,7 +201,7 @@ export const handleDecodeTxnData = (
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dZapAbi = getDZapAbi(service);
+  const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
   try {
     events = parseEventLogs({
       abi: dZapAbi,
