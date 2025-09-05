@@ -79,6 +79,7 @@ class PermitTxnHandler {
         rpcUrls,
         version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
         contractVersion,
+        service,
       });
       return {
         status,
