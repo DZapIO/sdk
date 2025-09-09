@@ -28,7 +28,7 @@ export const checkEIP2612PermitSupport = async ({
   chainId: number;
   rpcUrls?: string[];
   permitEIP2612DisabledTokens?: string[];
-  owner?: HexString; // Optional owner for fetching name and nonce
+  owner?: HexString; // Optional owner for fetching nonce
 }): Promise<{
   supportsPermit: boolean;
   data?: {
