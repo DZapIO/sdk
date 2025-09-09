@@ -1,7 +1,7 @@
 import { ethers, Signer } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
 import { zeroAddress } from 'src/constants/address';
-import { SignatureExpiryInSecs } from 'src/constants/permit2';
+import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from 'src/constants/permit2';
 import { PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612Types } from 'src/types/eip-2612';
@@ -19,16 +19,24 @@ export const checkEIP2612PermitSupport = async ({
   chainId,
   rpcUrls,
   permitEIP2612DisabledTokens,
+  owner,
 }: {
   address: HexString;
   chainId: number;
   rpcUrls?: string[];
   permitEIP2612DisabledTokens?: string[];
-}): Promise<{ supportsPermit: boolean; domainSeparator?: HexString; version?: string }> => {
+  owner?: HexString; // Optional owner for fetching name and nonce
+}): Promise<{
+  supportsPermit: boolean;
+  data?: {
+    version: string;
+    name: string;
+    nonce: bigint;
+  };
+}> => {
   if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase())) {
     return { supportsPermit: false };
   }
-
   const contracts = [
     {
       address: address as HexString,
@@ -39,12 +47,17 @@ export const checkEIP2612PermitSupport = async ({
       address: address as HexString,
       abi: erc20PermitAbi,
       functionName: erc20Functions.nonces,
-      args: [zeroAddress], // dummy address to check function exists
+      args: [owner ?? zeroAddress],
     },
     {
       address: address as HexString,
       abi: erc20PermitAbi,
       functionName: erc20Functions.version,
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.name,
     },
   ];
 
@@ -58,18 +71,25 @@ export const checkEIP2612PermitSupport = async ({
   if (multicallResult.status !== TxnStatus.success) {
     return { supportsPermit: false };
   }
-  const [domainSeparatorResult, nonceResult, versionResult] = multicallResult.data as Array<{ status: string; result: unknown }>;
-  if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success) {
+
+  const results = multicallResult.data as Array<{ status: string; result: unknown }>;
+  const [domainSeparatorResult, nonceResult, versionResult, nameResult] = results;
+
+  if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
     return { supportsPermit: false };
   }
 
-  const domainSeparator = domainSeparatorResult.result as HexString;
-  const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : undefined; // sending undefined if version is not available
+  const name = nameResult.result as string;
+  const nonce = nonceResult.result as bigint;
+  const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION;
 
   return {
     supportsPermit: true,
-    domainSeparator,
-    version,
+    data: {
+      version,
+      name,
+      nonce,
+    },
   };
 };
 
@@ -83,59 +103,27 @@ export const getEIP2612PermitSignature = async ({
   token,
   signer,
   version,
-  rpcUrls,
   amount = maxUint256,
   sigDeadline = generateDeadline(SignatureExpiryInSecs),
+  name,
+  nonce,
 }: {
   chainId: number;
   account: HexString;
   token: HexString;
   spender: HexString;
   version: string;
-  rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
   signer: WalletClient | Signer;
+  name: string;
+  nonce: bigint;
 }): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
     const address = token as HexString;
     const owner = account as HexString;
     const deadline = sigDeadline;
 
-    const contracts = [
-      {
-        address: address as HexString,
-        abi: erc20PermitAbi,
-        functionName: erc20Functions.name,
-      },
-      {
-        address: address as HexString,
-        abi: erc20PermitAbi,
-        functionName: erc20Functions.nonces,
-        args: [owner],
-      },
-    ];
-
-    const multicallResult = await multicall({
-      chainId,
-      contracts,
-      rpcUrls,
-      allowFailure: false,
-    });
-
-    if (multicallResult.status !== TxnStatus.success) {
-      return {
-        status: TxnStatus.error,
-        code: StatusCodes.Error,
-      };
-    }
-    const [tokenNameResult, nonceResult] = multicallResult.data;
-    const name = tokenNameResult as string;
-    const nonce = nonceResult as bigint;
-
-    if (!name || Number.isNaN(Number(nonce))) {
-      throw new Error('Failed to retrieve token name or nonce');
-    }
     const domain = {
       name,
       version,
