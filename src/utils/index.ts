@@ -28,6 +28,11 @@ export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | unde
   return createPublicClient({
     chain: viemChainsById[chainId],
     transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+    batch: {
+      multicall: {
+        wait: RPC_BATCHING_WAIT_TIME,
+      },
+    },
   });
 };
 
