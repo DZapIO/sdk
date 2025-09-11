@@ -8,8 +8,6 @@ import { WalletClient } from 'viem';
 
 import { Signer } from 'ethers';
 import { PermitTypes } from 'src/constants/permit';
-import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
-
 class PermitTxnHandler {
   static generatePermitDataForToken = async ({
     token,
@@ -55,9 +53,10 @@ class PermitTxnHandler {
       chainId,
       rpcUrls,
       permitEIP2612DisabledTokens,
+      owner: sender,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
-      if (!eip2612PermitData.supportsPermit) {
+      if (!eip2612PermitData.supportsPermit || !eip2612PermitData.data) {
         throw new Error('Token does not support EIP-2612 permits');
       }
 
@@ -76,8 +75,9 @@ class PermitTxnHandler {
         spender,
         amount: BigInt(amount),
         signer,
-        rpcUrls,
-        version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
+        version: eip2612PermitData.data.version,
+        name: eip2612PermitData.data.name,
+        nonce: eip2612PermitData.data.nonce,
         contractVersion,
         service,
       });

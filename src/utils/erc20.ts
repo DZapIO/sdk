@@ -171,6 +171,7 @@ export const getAllowance = async ({
           chainId,
           rpcUrls,
           permitEIP2612DisabledTokens,
+          owner: sender,
         });
         return {
           token: address,
