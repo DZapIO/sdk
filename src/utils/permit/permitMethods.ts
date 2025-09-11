@@ -1,6 +1,5 @@
 import { ethers, Signer } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
-import { zeroAddress } from 'src/constants/address';
 import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from 'src/constants/permit2';
 import { ContractVersion, PermitType, StatusCodes, TxnStatus } from 'src/enums';
 import { AvailableDZapServices, HexString } from 'src/types';
@@ -28,7 +27,7 @@ export const checkEIP2612PermitSupport = async ({
   chainId: number;
   rpcUrls?: string[];
   permitEIP2612DisabledTokens?: string[];
-  owner?: HexString; // Optional owner for fetching nonce
+  owner: HexString; // Optional owner for fetching nonce
 }): Promise<{
   supportsPermit: boolean;
   data?: {
@@ -50,7 +49,7 @@ export const checkEIP2612PermitSupport = async ({
       address: address as HexString,
       abi: erc20PermitAbi,
       functionName: erc20Functions.nonces,
-      args: [owner ?? zeroAddress],
+      args: [owner],
     },
     {
       address: address as HexString,
@@ -87,7 +86,7 @@ export const checkEIP2612PermitSupport = async ({
   const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION;
 
   return {
-    supportsPermit: eip2612DisabledChains.includes(chainId) ? false : true,
+    supportsPermit: true,
     data: {
       version,
       name,
