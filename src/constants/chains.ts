@@ -13,4 +13,5 @@ export const exclusiveChainIds = {
   immutableZkevm: 13371,
   abstract: 2741,
   lens: 232,
+  citreaTestnet: 5115,
 };
