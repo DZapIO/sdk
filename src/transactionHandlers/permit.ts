@@ -242,7 +242,7 @@ class PermitTxnHandler {
       tokens[dataIdx].permitData = res.permitData;
 
       // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
-      if (isFirstToken) {
+      if (isFirstToken && !isDZapNativeToken(tokens[dataIdx].address)) {
         firstTokenNonce = nonce ?? null;
       }
 
