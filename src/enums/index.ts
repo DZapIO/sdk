@@ -15,6 +15,16 @@ export enum DZapPermitMode {
   BATCH_PERMIT2_WITNESS_TRANSFER,
 }
 
+export enum V2PermitMode {
+  PERMIT,
+  PERMIT2_APPROVE,
+}
+
+export enum ContractVersion {
+  v1 = 'v1',
+  v2 = 'v2',
+}
+
 export enum TxnStatus {
   mining = 'mining',
   success = 'success',

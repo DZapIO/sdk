@@ -2,7 +2,9 @@ import { Signer } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
 import { GaslessTxType } from 'src/constants';
 import { permit2PrimaryType } from 'src/constants/permit';
+import { ContractVersion } from 'src/enums';
 import { Address, WalletClient } from 'viem';
+import { AvailableDZapServices } from '.';
 
 export const defaultWitnessType = {
   typeName: 'DZapTransferWitness',
@@ -107,6 +109,8 @@ export type BasePermitParams = {
   rpcUrls?: string[];
   deadline?: bigint;
   signer: WalletClient | Signer;
+  contractVersion: ContractVersion;
+  service: AvailableDZapServices;
 };
 
 /**
@@ -117,6 +121,10 @@ type Permit2612BaseParams = {
     amount?: bigint;
   } & Omit<TokenWithIndex, 'amount'>;
   version: string;
+  sigDeadline?: bigint;
+  amount?: bigint;
+  name: string;
+  nonce: bigint;
 } & BasePermitParams;
 
 export type DefaultPermit2612Params = {

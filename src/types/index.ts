@@ -2,7 +2,7 @@ import { Signer } from 'ethers';
 import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
-import { AppEnv, StatusCodes, TxnStatus } from 'src/enums';
+import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import { WalletClient } from 'viem';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
@@ -58,7 +58,7 @@ export type Chain = {
   swapBridgeContract: string;
   logo: string;
   tokenlistUrl?: string;
-  multicallAddress: string;
+  multicallAddress?: HexString;
   blockExplorerUrl: string;
   nativeToken: NativeTokenInfo;
   rpcProviders: ApiRpcResponse[];
@@ -85,6 +85,7 @@ export type Chain = {
   isEnabled: boolean;
   mainnet: boolean;
   tags?: Tag[];
+  version?: ContractVersion;
   permitDisabledTokens?: DisabledPermitTokens;
 };
 
@@ -410,6 +411,8 @@ export type SignatureParamsBase = {
   isBatchPermitAllowed?: boolean;
   signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
   permitEIP2612DisabledTokens?: string[];
+  service: AvailableDZapServices;
+  contractVersion: ContractVersion;
 };
 
 export type GasSignatureParams = SignatureParamsBase & {

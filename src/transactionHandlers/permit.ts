@@ -1,6 +1,5 @@
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
-import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { BatchPermitCallbackParams, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode } from 'src/types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithIndex } from 'src/types/permit';
@@ -36,7 +35,7 @@ class PermitTxnHandler {
   };
 
   static generatePermitDataForToken = async (params: PermitDataParams): Promise<PermitResponse> => {
-    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, permitType, permitEIP2612DisabledTokens } = params;
+    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, permitType, permitEIP2612DisabledTokens, account } = params;
     const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
       return {
@@ -54,9 +53,10 @@ class PermitTxnHandler {
       chainId,
       rpcUrls,
       permitEIP2612DisabledTokens,
+      owner: account,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
-      if (!eip2612PermitData.supportsPermit) {
+      if (!eip2612PermitData.supportsPermit || !eip2612PermitData.data) {
         throw new Error('Token does not support EIP-2612 permits');
       }
 
@@ -77,7 +77,10 @@ class PermitTxnHandler {
           index: 0,
         },
         gasless: false,
-        version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
+        amount: BigInt(amount),
+        version: eip2612PermitData.data.version,
+        name: eip2612PermitData.data.name,
+        nonce: eip2612PermitData.data.nonce,
       });
       return {
         status,

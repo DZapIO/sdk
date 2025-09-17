@@ -1,5 +1,5 @@
 import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import {
   Abi,
   ParseEventLogsReturnType,
@@ -14,7 +14,6 @@ import {
   stringToHex,
 } from 'viem';
 import * as ABI from '../artifacts';
-import { batchSwapIntegrators } from '../config';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
@@ -29,6 +28,11 @@ export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | unde
   return createPublicClient({
     chain: viemChainsById[chainId],
     transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+    batch: {
+      multicall: {
+        wait: RPC_BATCHING_WAIT_TIME,
+      },
+    },
   });
 };
 
@@ -143,8 +147,6 @@ export const calcTotalSrcTokenAmount = (data: { amount: string }[]) => {
 
 export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: string) => firstTokenAddress === secondTokenAddress;
 
-export const getIntegratorInfo = (integrator: string) => batchSwapIntegrators[integrator] || batchSwapIntegrators.dZap;
-
 export const generateUUID = () => {
   let d = new Date().getTime();
   let d2 = (typeof performance !== 'undefined' && performance.now && performance.now() * 1000) || 0;
@@ -179,10 +181,17 @@ export const isTypeSigner = (variable: any): variable is Signer => {
 
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
-export const getDZapAbi = (service: AvailableDZapServices) => {
+export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
   switch (service) {
     case Services.trade:
-      return ABI[DZapAbis.dZapCoreAbi];
+      switch (version) {
+        case ContractVersion.v1:
+          return ABI[DZapAbis.dZapCoreAbi];
+        case ContractVersion.v2:
+          return ABI[DZapAbis.dZapCoreV2Abi];
+        default:
+          throw new Error('Invalid Version for Trade');
+      }
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
     case Services.zap:
@@ -197,7 +206,7 @@ export const handleDecodeTxnData = (
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dZapAbi = getDZapAbi(service);
+  const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
   try {
     events = parseEventLogs({
       abi: dZapAbi,

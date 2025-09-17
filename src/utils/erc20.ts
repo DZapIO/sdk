@@ -19,6 +19,7 @@ type AllowanceParams = {
   rpcUrls?: string[];
   mode?: ApprovalMode;
   permitEIP2612DisabledTokens?: string[];
+  multicallAddress?: HexString;
 };
 
 export const approveToken = async ({
@@ -103,11 +104,13 @@ export const batchGetAllowances = async ({
   chainId,
   data,
   owner,
+  multicallAddress,
   rpcUrls,
 }: {
   chainId: number;
   data: { token: HexString; spender: HexString }[];
   owner: HexString;
+  multicallAddress?: HexString;
   rpcUrls?: string[];
 }): Promise<{ status: TxnStatus; code: StatusCodes; data: Record<string, bigint> }> => {
   const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
@@ -125,6 +128,7 @@ export const batchGetAllowances = async ({
     chainId,
     contracts,
     rpcUrls,
+    multicallAddress,
     allowFailure: false,
   });
 
@@ -148,6 +152,7 @@ export const getAllowance = async ({
   sender,
   tokens,
   rpcUrls,
+  multicallAddress,
   mode = ApprovalModes.Default,
   spender,
   permitEIP2612DisabledTokens,
@@ -165,6 +170,7 @@ export const getAllowance = async ({
           chainId,
           rpcUrls,
           permitEIP2612DisabledTokens,
+          owner: sender,
         });
         return {
           token: address,
@@ -193,6 +199,7 @@ export const getAllowance = async ({
       chainId,
       data: approvalData,
       owner: sender,
+      multicallAddress,
       rpcUrls,
     });
 

@@ -1,16 +1,19 @@
 import { ethers } from 'ethers';
 import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
-import { zeroAddress } from 'src/constants/address';
-import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
+import { Services } from 'src/constants';
+import { erc20Functions } from 'src/constants/erc20';
+import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from 'src/constants/permit2';
+import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
 import { HexString } from 'src/types';
 import { EIP2612DefaultTypes } from 'src/types/eip-2612';
 import { DefaultPermit2612Params } from 'src/types/permit';
-import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
+import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
+import { katana } from 'viem/chains';
 import { generateDeadline } from '../date';
-import { getPublicClient } from '../index';
+import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';
 
+export const eip2612DisabledChains = [Number(katana.id)];
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
  */
@@ -19,37 +22,77 @@ export const checkEIP2612PermitSupport = async ({
   chainId,
   rpcUrls,
   permitEIP2612DisabledTokens,
+  owner,
 }: {
   address: HexString;
   chainId: number;
   rpcUrls?: string[];
   permitEIP2612DisabledTokens?: string[];
-}): Promise<{ supportsPermit: boolean; domainSeparator?: HexString; version?: string }> => {
-  if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase())) {
+  owner: HexString; // Optional owner for fetching nonce
+}): Promise<{
+  supportsPermit: boolean;
+  data?: {
+    version: string;
+    name: string;
+    nonce: bigint;
+  };
+}> => {
+  if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase()) || eip2612DisabledChains.includes(chainId)) {
     return { supportsPermit: false };
   }
-  const contract = getContract({
-    abi: erc20PermitAbi,
-    address: address,
-    client: getPublicClient({ chainId, rpcUrls }),
+  const contracts = [
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.domainSeparator,
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.nonces,
+      args: [owner],
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.version,
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.name,
+    },
+  ];
+
+  const multicallResult = await multicall({
+    chainId,
+    contracts,
+    rpcUrls,
+    allowFailure: true,
   });
-  const [domainSeparatorResult, nonceResult, versionResult] = await Promise.allSettled([
-    contract.read.DOMAIN_SEPARATOR(),
-    contract.read.nonces([zeroAddress]), // dummy address to check function exists
-    contract.read.version(),
-  ]);
 
-  if (domainSeparatorResult.status === 'rejected' || nonceResult.status === 'rejected') {
+  if (multicallResult.status !== TxnStatus.success) {
     return { supportsPermit: false };
   }
 
-  const domainSeparator = domainSeparatorResult.value;
-  const version = versionResult.status === 'fulfilled' ? versionResult.value : undefined; // sending undefined if version is not available
+  const results = multicallResult.data as Array<{ status: string; result: unknown }>;
+  const [domainSeparatorResult, nonceResult, versionResult, nameResult] = results;
+
+  if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
+    return { supportsPermit: false };
+  }
+
+  const name = nameResult.result as string;
+  const nonce = nonceResult.result as bigint;
+  const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION;
 
   return {
     supportsPermit: true,
-    domainSeparator,
-    version,
+    data: {
+      version,
+      name,
+      nonce,
+    },
   };
 };
 
@@ -60,29 +103,21 @@ export const getEIP2612PermitSignature = async (
   params: DefaultPermit2612Params,
 ): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
-    const { chainId, spender, account, token, signer, rpcUrls, version, deadline = generateDeadline(SignatureExpiryInSecs) } = params;
+    const {
+      chainId,
+      spender,
+      account,
+      token,
+      signer,
+      contractVersion,
+      service,
+      name,
+      nonce,
+      version,
+      deadline = generateDeadline(SignatureExpiryInSecs),
+    } = params;
     const { address, amount = maxUint256 } = token;
 
-    const contract = getContract({
-      abi: erc20PermitAbi,
-      address: address,
-      client: getPublicClient({ chainId, rpcUrls }),
-    });
-
-    const [tokenNameResult, nonceResult] = await Promise.allSettled([contract.read.name(), contract.read.nonces([account])]);
-
-    if (tokenNameResult.status === 'rejected' || nonceResult.status === 'rejected') {
-      return {
-        status: TxnStatus.error,
-        code: StatusCodes.Error,
-      };
-    }
-    const name = tokenNameResult.value;
-    const nonce = nonceResult.value;
-
-    if (!name || Number.isNaN(Number(nonce))) {
-      throw new Error('Failed to retrieve token name or nonce');
-    }
     const domain = {
       name,
       version,
@@ -110,7 +145,13 @@ export const getEIP2612PermitSignature = async (
 
     const sig = ethers.utils.splitSignature(signature);
 
-    const dZapPermitData = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
+    const dZapPermitData =
+      contractVersion === ContractVersion.v1 && service !== Services.zap
+        ? ethers.utils.defaultAbiCoder.encode(
+            ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
+            [account, spender, amount, deadline, sig.v, sig.r, sig.s],
+          )
+        : ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData as HexString]);
 

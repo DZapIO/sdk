@@ -3,7 +3,7 @@ import { Signer } from 'ethers';
 import { Services } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
 import { PriceService } from 'src/service/price';
 import GenericTxnHandler from 'src/transactionHandlers/generic';
 import PermitTxnHandler from 'src/transactionHandlers/permit';
@@ -131,8 +131,8 @@ class DZapClient {
    * const bridgeAbi = DZapClient.getDZapAbi('bridge');
    * ```
    */
-  public static getDZapAbi(service: AvailableDZapServices) {
-    return getDZapAbi(service);
+  public static getDZapAbi(service: AvailableDZapServices, version: ContractVersion) {
+    return getDZapAbi(service, version);
   }
 
   /**
@@ -458,7 +458,16 @@ class DZapClient {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction, rpcUrls });
+    const chainConfig = await DZapClient.getChainConfig();
+
+    return await TradeTxnHandler.buildAndSendTransaction({
+      request,
+      signer,
+      txnData,
+      batchTransaction,
+      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
+      rpcUrls,
+    });
   }
 
   /**
@@ -729,6 +738,7 @@ class DZapClient {
   }) {
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
     return await getAllowance({
       chainId,
       sender,
@@ -736,6 +746,7 @@ class DZapClient {
       rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
       mode,
       spender: spenderAddress,
+      multicallAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
@@ -846,7 +857,7 @@ class DZapClient {
    * ```
    */
   public async sign(
-    params: Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless'> & {
+    params: Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless' | 'contractVersion'> & {
       spender?: HexString;
       permitType?: PermitMode;
       rpcUrls?: string[];
@@ -866,6 +877,7 @@ class DZapClient {
       spender: spenderAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
       gasless: false,
+      contractVersion: chainConfig[chainId]?.version || ContractVersion.v1,
     } as GasSignatureParams;
     return await PermitTxnHandler.signPermit(request);
   }

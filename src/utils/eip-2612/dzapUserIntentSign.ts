@@ -82,7 +82,7 @@ export const signGaslessDzapUserIntent = async (
     const deadline = params.deadline || generateDeadline(SignatureExpiryInSecs);
 
     const contract = getContract({
-      abi: getDZapAbi('trade'),
+      abi: getDZapAbi('trade', params.contractVersion),
       address: spender,
       client: getPublicClient({ chainId, rpcUrls }),
     });

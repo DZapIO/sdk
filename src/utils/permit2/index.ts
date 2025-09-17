@@ -17,7 +17,19 @@ export function getPermit2Address(chainId: number): HexString {
 
 export const getPermit2Signature = async (params: Permit2Params): Promise<BasePermitResponse> => {
   try {
-    const { chainId, account, tokens, spender, rpcUrls, deadline: sigDeadline, signer, permitType, firstTokenNonce } = params;
+    const {
+      chainId,
+      account,
+      tokens,
+      spender,
+      rpcUrls,
+      deadline: sigDeadline,
+      signer,
+      permitType,
+      firstTokenNonce,
+      contractVersion,
+      service,
+    } = params;
     const deadline = sigDeadline ?? generateDeadline(SignatureExpiryInSecs);
     const expiration = params.expiration ?? maxUint48;
 
@@ -42,6 +54,8 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
       tokens: updatedTokens,
       expiration,
       firstTokenNonce: firstTokenNonce ?? null,
+      service,
+      contractVersion,
     });
 
     const signTypedPermit2Data = getPermit2Data(permit2Values, permit2Address, chainId, witnessData);
