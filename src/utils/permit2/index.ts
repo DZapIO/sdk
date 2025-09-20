@@ -81,10 +81,12 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
           ])
         : permitType === permit2PrimaryType.PermitWitnessTransferFrom
           ? encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature])
-          : encodeAbiParameters(
-              parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
-              [BigInt(updatedTokens[0].amount), Number(nonce), Number(deadline), BigInt(deadline), signature],
-            );
+          : encodeAbiParameters(parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
+              Number(nonce.toString()),
+              Number(expiration.toString()),
+              BigInt(deadline.toString()),
+              signature,
+            ]);
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [dzapPermitMode, dZapDataForTransfer]);
 
