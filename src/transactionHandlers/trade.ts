@@ -142,7 +142,7 @@ class TradeTxnHandler {
       }
 
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
-      const txnParams = { from, to, data, value, gasLimit };
+      const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
@@ -201,7 +201,7 @@ class TradeTxnHandler {
 
       const permitType = request.hasPermit2ApprovalForAllTokens ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
 
-      const { swapDataHash, executorFeesHash, txId, adapterDataHash, txType } = buildTxnResponseData;
+      const txId = buildTxnResponseData.txId;
       const resp = await PermitTxnHandler.signGaslessUserIntent({
         tokens: request.data.map((req, index) => {
           return {
@@ -217,13 +217,10 @@ class TradeTxnHandler {
         permitType,
         signer,
         gasless: true,
-        txType,
-        swapDataHash,
-        executorFeesHash,
         txId,
-        adapterDataHash,
         service: 'trade',
         contractVersion: ContractVersion.v2,
+        ...buildTxnResponseData.transaction,
       });
 
       if (resp.status === TxnStatus.success && resp.data) {

@@ -10,7 +10,6 @@ import {
   contractErrorActions,
   ContractErrorResponse,
   DZapTransactionResponse,
-  ExecuteTxnData,
   Fee,
   FeeDetails,
   GaslessTradeBuildTxnResponse,
@@ -33,6 +32,11 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
+  EvmTxData,
+  SvmTxData,
+  BtcTxData,
+  TradeGasBuildTxnResponse,
+  ParamQuotes,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
@@ -61,7 +65,6 @@ export {
   DZapPermitMode,
   DZapTransactionResponse,
   erc20Functions,
-  ExecuteTxnData,
   Fee,
   FeeDetails,
   formatToken,
@@ -97,4 +100,9 @@ export {
   TradeStep,
   TxnStatus,
   ZapStatusResponse,
+  EvmTxData,
+  SvmTxData,
+  BtcTxData,
+  TradeGasBuildTxnResponse,
+  ParamQuotes,
 };

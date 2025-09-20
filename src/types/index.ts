@@ -1,5 +1,5 @@
 import { Signer } from 'ethers';
-import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
+import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from 'src/constants';
 import { ApprovalModes } from 'src/constants/approval';
 import { PermitTypes } from 'src/constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
@@ -258,39 +258,93 @@ export type TradeBuildTxnRequestData = {
   permitData?: string;
 };
 
-export type ExecuteTxnData = {
+export type ParamQuotes = {
+  additionalInfo?: Record<string, unknown>;
+  destAmount: string;
+  provider: string;
+  minDestAmount: string;
+};
+
+export type EvmTxData = {
+  from: HexString;
   data: HexString;
   to: HexString;
-  from: HexString;
-  chainId: number;
   value: string;
   gasLimit: string;
 };
 
-export type TradeBuildTxnResponse = ExecuteTxnData & {
-  additionalInfo?: AdditionalInfo;
-  //dev: only used for btc tx.
+export type SvmTxData = {
+  from: string;
+  data: string;
+  blockhash?: string;
+  lastValidBlockHeight?: number;
+};
+
+export type BtcTxData = {
+  from: string;
+  data: string;
+  inputs: PsbtInput[];
+  outputs: PsbtOutput[];
+  feeRate: number;
+};
+
+export type TxData = EvmTxData | SvmTxData | BtcTxData;
+
+export type TxRequestData<T> = {
+  status: typeof STATUS.success;
+  txId: string;
+  chainId: number;
+  transaction: T;
+};
+
+export type TradeGasBuildTxnResponse<T = TxData> = TxRequestData<T> & {
+  quotes: Record<string, ParamQuotes>;
+};
+
+export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
+  //@deprecated
+  data: string;
+  from: string;
+  to?: string;
+  value?: string;
+  gasLimit?: string;
+  svmTxData?: {
+    blockhash: string;
+    lastValidBlockHeight: number;
+  };
   btcTxData?: {
     inputs: PsbtInput[];
     outputs: PsbtOutput[];
     feeRate: number;
   };
-  svmTxData?: {
-    blockhash: string;
-    lastValidBlockHeight: number;
-  };
+  additionalInfo: Record<string, Record<string, unknown>>;
   updatedQuotes: Record<string, string>;
 };
 
 export type GaslessTxTypes = keyof typeof GaslessTxType;
 
-export type GaslessTradeBuildTxnResponse = {
-  txId: HexString;
-  keccakTxId: HexString;
+type BridgeGaslessTxData = {
+  executorFeesHash: HexString;
+  swapDataHash?: HexString; //undefined for eip2612, bridge only,
+  adapterDataHash: HexString;
+  txType: typeof GaslessTxType.bridge;
+  value: string;
+};
+
+type SwapGaslessTxData = {
   executorFeesHash: HexString;
   swapDataHash: HexString;
-  adapterDataHash: HexString;
-  txType: GaslessTxTypes;
+  txType: typeof GaslessTxType.swap;
+  value: string;
+};
+
+export type GaslessTradeBuildTxnResponse = {
+  status: 'success';
+  txId: HexString;
+  transaction: BridgeGaslessTxData | SwapGaslessTxData;
+  quotes: Record<string, ParamQuotes>;
+  gasless: true;
+  onlySwapData: false;
 };
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
@@ -424,3 +478,26 @@ export type GaslessSignatureParams = ((SignatureParamsBase & GaslessBridgeParams
 };
 
 export type SignatureParams = GasSignatureParams | GaslessSignatureParams;
+
+export type SignPermitResponse =
+  | {
+      status: TxnStatus.success;
+      code: StatusCodes;
+      tokens: {
+        address: HexString;
+        permitData?: HexString;
+        amount: string;
+      }[];
+      permitType: Exclude<PermitMode, keyof typeof PermitTypes.PermitBatchWitnessTransferFrom>;
+    }
+  | {
+      status: TxnStatus.success;
+      code: StatusCodes;
+      batchPermitData: HexString;
+      permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
+    }
+  | {
+      status: Exclude<TxnStatus, TxnStatus.success>;
+      code: StatusCodes;
+      permitType: PermitMode;
+    };

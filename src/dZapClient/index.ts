@@ -15,12 +15,13 @@ import {
   CalculatePointsRequest,
   Chain,
   ChainData,
-  ExecuteTxnData,
+  EvmTxData,
   GaslessTradeBuildTxnResponse,
   GasSignatureParams,
   HexString,
   OtherAvailableAbis,
   PermitMode,
+  SignPermitResponse,
   TokenInfo,
   TokenResponse,
   TradeBuildTxnRequest,
@@ -560,9 +561,10 @@ class DZapClient {
    * });
    * ```
    */
-  public async sendTransaction({ signer, txnData }: { chainId: number; signer: Signer | WalletClient; txnData: ExecuteTxnData }) {
+  public async sendTransaction({ chainId, signer, txnData }: { chainId: number; signer: Signer | WalletClient; txnData: EvmTxData }) {
     return await GenericTxnHandler.sendTransaction({
       signer,
+      chainId,
       ...txnData,
     });
   }
@@ -863,7 +865,7 @@ class DZapClient {
       rpcUrls?: string[];
       service: AvailableDZapServices;
     },
-  ) {
+  ): Promise<SignPermitResponse> {
     const { service, chainId } = params;
     const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();
