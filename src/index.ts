@@ -37,10 +37,10 @@ import {
   BtcTxData,
   TradeGasBuildTxnResponse,
   ParamQuotes,
+  SignPermitResponse,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
-
 import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
@@ -105,4 +105,5 @@ export {
   BtcTxData,
   TradeGasBuildTxnResponse,
   ParamQuotes,
+  SignPermitResponse,
 };

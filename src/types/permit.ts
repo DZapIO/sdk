@@ -198,7 +198,7 @@ export type PermitResponse = {
 } & BasePermitResponse;
 
 export type BatchPermitResponse = {
-  permitType: (typeof permit2PrimaryType.PermitBatchWitnessTransferFrom)[keyof typeof permit2PrimaryType.PermitBatchWitnessTransferFrom];
+  permitType: typeof permit2PrimaryType.PermitBatchWitnessTransferFrom;
 } & BasePermitResponse;
 
 // WITNESS DATA TYPES

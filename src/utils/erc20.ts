@@ -153,7 +153,7 @@ export const getAllowance = async ({
   tokens,
   rpcUrls,
   multicallAddress,
-  mode = ApprovalModes.Default,
+  mode,
   spender,
   permitEIP2612DisabledTokens,
 }: AllowanceParams) => {
@@ -177,12 +177,18 @@ export const getAllowance = async ({
           spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId), // @dev: not needed, but added for consistency
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
+          isDefaultApprovalMode: false,
         };
       } else if (mode === ApprovalModes.Default) {
-        return { token: address, spender, amount };
+        return {
+          token: address,
+          spender,
+          amount,
+          isDefaultApprovalMode: true,
+        };
       } else {
         const permit2Address = getPermit2Address(chainId);
-        return { token: address, spender: permit2Address, amount };
+        return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
       }
     }),
   );
@@ -204,10 +210,10 @@ export const getAllowance = async ({
     });
 
     for (let i = 0; i < approvalData.length; i++) {
-      const { token, amount, isEIP2612PermitSupported } = approvalData[i];
+      const { token, amount, isEIP2612PermitSupported, isDefaultApprovalMode } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
-      const signatureNeeded = true;
+      const signatureNeeded = isDefaultApprovalMode ? false : true;
       data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
 

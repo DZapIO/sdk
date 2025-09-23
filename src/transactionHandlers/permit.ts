@@ -1,7 +1,7 @@
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { BatchPermitCallbackParams, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from 'src/types';
+import { GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from 'src/types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithIndex } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
 import { signGaslessDzapUserIntent } from 'src/utils/eip-2612/dzapUserIntentSign';
@@ -14,6 +14,7 @@ type BasePermitDataParams = {
   totalSrcAmount: bigint;
   permitEIP2612DisabledTokens?: string[];
   permitType: PermitMode;
+  firstTokenNonce?: bigint;
 } & Omit<PermitParams, 'permitType'>;
 
 type PermitDataParams = BasePermitDataParams & ({ gasless: false } | GaslessSwapParams | GaslessBridgeParams);
@@ -149,103 +150,111 @@ class PermitTxnHandler {
       },
     };
   };
-
-  public static signPermit = async (signPermitReq: GasSignatureParams): Promise<SignPermitResponse> => {
-    const { chainId, tokens, rpcUrls, sender, signer, signatureCallback, spender, permitType, isBatchPermitAllowed } = signPermitReq;
-    if (tokens.length === 0) {
-      return { status: TxnStatus.success, code: StatusCodes.Success, tokens, permitType };
-    }
-    let firstTokenNonce: bigint | null = null;
-
-    const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
-    const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
-
+  public static shouldUseBatchPermit = ({
+    permitType,
+    isBatchPermitAllowed = true,
+    tokens,
+    oneToMany,
+  }: {
+    permitType: PermitMode;
+    isBatchPermitAllowed?: boolean;
+    tokens: {
+      address: HexString;
+      permitData?: HexString | undefined;
+      amount: string;
+    }[];
+    oneToMany: boolean;
+  }) => {
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
     const isBatchPermitRequested = permitType === PermitTypes.PermitBatchWitnessTransferFrom;
 
     const shouldAutoBatch = permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany;
 
-    const shouldUseBatchPermit = isBatchPermitAllowed && (isBatchPermitRequested || shouldAutoBatch);
+    return isBatchPermitAllowed && (isBatchPermitRequested || shouldAutoBatch);
+  };
+
+  public static signPermit = async (signPermitReq: GasSignatureParams): Promise<SignPermitResponse> => {
+    const { tokens } = signPermitReq;
+    if (tokens.length === 0) {
+      return { status: TxnStatus.success, code: StatusCodes.Success, tokens, permitType: signPermitReq.permitType };
+    }
+    const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
+
+    const shouldUseBatchPermit = PermitTxnHandler.shouldUseBatchPermit({
+      permitType: signPermitReq.permitType,
+      isBatchPermitAllowed: signPermitReq.isBatchPermitAllowed,
+      tokens,
+      oneToMany,
+    });
 
     if (shouldUseBatchPermit) {
-      const permitDataReq = {
+      const resp = await PermitTxnHandler.generateBatchPermitDataForTokens({
         ...signPermitReq,
         tokens: tokens.map((token, index) => ({ ...token, index })),
-        firstTokenNonce,
-        chainId,
-        rpcUrls,
-        account: sender,
-        spender,
-        signer,
+        account: signPermitReq.sender,
         permitType: PermitTypes.PermitBatchWitnessTransferFrom, //override because only PermitBatchWitnessTransferFrom supports batch
-      };
-
-      const resp = await PermitTxnHandler.generateBatchPermitDataForTokens(permitDataReq);
+      });
 
       if (resp.status !== TxnStatus.success) {
         return { status: resp.status, code: resp.code, permitType: PermitTypes.PermitBatchWitnessTransferFrom };
       }
-
-      const { permitData, permitType: permitTypeForToken } = resp;
-      if (signatureCallback) {
-        await signatureCallback({
-          batchPermitData: permitData,
+      if (signPermitReq.signatureCallback) {
+        await signPermitReq.signatureCallback({
+          batchPermitData: resp.permitData as HexString,
           tokens,
-          permitType: permitTypeForToken,
-        } as BatchPermitCallbackParams);
+          permitType: resp.permitType,
+        });
       }
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,
-        batchPermitData: permitData as HexString,
-        permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+        batchPermitData: resp.permitData as HexString,
+        permitType: resp.permitType,
       };
-    }
+    } else {
+      const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
+      let firstTokenNonce: bigint | null = null;
+      let permitType = signPermitReq.permitType;
 
-    for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
-      const isFirstToken = dataIdx === 0;
-      const permitDataReq = {
-        ...signPermitReq,
-        token: {
-          ...tokens[dataIdx],
-          index: dataIdx,
-        },
-        firstTokenNonce,
-        oneToMany,
-        totalSrcAmount,
-        chainId,
-        rpcUrls,
-        account: sender,
-        spender,
-        permitType,
-        signer,
-      };
+      for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
+        const isFirstToken = dataIdx === 0;
 
-      const res = await PermitTxnHandler.generatePermitDataForToken(permitDataReq);
-
-      if (res.status !== TxnStatus.success) {
-        return { status: res.status, code: res.code, permitType: res.permitType };
-      }
-
-      tokens[dataIdx].permitData = res.permitData;
-
-      // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
-      if (isFirstToken && !isDZapNativeToken(tokens[dataIdx].address)) {
-        firstTokenNonce = res.nonce ?? null;
-      }
-
-      if (signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
-        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokens[dataIdx].amount);
-        await signatureCallback({
-          permitData: res.permitData as HexString,
-          srcToken: tokens[dataIdx].address as HexString,
-          amount: amount.toString(),
-          permitType: res.permitType,
+        const res = await PermitTxnHandler.generatePermitDataForToken({
+          ...signPermitReq,
+          token: {
+            ...tokens[dataIdx],
+            index: dataIdx,
+          },
+          firstTokenNonce: firstTokenNonce ?? undefined,
+          oneToMany,
+          totalSrcAmount,
+          account: signPermitReq.sender,
+          permitType,
         });
-      }
-    }
+        permitType = res.permitType;
+        if (res.status !== TxnStatus.success) {
+          return { status: res.status, code: res.code, permitType: res.permitType };
+        }
 
-    return { status: TxnStatus.success, tokens, code: StatusCodes.Success, permitType };
+        tokens[dataIdx].permitData = res.permitData;
+
+        // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
+        if (isFirstToken && !isDZapNativeToken(tokens[dataIdx].address)) {
+          firstTokenNonce = res.nonce ?? null;
+        }
+
+        if (signPermitReq.signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
+          const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokens[dataIdx].amount);
+          await signPermitReq.signatureCallback({
+            permitData: res.permitData as HexString,
+            srcToken: tokens[dataIdx].address as HexString,
+            amount: amount.toString(),
+            permitType: res.permitType,
+          });
+        }
+      }
+      return { status: TxnStatus.success, tokens, code: StatusCodes.Success, permitType };
+    }
   };
 }
 

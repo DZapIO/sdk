@@ -20,7 +20,9 @@ export const permit2PrimaryType = {
 } as const;
 
 export const PermitTypes = {
-  ...permit2PrimaryType,
+  PermitSingle: 'PermitSingle',
+  PermitWitnessTransferFrom: 'PermitWitnessTransferFrom',
+  PermitBatchWitnessTransferFrom: 'PermitBatchWitnessTransferFrom',
   EIP2612Permit: 'EIP2612Permit',
   AutoPermit: 'AutoPermit',
 } as const;

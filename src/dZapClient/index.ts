@@ -37,7 +37,7 @@ import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from 
 import { approveToken, getAllowance } from 'src/utils/erc20';
 import { updateTokenListPrices } from 'src/utils/tokens';
 import { updateQuotes } from 'src/utils/updateQuotes';
-import { TransactionReceipt, WalletClient } from 'viem';
+import { Prettify, TransactionReceipt, WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
   fetchAllTokens,
@@ -738,6 +738,7 @@ class DZapClient {
     spender?: HexString; // Optional custom spender address
     mode?: ApprovalMode;
   }) {
+    console.log('sdk getAllowance', { chainId, sender, tokens, service, rpcUrls, spender, mode });
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
@@ -749,7 +750,7 @@ class DZapClient {
       mode,
       spender: spenderAddress,
       multicallAddress,
-      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
+      permitEIP2612DisabledTokens: chainConfig?.[chainId]?.permitDisabledTokens?.eip2612,
     });
   }
 
@@ -859,12 +860,14 @@ class DZapClient {
    * ```
    */
   public async sign(
-    params: Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless' | 'contractVersion'> & {
-      spender?: HexString;
-      permitType?: PermitMode;
-      rpcUrls?: string[];
-      service: AvailableDZapServices;
-    },
+    params: Prettify<
+      Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless' | 'contractVersion'> & {
+        spender?: HexString;
+        permitType?: PermitMode;
+        rpcUrls?: string[];
+        service: AvailableDZapServices;
+      }
+    >,
   ): Promise<SignPermitResponse> {
     const { service, chainId } = params;
     const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);

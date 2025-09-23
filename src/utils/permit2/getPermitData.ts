@@ -1,7 +1,7 @@
 import { TypedDataField } from 'ethers';
 import { PermitBatchTransferFromValues, PermitSingleValues, PermitTransferFromValues, WitnessData } from 'src/types/permit';
 import type { Address, TypedDataDomain } from 'viem';
-import { permit2Domain } from './domain.js';
+import { permit2Domain } from './domain';
 
 type PermitSingleData = {
   domain: TypedDataDomain;

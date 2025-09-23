@@ -1,8 +1,8 @@
 import { Signer } from 'ethers';
-import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from 'src/constants';
-import { ApprovalModes } from 'src/constants/approval';
-import { PermitTypes } from 'src/constants/permit';
-import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
+import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './../constants';
+import { ApprovalModes } from './../constants/approval';
+import { PermitTypes } from './../constants/permit';
+import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
 import { WalletClient } from 'viem';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
@@ -488,7 +488,7 @@ export type SignPermitResponse =
         permitData?: HexString;
         amount: string;
       }[];
-      permitType: Exclude<PermitMode, keyof typeof PermitTypes.PermitBatchWitnessTransferFrom>;
+      permitType: PermitMode;
     }
   | {
       status: TxnStatus.success;
@@ -497,7 +497,7 @@ export type SignPermitResponse =
       permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
     }
   | {
-      status: Exclude<TxnStatus, TxnStatus.success>;
+      status: Exclude<TxnStatus, typeof TxnStatus.success>;
       code: StatusCodes;
       permitType: PermitMode;
     };
