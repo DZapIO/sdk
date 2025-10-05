@@ -3,7 +3,7 @@ import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
 import { ApprovalModes } from 'src/constants/approval';
 import { erc20Functions } from 'src/constants/erc20';
 import { StatusCodes, TxnStatus } from 'src/enums';
-import { ApprovalMode, HexString } from 'src/types';
+import { ApprovalMode, HexString, TokenPermitData } from 'src/types';
 import { isDZapNativeToken } from 'src/utils';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { isTypeSigner, writeContract } from '.';
@@ -14,11 +14,10 @@ import { getPermit2Address } from './permit2';
 type AllowanceParams = {
   chainId: number;
   sender: HexString;
-  tokens: { address: HexString; amount: string }[];
+  tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
   spender: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
-  permitEIP2612DisabledTokens?: string[];
   multicallAddress?: HexString;
 };
 
@@ -147,30 +146,21 @@ export const batchGetAllowances = async ({
 /**
  * Get allowance information for tokens based on approval mode
  */
-export const getAllowance = async ({
-  chainId,
-  sender,
-  tokens,
-  rpcUrls,
-  multicallAddress,
-  mode,
-  spender,
-  permitEIP2612DisabledTokens,
-}: AllowanceParams) => {
+export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicallAddress, mode, spender }: AllowanceParams) => {
   const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
   const approvalData = await Promise.all(
-    erc20Tokens.map(async ({ address, amount }) => {
+    erc20Tokens.map(async ({ address, amount, permit }) => {
       if (mode === ApprovalModes.AutoPermit) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
           address,
           chainId,
           rpcUrls,
-          permitEIP2612DisabledTokens,
           owner: sender,
+          permit,
         });
         return {
           token: address,

@@ -4,7 +4,7 @@ import { Services } from 'src/constants';
 import { erc20Functions } from 'src/constants/erc20';
 import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from 'src/constants/permit2';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
+import { HexString, TokenPermitData } from 'src/types';
 import { EIP2612DefaultTypes } from 'src/types/eip-2612';
 import { DefaultPermit2612Params } from 'src/types/permit';
 import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
@@ -21,14 +21,14 @@ export const checkEIP2612PermitSupport = async ({
   address,
   chainId,
   rpcUrls,
-  permitEIP2612DisabledTokens,
   owner,
+  permit,
 }: {
-  address: HexString;
   chainId: number;
+  address: HexString;
   rpcUrls?: string[];
-  permitEIP2612DisabledTokens?: string[];
   owner: HexString; // Optional owner for fetching nonce
+  permit?: TokenPermitData;
 }): Promise<{
   supportsPermit: boolean;
   data?: {
@@ -37,7 +37,7 @@ export const checkEIP2612PermitSupport = async ({
     nonce: bigint;
   };
 }> => {
-  if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase()) || eip2612DisabledChains.includes(chainId)) {
+  if (permit?.eip2612?.supported === false || eip2612DisabledChains.includes(chainId)) {
     return { supportsPermit: false };
   }
   const contracts = [
@@ -118,17 +118,19 @@ export const getEIP2612PermitSignature = async (
     } = params;
     const { address, amount = maxUint256 } = token;
 
-    const domain = {
-      name,
-      version,
-      chainId,
-      verifyingContract: address,
-    };
+    const domain = token?.permit?.eip2612?.data?.domain
+      ? token?.permit?.eip2612?.data?.domain
+      : {
+          name,
+          version,
+          chainId,
+          verifyingContract: address,
+        };
 
     const message = {
       owner: account,
       spender,
-      value: amount,
+      value: BigInt(amount),
       nonce,
       deadline,
     };

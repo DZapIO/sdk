@@ -4,7 +4,7 @@ import { GaslessTxType } from 'src/constants';
 import { permit2PrimaryType } from 'src/constants/permit';
 import { ContractVersion } from 'src/enums';
 import { Address, WalletClient } from 'viem';
-import { AvailableDZapServices } from '.';
+import { AvailableDZapServices, TokenPermitData } from '.';
 
 export const defaultWitnessType = {
   typeName: 'DZapTransferWitness',
@@ -78,6 +78,13 @@ type TokenPermissions = {
   amount: bigint;
 };
 
+export type TokenWithPermitData = {
+  index: number;
+  address: HexString;
+  amount: string;
+  permit?: TokenPermitData;
+};
+
 export type Permit2PrimaryType = (typeof permit2PrimaryType)[keyof typeof permit2PrimaryType];
 
 // Gasless common types
@@ -117,9 +124,7 @@ export type BasePermitParams = {
  * Traditional EIP-2612 permit (user pays gas)
  */
 type Permit2612BaseParams = {
-  token: {
-    amount?: bigint;
-  } & Omit<TokenWithIndex, 'amount'>;
+  token: TokenWithPermitData;
   version: string;
   sigDeadline?: bigint;
   amount?: bigint;
@@ -153,7 +158,7 @@ export type Gasless2612PermitParams = GaslessSwapPermit2612Params | GaslessBridg
 export type Permit2612Params = DefaultPermit2612Params | Gasless2612PermitParams;
 
 export type BasePermit2Params = {
-  tokens: { address: HexString; amount?: string; index: number }[];
+  tokens: TokenWithPermitData[];
   expiration?: bigint;
   permitType: Permit2PrimaryType;
   firstTokenNonce?: bigint;

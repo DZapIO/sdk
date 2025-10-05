@@ -3,7 +3,7 @@ import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STA
 import { ApprovalModes } from './../constants/approval';
 import { PermitTypes } from './../constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
-import { WalletClient } from 'viem';
+import { TypedDataDomain, WalletClient } from 'viem';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
@@ -86,7 +86,6 @@ export type Chain = {
   mainnet: boolean;
   tags?: Tag[];
   version?: ContractVersion;
-  permitDisabledTokens?: DisabledPermitTokens;
 };
 
 export type ApiRpcResponse = {
@@ -215,6 +214,18 @@ export type Token = {
   price?: string;
 };
 
+export type TokenPermitData = {
+  eip2612: {
+    supported: boolean;
+    data?: {
+      domain?: TypedDataDomain;
+    };
+  };
+  permit2: {
+    supported: boolean;
+  };
+};
+
 export type TokenInfo = NativeTokenInfo & {
   chainId: number;
   balanceInUsd?: number | null;
@@ -226,6 +237,7 @@ export type TokenInfo = NativeTokenInfo & {
     source: boolean;
     destination: boolean;
   };
+  permit?: TokenPermitData;
 };
 
 export type TokenResponse = {
@@ -459,13 +471,13 @@ export type SignatureParamsBase = {
     address: HexString;
     permitData?: HexString;
     amount: string;
+    permit?: TokenPermitData;
   }[];
   spender: HexString;
   rpcUrls: string[];
   permitType: PermitMode;
   isBatchPermitAllowed?: boolean;
   signatureCallback?: (params: SignatureCallbackParams) => Promise<void>;
-  permitEIP2612DisabledTokens?: string[];
   service: AvailableDZapServices;
   contractVersion: ContractVersion;
 };
