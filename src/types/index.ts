@@ -268,6 +268,7 @@ export type TradeBuildTxnRequestData = {
   slippage: number;
   additionalInfo?: AdditionalInfo;
   permitData?: string;
+  permit?: TokenPermitData;
 };
 
 export type ParamQuotes = {

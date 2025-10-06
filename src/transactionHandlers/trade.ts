@@ -199,7 +199,11 @@ class TradeTxnHandler {
         });
       }
 
-      const permitType = request.hasPermit2ApprovalForAllTokens ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
+      const permitType = request.hasPermit2ApprovalForAllTokens
+        ? request.data.length > 1
+          ? PermitTypes.PermitBatchWitnessTransferFrom
+          : PermitTypes.PermitWitnessTransferFrom
+        : PermitTypes.EIP2612Permit;
 
       const txId = buildTxnResponseData.txId;
       const resp = await PermitTxnHandler.signGaslessUserIntent({
