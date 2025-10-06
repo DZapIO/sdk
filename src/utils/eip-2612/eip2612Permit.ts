@@ -116,8 +116,9 @@ export const getEIP2612PermitSignature = async (
       version,
       deadline = generateDeadline(SignatureExpiryInSecs),
     } = params;
-    const { address, amount = maxUint256 } = token;
 
+    const { address } = token;
+    const amount = token.amount ? BigInt(token.amount) : maxUint256;
     const domain = token?.permit?.eip2612?.data?.domain
       ? token?.permit?.eip2612?.data?.domain
       : {
@@ -130,7 +131,7 @@ export const getEIP2612PermitSignature = async (
     const message = {
       owner: account,
       spender,
-      value: BigInt(amount),
+      value: amount,
       nonce,
       deadline,
     };
