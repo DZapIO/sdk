@@ -73,7 +73,7 @@ class PermitTxnHandler {
         ...params,
         token: {
           address: token.address as HexString,
-          amount: BigInt(amount).toString(),
+          amount: amount.toString(),
           index: 0,
           permit: token.permit,
         },
