@@ -738,7 +738,6 @@ class DZapClient {
     spender?: HexString; // Optional custom spender address
     mode?: ApprovalMode;
   }) {
-    console.log('sdk getAllowance', { chainId, sender, tokens, service, rpcUrls, spender, mode });
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
