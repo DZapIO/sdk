@@ -38,6 +38,7 @@ import {
   TradeGasBuildTxnResponse,
   ParamQuotes,
   SignPermitResponse,
+  TokenPermitData,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { formatToken, getTokensPairKey } from './utils';
@@ -106,4 +107,5 @@ export {
   TradeGasBuildTxnResponse,
   ParamQuotes,
   SignPermitResponse,
+  TokenPermitData,
 };

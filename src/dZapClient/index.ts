@@ -750,7 +750,6 @@ class DZapClient {
       mode,
       spender: spenderAddress,
       multicallAddress,
-      permitEIP2612DisabledTokens: chainConfig?.[chainId]?.permitDisabledTokens?.eip2612,
     });
   }
 
@@ -880,7 +879,6 @@ class DZapClient {
       rpcUrls: params?.rpcUrls || this.rpcUrlsByChainId[chainId],
       permitType,
       spender: spenderAddress,
-      permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
       gasless: false,
       contractVersion: chainConfig[chainId]?.version || ContractVersion.v1,
     } as GasSignatureParams;

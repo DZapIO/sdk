@@ -2,7 +2,7 @@ import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
 import { PermitTypes } from 'src/constants/permit';
 import { StatusCodes, TxnStatus } from 'src/enums';
 import { GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from 'src/types';
-import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithIndex } from 'src/types/permit';
+import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from 'src/types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
 import { signGaslessDzapUserIntent } from 'src/utils/eip-2612/dzapUserIntentSign';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/eip-2612/eip2612Permit';
@@ -10,9 +10,8 @@ import { getPermit2Signature } from 'src/utils/permit2';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
-  token: TokenWithIndex;
+  token: TokenWithPermitData;
   totalSrcAmount: bigint;
-  permitEIP2612DisabledTokens?: string[];
   permitType: PermitMode;
   firstTokenNonce?: bigint;
 } & Omit<PermitParams, 'permitType'>;
@@ -20,7 +19,7 @@ type BasePermitDataParams = {
 type PermitDataParams = BasePermitDataParams & ({ gasless: false } | GaslessSwapParams | GaslessBridgeParams);
 
 type BaseBatchPermitParams = {
-  tokens: TokenWithIndex[];
+  tokens: TokenWithPermitData[];
   permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
 } & Omit<PermitParams, 'permitType'>;
 
@@ -36,7 +35,7 @@ class PermitTxnHandler {
   };
 
   static generatePermitDataForToken = async (params: PermitDataParams): Promise<PermitResponse> => {
-    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, permitType, permitEIP2612DisabledTokens, account } = params;
+    const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, permitType, account } = params;
     const isFirstToken = token.index === 0;
     if (isDZapNativeToken(token.address)) {
       return {
@@ -53,8 +52,8 @@ class PermitTxnHandler {
       address: token.address,
       chainId,
       rpcUrls,
-      permitEIP2612DisabledTokens,
       owner: account,
+      permit: token.permit,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
       if (!eip2612PermitData.supportsPermit || !eip2612PermitData.data) {
@@ -74,8 +73,9 @@ class PermitTxnHandler {
         ...params,
         token: {
           address: token.address as HexString,
-          amount: BigInt(amount),
+          amount: amount.toString(),
           index: 0,
+          permit: token.permit,
         },
         gasless: false,
         amount: BigInt(amount),
