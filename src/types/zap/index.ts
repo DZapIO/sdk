@@ -1,5 +1,6 @@
 import { HexString, ProviderDetails } from 'src/types';
 import { ZapPathAsset } from './path';
+import { ZapStatus, ZapStatusAsset } from './status';
 
 export type ZapProviders = Record<string, ProviderDetails>;
 
@@ -24,6 +25,29 @@ export type ZapUnderlyingToken = {
 export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {
   amount: string;
   amountUSD: string;
+};
+
+export type ZapStatusStep = {
+  chainId: number;
+  hash?: string;
+  status: ZapStatus;
+  action: string;
+  protocol: ProviderDetails;
+  input: ZapStatusAsset[];
+  output: ZapStatusAsset[];
+};
+
+export type ZapStatusResponse = {
+  status: ZapStatus;
+  steps: ZapStatusStep[];
+  recipient: string;
+  timestamp: number;
+  completedAt: number;
+};
+
+export type ZapStatusRequest = {
+  chainId: number;
+  txnHash: string;
 };
 
 export * from './build';
