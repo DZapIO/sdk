@@ -1,9 +1,11 @@
 import { CancelToken, Method } from 'axios';
 import AxiosClient from '../axios';
 import { baseApiClient, baseZapApiClient } from '../axios/baseClient';
-import { apiKey } from '../config';
+import { apiKey as apiKeyEnv } from '../config';
 import { GET, POST } from '../constants/httpMethods';
+import DZapClient from '../dZapClient';
 import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
+
 type Invoke = {
   endpoint: string;
   data?: any;
@@ -14,6 +16,7 @@ type Invoke = {
 };
 
 export const invoke = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false }: Invoke) => {
+  const apiKey = DZapClient.getInstance().apiKey || apiKeyEnv;
   const config: ExtendedAxiosRequestConfig = {
     method,
     url: endpoint,
@@ -34,6 +37,7 @@ export const invoke = async ({ endpoint, data, method = POST, cancelToken, shoul
 };
 
 export const invokeZap = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false }: Invoke) => {
+  const apiKey = DZapClient.getInstance().apiKey || apiKeyEnv;
   const config: ExtendedAxiosRequestConfig = {
     method,
     url: endpoint,

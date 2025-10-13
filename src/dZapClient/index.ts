@@ -76,10 +76,14 @@ class DZapClient {
   private static chainConfig: ChainData | null = null;
   private priceService;
   public rpcUrlsByChainId: Record<number, string[]> = {};
-  private constructor(rpcUrlsByChainId?: Record<number, string[]>) {
+  apiKey: string | null = null;
+  private constructor(rpcUrlsByChainId?: Record<number, string[]>, apiKey?: string) {
     this.priceService = new PriceService();
     if (rpcUrlsByChainId) {
       this.rpcUrlsByChainId = rpcUrlsByChainId;
+    }
+    if (apiKey) {
+      this.apiKey = apiKey;
     }
   }
 
@@ -102,9 +106,15 @@ class DZapClient {
    * });
    * ```
    */
-  public static getInstance(rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
     if (!DZapClient.instance) {
-      DZapClient.instance = new DZapClient(rpcUrlsByChainId);
+      DZapClient.instance = new DZapClient(rpcUrlsByChainId, apiKey);
+    }
+    if (apiKey) {
+      DZapClient.instance.apiKey = apiKey;
+    }
+    if (rpcUrlsByChainId) {
+      DZapClient.instance.rpcUrlsByChainId = rpcUrlsByChainId;
     }
     return DZapClient.instance;
   }
