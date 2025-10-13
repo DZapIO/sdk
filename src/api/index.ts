@@ -1,5 +1,6 @@
 import { CancelToken } from 'axios';
-import { GET, POST } from 'src/constants/httpMethods';
+
+import { GET, POST } from '../constants/httpMethods';
 import {
   BUILD_TX_URL,
   CALCULATE_POINTS_URL,
@@ -10,11 +11,11 @@ import {
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
   QUOTES_URL,
-} from 'src/constants/urlConstants';
-import { ZapBuildTxnRequest, ZapQuoteRequest, ZapStatusRequest } from 'src/types/zap';
-import { invoke, invokeZap } from 'src/utils/axios';
-import { ZAP_BUILD_TX_URL, ZAP_QUOTE_URL, ZAP_TXN_STATUS_URL } from 'src/zap/constants/urls';
+} from '../constants/urlConstants';
 import { CalculatePointsRequest, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
+import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
+import { invoke, invokeZap } from '../utils/axios';
+import { ZAP_ENDPOINTS } from '../zap/constants/urls';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
@@ -33,7 +34,7 @@ export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
 
 export const fetchZapBuildTxnData = (request: ZapBuildTxnRequest, cancelToken?: CancelToken) =>
   invokeZap({
-    endpoint: ZAP_BUILD_TX_URL,
+    endpoint: ZAP_ENDPOINTS.buildTx,
     data: request,
     method: POST,
     cancelToken,
@@ -41,7 +42,7 @@ export const fetchZapBuildTxnData = (request: ZapBuildTxnRequest, cancelToken?: 
 
 export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToken) =>
   invokeZap({
-    endpoint: ZAP_QUOTE_URL,
+    endpoint: ZAP_ENDPOINTS.quote,
     data: request,
     method: POST,
     cancelToken,
@@ -49,8 +50,41 @@ export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToke
 
 export const fetchZapTxnStatus = (request: ZapStatusRequest) =>
   invokeZap({
-    endpoint: ZAP_TXN_STATUS_URL,
+    endpoint: ZAP_ENDPOINTS.status,
     data: request,
+    method: GET,
+  });
+
+export const fetchZapPositions = (request: ZapPositionsRequest) =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.positions,
+    data: request,
+    method: GET,
+  });
+
+export const fetchZapPools = (request: ZapPoolsRequest) =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.pools,
+    data: request,
+    method: GET,
+  });
+
+export const fetchZapPoolDetails = (request: ZapPoolDetailsRequest) =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.poolDetails,
+    data: request,
+    method: GET,
+  });
+
+export const fetchZapChains = () =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.config.chains,
+    method: GET,
+  });
+
+export const fetchZapProviders = () =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.config.providers,
     method: GET,
   });
 

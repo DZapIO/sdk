@@ -1,4 +1,4 @@
-import { AppEnv } from 'src/enums';
+import { AppEnv } from './enums';
 
 let APP_ENV;
 let BASE_API_URL;

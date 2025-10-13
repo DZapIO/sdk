@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
 import { AtomicReadyWalletRejectedUpgradeError, decodeAbiParameters, parseAbiParameters } from 'viem';
+import { StatusCodes, TxnStatus } from '../enums';
+import { HexString } from '../types';
 
 export const BRIDGE_ERRORS = {
   BridgeCallFailed: 'BridgeCallFailed',

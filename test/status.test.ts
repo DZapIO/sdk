@@ -1,5 +1,5 @@
-import { TradeStatusResponse } from 'src/types';
 import DZapClient from '../src/dZapClient';
+import { TradeStatusResponse } from '../src/types';
 
 describe('DZapClient - getStatus', () => {
   let client: DZapClient;

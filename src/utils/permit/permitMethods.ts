@@ -1,16 +1,16 @@
 import { ethers, Signer } from 'ethers';
-import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
-import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from 'src/constants/permit2';
-import { ContractVersion, PermitType, StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString } from 'src/types';
-import { EIP2612Types } from 'src/types/eip-2612';
 import { encodeAbiParameters, maxUint256, parseAbiParameters, WalletClient } from 'viem';
 import { katana } from 'viem/chains';
+import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
+import { Services } from '../../constants';
+import { erc20Functions } from '../../constants/erc20';
+import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from '../../constants/permit2';
+import { ContractVersion, PermitType, StatusCodes, TxnStatus } from '../../enums';
+import { AvailableDZapServices, HexString } from '../../types';
+import { EIP2612Types } from '../../types/eip-2612';
 import { generateDeadline } from '../date';
 import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';
-import { Services } from 'src/constants';
-import { erc20Functions } from 'src/constants/erc20';
 
 export const eip2612DisabledChains = [Number(katana.id)];
 /**

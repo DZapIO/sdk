@@ -1,15 +1,14 @@
-import { fetchTradeBuildTxnData } from 'src/api';
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { Signer } from 'ethers';
+import { WalletClient } from 'viem';
+import { fetchTradeBuildTxnData } from '../api';
+import { StatusCodes, TxnStatus } from '../enums';
 import { AdditionalInfo, ContractErrorResponse, DZapTransactionResponse, HexString, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../types';
 import { isTypeSigner } from '../utils';
+import { viemChainsById } from '../utils/chains';
+import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
-
-import { Signer } from 'ethers';
-import { viemChainsById } from 'src/utils/chains';
-import { generateApprovalBatchCalls } from 'src/utils/eip-5792/batchApproveTokens';
-import { WalletClient } from 'viem';
 
 class TradeTxnHandler {
   private static sendTransaction = async (

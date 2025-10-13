@@ -1,5 +1,5 @@
-import { getBaseUrl, getBaseZapUrl } from 'src/config';
 import AxiosClient from '.';
+import { getBaseUrl, getBaseZapUrl } from '../config';
 
 export const baseApiClient = AxiosClient.getInstance(getBaseUrl());
 

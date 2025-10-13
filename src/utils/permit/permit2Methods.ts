@@ -1,12 +1,12 @@
 import { Signer } from 'ethers';
-import { Services } from 'src/constants';
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { erc20PermitFunctions } from 'src/constants/erc20';
-import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { ContractVersion, PermitType, StatusCodes, TxnStatus, V2PermitMode } from 'src/enums';
-import { AvailableDZapServices, HexString } from 'src/types';
 import { WalletClient, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
+import { Services } from '../../constants';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/contract';
+import { erc20PermitFunctions } from '../../constants/erc20';
+import { SignatureExpiryInSecs } from '../../constants/permit2';
+import { ContractVersion, PermitType, StatusCodes, TxnStatus, V2PermitMode } from '../../enums';
+import { AvailableDZapServices, HexString } from '../../types';
 import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';

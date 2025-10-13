@@ -1,8 +1,8 @@
-import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from 'src/constants';
-import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
+import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from '../constants';
+import { ApprovalModes } from '../constants/approval';
+import { PermitTypes } from '../constants/permit';
+import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { PsbtInput, PsbtOutput } from './btc';
-import { PermitTypes } from 'src/constants/permit';
-import { ApprovalModes } from 'src/constants/approval';
 
 export type HexString = `0x${string}`;
 

@@ -1,5 +1,5 @@
-import { HexString } from 'src/types';
 import { type WalletClient } from 'viem';
+import { HexString } from '../../types';
 import { encodeApproveCallData } from '../encodeApproveCall';
 import { getAllowance } from '../erc20';
 import { isDZapNativeToken } from '../index';

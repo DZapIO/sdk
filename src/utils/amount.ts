@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
-import { TradeQuote, Fee, FeeDetails } from 'src/types';
 import { formatUnits } from 'viem';
+import { Fee, FeeDetails, TradeQuote } from '../types';
 
 export const calculateAmountUSD = (amountInWei: string, decimals: number, price: string) => {
   return decimals ? new Decimal(formatUnits(BigInt(amountInWei), decimals)).mul(price || 0).toFixed(5) : '0';

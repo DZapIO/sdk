@@ -1,14 +1,14 @@
 import { Signer } from 'ethers';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { DZapTransactionResponse, HexString } from 'src/types';
-import { getPublicClient, isTypeSigner } from 'src/utils';
-import { viemChainsById } from 'src/utils/chains';
-import { handleViemTransactionError } from 'src/utils/errors';
 import { WalletClient } from 'viem';
-import { zapStepAction } from '../zap/constants/step';
+import { fetchZapBuildTxnData } from '../api';
+import { StatusCodes, TxnStatus } from '../enums';
+import { DZapTransactionResponse, HexString } from '../types';
+import { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
 import { ZapStep, ZapTxnDetails } from '../types/zap/step';
-import { ZapBuildTxnRequest, ZapBuildTxnResponse } from 'src/types/zap';
-import { fetchZapBuildTxnData } from 'src/api';
+import { getPublicClient, isTypeSigner } from '../utils';
+import { viemChainsById } from '../utils/chains';
+import { handleViemTransactionError } from '../utils/errors';
+import { zapStepAction } from '../zap/constants/step';
 
 class ZapTxnHandler {
   public static execute = async ({

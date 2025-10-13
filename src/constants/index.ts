@@ -1,5 +1,5 @@
-import { PermitType } from 'src/enums';
 import { encodeAbiParameters, parseAbiParameters } from 'viem';
+import { PermitType } from '../enums';
 
 export const STATUS = {
   pending: 'pending',
