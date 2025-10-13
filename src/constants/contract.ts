@@ -1,5 +1,5 @@
-import { HexString } from 'src/types';
-import { ExclusiveChainIds } from 'src/types/chains';
+import { HexString } from '../types';
+import { ExclusiveChainIds } from '../types/chains';
 import { exclusiveChainIds } from './chains';
 
 export const exclusivePermit2Addresses: { [key: ExclusiveChainIds]: HexString } = {

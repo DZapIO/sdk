@@ -1,7 +1,7 @@
-import { HexString } from 'src/types';
 import { WalletClient } from 'viem';
 import { sendCalls } from 'viem/actions';
 import { getAction } from 'viem/utils';
+import { HexString } from '../../types';
 
 export type BatchCallParams = {
   to: HexString;

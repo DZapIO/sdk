@@ -1,9 +1,9 @@
-import { GET } from 'src/constants/httpMethods';
-import { ChainData } from 'src/types';
-import { invoke } from 'src/utils/axios';
-import { coingeckoConfig } from './config';
+import { GET } from '../../../../constants/httpMethods';
+import { ChainData } from '../../../../types';
+import { invoke } from '../../../../utils/axios';
+import { isNativeCurrency } from '../../../../utils/tokens';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
-import { isNativeCurrency } from 'src/utils/tokens';
+import { coingeckoConfig } from './config';
 
 export class CoingeckoPriceProvider implements IPriceProvider {
   public id = priceProviders.coingecko;

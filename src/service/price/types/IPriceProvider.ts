@@ -1,4 +1,4 @@
-import { ChainData } from 'src/types';
+import { ChainData } from '../../../types';
 
 export const priceProviders = {
   dZap: 'dZap',

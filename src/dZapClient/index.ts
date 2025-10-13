@@ -1,54 +1,6 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
-import { Services } from 'src/constants';
-import { ApprovalModes } from 'src/constants/approval';
-import { PermitTypes } from 'src/constants/permit';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { PriceService } from 'src/service/price';
-import GenericTxnHandler from 'src/transactionHandlers/generic';
-import PermitTxnHandler from 'src/transactionHandlers/permit';
-import TradeTxnHandler from 'src/transactionHandlers/trade';
-import ZapTxnHandler from 'src/transactionHandlers/zap';
-import {
-  ApprovalMode,
-  AvailableDZapServices,
-  CalculatePointsRequest,
-  Chain,
-  ChainData,
-  ExecuteTxnData,
-  HexString,
-  OtherAvailableAbis,
-  PermitMode,
-  TokenInfo,
-  TokenResponse,
-  TradeBuildTxnRequest,
-  TradeBuildTxnResponse,
-  TradeQuotesRequest,
-  TradeQuotesResponse,
-  TradeStatusResponse,
-} from 'src/types';
-import {
-  ZapBuildTxnRequest,
-  ZapBuildTxnResponse,
-  ZapChains,
-  ZapPoolDetails,
-  ZapPoolDetailsRequest,
-  ZapPoolsRequest,
-  ZapPoolsResponse,
-  ZapPositionsRequest,
-  ZapPositionsResponse,
-  ZapProviders,
-  ZapQuoteRequest,
-  ZapQuoteResponse,
-  ZapStatusRequest,
-  ZapStatusResponse,
-} from 'src/types/zap';
-import { ZapTransactionStep } from 'src/types/zap/step';
-import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
-import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from 'src/utils/eip-5792';
-import { approveToken, getAllowance } from 'src/utils/erc20';
-import { updateTokenListPrices } from 'src/utils/tokens';
-import { updateQuotes } from 'src/utils/updateQuotes';
+
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
@@ -68,6 +20,55 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
+import { Services } from '../constants';
+import { ApprovalModes } from '../constants/approval';
+import { PermitTypes } from '../constants/permit';
+import { StatusCodes, TxnStatus } from '../enums';
+import { PriceService } from '../service/price';
+import GenericTxnHandler from '../transactionHandlers/generic';
+import PermitTxnHandler from '../transactionHandlers/permit';
+import TradeTxnHandler from '../transactionHandlers/trade';
+import ZapTxnHandler from '../transactionHandlers/zap';
+import {
+  ApprovalMode,
+  AvailableDZapServices,
+  CalculatePointsRequest,
+  Chain,
+  ChainData,
+  ExecuteTxnData,
+  HexString,
+  OtherAvailableAbis,
+  PermitMode,
+  TokenInfo,
+  TokenResponse,
+  TradeBuildTxnRequest,
+  TradeBuildTxnResponse,
+  TradeQuotesRequest,
+  TradeQuotesResponse,
+  TradeStatusResponse,
+} from '../types';
+import {
+  ZapBuildTxnRequest,
+  ZapBuildTxnResponse,
+  ZapChains,
+  ZapPoolDetails,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPoolsResponse,
+  ZapPositionsRequest,
+  ZapPositionsResponse,
+  ZapProviders,
+  ZapQuoteRequest,
+  ZapQuoteResponse,
+  ZapStatusRequest,
+  ZapStatusResponse,
+  ZapTransactionStep,
+} from '../types/zap';
+import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from '../utils';
+import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
+import { approveToken, getAllowance } from '../utils/erc20';
+import { updateTokenListPrices } from '../utils/tokens';
+import { updateQuotes } from '../utils/updateQuotes';
 
 class DZapClient {
   private static instance: DZapClient;

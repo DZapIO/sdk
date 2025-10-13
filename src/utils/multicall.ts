@@ -1,5 +1,5 @@
-import { StatusCodes, TxnStatus } from 'src/enums';
 import { MulticallParameters } from 'viem';
+import { StatusCodes, TxnStatus } from '../enums';
 import { getPublicClient } from './index';
 
 /**

@@ -1,24 +1,25 @@
-import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   Abi,
-  ParseEventLogsReturnType,
-  TransactionReceipt,
-  WalletClient,
   createPublicClient,
   fallback,
   getAddress,
   http,
   isAddress,
   parseEventLogs,
+  ParseEventLogsReturnType,
   stringToHex,
+  TransactionReceipt,
+  WalletClient,
+  zeroAddress,
 } from 'viem';
 import * as ABI from '../artifacts';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
-import { nativeTokens, zeroAddress } from 'src/constants/address';
-import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from 'src/constants/rpc';
+import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
+import { nativeTokens } from '../constants/address';
+import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
+import { StatusCodes, TxnStatus } from '../enums';
 import { viemChainsById } from './chains';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
@@ -31,7 +32,7 @@ export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | unde
   });
 };
 
-export const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
+const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 

@@ -1,10 +1,10 @@
-import { GET } from 'src/constants/httpMethods';
-import { ChainData } from 'src/types';
-import { invoke } from 'src/utils/axios';
+import { GET } from '../../../../constants/httpMethods';
+import { ChainData } from '../../../../types';
+import { invoke } from '../../../../utils/axios';
+import { isNativeCurrency } from '../../../../utils/tokens';
+import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 import { defiLlamaConfig } from './config';
 import { DefiLlamaResponse } from './types';
-import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
-import { isNativeCurrency } from 'src/utils/tokens';
 
 export class DefiLlamaPriceProvider implements IPriceProvider {
   public id = priceProviders.defiLlama;

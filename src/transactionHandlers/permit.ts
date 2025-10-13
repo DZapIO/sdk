@@ -1,14 +1,13 @@
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
-import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
-import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
-import { WalletClient } from 'viem';
-
 import { Signer } from 'ethers';
-import { PermitTypes } from 'src/constants/permit';
-import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
+import { WalletClient } from 'viem';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from '../constants';
+import { PermitTypes } from '../constants/permit';
+import { DEFAULT_PERMIT_VERSION } from '../constants/permit2';
+import { StatusCodes, TxnStatus } from '../enums';
+import { AvailableDZapServices, HexString, PermitMode } from '../types';
+import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
+import { getPermit2Signature } from '../utils/permit/permit2Methods';
+import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/permit/permitMethods';
 
 class PermitTxnHandler {
   static generatePermitDataForToken = async ({

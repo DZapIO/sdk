@@ -1,11 +1,10 @@
-import { StatusCodes, TxnStatus } from 'src/enums';
+import { Signer } from 'ethers';
+import { WalletClient } from 'viem';
+import { StatusCodes, TxnStatus } from '../enums';
 import { HexString } from '../types';
 import { isTypeSigner } from '../utils';
+import { viemChainsById } from '../utils/chains';
 import { handleViemTransactionError } from '../utils/errors';
-
-import { Signer } from 'ethers';
-import { viemChainsById } from 'src/utils/chains';
-import { WalletClient } from 'viem';
 
 class GenericTxnHandler {
   public static sendTransaction = async ({
