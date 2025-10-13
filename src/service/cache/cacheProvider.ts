@@ -1,10 +1,11 @@
-import NodeCache from 'node-cache';
+import type NodeCache from 'node-cache';
+
 const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
 let Cache: typeof NodeCache | null = null;
 if (isNode) {
   try {
-    Cache = NodeCache;
+    Cache = require('node-cache');
   } catch (error) {
     // Fallback to in-memory cache if node-cache is not available
     Cache = null;
