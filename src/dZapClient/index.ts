@@ -1126,8 +1126,8 @@ class DZapClient {
    * const zapChains = await client.getZapChains();
    *
    * // Check which providers are supported on each chain
-   * zapChains.forEach(chain => {
-   *   console.log(`Chain ${chain.chainId}: ${chain.supportedProviders.join(', ')}`);
+   * Object.entries(zapChains).forEach(([chainKey, { name, supportedProviders }]) => {
+   *   console.log(`Chain ${chainKey} (${name}): ${supportedProviders.join(', ')}`);
    * });
    * ```
    */
@@ -1145,7 +1145,7 @@ class DZapClient {
    * // Get all zap providers
    * const allProviders = await client.getZapProviders();
    *
-   * allProviders.forEach(provider => {
+   * Object.values(allProviders).forEach((provider) => {
    *   console.log(`Provider: ${provider.name}`);
    * });
    * ```
