@@ -110,6 +110,13 @@
     "format": "esm,cjs,umd",
     "target": "node",
     "sourcemap": false,
-    "generateTypes": true
+    "generateTypes": true,
+    "external": [
+      "ethers",
+      "viem",
+      "axios",
+      "decimal.js",
+      "node-cache"
+    ]
   }
 }

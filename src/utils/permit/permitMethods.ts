@@ -1,10 +1,10 @@
 import { ethers, Signer } from 'ethers';
 import { encodeAbiParameters, maxUint256, parseAbiParameters, WalletClient } from 'viem';
-import { katana } from 'viem/chains';
 import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
 import { Services } from '../../constants';
 import { erc20Functions } from '../../constants/erc20';
 import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from '../../constants/permit2';
+import { config } from '../../config';
 import { ContractVersion, PermitType, StatusCodes, TxnStatus } from '../../enums';
 import { AvailableDZapServices, HexString } from '../../types';
 import { EIP2612Types } from '../../types/eip-2612';
@@ -12,7 +12,7 @@ import { generateDeadline } from '../date';
 import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';
 
-export const eip2612DisabledChains = [Number(katana.id)];
+export const eip2612DisabledChains = config.getEip2612DisabledChains();
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
  */

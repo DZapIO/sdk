@@ -69,22 +69,15 @@ import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from 
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
 import { updateQuotes } from '../utils/updateQuotes';
+import { config } from '../config';
 
 class DZapClient {
   private static instance: DZapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private static chainConfig: ChainData | null = null;
   private priceService;
-  public rpcUrlsByChainId: Record<number, string[]> = {};
-  apiKey: string | null = null;
-  private constructor(rpcUrlsByChainId?: Record<number, string[]>, apiKey?: string) {
+  private constructor() {
     this.priceService = new PriceService();
-    if (rpcUrlsByChainId) {
-      this.rpcUrlsByChainId = rpcUrlsByChainId;
-    }
-    if (apiKey) {
-      this.apiKey = apiKey;
-    }
   }
 
   /**
@@ -108,13 +101,13 @@ class DZapClient {
    */
   public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
     if (!DZapClient.instance) {
-      DZapClient.instance = new DZapClient(rpcUrlsByChainId, apiKey);
+      DZapClient.instance = new DZapClient();
     }
     if (apiKey) {
-      DZapClient.instance.apiKey = apiKey;
+      config.setApiKey(apiKey);
     }
     if (rpcUrlsByChainId) {
-      DZapClient.instance.rpcUrlsByChainId = rpcUrlsByChainId;
+      config.setRpcUrlsByChainId(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }
@@ -704,7 +697,7 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       mode,
       spender: spenderAddress,
       multicallAddress,
@@ -775,7 +768,7 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       tokens,
       approvalTxnCallback,
       mode,
@@ -857,7 +850,7 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       service,
       signer,
       spender: spenderAddress,
