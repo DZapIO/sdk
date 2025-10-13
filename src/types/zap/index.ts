@@ -1,54 +1,28 @@
 import { HexString, ProviderDetails } from 'src/types';
-import { ZapPath, ZapPathAsset } from './path';
-import { ZapStep } from './step';
+import { ZapPathAsset } from './path';
+import { ZapStatus, ZapStatusAsset } from './status';
 
-export type ZapBuildTxnResponse = {
-  amountOut: string;
-  approvalData: {
-    callTo: HexString;
-    approveTo: HexString;
-    amount: string;
-  } | null;
-  steps: ZapStep[];
-  path: ZapPath[];
-};
+export type ZapProviders = Record<string, ProviderDetails>;
 
-export type ZapQuoteResponse = Omit<ZapBuildTxnResponse, 'steps'>;
+export type ZapChains = { [key: string]: { name: string; supportedProviders: string[] } };
 
-export type ZapBuildTxnRequest = {
-  srcToken: HexString;
-  srcChainId: number;
-  destToken: HexString;
-  destChainId: number;
-  recipient: HexString;
-  refundee: HexString;
-  slippage: number;
-  account: HexString;
-  permitData?: HexString;
-  amount?: string;
-  estimateGas?: boolean;
-  positionDetails?: ZapRouteRequestPositionDetails;
-  poolDetails?: ZapRouteRequestPoolDetails;
-  allowedBridges?: string[];
-  allowedDexes?: string[];
-};
-
-export type ZapQuoteRequest = ZapBuildTxnRequest;
-
-export type ZapRouteRequestPositionDetails = {
-  nftId: string;
-};
-
-export type ZapRouteRequestPoolDetails = {
-  lowerTick: number;
-  upperTick: number;
-  metadata?: unknown;
-};
-
-export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
-
-export type ZapStatusAsset = {
+export type ZapFee = {
+  amount: string;
+  amountUSD: string;
   asset: ZapPathAsset;
+  included: boolean;
+};
+
+export type ZapUnderlyingToken = {
+  chainId: number;
+  address: HexString;
+  name?: string;
+  symbol: string;
+  decimals: number;
+  logo?: string | null;
+};
+
+export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {
   amount: string;
   amountUSD: string;
 };
@@ -76,5 +50,10 @@ export type ZapStatusRequest = {
   txnHash: string;
 };
 
+export * from './build';
 export * from './path';
+export * from './pool';
+export * from './position';
+export * from './quote';
+export * from './status';
 export * from './step';
