@@ -182,7 +182,6 @@ class DZapClient {
    * @example
    * ```typescript
    * const quotes = await client.getTradeQuotes({
-   *   integratorId: 'dzap',
    *   fromChain: 1,
    *   data: [{
    *     amount: '1000000', // 1 USDC
@@ -217,7 +216,6 @@ class DZapClient {
    * @example
    * ```typescript
    * const txData = await client.buildTradeTxn({
-   *   integratorId: 'dzap',
    *   fromChain: 1,
    *   sender: '0x...',
    *   refundee: '0x...',
@@ -450,7 +448,6 @@ class DZapClient {
    * // Execute a swap trade
    * const result = await dZapClient.trade({
    *   request: {
-   *     integratorId: 'dzap',
    *     fromChain: 1,
    *     sender: '0x...',
    *     data: [{

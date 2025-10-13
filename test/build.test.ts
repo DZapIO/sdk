@@ -24,7 +24,6 @@ describe('DZapClient - buildTxn', () => {
           toChain: 8453,
         },
       ],
-      integratorId: 'dzap',
       refundee: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
       sender: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
@@ -54,7 +53,6 @@ describe('DZapClient - buildTxn', () => {
           toChain: 42161, // Same chain
         },
       ],
-      integratorId: 'dzap',
       refundee: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
       sender: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',

@@ -118,7 +118,6 @@ export type Fee = {
 export type QuoteFilter = keyof typeof QuoteFilters;
 
 export type TradeQuotesRequest = {
-  integratorId: string;
   fromChain: number;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
@@ -230,7 +229,6 @@ export type TokenResponse = {
 export type TradeBuildTxnRequest = {
   sender: HexString;
   refundee: HexString;
-  integratorId: string;
   fromChain: number;
   disableEstimation?: boolean;
   data: TradeBuildTxnRequestData[];
