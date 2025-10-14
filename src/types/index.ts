@@ -122,7 +122,7 @@ export type TradeQuotesRequest = {
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
-  allowedSources?: string[];
+  allowedProtocols?: string[];
   filter?: QuoteFilter;
 };
 
@@ -242,7 +242,7 @@ export type TradeBuildTxnRequestData = {
   destToken: string;
   destDecimals?: number;
   toChain: number;
-  selectedRoute: string;
+  protocol: string;
   recipient: string;
   slippage: number;
   additionalInfo?: AdditionalInfo;

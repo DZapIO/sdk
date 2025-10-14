@@ -68,7 +68,7 @@ async function runTradeExamples() {
           srcToken: bestQuote.srcToken.address,
           destToken: bestQuote.destToken.address,
           toChain: 8453,
-          selectedRoute: bestRouteKey,
+          protocol: bestRouteKey,
           recipient: userAddress,
           slippage: 1,
         },
