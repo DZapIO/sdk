@@ -19,7 +19,7 @@ import { Signer } from 'ethers';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
 import { nativeTokens } from '../constants/address';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
-import { StatusCodes, TxnStatus } from '../enums';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { viemChainsById } from './chains';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
@@ -29,6 +29,11 @@ export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | unde
   return createPublicClient({
     chain: viemChainsById[chainId],
     transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+    batch: {
+      multicall: {
+        wait: RPC_BATCHING_WAIT_TIME,
+      },
+    },
   });
 };
 
@@ -177,10 +182,17 @@ export const isTypeSigner = (variable: any): variable is Signer => {
 
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
-export const getDZapAbi = (service: AvailableDZapServices) => {
+export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
   switch (service) {
     case Services.trade:
-      return ABI[DZapAbis.dZapCoreAbi];
+      switch (version) {
+        case ContractVersion.v1:
+          return ABI[DZapAbis.dZapCoreAbi];
+        case ContractVersion.v2:
+          return ABI[DZapAbis.dZapCoreV2Abi];
+        default:
+          throw new Error('Invalid Version for Trade');
+      }
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
     case Services.zap:
@@ -195,7 +207,7 @@ export const handleDecodeTxnData = (
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dZapAbi = getDZapAbi(service);
+  const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
   try {
     events = parseEventLogs({
       abi: dZapAbi,

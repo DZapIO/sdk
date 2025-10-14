@@ -21,7 +21,6 @@ async function runTradeExamples() {
   console.log('\nFetching quotes...');
   const userAddress = walletClient.account.address; // Replace with your actual wallet address
   const quotesRequest: TradeQuotesRequest = {
-    integratorId: 'DZap',
     fromChain: 42161,
     data: [
       {
@@ -60,7 +59,6 @@ async function runTradeExamples() {
 
     console.log('\nBuilding and sending transaction...');
     const buildTxRequest: TradeBuildTxnRequest = {
-      integratorId: 'DZap',
       fromChain: 42161,
       sender: userAddress,
       refundee: userAddress,
@@ -70,7 +68,7 @@ async function runTradeExamples() {
           srcToken: bestQuote.srcToken.address,
           destToken: bestQuote.destToken.address,
           toChain: 8453,
-          selectedRoute: bestRouteKey,
+          protocol: bestRouteKey,
           recipient: userAddress,
           slippage: 1,
         },

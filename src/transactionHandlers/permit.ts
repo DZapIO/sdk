@@ -2,8 +2,7 @@ import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from '../constants';
 import { PermitTypes } from '../constants/permit';
-import { DEFAULT_PERMIT_VERSION } from '../constants/permit2';
-import { StatusCodes, TxnStatus } from '../enums';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { AvailableDZapServices, HexString, PermitMode } from '../types';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
 import { getPermit2Signature } from '../utils/permit/permit2Methods';
@@ -23,6 +22,7 @@ class PermitTxnHandler {
     signer,
     service,
     permitEIP2612DisabledTokens,
+    contractVersion,
   }: {
     token: { address: HexString; amount: string };
     isFirstToken: boolean;
@@ -36,6 +36,7 @@ class PermitTxnHandler {
     signer: WalletClient | Signer;
     service: AvailableDZapServices;
     permitEIP2612DisabledTokens?: string[];
+    contractVersion: ContractVersion;
   }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
     if (isDZapNativeToken(token.address)) {
       return {
@@ -52,9 +53,10 @@ class PermitTxnHandler {
       chainId,
       rpcUrls,
       permitEIP2612DisabledTokens,
+      owner: sender,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
-      if (!eip2612PermitData.supportsPermit) {
+      if (!eip2612PermitData.supportsPermit || !eip2612PermitData.data) {
         throw new Error('Token does not support EIP-2612 permits');
       }
 
@@ -73,8 +75,11 @@ class PermitTxnHandler {
         spender,
         amount: BigInt(amount),
         signer,
-        rpcUrls,
-        version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
+        version: eip2612PermitData.data.version,
+        name: eip2612PermitData.data.name,
+        nonce: eip2612PermitData.data.nonce,
+        contractVersion,
+        service,
       });
       return {
         status,
@@ -100,6 +105,7 @@ class PermitTxnHandler {
           service,
           signer,
           rpcUrls,
+          contractVersion,
         });
         return {
           status,
@@ -122,6 +128,7 @@ class PermitTxnHandler {
     spender,
     permitType,
     permitEIP2612DisabledTokens,
+    contractVersion,
   }: {
     chainId: number;
     sender: HexString;
@@ -147,6 +154,7 @@ class PermitTxnHandler {
     spender: HexString;
     permitType: PermitMode;
     permitEIP2612DisabledTokens?: string[];
+    contractVersion: ContractVersion;
   }): Promise<{
     status: TxnStatus;
     tokens: {
@@ -181,6 +189,7 @@ class PermitTxnHandler {
         signer,
         service,
         permitEIP2612DisabledTokens,
+        contractVersion,
       });
 
       if (status !== TxnStatus.success) {

@@ -23,7 +23,7 @@ import {
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
-import { StatusCodes, TxnStatus } from '../enums';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { PriceService } from '../service/price';
 import GenericTxnHandler from '../transactionHandlers/generic';
 import PermitTxnHandler from '../transactionHandlers/permit';
@@ -69,18 +69,15 @@ import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from 
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
 import { updateQuotes } from '../utils/updateQuotes';
+import { config } from '../config';
 
 class DZapClient {
   private static instance: DZapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private static chainConfig: ChainData | null = null;
   private priceService;
-  public rpcUrlsByChainId: Record<number, string[]> = {};
-  private constructor(rpcUrlsByChainId?: Record<number, string[]>) {
+  private constructor() {
     this.priceService = new PriceService();
-    if (rpcUrlsByChainId) {
-      this.rpcUrlsByChainId = rpcUrlsByChainId;
-    }
   }
 
   /**
@@ -102,9 +99,15 @@ class DZapClient {
    * });
    * ```
    */
-  public static getInstance(rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
     if (!DZapClient.instance) {
-      DZapClient.instance = new DZapClient(rpcUrlsByChainId);
+      DZapClient.instance = new DZapClient();
+    }
+    if (apiKey) {
+      config.setApiKey(apiKey);
+    }
+    if (rpcUrlsByChainId) {
+      config.setRpcUrlsByChainId(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }
@@ -150,8 +153,8 @@ class DZapClient {
    * const bridgeAbi = DZapClient.getDZapAbi('bridge');
    * ```
    */
-  public static getDZapAbi(service: AvailableDZapServices) {
-    return getDZapAbi(service);
+  public static getDZapAbi(service: AvailableDZapServices, version: ContractVersion) {
+    return getDZapAbi(service, version);
   }
 
   /**
@@ -182,7 +185,6 @@ class DZapClient {
    * @example
    * ```typescript
    * const quotes = await client.getTradeQuotes({
-   *   integratorId: 'dzap',
    *   fromChain: 1,
    *   data: [{
    *     amount: '1000000', // 1 USDC
@@ -217,7 +219,6 @@ class DZapClient {
    * @example
    * ```typescript
    * const txData = await client.buildTradeTxn({
-   *   integratorId: 'dzap',
    *   fromChain: 1,
    *   sender: '0x...',
    *   refundee: '0x...',
@@ -225,7 +226,7 @@ class DZapClient {
    *     amount: '1000000',
    *     srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
    *     destToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-   *     selectedRoute: 'uniswap',
+   *     protocol: 'uniswap',
    *     recipient: '0x...',
    *     slippage: 1
    *   }]
@@ -450,7 +451,6 @@ class DZapClient {
    * // Execute a swap trade
    * const result = await dZapClient.trade({
    *   request: {
-   *     integratorId: 'dzap',
    *     fromChain: 1,
    *     sender: '0x...',
    *     data: [{
@@ -477,7 +477,16 @@ class DZapClient {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData, batchTransaction, rpcUrls });
+    const chainConfig = await DZapClient.getChainConfig();
+
+    return await TradeTxnHandler.buildAndSendTransaction({
+      request,
+      signer,
+      txnData,
+      batchTransaction,
+      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
+      rpcUrls,
+    });
   }
 
   /**
@@ -683,13 +692,15 @@ class DZapClient {
   }) {
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
     return await getAllowance({
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       mode,
       spender: spenderAddress,
+      multicallAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
@@ -757,7 +768,7 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       tokens,
       approvalTxnCallback,
       mode,
@@ -839,13 +850,14 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       service,
       signer,
       spender: spenderAddress,
       permitType,
       signatureCallback,
-      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
+      permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
+      contractVersion: chainConfig[chainId]?.version || ContractVersion.v1,
     });
   }
 

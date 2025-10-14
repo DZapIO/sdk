@@ -107,9 +107,23 @@
   "microbundle": {
     "entry": "src/index.ts",
     "output": "dist",
-    "format": "esm,cjs,umd",
+    "format": "esm,cjs",
     "target": "node",
     "sourcemap": false,
-    "generateTypes": true
+    "generateTypes": true,
+    "external": [
+      "ethers",
+      "viem",
+      "axios",
+      "decimal.js",
+      "node-cache"
+    ],
+    "globals": {
+      "ethers": "ethers",
+      "viem": "viem",
+      "axios": "axios",
+      "decimal.js": "decimal.js",
+      "node-cache": "node-cache"
+    }
   }
 }

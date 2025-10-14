@@ -1,7 +1,7 @@
 import { DZapAbis, OtherAbis, QuoteFilters, Services, STATUS_RESPONSE } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
-import { AppEnv, StatusCodes, TxnStatus } from '../enums';
+import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { PsbtInput, PsbtOutput } from './btc';
 
 export type HexString = `0x${string}`;
@@ -55,7 +55,7 @@ export type Chain = {
   swapBridgeContract: string;
   logo: string;
   tokenlistUrl?: string;
-  multicallAddress: string;
+  multicallAddress?: HexString;
   blockExplorerUrl: string;
   nativeToken: NativeTokenInfo;
   rpcProviders: ApiRpcResponse[];
@@ -82,6 +82,7 @@ export type Chain = {
   isEnabled: boolean;
   mainnet: boolean;
   tags?: Tag[];
+  version?: ContractVersion;
   permitDisabledTokens?: DisabledPermitTokens;
 };
 
@@ -117,12 +118,11 @@ export type Fee = {
 export type QuoteFilter = keyof typeof QuoteFilters;
 
 export type TradeQuotesRequest = {
-  integratorId: string;
   fromChain: number;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
-  allowedSources?: string[];
+  allowedProtocols?: string[];
   filter?: QuoteFilter;
 };
 
@@ -229,7 +229,6 @@ export type TokenResponse = {
 export type TradeBuildTxnRequest = {
   sender: HexString;
   refundee: HexString;
-  integratorId: string;
   fromChain: number;
   disableEstimation?: boolean;
   data: TradeBuildTxnRequestData[];
@@ -243,7 +242,7 @@ export type TradeBuildTxnRequestData = {
   destToken: string;
   destDecimals?: number;
   toChain: number;
-  selectedRoute: string;
+  protocol: string;
   recipient: string;
   slippage: number;
   additionalInfo?: AdditionalInfo;

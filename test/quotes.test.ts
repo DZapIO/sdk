@@ -23,7 +23,6 @@ describe('DZapClient - getQuotes', () => {
           toChain: 8453,
         },
       ],
-      integratorId: 'dzap',
     };
 
     const quotes = await client.getTradeQuotes(request);
@@ -51,7 +50,6 @@ describe('DZapClient - getQuotes', () => {
           toChain: 42161, // Same chain
         },
       ],
-      integratorId: 'dzap',
     };
 
     const quotes = await client.getTradeQuotes(request);

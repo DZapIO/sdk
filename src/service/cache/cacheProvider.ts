@@ -1,14 +1,61 @@
-import Cache from 'node-cache';
+import type NodeCache from 'node-cache';
+
+const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+
+let Cache: typeof NodeCache | null = null;
+if (isNode) {
+  try {
+    Cache = require('node-cache');
+  } catch (error) {
+    // Fallback to in-memory cache if node-cache is not available
+    Cache = null;
+  }
+}
+
+// Simple in-memory cache fallback for browser environments
+class InMemoryCache {
+  private cache = new Map<string, { value: any; expiry?: number }>();
+
+  set<T>(key: string, value: T, ttl?: number): void {
+    const expiry = ttl ? Date.now() + ttl * 1000 : undefined;
+    this.cache.set(key, { value, expiry });
+  }
+
+  get<T>(key: string): T | undefined {
+    const item = this.cache.get(key);
+    if (!item) return undefined;
+
+    if (item.expiry && Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return undefined;
+    }
+
+    return item.value;
+  }
+
+  del(key: string): number {
+    return this.cache.delete(key) ? 1 : 0;
+  }
+
+  flushAll(): void {
+    this.cache.clear();
+  }
+}
 
 export class CacheProvider {
   private static _instance: CacheProvider;
-  private readonly client: Cache;
+  private readonly client: NodeCache | InMemoryCache;
 
   private constructor() {
-    this.client = new Cache({
-      checkperiod: 10,
-      deleteOnExpire: true,
-    });
+    if (isNode && Cache) {
+      this.client = new Cache({
+        checkperiod: 10,
+        deleteOnExpire: true,
+      });
+    } else {
+      // Use in-memory cache for browser or when node-cache is not available
+      this.client = new InMemoryCache();
+    }
   }
 
   public static get instance(): CacheProvider {
@@ -24,7 +71,7 @@ export class CacheProvider {
   }
 
   public static get<T>(key: string): T | undefined {
-    return this.instance.client.get<T>(key);
+    return this.instance.client.get(key) as T | undefined;
   }
 
   public static delete(key: string): number {
