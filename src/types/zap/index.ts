@@ -1,4 +1,4 @@
-import { HexString, ProviderDetails } from 'src/types';
+import { HexString, ProviderDetails } from '../';
 import { ZapPathAsset } from './path';
 
 export type ZapProviders = Record<string, ProviderDetails>;

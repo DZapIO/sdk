@@ -1,53 +1,6 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer, Wallet } from 'ethers';
-import { Services } from 'src/constants';
-import { ApprovalModes } from 'src/constants/approval';
-import { PermitTypes } from 'src/constants/permit';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { PriceService } from 'src/service/price';
-import GenericTxnHandler from 'src/transactionHandlers/generic';
-import PermitTxnHandler from 'src/transactionHandlers/permit';
-import TradeTxnHandler from 'src/transactionHandlers/trade';
-import ZapTxnHandler from 'src/transactionHandlers/zap';
-import {
-  ApprovalMode,
-  AvailableDZapServices,
-  CalculatePointsRequest,
-  Chain,
-  ChainData,
-  ExecuteTxnData,
-  HexString,
-  OtherAvailableAbis,
-  PermitMode,
-  TokenInfo,
-  TokenResponse,
-  TradeBuildTxnRequest,
-  TradeBuildTxnResponse,
-  TradeQuotesRequest,
-  TradeQuotesResponse,
-  TradeStatusResponse,
-} from 'src/types';
-import {
-  ZapBuildTxnRequest,
-  ZapBuildTxnResponse,
-  ZapChains,
-  ZapPoolDetails,
-  ZapPoolDetailsRequest,
-  ZapPoolsRequest,
-  ZapPoolsResponse,
-  ZapPositionsRequest,
-  ZapPositionsResponse,
-  ZapProviders,
-  ZapQuoteRequest,
-  ZapQuoteResponse,
-  ZapStatusRequest,
-  ZapStatusResponse,
-} from 'src/types/zap';
-import { ZapTransactionStep } from 'src/types/zap/step';
-import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from 'src/utils';
-import { approveToken, getAllowance } from 'src/utils/erc20';
-import { updateTokenListPrices } from 'src/utils/tokens';
-import { updateQuotes } from 'src/utils/updateQuotes';
+import { Signer } from 'ethers';
+
 import { TransactionReceipt, WalletClient } from 'viem';
 import {
   fetchAllSupportedChains,
@@ -67,18 +20,64 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
+import { Services } from '../constants';
+import { ApprovalModes } from '../constants/approval';
+import { PermitTypes } from '../constants/permit';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
+import { PriceService } from '../service/price';
+import GenericTxnHandler from '../transactionHandlers/generic';
+import PermitTxnHandler from '../transactionHandlers/permit';
+import TradeTxnHandler from '../transactionHandlers/trade';
+import ZapTxnHandler from '../transactionHandlers/zap';
+import {
+  ApprovalMode,
+  AvailableDZapServices,
+  CalculatePointsRequest,
+  Chain,
+  ChainData,
+  ExecuteTxnData,
+  HexString,
+  OtherAvailableAbis,
+  PermitMode,
+  TokenInfo,
+  TokenResponse,
+  TradeBuildTxnRequest,
+  TradeBuildTxnResponse,
+  TradeQuotesRequest,
+  TradeQuotesResponse,
+  TradeStatusResponse,
+} from '../types';
+import {
+  ZapBuildTxnRequest,
+  ZapBuildTxnResponse,
+  ZapChains,
+  ZapPoolDetails,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPoolsResponse,
+  ZapPositionsRequest,
+  ZapPositionsResponse,
+  ZapProviders,
+  ZapQuoteRequest,
+  ZapQuoteResponse,
+  ZapStatusRequest,
+  ZapStatusResponse,
+  ZapTransactionStep,
+} from '../types/zap';
+import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from '../utils';
+import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
+import { approveToken, getAllowance } from '../utils/erc20';
+import { updateTokenListPrices } from '../utils/tokens';
+import { updateQuotes } from '../utils/updateQuotes';
+import { config } from '../config';
 
 class DZapClient {
   private static instance: DZapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private static chainConfig: ChainData | null = null;
   private priceService;
-  public rpcUrlsByChainId: Record<number, string[]> = {};
-  private constructor(rpcUrlsByChainId?: Record<number, string[]>) {
+  private constructor() {
     this.priceService = new PriceService();
-    if (rpcUrlsByChainId) {
-      this.rpcUrlsByChainId = rpcUrlsByChainId;
-    }
   }
 
   /**
@@ -100,9 +99,15 @@ class DZapClient {
    * });
    * ```
    */
-  public static getInstance(rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
     if (!DZapClient.instance) {
-      DZapClient.instance = new DZapClient(rpcUrlsByChainId);
+      DZapClient.instance = new DZapClient();
+    }
+    if (apiKey) {
+      config.setApiKey(apiKey);
+    }
+    if (rpcUrlsByChainId) {
+      config.setRpcUrlsByChainId(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }
@@ -148,8 +153,8 @@ class DZapClient {
    * const bridgeAbi = DZapClient.getDZapAbi('bridge');
    * ```
    */
-  public static getDZapAbi(service: AvailableDZapServices) {
-    return getDZapAbi(service);
+  public static getDZapAbi(service: AvailableDZapServices, version: ContractVersion) {
+    return getDZapAbi(service, version);
   }
 
   /**
@@ -180,7 +185,6 @@ class DZapClient {
    * @example
    * ```typescript
    * const quotes = await client.getTradeQuotes({
-   *   integratorId: 'dzap',
    *   fromChain: 1,
    *   data: [{
    *     amount: '1000000', // 1 USDC
@@ -215,7 +219,6 @@ class DZapClient {
    * @example
    * ```typescript
    * const txData = await client.buildTradeTxn({
-   *   integratorId: 'dzap',
    *   fromChain: 1,
    *   sender: '0x...',
    *   refundee: '0x...',
@@ -223,7 +226,7 @@ class DZapClient {
    *     amount: '1000000',
    *     srcToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
    *     destToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-   *     selectedRoute: 'uniswap',
+   *     protocol: 'uniswap',
    *     recipient: '0x...',
    *     slippage: 1
    *   }]
@@ -439,6 +442,8 @@ class DZapClient {
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
+   * @param params.batchTransaction - Optional flag to enable batch transaction. If true, the transaction will be sent as a batch transaction with EIP-5792.
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to the transaction execution result
    *
    * @example
@@ -446,7 +451,6 @@ class DZapClient {
    * // Execute a swap trade
    * const result = await dZapClient.trade({
    *   request: {
-   *     integratorId: 'dzap',
    *     fromChain: 1,
    *     sender: '0x...',
    *     data: [{
@@ -464,12 +468,25 @@ class DZapClient {
     request,
     signer,
     txnData,
+    batchTransaction = false,
+    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
+    batchTransaction?: boolean;
+    rpcUrls?: string[];
   }) {
-    return await TradeTxnHandler.buildAndSendTransaction({ request, signer, txnData });
+    const chainConfig = await DZapClient.getChainConfig();
+
+    return await TradeTxnHandler.buildAndSendTransaction({
+      request,
+      signer,
+      txnData,
+      batchTransaction,
+      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
+      rpcUrls,
+    });
   }
 
   /**
@@ -502,6 +519,26 @@ class DZapClient {
       signer,
       ...txnData,
     });
+  }
+
+  /**
+   * Waits for a batch transaction to be mined and returns the transaction receipt.
+   *
+   * @param params - Configuration object for transaction sending
+   * @param params.walletClient - The wallet client
+   * @param params.batchHash - The hash of the batch transaction
+   * @returns Promise resolving to the transaction execution result
+   *
+   * @example
+   * ```typescript
+   * const result = await client.waitForBatchTransactionReceipt({
+   *   walletClient: walletClient,
+   *   batchHash: '0x...',
+   * });
+   * ```
+   */
+  public async waitForBatchTransactionReceipt({ walletClient, batchHash }: { walletClient: WalletClient; batchHash: HexString }) {
+    return await waitForBatchTransactionReceipt(walletClient, batchHash);
   }
 
   /**
@@ -627,7 +664,7 @@ class DZapClient {
    *   chainId: 1,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2
@@ -647,7 +684,7 @@ class DZapClient {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString; // Optional custom spender address
@@ -655,13 +692,15 @@ class DZapClient {
   }) {
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
     return await getAllowance({
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       mode,
       spender: spenderAddress,
+      multicallAddress,
       permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
     });
   }
@@ -690,7 +729,7 @@ class DZapClient {
    *   signer: walletClient,
    *   sender: '0x...',
    *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: BigInt('1000000') }
+   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
    *   ],
    *   service: 'swap',
    *   mode: ApprovalModes.Permit2,
@@ -712,7 +751,7 @@ class DZapClient {
   }: {
     chainId: number;
     signer: WalletClient | Signer;
-    tokens: { address: HexString; amount: bigint }[];
+    tokens: { address: HexString; amount: string }[];
     approvalTxnCallback?: ({
       txnDetails,
       address,
@@ -729,7 +768,7 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       tokens,
       approvalTxnCallback,
       mode,
@@ -789,7 +828,7 @@ class DZapClient {
       amount: string;
     }[];
     service: AvailableDZapServices;
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
     permitType?: PermitMode;
@@ -801,7 +840,7 @@ class DZapClient {
     }: {
       permitData: HexString;
       srcToken: string;
-      amount: bigint;
+      amount: string;
       permitType: PermitMode;
     }) => Promise<void>;
   }) {
@@ -811,13 +850,14 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || this.rpcUrlsByChainId[chainId],
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       service,
       signer,
       spender: spenderAddress,
       permitType,
       signatureCallback,
-      permitEIP2612DisabledTokens: chainConfig[chainId].permitDisabledTokens?.eip2612,
+      permitEIP2612DisabledTokens: chainConfig[chainId]?.permitDisabledTokens?.eip2612,
+      contractVersion: chainConfig[chainId]?.version || ContractVersion.v1,
     });
   }
 
@@ -987,6 +1027,30 @@ class DZapClient {
   }
 
   /**
+   * Send batch calls
+   * @param params
+   * @param params.walletClient - The wallet client
+   * @param params.calls - The calls to send
+   * @returns Promise resolving to batch call result
+   *
+   * @example
+   * ```typescript
+   * const calls  = [{
+   *   to: '0x...',
+   *   data: '0x...',
+   *   value: 0n,
+   * }]
+   * const result = await client.sendBatchCalls({
+   *   walletClient: walletClient,
+   *   calls,
+   * });
+   * ```
+   */
+  public async sendBatchCalls({ walletClient, calls }: { walletClient: WalletClient; calls: BatchCallParams[] }) {
+    return await sendBatchCalls(walletClient, calls);
+  }
+
+  /**
    * Fetches user's zap positions across different protocols and pools on a specific blockchain.
    * Positions include active liquidity provision, staking, farming, and other protocol-specific investments.
    *
@@ -1074,8 +1138,8 @@ class DZapClient {
    * const zapChains = await client.getZapChains();
    *
    * // Check which providers are supported on each chain
-   * zapChains.forEach(chain => {
-   *   console.log(`Chain ${chain.chainId}: ${chain.supportedProviders.join(', ')}`);
+   * Object.entries(zapChains).forEach(([chainKey, { name, supportedProviders }]) => {
+   *   console.log(`Chain ${chainKey} (${name}): ${supportedProviders.join(', ')}`);
    * });
    * ```
    */
@@ -1093,7 +1157,7 @@ class DZapClient {
    * // Get all zap providers
    * const allProviders = await client.getZapProviders();
    *
-   * allProviders.forEach(provider => {
+   * Object.values(allProviders).forEach((provider) => {
    *   console.log(`Provider: ${provider.name}`);
    * });
    * ```

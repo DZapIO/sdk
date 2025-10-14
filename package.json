@@ -1,6 +1,6 @@
 {
   "name": "@dzapio/sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations including Swaps, Bridges, and Zaps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
@@ -107,9 +107,23 @@
   "microbundle": {
     "entry": "src/index.ts",
     "output": "dist",
-    "format": "esm,cjs,umd",
+    "format": "esm,cjs",
     "target": "node",
     "sourcemap": false,
-    "generateTypes": true
+    "generateTypes": true,
+    "external": [
+      "ethers",
+      "viem",
+      "axios",
+      "decimal.js",
+      "node-cache"
+    ],
+    "globals": {
+      "ethers": "ethers",
+      "viem": "viem",
+      "axios": "axios",
+      "decimal.js": "decimal.js",
+      "node-cache": "node-cache"
+    }
   }
 }

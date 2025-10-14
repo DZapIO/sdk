@@ -1,4 +1,5 @@
-import { HexString, ZapUnderlyingToken } from 'src';
+import { ZapUnderlyingToken } from '.';
+import { HexString } from '..';
 
 export type ZapPoolDetailsRequest = {
   address: HexString;

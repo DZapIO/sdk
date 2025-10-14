@@ -21,15 +21,12 @@ async function runTradeExamples() {
   console.log('\nFetching quotes...');
   const userAddress = walletClient.account.address; // Replace with your actual wallet address
   const quotesRequest: TradeQuotesRequest = {
-    integratorId: 'DZap',
     fromChain: 42161,
     data: [
       {
         amount: '374980', // Specify the amount in smallest unit (e.g., wei for ETH, or 6 decimals for USDC)
         srcToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC on Arbitrum
-        srcDecimals: 18,
         destToken: '0x4200000000000000000000000000000000000006', // WETH
-        destDecimals: 18,
         toChain: 8453, // Base Chain
         slippage: 1, // 1%
       },
@@ -62,7 +59,6 @@ async function runTradeExamples() {
 
     console.log('\nBuilding and sending transaction...');
     const buildTxRequest: TradeBuildTxnRequest = {
-      integratorId: 'DZap',
       fromChain: 42161,
       sender: userAddress,
       refundee: userAddress,
@@ -70,11 +66,9 @@ async function runTradeExamples() {
         {
           amount: bestQuote.srcAmount,
           srcToken: bestQuote.srcToken.address,
-          srcDecimals: bestQuote.srcToken.decimals,
           destToken: bestQuote.destToken.address,
-          destDecimals: bestQuote.destToken.decimals,
           toChain: 8453,
-          selectedRoute: bestRouteKey,
+          protocol: bestRouteKey,
           recipient: userAddress,
           slippage: 1,
         },

@@ -1,14 +1,12 @@
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { AvailableDZapServices, HexString, PermitMode } from 'src/types';
-import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { getPermit2Signature } from 'src/utils/permit/permit2Methods';
-import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/permit/permitMethods';
+import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
-
-import { Wallet } from 'ethers';
-import { PermitTypes } from 'src/constants/permit';
-import { DEFAULT_PERMIT_VERSION } from 'src/constants/permit2';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from '../constants';
+import { PermitTypes } from '../constants/permit';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
+import { AvailableDZapServices, HexString, PermitMode } from '../types';
+import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
+import { getPermit2Signature } from '../utils/permit/permit2Methods';
+import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/permit/permitMethods';
 
 class PermitTxnHandler {
   static generatePermitDataForToken = async ({
@@ -24,6 +22,7 @@ class PermitTxnHandler {
     signer,
     service,
     permitEIP2612DisabledTokens,
+    contractVersion,
   }: {
     token: { address: HexString; amount: string };
     isFirstToken: boolean;
@@ -34,9 +33,10 @@ class PermitTxnHandler {
     sender: HexString;
     spender: HexString;
     permitType: PermitMode;
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     service: AvailableDZapServices;
     permitEIP2612DisabledTokens?: string[];
+    contractVersion: ContractVersion;
   }): Promise<{ status: TxnStatus; code: StatusCodes; permitData: HexString; permitType: PermitMode }> => {
     if (isDZapNativeToken(token.address)) {
       return {
@@ -47,15 +47,16 @@ class PermitTxnHandler {
       };
     }
 
-    const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(token.amount);
+    const amount = oneToMany && isFirstToken ? totalSrcAmount : token.amount;
     const eip2612PermitData = await checkEIP2612PermitSupport({
       address: token.address,
       chainId,
       rpcUrls,
       permitEIP2612DisabledTokens,
+      owner: sender,
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
-      if (!eip2612PermitData.supportsPermit) {
+      if (!eip2612PermitData.supportsPermit || !eip2612PermitData.data) {
         throw new Error('Token does not support EIP-2612 permits');
       }
 
@@ -72,10 +73,13 @@ class PermitTxnHandler {
         account: sender,
         token: token.address,
         spender,
-        amount,
+        amount: BigInt(amount),
         signer,
-        rpcUrls,
-        version: eip2612PermitData.version || DEFAULT_PERMIT_VERSION,
+        version: eip2612PermitData.data.version,
+        name: eip2612PermitData.data.name,
+        nonce: eip2612PermitData.data.nonce,
+        contractVersion,
+        service,
       });
       return {
         status,
@@ -97,10 +101,11 @@ class PermitTxnHandler {
           account: sender,
           token: token.address,
           spender,
-          amount,
+          amount: BigInt(amount),
           service,
           signer,
           rpcUrls,
+          contractVersion,
         });
         return {
           status,
@@ -123,6 +128,7 @@ class PermitTxnHandler {
     spender,
     permitType,
     permitEIP2612DisabledTokens,
+    contractVersion,
   }: {
     chainId: number;
     sender: HexString;
@@ -133,7 +139,7 @@ class PermitTxnHandler {
     }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
-    signer: WalletClient | Wallet;
+    signer: WalletClient | Signer;
     signatureCallback?: ({
       permitData,
       srcToken,
@@ -142,12 +148,13 @@ class PermitTxnHandler {
     }: {
       permitData: HexString;
       srcToken: HexString;
-      amount: bigint;
+      amount: string;
       permitType: PermitMode;
     }) => Promise<void>;
     spender: HexString;
     permitType: PermitMode;
     permitEIP2612DisabledTokens?: string[];
+    contractVersion: ContractVersion;
   }): Promise<{
     status: TxnStatus;
     tokens: {
@@ -182,6 +189,7 @@ class PermitTxnHandler {
         signer,
         service,
         permitEIP2612DisabledTokens,
+        contractVersion,
       });
 
       if (status !== TxnStatus.success) {
@@ -191,7 +199,7 @@ class PermitTxnHandler {
       tokens[dataIdx].permitData = permitData;
 
       if (signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
-        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokens[dataIdx].amount);
+        const amount = oneToMany && isFirstToken ? totalSrcAmount.toString() : tokens[dataIdx].amount;
         await signatureCallback({
           permitData,
           srcToken: tokens[dataIdx].address as HexString,

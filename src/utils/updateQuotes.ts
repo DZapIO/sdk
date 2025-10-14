@@ -1,8 +1,8 @@
-import { TradeQuotesRequest, TradeQuotesResponse, ChainData } from 'src/types';
 import Decimal from 'decimal.js';
+import { PriceService } from '../service/price';
+import { priceProviders } from '../service/price/types/IPriceProvider';
+import { ChainData, TradeQuotesRequest, TradeQuotesResponse } from '../types';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from './amount';
-import { PriceService } from 'src/service/price';
-import { priceProviders } from 'src/service/price/types/IPriceProvider';
 
 export const updateQuotes = async (
   quotes: TradeQuotesResponse,
@@ -45,12 +45,9 @@ export const updateQuotes = async (
     }
     let isSorted = true;
     for (const data of Object.values(quote.quoteRates)) {
-      const tokensDetails = request.data.find((d) => d.srcToken === data.srcToken.address && d.destToken === data.destToken.address);
-      if (!tokensDetails) {
-        continue;
-      }
-
-      const { srcDecimals, destDecimals, toChain } = tokensDetails;
+      const srcDecimals = data.srcToken.decimals;
+      const destDecimals = data.destToken.decimals;
+      const toChain = data.destToken.chainId;
 
       if (!Number(data.srcAmountUSD)) {
         isSorted = false;

@@ -1,5 +1,6 @@
-import { StatusCodes, TxnStatus } from 'src/enums';
 import { MulticallParameters } from 'viem';
+import { StatusCodes, TxnStatus } from '../enums';
+import { HexString } from '../types';
 import { getPublicClient } from './index';
 
 /**
@@ -9,17 +10,20 @@ export const multicall = async ({
   chainId,
   contracts,
   rpcUrls,
+  multicallAddress,
   allowFailure = false,
 }: {
   chainId: number;
   contracts: MulticallParameters['contracts'];
   rpcUrls?: string[];
+  multicallAddress?: HexString;
   allowFailure?: boolean;
 }): Promise<{ status: TxnStatus; code: StatusCodes; data: unknown[] }> => {
   try {
     const publicClient = getPublicClient({ chainId, rpcUrls });
     const results = await publicClient.multicall({
       contracts,
+      ...(multicallAddress && { multicallAddress }),
       allowFailure,
     });
 

@@ -1,5 +1,5 @@
-import { PermitType } from 'src/enums';
 import { encodeAbiParameters, parseAbiParameters } from 'viem';
+import { PermitType } from '../enums';
 
 export const STATUS = {
   pending: 'pending',
@@ -15,6 +15,7 @@ export const ERRORS = {
 
 export const DZapAbis = {
   dZapCoreAbi: 'dZapCoreAbi',
+  dZapCoreV2Abi: 'dZapCoreV2Abi',
   dZapDcaAbi: 'dZapDcaAbi',
 } as const;
 

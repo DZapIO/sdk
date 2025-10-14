@@ -1,4 +1,4 @@
-import { fetchTokenPrice } from 'src/api';
+import { fetchTokenPrice } from '../../../../api';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 
 export class DZapPriceProvider implements IPriceProvider {

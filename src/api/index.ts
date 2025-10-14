@@ -1,5 +1,6 @@
 import { CancelToken } from 'axios';
-import { GET, POST } from 'src/constants/httpMethods';
+
+import { GET, POST } from '../constants/httpMethods';
 import {
   BUILD_TX_URL,
   CALCULATE_POINTS_URL,
@@ -10,11 +11,11 @@ import {
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
   QUOTES_URL,
-} from 'src/constants/urlConstants';
-import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from 'src/types/zap';
-import { invoke, invokeZap } from 'src/utils/axios';
-import { ZAP_ENDPOINTS } from 'src/zap/constants/urls';
+} from '../constants/urlConstants';
 import { CalculatePointsRequest, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
+import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
+import { invoke, invokeZap } from '../utils/axios';
+import { ZAP_ENDPOINTS } from '../zap/constants/urls';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({

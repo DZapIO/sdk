@@ -1,24 +1,25 @@
-import { DZapAbis, OtherAbis, Services, dZapNativeTokenFormat } from 'src/constants';
-import { StatusCodes, TxnStatus } from 'src/enums';
 import {
   Abi,
-  ParseEventLogsReturnType,
-  TransactionReceipt,
-  WalletClient,
   createPublicClient,
   fallback,
   getAddress,
   http,
   isAddress,
   parseEventLogs,
+  ParseEventLogsReturnType,
   stringToHex,
+  TransactionReceipt,
+  WalletClient,
+  zeroAddress,
 } from 'viem';
 import * as ABI from '../artifacts';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
-import { nativeTokens, zeroAddress } from 'src/constants/address';
-import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from 'src/constants/rpc';
+import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
+import { nativeTokens } from '../constants/address';
+import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { viemChainsById } from './chains';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
@@ -28,10 +29,15 @@ export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | unde
   return createPublicClient({
     chain: viemChainsById[chainId],
     transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+    batch: {
+      multicall: {
+        wait: RPC_BATCHING_WAIT_TIME,
+      },
+    },
   });
 };
 
-export const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
+const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 
@@ -176,10 +182,17 @@ export const isTypeSigner = (variable: any): variable is Signer => {
 
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
-export const getDZapAbi = (service: AvailableDZapServices) => {
+export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
   switch (service) {
     case Services.trade:
-      return ABI[DZapAbis.dZapCoreAbi];
+      switch (version) {
+        case ContractVersion.v1:
+          return ABI[DZapAbis.dZapCoreAbi];
+        case ContractVersion.v2:
+          return ABI[DZapAbis.dZapCoreV2Abi];
+        default:
+          throw new Error('Invalid Version for Trade');
+      }
     case Services.dca:
       return ABI[DZapAbis.dZapDcaAbi];
     case Services.zap:
@@ -194,7 +207,7 @@ export const handleDecodeTxnData = (
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dZapAbi = getDZapAbi(service);
+  const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
   try {
     events = parseEventLogs({
       abi: dZapAbi,

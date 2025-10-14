@@ -1,15 +1,15 @@
-import { Wallet } from 'ethers';
-import { Services } from 'src/constants';
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from 'src/constants/contract';
-import { erc20PermitFunctions } from 'src/constants/erc20';
-import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { PermitType, StatusCodes, TxnStatus, ZapPermitType } from 'src/enums';
-import { AvailableDZapServices, HexString } from 'src/types';
+import { Signer } from 'ethers';
 import { WalletClient, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
+import { Services } from '../../constants';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/contract';
+import { erc20PermitFunctions } from '../../constants/erc20';
+import { SignatureExpiryInSecs } from '../../constants/permit2';
+import { ContractVersion, PermitType, StatusCodes, TxnStatus, V2PermitMode } from '../../enums';
+import { AvailableDZapServices, HexString } from '../../types';
+import { generateDeadline } from '../date';
 import { getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
-import { generateDeadline } from '../date';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -26,6 +26,7 @@ export async function getPermit2Signature({
   amount = maxUint256,
   sigDeadline = generateDeadline(SignatureExpiryInSecs),
   expiration = maxUint48,
+  contractVersion,
 }: {
   chainId: number;
   account: HexString;
@@ -35,8 +36,9 @@ export async function getPermit2Signature({
   rpcUrls?: string[];
   sigDeadline?: bigint;
   amount?: bigint;
-  signer: WalletClient | Wallet;
+  signer: WalletClient | Signer;
   expiration?: bigint;
+  contractVersion: ContractVersion;
 }) {
   try {
     const permit2Address = getPermit2Address(chainId);
@@ -88,18 +90,26 @@ export async function getPermit2Signature({
       account,
       primaryType: 'PermitSingle',
     });
-    const customPermitDataForTransfer = encodeAbiParameters(
-      parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
-      [
-        BigInt(permitApprove.details.amount.toString()),
-        Number(permitApprove.details.nonce.toString()),
-        Number(permitApprove.details.expiration.toString()),
-        BigInt(permitApprove.sigDeadline.toString()),
-        signature,
-      ],
-    );
-    const permitType = service === Services.zap ? ZapPermitType.PERMIT2 : PermitType.PERMIT2_APPROVE;
+    const customPermitDataForTransfer =
+      contractVersion === ContractVersion.v1 && service !== Services.zap
+        ? encodeAbiParameters(parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
+            BigInt(permitApprove.details.amount.toString()),
+            Number(permitApprove.details.nonce.toString()),
+            Number(permitApprove.details.expiration.toString()),
+            BigInt(permitApprove.sigDeadline.toString()),
+            signature,
+          ])
+        : encodeAbiParameters(parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
+            Number(permitApprove.details.nonce.toString()),
+            Number(permitApprove.details.expiration.toString()),
+            BigInt(permitApprove.sigDeadline.toString()),
+            signature,
+          ]);
+
+    const permitType = service !== Services.zap && contractVersion === ContractVersion.v1 ? PermitType.PERMIT2_APPROVE : V2PermitMode.PERMIT2_APPROVE;
+
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitType, customPermitDataForTransfer]);
+
     return { status: TxnStatus.success, permitData, code: StatusCodes.Success };
   } catch (e: any) {
     if (e?.cause?.code === StatusCodes.UserRejectedRequest || e?.code === StatusCodes.UserRejectedRequest) {

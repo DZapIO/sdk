@@ -14,6 +14,9 @@ export const erc20Functions = {
   balanceOf: 'balanceOf',
   decimals: 'decimals',
   symbol: 'symbol',
+  version: 'version',
+  nonces: 'nonces',
+  domainSeparator: 'DOMAIN_SEPARATOR',
 } as const;
 
 export const eip2612PermitFunctions = {

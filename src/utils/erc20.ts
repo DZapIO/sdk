@@ -1,12 +1,10 @@
 import { Signer } from 'ethers';
-import { ApprovalModes } from 'src/constants/approval';
-import { erc20Functions } from 'src/constants/erc20';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { ApprovalMode, HexString } from 'src/types';
-import { isDZapNativeToken } from 'src/utils';
-import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { abi as erc20Abi } from 'src/artifacts/default/erc20Abi';
-import { isTypeSigner, writeContract } from '.';
+import { encodeFunctionData, erc20Abi, maxUint256, MulticallParameters, WalletClient } from 'viem';
+import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
+import { ApprovalModes } from '../constants/approval';
+import { erc20Functions } from '../constants/erc20';
+import { StatusCodes, TxnStatus } from '../enums';
+import { ApprovalMode, HexString } from '../types';
 import { multicall } from './multicall';
 import { getPermit2Address } from './permit/permit2Methods';
 import { checkEIP2612PermitSupport } from './permit/permitMethods';
@@ -23,7 +21,7 @@ export const approveToken = async ({
   chainId: number;
   signer: WalletClient | Signer;
   mode: ApprovalMode;
-  tokens: { address: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: string }[];
   rpcUrls?: string[];
   approvalTxnCallback?: ({
     txnDetails,
@@ -44,7 +42,7 @@ export const approveToken = async ({
       const callData = encodeFunctionData({
         abi: erc20Abi,
         functionName: erc20Functions.approve,
-        args: [spender, tokens[dataIdx].amount],
+        args: [spender, BigInt(tokens[dataIdx].amount)],
       });
       await signer.sendTransaction({
         from,
@@ -93,11 +91,13 @@ export const batchGetAllowances = async ({
   chainId,
   data,
   owner,
+  multicallAddress,
   rpcUrls,
 }: {
   chainId: number;
   data: { token: HexString; spender: HexString }[];
   owner: HexString;
+  multicallAddress?: HexString;
   rpcUrls?: string[];
 }): Promise<{ status: TxnStatus; code: StatusCodes; data: Record<string, bigint> }> => {
   const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
@@ -115,6 +115,7 @@ export const batchGetAllowances = async ({
     chainId,
     contracts,
     rpcUrls,
+    multicallAddress,
     allowFailure: false,
   });
 
@@ -138,14 +139,16 @@ export const getAllowance = async ({
   sender,
   tokens,
   rpcUrls,
+  multicallAddress,
   mode = ApprovalModes.Default,
   spender,
   permitEIP2612DisabledTokens,
 }: {
   chainId: number;
   sender: HexString;
-  tokens: { address: HexString; amount: bigint }[];
+  tokens: { address: HexString; amount: string }[];
   spender: HexString;
+  multicallAddress?: HexString;
   rpcUrls?: string[];
   mode?: ApprovalMode;
   permitEIP2612DisabledTokens?: string[];
@@ -166,6 +169,7 @@ export const getAllowance = async ({
           chainId,
           rpcUrls,
           permitEIP2612DisabledTokens,
+          owner: sender,
         });
         return {
           token: address,
@@ -190,13 +194,14 @@ export const getAllowance = async ({
       chainId,
       data: approvalData,
       owner: sender,
+      multicallAddress,
       rpcUrls,
     });
 
     for (let i = 0; i < approvalData.length; i++) {
       const { token, amount, isEIP2612PermitSupported } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
-      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < amount;
+      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
       const signatureNeeded = mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit;
       data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
