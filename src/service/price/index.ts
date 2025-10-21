@@ -35,14 +35,12 @@ export class PriceService {
     notAllowSources?: PriceProvider[];
   }): Promise<Record<string, string | null>> {
     if (!tokenAddresses || tokenAddresses.length === 0) {
-      console.warn('No token addresses provided');
       return {};
     }
 
     const validProviders = this.getValidProviders({ allowedSources, notAllowSources, chainConfig });
 
     if (validProviders.length === 0) {
-      console.warn('No valid providers available based on the provided constraints');
       return {};
     }
 
@@ -72,10 +70,6 @@ export class PriceService {
       } else {
         tokenWithPrice[token] = price;
       }
-    }
-
-    if (remainingTokens.length > 0) {
-      console.warn('Prices not found for tokens:', remainingTokens);
     }
 
     if (Object.keys(tokenWithPrice).length > 0) {

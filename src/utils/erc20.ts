@@ -4,10 +4,20 @@ import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
 import { ApprovalModes } from '../constants/approval';
 import { erc20Functions } from '../constants/erc20';
 import { StatusCodes, TxnStatus } from '../enums';
-import { ApprovalMode, HexString } from '../types';
+import { ApprovalMode, HexString, TokenPermitData } from '../types';
+import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
 import { multicall } from './multicall';
-import { getPermit2Address } from './permit/permit2Methods';
-import { checkEIP2612PermitSupport } from './permit/permitMethods';
+import { getPermit2Address } from './permit2';
+
+type AllowanceParams = {
+  chainId: number;
+  sender: HexString;
+  tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
+  spender: HexString;
+  rpcUrls?: string[];
+  mode?: ApprovalMode;
+  multicallAddress?: HexString;
+};
 
 export const approveToken = async ({
   chainId,
@@ -32,7 +42,7 @@ export const approveToken = async ({
   }) => Promise<TxnStatus | void>;
   spender: HexString;
 }) => {
-  if (mode === ApprovalModes.AutoPermit || mode === ApprovalModes.Permit2) {
+  if (mode !== ApprovalModes.Default) {
     spender = getPermit2Address(chainId);
   }
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
@@ -134,51 +144,40 @@ export const batchGetAllowances = async ({
 /**
  * Get allowance information for tokens based on approval mode
  */
-export const getAllowance = async ({
-  chainId,
-  sender,
-  tokens,
-  rpcUrls,
-  multicallAddress,
-  mode = ApprovalModes.Default,
-  spender,
-  permitEIP2612DisabledTokens,
-}: {
-  chainId: number;
-  sender: HexString;
-  tokens: { address: HexString; amount: string }[];
-  spender: HexString;
-  multicallAddress?: HexString;
-  rpcUrls?: string[];
-  mode?: ApprovalMode;
-  permitEIP2612DisabledTokens?: string[];
-}) => {
+export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicallAddress, mode, spender }: AllowanceParams) => {
   const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
   const approvalData = await Promise.all(
-    erc20Tokens.map(async ({ address, amount }) => {
-      if (mode === ApprovalModes.Permit2) {
-        const permit2Address = getPermit2Address(chainId);
-        return { token: address, spender: permit2Address, amount };
-      } else if (mode === ApprovalModes.AutoPermit) {
+    erc20Tokens.map(async ({ address, amount, permit }) => {
+      if (mode === ApprovalModes.AutoPermit) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
           address,
           chainId,
           rpcUrls,
-          permitEIP2612DisabledTokens,
           owner: sender,
+          permit,
         });
         return {
           token: address,
           spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId), // @dev: not needed, but added for consistency
           amount,
           isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
+          isDefaultApprovalMode: false,
         };
+      } else if (mode === ApprovalModes.Default) {
+        return {
+          token: address,
+          spender,
+          amount,
+          isDefaultApprovalMode: true,
+        };
+      } else {
+        const permit2Address = getPermit2Address(chainId);
+        return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
       }
-      return { token: address, spender, amount };
     }),
   );
 
@@ -199,10 +198,10 @@ export const getAllowance = async ({
     });
 
     for (let i = 0; i < approvalData.length; i++) {
-      const { token, amount, isEIP2612PermitSupported } = approvalData[i];
+      const { token, amount, isEIP2612PermitSupported, isDefaultApprovalMode } = approvalData[i];
       const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
       const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
-      const signatureNeeded = mode === ApprovalModes.Permit2 || mode === ApprovalModes.AutoPermit;
+      const signatureNeeded = isDefaultApprovalMode ? false : true;
       data[token] = { allowance, approvalNeeded, signatureNeeded };
     }
 

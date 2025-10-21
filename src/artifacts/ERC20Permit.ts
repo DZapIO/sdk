@@ -357,6 +357,34 @@ export const erc20PermitAbi = [
     type: 'function',
   },
   {
+    inputs: [
+      { name: 'holder', type: 'address', internalType: 'address' },
+      { name: 'spender', type: 'address', internalType: 'address' },
+      { name: 'nonce', type: 'uint256', internalType: 'uint256' },
+      { name: 'expiry', type: 'uint256', internalType: 'uint256' },
+      { name: 'allowed', type: 'bool', internalType: 'bool' },
+      {
+        internalType: 'uint8',
+        name: 'v',
+        type: 'uint8',
+      },
+      {
+        internalType: 'bytes32',
+        name: 'r',
+        type: 'bytes32',
+      },
+      {
+        internalType: 'bytes32',
+        name: 's',
+        type: 'bytes32',
+      },
+    ],
+    name: 'permit',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     inputs: [],
     name: 'symbol',
     outputs: [

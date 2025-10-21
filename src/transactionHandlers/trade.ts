@@ -1,14 +1,26 @@
 import { Signer } from 'ethers';
+import { executeGaslessTxnData } from '../api';
+import { PermitTypes } from '../constants/permit';
+import { ContractVersion } from '../enums';
+import { viemChainsById } from '../utils/chains';
+import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { WalletClient } from 'viem';
 import { fetchTradeBuildTxnData } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
-import { AdditionalInfo, ContractErrorResponse, DZapTransactionResponse, HexString, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../types';
+import {
+  AdditionalInfo,
+  ContractErrorResponse,
+  DZapTransactionResponse,
+  GaslessTradeBuildTxnResponse,
+  HexString,
+  TradeBuildTxnRequest,
+  TradeBuildTxnResponse,
+} from '../types';
 import { isTypeSigner } from '../utils';
-import { viemChainsById } from '../utils/chains';
-import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
+import PermitTxnHandler from './permit';
 
 class TradeTxnHandler {
   private static sendTransaction = async (
@@ -132,7 +144,7 @@ class TradeTxnHandler {
       }
 
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
-      const txnParams = { from, to, data, value, gasLimit };
+      const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
@@ -141,6 +153,114 @@ class TradeTxnHandler {
 
       console.log('Using viem walletClient - sending regular transaction.');
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+    } catch (error: any) {
+      console.log({ error });
+      if (isAxiosError(error)) {
+        if (error?.response?.status === StatusCodes.SimulationFailure) {
+          return {
+            status: TxnStatus.error,
+            errorMsg: 'Simulation Failed',
+            error: (error.response?.data as ContractErrorResponse).message,
+            code: (error.response?.data as ContractErrorResponse).code,
+            action: (error.response?.data as ContractErrorResponse).action,
+          };
+        }
+        return {
+          status: TxnStatus.error,
+          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
+          error: error?.response?.data ?? error,
+          code: error?.response?.status ?? StatusCodes.Error,
+        };
+      }
+      return handleViemTransactionError({ error });
+    }
+  };
+  public static buildGaslessTxAndSignPermit = async ({
+    request,
+    signer,
+    rpcUrls,
+    spender,
+    txnData,
+  }: {
+    request: TradeBuildTxnRequest;
+    signer: Signer | WalletClient;
+    rpcUrls: string[];
+    spender: HexString;
+    txnData?: GaslessTradeBuildTxnResponse;
+  }): Promise<DZapTransactionResponse> => {
+    try {
+      const chainId = request.fromChain;
+
+      let buildTxnResponseData: GaslessTradeBuildTxnResponse;
+      if (txnData) {
+        buildTxnResponseData = txnData;
+      } else {
+        buildTxnResponseData = await fetchTradeBuildTxnData({
+          ...request,
+          gasless: true,
+        });
+      }
+
+      const permitType = request.hasPermit2ApprovalForAllTokens ? PermitTypes.PermitBatchWitnessTransferFrom : PermitTypes.EIP2612Permit;
+
+      const txId = buildTxnResponseData.txId;
+      const resp = await PermitTxnHandler.signGaslessUserIntent({
+        tokens: request.data.map((req, index) => {
+          return {
+            address: req.srcToken as HexString,
+            amount: req.amount,
+            index: index,
+          };
+        }),
+        chainId,
+        rpcUrls,
+        sender: request.sender,
+        spender,
+        permitType,
+        signer,
+        gasless: true,
+        txId,
+        service: 'trade',
+        contractVersion: ContractVersion.v2,
+        ...buildTxnResponseData.transaction,
+      });
+
+      if (resp.status === TxnStatus.success && resp.data) {
+        const permit =
+          resp.data.type === PermitTypes.EIP2612Permit
+            ? {
+                permitData: request.data.map((req) => {
+                  return {
+                    token: req.srcToken as HexString,
+                    amount: req.amount,
+                    permit: req.permitData as HexString,
+                  };
+                }),
+                gaslessIntentNonce: resp.data.nonce?.toString(),
+                gaslessIntentSignature: resp.data.signature,
+                gaslessIntentDeadline: resp.data.deadline?.toString(),
+              }
+            : {
+                batchPermitData: resp.data.batchPermitData,
+              };
+        const gaslessTxResp: {
+          status: TxnStatus;
+          txnHash: HexString;
+        } = await executeGaslessTxnData({
+          chainId: request.fromChain,
+          txId,
+          permit,
+        });
+        if (gaslessTxResp.status !== TxnStatus.success) {
+          throw new Error('Failed to sign permit');
+        }
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash: gaslessTxResp.txnHash as HexString,
+        };
+      }
+      throw new Error('Gasless Transaction Failed');
     } catch (error: any) {
       console.log({ error });
       if (isAxiosError(error)) {
