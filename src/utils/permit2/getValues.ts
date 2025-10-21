@@ -1,6 +1,5 @@
-import { HexString } from 'src';
-import { erc20PermitFunctions } from 'src/constants/erc20';
-import { permit2PrimaryType } from 'src/constants/permit';
+import { erc20PermitFunctions } from '../../constants/erc20';
+import { permit2PrimaryType } from '../../constants/permit';
 import {
   BasePermitParams,
   Permit2PrimaryType,
@@ -8,11 +7,12 @@ import {
   PermitSingleValues,
   PermitTransferFromValues,
   TokenWithIndex,
-} from 'src/types/permit';
+} from '../../types/permit';
 import type { Address } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { getPublicClient } from '../index';
 import { getNextPermit2Nonce } from './getNonce';
+import { HexString } from '../../types';
 
 type Permit2ValuesParams = {
   deadline: bigint;

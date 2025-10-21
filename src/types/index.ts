@@ -1,9 +1,9 @@
 import { Signer } from 'ethers';
+import { TypedDataDomain, WalletClient } from 'viem';
 import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './../constants';
 import { ApprovalModes } from './../constants/approval';
 import { PermitTypes } from './../constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
-import { TypedDataDomain, WalletClient } from 'viem';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
@@ -120,13 +120,12 @@ export type Fee = {
 export type QuoteFilter = keyof typeof QuoteFilters;
 
 export type TradeQuotesRequest = {
-  integratorId: string;
   fromChain: number;
   gasless?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
-  allowedSources?: string[];
+  allowedProtocols?: string[];
   filter?: QuoteFilter;
 };
 
@@ -247,10 +246,10 @@ export type TokenResponse = {
 export type TradeBuildTxnRequest = {
   sender: HexString;
   refundee: HexString;
-  integratorId: string;
   fromChain: number;
   gasless: boolean;
   disableEstimation?: boolean;
+
   data: TradeBuildTxnRequestData[];
   hasPermit2ApprovalForAllTokens?: boolean; //@dev true if permit2 approval exists for all tokens
   publicKey?: string; //@dev used for bitcoin chain only
@@ -263,7 +262,7 @@ export type TradeBuildTxnRequestData = {
   destToken: string;
   destDecimals?: number;
   toChain: number;
-  selectedRoute: string;
+  protocol: string;
   recipient: string;
   slippage: number;
   additionalInfo?: AdditionalInfo;

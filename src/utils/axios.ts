@@ -1,9 +1,9 @@
 import { CancelToken, Method } from 'axios';
-import AxiosClient from 'src/axios';
-import { baseApiClient, baseZapApiClient } from 'src/axios/baseClient';
-import { apiKey } from 'src/config';
-import { GET, POST } from 'src/constants/httpMethods';
-import { ExtendedAxiosRequestConfig } from 'src/types/axiosClient';
+import AxiosClient from '../axios';
+import { baseApiClient, baseZapApiClient } from '../axios/baseClient';
+import { GET, POST } from '../constants/httpMethods';
+import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
+import { config } from '../config';
 
 type Invoke = {
   endpoint: string;
@@ -15,7 +15,8 @@ type Invoke = {
 };
 
 export const invoke = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false }: Invoke) => {
-  const config: ExtendedAxiosRequestConfig = {
+  const apiKey = config.getApiKey();
+  const axiosConfig: ExtendedAxiosRequestConfig = {
     method,
     url: endpoint,
     data: method === GET ? undefined : data,
@@ -27,7 +28,7 @@ export const invoke = async ({ endpoint, data, method = POST, cancelToken, shoul
     cancelToken,
     shouldRetry,
   };
-  return baseApiClient(config)
+  return baseApiClient(axiosConfig)
     .then((res) => res.data)
     .catch((error) => {
       return Promise.reject(error);
@@ -35,7 +36,8 @@ export const invoke = async ({ endpoint, data, method = POST, cancelToken, shoul
 };
 
 export const invokeZap = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false }: Invoke) => {
-  const config: ExtendedAxiosRequestConfig = {
+  const apiKey = config.getApiKey();
+  const axiosConfig: ExtendedAxiosRequestConfig = {
     method,
     url: endpoint,
     data: method === GET ? undefined : data,
@@ -47,7 +49,7 @@ export const invokeZap = async ({ endpoint, data, method = POST, cancelToken, sh
     cancelToken,
     shouldRetry,
   };
-  return baseZapApiClient(config)
+  return baseZapApiClient(axiosConfig)
     .then((res) => res.data)
     .catch((error) => {
       return Promise.reject(error);

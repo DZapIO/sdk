@@ -1,10 +1,12 @@
 import { Signer } from 'ethers';
-import { executeGaslessTxnData, fetchTradeBuildTxnData } from 'src/api';
-import { PermitTypes } from 'src/constants/permit';
-import { ContractVersion, StatusCodes, TxnStatus } from 'src/enums';
-import { viemChainsById } from 'src/utils/chains';
-import { generateApprovalBatchCalls } from 'src/utils/eip-5792/batchApproveTokens';
+import { executeGaslessTxnData } from '../api';
+import { PermitTypes } from '../constants/permit';
+import { ContractVersion } from '../enums';
+import { viemChainsById } from '../utils/chains';
+import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { WalletClient } from 'viem';
+import { fetchTradeBuildTxnData } from '../api';
+import { StatusCodes, TxnStatus } from '../enums';
 import {
   AdditionalInfo,
   ContractErrorResponse,

@@ -7,7 +7,6 @@
     "target": "es2017",
     "sourceMap": false,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "moduleResolution": "Node",
     "skipLibCheck": true,

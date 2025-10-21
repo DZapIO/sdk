@@ -1,5 +1,5 @@
-import { permit2Abi } from 'src/artifacts';
-import { HexString } from 'src/types';
+import { permit2Abi } from '../../artifacts';
+import { HexString } from '../../types';
 import { Address, getContract, maxUint256, PublicClient } from 'viem';
 import { getPublicClient } from '..';
 

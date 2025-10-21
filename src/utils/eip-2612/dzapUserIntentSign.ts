@@ -1,10 +1,10 @@
-import { GaslessTxType } from 'src/constants';
-import { dZapIntentPrimaryType, eip2612GaslessDomain } from 'src/constants/permit';
-import { SignatureExpiryInSecs } from 'src/constants/permit2';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
-import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from 'src/types/eip-2612';
-import { Gasless2612PermitParams } from 'src/types/permit';
+import { GaslessTxType } from '../../constants';
+import { dZapIntentPrimaryType, eip2612GaslessDomain } from '../../constants/permit';
+import { SignatureExpiryInSecs } from '../../constants/permit2';
+import { StatusCodes, TxnStatus } from '../../enums';
+import { HexString } from '../../types';
+import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from '../../types/eip-2612';
+import { Gasless2612PermitParams } from '../../types/permit';
 import { getContract } from 'viem';
 import { generateDeadline } from '../date';
 import { getDZapAbi, getPublicClient } from '../index';

@@ -1,9 +1,9 @@
-import { HexString } from 'src';
-import { permit2ProxyAbi } from 'src/artifacts/Permit2Proxy';
-import { getPublicClient } from 'src/utils';
-import { viemChainsById } from 'src/utils/chains';
-import { getPermit2Address } from 'src/utils/permit2';
-import { getNextPermit2Nonce } from 'src/utils/permit2/getNonce';
+import { permit2ProxyAbi } from '../../src/artifacts/Permit2Proxy';
+import { getPublicClient } from '../../src/utils';
+import { viemChainsById } from '../../src/utils/chains';
+import { getPermit2Address } from '../../src/utils/permit2';
+import { getNextPermit2Nonce } from '../../src/utils/permit2/getNonce';
+import { HexString } from '../../src/types';
 
 const permitProxy: Record<number, HexString> = {
   42161: '0x89c6340B1a1f4b25D36cd8B063D49045caF3f818',

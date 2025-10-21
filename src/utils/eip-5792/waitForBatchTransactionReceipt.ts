@@ -1,9 +1,9 @@
 import { type Client } from 'viem';
 import { waitForCallsStatus } from 'viem/actions';
 import { getAction } from 'viem/utils';
-import { TxnStatus } from 'src/enums';
-import { HexString } from 'src/types';
-import { WalletCallReceipt } from 'src/types/wallet';
+import { TxnStatus } from '../../enums';
+import { HexString } from '../../types';
+import { WalletCallReceipt } from '../../types/wallet';
 
 export const waitForBatchTransactionReceipt = async (client: Client, batchHash: HexString): Promise<WalletCallReceipt> => {
   const { receipts, status, statusCode } = await getAction(

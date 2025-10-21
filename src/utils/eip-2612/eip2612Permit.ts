@@ -1,19 +1,19 @@
 import { ethers } from 'ethers';
-import { abi as erc20PermitAbi } from 'src/artifacts/ERC20Permit';
-import { Services } from 'src/constants';
-import { erc20Functions } from 'src/constants/erc20';
-import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from 'src/constants/permit2';
-import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from 'src/enums';
-import { HexString, TokenPermitData } from 'src/types';
-import { EIP2612DefaultTypes } from 'src/types/eip-2612';
-import { DefaultPermit2612Params } from 'src/types/permit';
 import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
-import { katana } from 'viem/chains';
+import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
+import { config } from '../../config';
+import { Services } from '../../constants';
+import { erc20Functions } from '../../constants/erc20';
+import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from '../../constants/permit2';
+import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
+import { HexString, TokenPermitData } from '../../types';
+import { EIP2612DefaultTypes } from '../../types/eip-2612';
+import { DefaultPermit2612Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';
 
-export const eip2612DisabledChains = [Number(katana.id)];
+export const eip2612DisabledChains = config.getEip2612DisabledChains();
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
  */

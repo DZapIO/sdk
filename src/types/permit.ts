@@ -1,8 +1,8 @@
 import { Signer } from 'ethers';
-import { HexString, PermitMode, StatusCodes, TxnStatus } from 'src';
-import { GaslessTxType } from 'src/constants';
-import { permit2PrimaryType } from 'src/constants/permit';
-import { ContractVersion } from 'src/enums';
+import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
+import { GaslessTxType } from '../constants';
+import { permit2PrimaryType } from '../constants/permit';
+import { ContractVersion } from '../enums';
 import { Address, WalletClient } from 'viem';
 import { AvailableDZapServices, TokenPermitData } from '.';
 

@@ -1,12 +1,13 @@
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from 'src/constants';
-import { PermitTypes } from 'src/constants/permit';
-import { StatusCodes, TxnStatus } from 'src/enums';
-import { GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from 'src/types';
-import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from 'src/types/permit';
-import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from 'src/utils';
-import { signGaslessDzapUserIntent } from 'src/utils/eip-2612/dzapUserIntentSign';
-import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from 'src/utils/eip-2612/eip2612Permit';
-import { getPermit2Signature } from 'src/utils/permit2';
+import { GaslessSignatureParams, GasSignatureParams, SignPermitResponse } from '../types';
+import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
+import { signGaslessDzapUserIntent } from '../utils/eip-2612/dzapUserIntentSign';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from '../constants';
+import { PermitTypes } from '../constants/permit';
+import { StatusCodes, TxnStatus } from '../enums';
+import { HexString, PermitMode } from '../types';
+import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
+import { getPermit2Signature } from '../utils/permit2';
+import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/eip-2612/eip2612Permit';
 
 type BasePermitDataParams = {
   oneToMany: boolean;

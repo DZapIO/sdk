@@ -5,7 +5,6 @@ import { StatusCodes, TxnStatus } from '../src/enums';
 import { HexString, SignatureCallbackParams } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
-
 // Setup a signer. This is a placeholder.
 // In a real app, you would get this from a wallet connector like RainbowKit, wagmi, etc.
 const walletClient = createWalletClient({
@@ -21,7 +20,7 @@ async function runPermitExamples() {
   const senderAddress = '0xYourWalletAddress' as HexString;
   const tokenToApprove = '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1' as HexString; // DAI
   const amountToTrade = parseUnits('1000', 18).toString(); // 1000 DAI
-  const rpcUrls = ['https://eth.llamarpc.com'];
+  const rpcUrls = ['https://arb1.arbitrum.io/rpc'];
 
   // A. CHECK ALLOWANCE
 

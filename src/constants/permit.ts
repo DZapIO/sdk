@@ -1,4 +1,4 @@
-import { DZapPermitMode } from 'src/enums';
+import { DZapPermitMode } from '../enums';
 import { encodePacked, keccak256 } from 'viem';
 
 export const eip2612GaslessDomain = {
