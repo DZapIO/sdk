@@ -1,15 +1,16 @@
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/contract';
 import { permit2PrimaryType, PermitToDZapPermitMode } from '../../constants/permit';
 import { SignatureExpiryInSecs } from '../../constants/permit2';
-import { StatusCodes, TxnStatus } from '../../enums';
+import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { BasePermitResponse, BatchPermitAbiParams, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { signTypedData } from '../signTypedData';
-import { getPermit2Data } from './getPermitData';
-import { getPermit2Values } from './getValues';
-import { getPermit2WitnessData } from './getWitnessData';
+import { getPermit2Data } from './permitData';
+import { getPermit2Values } from './values';
+import { getPermit2WitnessData } from './witnessData';
+import { Services } from '../../constants';
 
 export function getPermit2Address(chainId: number): HexString {
   return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
@@ -42,7 +43,6 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
     });
     const { witnessData } = getPermit2WitnessData(params);
 
-    const dzapPermitMode = PermitToDZapPermitMode[permitType];
     const { permit2Values, nonce } = await getPermit2Values({
       primaryType: permitType,
       spender,
@@ -69,25 +69,35 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
       primaryType: permitType,
     });
 
-    const dZapDataForTransfer =
-      permitType === permit2PrimaryType.PermitBatchWitnessTransferFrom
-        ? encodeAbiParameters(BatchPermitAbiParams, [
-            {
-              permitted: updatedTokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
-              nonce,
-              deadline,
-            },
-            signature,
-          ])
-        : permitType === permit2PrimaryType.PermitWitnessTransferFrom
-          ? encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature])
-          : encodeAbiParameters(parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
-              Number(nonce.toString()),
-              Number(expiration.toString()),
-              BigInt(deadline.toString()),
-              signature,
-            ]);
+    let dZapDataForTransfer;
+    if (permitType === permit2PrimaryType.PermitBatchWitnessTransferFrom) {
+      dZapDataForTransfer = encodeAbiParameters(BatchPermitAbiParams, [
+        {
+          permitted: updatedTokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
+          nonce,
+          deadline,
+        },
+        signature,
+      ]);
+    } else if (permitType === permit2PrimaryType.PermitWitnessTransferFrom) {
+      dZapDataForTransfer = encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature]);
+    } else if (contractVersion === ContractVersion.v1 && service !== Services.zap) {
+      //for v1 support
+      dZapDataForTransfer = encodeAbiParameters(
+        parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
+        [BigInt(tokens[0].amount), Number(nonce.toString()), Number(expiration.toString()), BigInt(deadline.toString()), signature],
+      );
+    } else {
+      dZapDataForTransfer = encodeAbiParameters(parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
+        Number(nonce.toString()),
+        Number(expiration.toString()),
+        BigInt(deadline.toString()),
+        signature,
+      ]);
+    }
 
+    const dzapPermitMode =
+      service !== Services.zap && contractVersion === ContractVersion.v1 ? DZapV1PermitMode.PERMIT2_APPROVE : PermitToDZapPermitMode[permitType];
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [dzapPermitMode, dZapDataForTransfer]);
 
     return {

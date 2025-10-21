@@ -15,8 +15,9 @@ export enum DZapPermitMode {
   BATCH_PERMIT2_WITNESS_TRANSFER,
 }
 
-export enum V2PermitMode {
+export enum DZapV1PermitMode {
   PERMIT,
+  PERMIT2_TRANSFER_FROM,
   PERMIT2_APPROVE,
 }
 

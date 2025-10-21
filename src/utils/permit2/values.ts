@@ -11,7 +11,7 @@ import {
 import type { Address } from 'viem';
 import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { getPublicClient } from '../index';
-import { getNextPermit2Nonce } from './getNonce';
+import { getNextPermit2Nonce } from './nonce';
 import { HexString } from '../../types';
 
 type Permit2ValuesParams = {
