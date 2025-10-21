@@ -1,13 +1,12 @@
-import { GaslessSignatureParams, GasSignatureParams, SignPermitResponse } from '../types';
-import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
-import { signGaslessDzapUserIntent } from '../utils/eip-2612/dzapUserIntentSign';
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA } from '../constants';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, Services } from '../constants';
 import { PermitTypes } from '../constants/permit';
-import { StatusCodes, TxnStatus } from '../enums';
-import { HexString, PermitMode } from '../types';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
+import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
+import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
-import { getPermit2Signature } from '../utils/permit2';
+import { signGaslessDzapUserIntent } from '../utils/eip-2612/dzapUserIntentSign';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/eip-2612/eip2612Permit';
+import { getPermit2Signature } from '../utils/permit2';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
@@ -151,11 +150,17 @@ class PermitTxnHandler {
       },
     };
   };
+  static v1PermitSupport = ({ contractVersion, service }: { contractVersion: ContractVersion; service: AvailableDZapServices }): boolean => {
+    return contractVersion === ContractVersion.v1 && service !== Services.zap;
+  };
+
   public static shouldUseBatchPermit = ({
     permitType,
     isBatchPermitAllowed = true,
     tokens,
     oneToMany,
+    contractVersion,
+    service,
   }: {
     permitType: PermitMode;
     isBatchPermitAllowed?: boolean;
@@ -165,13 +170,15 @@ class PermitTxnHandler {
       amount: string;
     }[];
     oneToMany: boolean;
+    contractVersion: ContractVersion;
+    service: AvailableDZapServices;
   }) => {
     // Utilize batch permit for transactions involving many-to-one token pairs or when the permitType is set to batch
     const isBatchPermitRequested = permitType === PermitTypes.PermitBatchWitnessTransferFrom;
 
     const shouldAutoBatch = permitType === PermitTypes.AutoPermit && tokens?.length > 1 && !oneToMany;
-
-    return isBatchPermitAllowed && (isBatchPermitRequested || shouldAutoBatch);
+    const isContractSupport = !PermitTxnHandler.v1PermitSupport({ contractVersion, service });
+    return isBatchPermitAllowed && (isBatchPermitRequested || shouldAutoBatch) && isContractSupport;
   };
 
   public static signPermit = async (signPermitReq: GasSignatureParams): Promise<SignPermitResponse> => {
@@ -186,6 +193,8 @@ class PermitTxnHandler {
       isBatchPermitAllowed: signPermitReq.isBatchPermitAllowed,
       tokens,
       oneToMany,
+      contractVersion: signPermitReq.contractVersion,
+      service: signPermitReq.service,
     });
 
     if (shouldUseBatchPermit) {
@@ -215,7 +224,10 @@ class PermitTxnHandler {
     } else {
       const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
       let firstTokenNonce: bigint | null = null;
-      let permitType = signPermitReq.permitType;
+
+      let permitType = PermitTxnHandler.v1PermitSupport({ contractVersion: signPermitReq.contractVersion, service: signPermitReq.service })
+        ? PermitTypes.PermitSingle
+        : signPermitReq.permitType;
 
       for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
         const isFirstToken = dataIdx === 0;
