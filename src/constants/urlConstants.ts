@@ -9,6 +9,7 @@ export const BRIDGE_BUILD_TX_URL = 'bridge/buildTx';
 export const QUOTES_URL = '/quotes';
 export const BUILD_TX_URL = '/buildTx';
 export const GASLESS_EXECUTE_TX_URL = '/gasless/executeTx';
+export const BROADCAST_TX = '/broadcast';
 
 // Common URLS
 export const GET_ALL_CHAINS_URL = 'chains';

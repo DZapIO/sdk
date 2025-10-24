@@ -377,6 +377,7 @@ export type DZapTransactionResponse = {
   error?: unknown;
   additionalInfo?: Record<string, unknown>;
   updatedQuotes?: Record<string, string>;
+  txHex?: HexString;
 };
 
 export type SwapInfo = {
@@ -514,3 +515,9 @@ export type SignPermitResponse =
       code: StatusCodes;
       permitType: PermitMode;
     };
+
+export type BroadCastTxParams = {
+  txId: string;
+  chainId: number;
+  txHex: HexString;
+};

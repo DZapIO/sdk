@@ -1,12 +1,9 @@
 import { Signer } from 'ethers';
-import { executeGaslessTxnData } from '../api';
-import { PermitTypes } from '../constants/permit';
-import { ContractVersion } from '../enums';
-import { viemChainsById } from '../utils/chains';
-import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { WalletClient } from 'viem';
-import { fetchTradeBuildTxnData } from '../api';
-import { StatusCodes, TxnStatus } from '../enums';
+import { broadcastTx, executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
+import { exclusiveChainIds } from '../constants/chains';
+import { PermitTypes } from '../constants/permit';
+import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import {
   AdditionalInfo,
   ContractErrorResponse,
@@ -17,6 +14,8 @@ import {
   TradeBuildTxnResponse,
 } from '../types';
 import { isTypeSigner } from '../utils';
+import { viemChainsById } from '../utils/chains';
+import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
@@ -55,6 +54,43 @@ class TradeTxnHandler {
       status: TxnStatus.success,
       code: StatusCodes.Success,
       txnHash,
+      additionalInfo,
+      updatedQuotes,
+    };
+  };
+
+  private static signTransaction = async (
+    signer: Signer | WalletClient,
+    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
+    chainId: number,
+    additionalInfo: AdditionalInfo | undefined,
+    updatedQuotes: Record<string, string>,
+  ): Promise<DZapTransactionResponse> => {
+    let txHex: HexString;
+
+    if (isTypeSigner(signer)) {
+      const txnRes = await signer.signTransaction({
+        from: txnParams.from,
+        to: txnParams.to,
+        data: txnParams.data,
+        value: txnParams.value,
+        gasLimit: txnParams.gasLimit,
+      });
+      txHex = txnRes as HexString;
+    } else {
+      txHex = await signer.signTransaction({
+        chain: viemChainsById[chainId],
+        account: txnParams.from as HexString,
+        to: txnParams.to as HexString,
+        data: txnParams.data as HexString,
+        value: BigInt(txnParams.value),
+      });
+    }
+
+    return {
+      status: TxnStatus.success,
+      code: StatusCodes.Success,
+      txHex,
       additionalInfo,
       updatedQuotes,
     };
@@ -146,6 +182,33 @@ class TradeTxnHandler {
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
+      if (chainId === exclusiveChainIds.hyperLiquid || request.data[0].toChain === exclusiveChainIds.hyperLiquid) {
+        const txId = buildTxnResponseData.txId;
+
+        const signedTxHex = await this.signTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+
+        if (signedTxHex.status !== TxnStatus.success) {
+          throw new Error('Failed to sign transaction');
+        }
+
+        const txResp: {
+          status: TxnStatus;
+          txnHash: HexString;
+        } = await broadcastTx({
+          chainId: request.fromChain,
+          txHex: signedTxHex.txHex as HexString,
+          txId,
+        });
+
+        if (txResp.status !== TxnStatus.success) {
+          throw new Error('Failed to sign permit');
+        }
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          txnHash: txResp.txnHash as HexString,
+        };
+      }
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
         return this.sendTxnWithBatch(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
