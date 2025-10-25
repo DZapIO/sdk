@@ -517,3 +517,9 @@ export type SignPermitResponse =
       code: StatusCodes;
       permitType: PermitMode;
     };
+
+export type BroadcastTxParams = {
+  txId: string;
+  chainId: number;
+  signedTxData: HexString;
+};

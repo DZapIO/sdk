@@ -2,6 +2,7 @@ import { CancelToken } from 'axios';
 
 import { GET, POST } from '../constants/httpMethods';
 import {
+  BROADCAST_TX,
   BUILD_TX_URL,
   CALCULATE_POINTS_URL,
   GASLESS_EXECUTE_TX_URL,
@@ -13,7 +14,7 @@ import {
   GET_TOKEN_PRICE,
   QUOTES_URL,
 } from '../constants/urlConstants';
-import { CalculatePointsRequest, GaslessExecuteTxParams, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
+import { BroadcastTxParams, CalculatePointsRequest, GaslessExecuteTxParams, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
@@ -36,6 +37,13 @@ export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
 export const executeGaslessTxnData = (request: GaslessExecuteTxParams) =>
   invoke({
     endpoint: GASLESS_EXECUTE_TX_URL,
+    data: request,
+    method: POST,
+  });
+
+export const broadcastTx = (request: BroadcastTxParams) =>
+  invoke({
+    endpoint: BROADCAST_TX,
     data: request,
     method: POST,
   });
