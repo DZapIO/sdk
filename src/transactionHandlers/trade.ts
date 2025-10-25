@@ -153,6 +153,54 @@ class TradeTxnHandler {
     };
   };
 
+  private static broadcastTransaction = async ({
+    request,
+    signer,
+    chainId,
+    txId,
+    txnParams,
+    additionalInfo,
+    updatedQuotes,
+  }: {
+    request: TradeBuildTxnRequest;
+    signer: Signer | WalletClient;
+    txId: string;
+    chainId: number;
+    additionalInfo: AdditionalInfo | undefined;
+    updatedQuotes: Record<string, string>;
+    txnParams: {
+      from: string;
+      to: `0x${string}`;
+      data: string;
+      value: string;
+      gasLimit: string;
+    };
+  }) => {
+    const signedTxHex = await this.signTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+
+    if (signedTxHex.status !== TxnStatus.success) {
+      throw new Error('Failed to sign transaction');
+    }
+
+    const txResp: {
+      status: TxnStatus;
+      txnHash: HexString;
+    } = await broadcastTx({
+      chainId: request.fromChain,
+      txHex: signedTxHex.txHex as HexString,
+      txId,
+    });
+
+    if (txResp.status !== TxnStatus.success) {
+      throw new Error('Failed to sign permit');
+    }
+    return {
+      status: TxnStatus.success,
+      code: StatusCodes.Success,
+      txnHash: txResp.txnHash as HexString,
+    };
+  };
+
   public static buildAndSendTransaction = async ({
     request,
     signer,
@@ -182,32 +230,8 @@ class TradeTxnHandler {
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
-      if (chainId === exclusiveChainIds.hyperLiquid || request.data[0].toChain === exclusiveChainIds.hyperLiquid) {
-        const txId = buildTxnResponseData.txId;
-
-        const signedTxHex = await this.signTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-
-        if (signedTxHex.status !== TxnStatus.success) {
-          throw new Error('Failed to sign transaction');
-        }
-
-        const txResp: {
-          status: TxnStatus;
-          txnHash: HexString;
-        } = await broadcastTx({
-          chainId: request.fromChain,
-          txHex: signedTxHex.txHex as HexString,
-          txId,
-        });
-
-        if (txResp.status !== TxnStatus.success) {
-          throw new Error('Failed to sign permit');
-        }
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash: txResp.txnHash as HexString,
-        };
+      if ([exclusiveChainIds.hyperLiquid, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
+        return this.broadcastTransaction({ request, signer, chainId, txId: buildTxnResponseData.txId, txnParams, additionalInfo, updatedQuotes });
       }
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
