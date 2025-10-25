@@ -63,9 +63,10 @@ class TradeTxnHandler {
     signer: Signer | WalletClient,
     txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
     chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-  ): Promise<DZapTransactionResponse & { signedTxData?: HexString }> => {
+  ): Promise<{
+    status: TxnStatus;
+    data: HexString;
+  }> => {
     let signedTxData: HexString;
 
     if (isTypeSigner(signer)) {
@@ -89,10 +90,7 @@ class TradeTxnHandler {
 
     return {
       status: TxnStatus.success,
-      code: StatusCodes.Success,
-      signedTxData,
-      additionalInfo,
-      updatedQuotes,
+      data: signedTxData,
     };
   };
 
@@ -159,15 +157,11 @@ class TradeTxnHandler {
     chainId,
     txId,
     txnParams,
-    additionalInfo,
-    updatedQuotes,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txId: string;
     chainId: number;
-    additionalInfo: AdditionalInfo | undefined;
-    updatedQuotes: Record<string, string>;
     txnParams: {
       from: string;
       to: `0x${string}`;
@@ -176,7 +170,7 @@ class TradeTxnHandler {
       gasLimit: string;
     };
   }) => {
-    const signedTxHex = await this.signTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+    const signedTxHex = await this.signTransaction(signer, txnParams, chainId);
 
     if (signedTxHex.status !== TxnStatus.success) {
       throw new Error('Failed to sign transaction');
@@ -187,7 +181,7 @@ class TradeTxnHandler {
       txnHash: HexString;
     } = await broadcastTx({
       chainId: request.fromChain,
-      signedTxData: signedTxHex.signedTxData as HexString,
+      signedTxData: signedTxHex.data,
       txId,
     });
 
@@ -231,7 +225,7 @@ class TradeTxnHandler {
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
       if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
-        return this.broadcastTransaction({ request, signer, chainId, txId: buildTxnResponseData.txId, txnParams, additionalInfo, updatedQuotes });
+        return this.broadcastTransaction({ request, signer, chainId, txId: buildTxnResponseData.txId, txnParams });
       }
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
