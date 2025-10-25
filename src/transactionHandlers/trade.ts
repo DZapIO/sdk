@@ -230,7 +230,7 @@ class TradeTxnHandler {
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
-      if ([exclusiveChainIds.hyperLiquid, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
+      if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
         return this.broadcastTransaction({ request, signer, chainId, txId: buildTxnResponseData.txId, txnParams, additionalInfo, updatedQuotes });
       }
       // Handle ethers signer (no batching support)

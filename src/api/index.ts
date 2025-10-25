@@ -14,7 +14,7 @@ import {
   GET_TOKEN_PRICE,
   QUOTES_URL,
 } from '../constants/urlConstants';
-import { BroadCastTxParams, CalculatePointsRequest, GaslessExecuteTxParams, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
+import { BroadcastTxParams, CalculatePointsRequest, GaslessExecuteTxParams, TradeBuildTxnRequest, TradeQuotesRequest } from '../types';
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
@@ -41,7 +41,7 @@ export const executeGaslessTxnData = (request: GaslessExecuteTxParams) =>
     method: POST,
   });
 
-export const broadcastTx = (request: BroadCastTxParams) =>
+export const broadcastTx = (request: BroadcastTxParams) =>
   invoke({
     endpoint: BROADCAST_TX,
     data: request,

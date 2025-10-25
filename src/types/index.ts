@@ -516,7 +516,7 @@ export type SignPermitResponse =
       permitType: PermitMode;
     };
 
-export type BroadCastTxParams = {
+export type BroadcastTxParams = {
   txId: string;
   chainId: number;
   txHex: HexString;
