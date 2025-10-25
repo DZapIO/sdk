@@ -1,5 +1,5 @@
 import { Signer } from 'ethers';
-import { TypedDataDomain, WalletClient } from 'viem';
+import { Prettify, TypedDataDomain, WalletClient } from 'viem';
 import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './../constants';
 import { ApprovalModes } from './../constants/approval';
 import { PermitTypes } from './../constants/permit';
@@ -20,6 +20,7 @@ export type NativeTokenInfo = {
   name: string;
   balance: string;
   price?: string;
+  logo: string;
 };
 
 export const contractErrorActions = {
@@ -225,19 +226,21 @@ export type TokenPermitData = {
   };
 };
 
-export type TokenInfo = NativeTokenInfo & {
-  chainId: number;
-  balanceInUsd?: number | null;
-  isDisabledOnSwapBridge?: {
-    source: boolean;
-    destination: boolean;
-  };
-  isDisabledOnZap?: {
-    source: boolean;
-    destination: boolean;
-  };
-  permit?: TokenPermitData;
-};
+export type TokenInfo = Prettify<
+  NativeTokenInfo & {
+    chainId: number;
+    balanceInUsd?: number | null;
+    isDisabledOnSwapBridge?: {
+      source: boolean;
+      destination: boolean;
+    };
+    isDisabledOnZap?: {
+      source: boolean;
+      destination: boolean;
+    };
+    permit?: TokenPermitData;
+  }
+>;
 
 export type TokenResponse = {
   [key: string]: TokenInfo;

@@ -1,7 +1,7 @@
 import { createWalletClient, http } from 'viem';
 import { arbitrum } from 'viem/chains';
 import { DZapClient, TxnStatus } from '../src';
-import { ZapQuoteRequest } from '../src/types/zap';
+import { ZapBuildTxnRequest } from '../src/types/zap';
 
 // 1. INITIALIZATION
 
@@ -24,7 +24,7 @@ async function runZapExamples() {
   // A. GET ZAP QUOTE
 
   console.log('\nFetching zap quote...');
-  const zapQuoteRequest: ZapQuoteRequest = {
+  const zapQuoteRequest: ZapBuildTxnRequest = {
     srcChainId: 42161, // Arbitrum
     destChainId: 42161, // Arbitrum (for simplicity, same chain)
     account: userAddress,

@@ -57,6 +57,7 @@ async function runPermitExamples() {
             address: HexString;
           }) => {
             console.log(`Approval transaction sent for ${address}:`, txnDetails);
+            return null;
           },
         });
         console.log('Approval transaction sent. Please confirm in your wallet.');

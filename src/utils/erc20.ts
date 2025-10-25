@@ -39,7 +39,7 @@ export const approveToken = async ({
   }: {
     txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
     address: HexString;
-  }) => Promise<TxnStatus | void>;
+  }) => Promise<TxnStatus | null>;
   spender: HexString;
 }) => {
   if (mode !== ApprovalModes.Default) {

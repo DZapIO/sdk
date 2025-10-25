@@ -407,7 +407,7 @@ class DZapClient {
     account?: string,
     includeBalance?: boolean,
     includePrice?: boolean,
-  ): Promise<Record<string, TokenInfo>> {
+  ): Promise<Record<string, TokenInfo> | TokenInfo> {
     return await fetchTokenDetails(tokenAddresses, chainId, account, includeBalance, includePrice);
   }
 
@@ -826,7 +826,7 @@ class DZapClient {
     }: {
       txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
       address: HexString;
-    }) => Promise<TxnStatus | void>;
+    }) => Promise<TxnStatus | null>;
     service: AvailableDZapServices;
     spender?: HexString; // Optional custom spender address
     rpcUrls?: string[];
@@ -1065,7 +1065,7 @@ class DZapClient {
    * console.log(`USDC Balance: ${usdcBalance.balance}`);
    * ```
    */
-  public async getBalances(chainId: number, account: string): Promise<Record<string, TokenResponse>> {
+  public async getBalances(chainId: number, account: string): Promise<TokenResponse> {
     const balanceData = await fetchBalances(chainId, account);
     return balanceData.result;
   }
