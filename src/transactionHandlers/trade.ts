@@ -65,8 +65,8 @@ class TradeTxnHandler {
     chainId: number,
     additionalInfo: AdditionalInfo | undefined,
     updatedQuotes: Record<string, string>,
-  ): Promise<DZapTransactionResponse> => {
-    let txHex: HexString;
+  ): Promise<DZapTransactionResponse & { signedTxData?: HexString }> => {
+    let signedTxData: HexString;
 
     if (isTypeSigner(signer)) {
       const txnRes = await signer.signTransaction({
@@ -76,9 +76,9 @@ class TradeTxnHandler {
         value: txnParams.value,
         gasLimit: txnParams.gasLimit,
       });
-      txHex = txnRes as HexString;
+      signedTxData = txnRes as HexString;
     } else {
-      txHex = await signer.signTransaction({
+      signedTxData = await signer.signTransaction({
         chain: viemChainsById[chainId],
         account: txnParams.from as HexString,
         to: txnParams.to as HexString,
@@ -90,7 +90,7 @@ class TradeTxnHandler {
     return {
       status: TxnStatus.success,
       code: StatusCodes.Success,
-      txHex,
+      signedTxData,
       additionalInfo,
       updatedQuotes,
     };
@@ -187,7 +187,7 @@ class TradeTxnHandler {
       txnHash: HexString;
     } = await broadcastTx({
       chainId: request.fromChain,
-      txHex: signedTxHex.txHex as HexString,
+      signedTxData: signedTxHex.signedTxData as HexString,
       txId,
     });
 
