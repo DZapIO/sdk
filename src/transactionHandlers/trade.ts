@@ -170,9 +170,9 @@ class TradeTxnHandler {
       gasLimit: string;
     };
   }) => {
-    const signedTxHex = await this.signTransaction(signer, txnParams, chainId);
+    const signedTx = await this.signTransaction(signer, txnParams, chainId);
 
-    if (signedTxHex.status !== TxnStatus.success) {
+    if (signedTx.status !== TxnStatus.success) {
       throw new Error('Failed to sign transaction');
     }
 
@@ -181,7 +181,7 @@ class TradeTxnHandler {
       txnHash: HexString;
     } = await broadcastTx({
       chainId: request.fromChain,
-      signedTxData: signedTxHex.data,
+      signedTxData: signedTx.data,
       txId,
     });
 
