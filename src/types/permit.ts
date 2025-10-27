@@ -127,7 +127,6 @@ type Permit2612BaseParams = {
   token: TokenWithPermitData;
   version: string;
   sigDeadline?: bigint;
-  amount?: bigint;
   name: string;
   nonce: bigint;
 } & BasePermitParams;
