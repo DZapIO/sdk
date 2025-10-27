@@ -23,15 +23,15 @@ export type ZapBuildTxnResponse = {
   path: ZapPath[];
 };
 export type ZapBuildTxnRequest = {
-  srcToken: HexString;
+  srcToken: string;
   srcChainId: number;
-  destToken: HexString;
+  destToken: string;
   destChainId: number;
-  recipient: HexString;
-  refundee: HexString;
+  recipient: string;
+  refundee: string;
   slippage: number;
-  account: HexString;
-  permitData?: HexString;
+  account: string;
+  permitData?: string;
   amount?: string;
   estimateGas?: boolean;
   positionDetails?: ZapRouteRequestPositionDetails;

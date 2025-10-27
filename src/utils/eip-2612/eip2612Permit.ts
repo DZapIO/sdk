@@ -1,13 +1,14 @@
-import { ethers, Signer } from 'ethers';
-import { encodeAbiParameters, maxUint256, parseAbiParameters, WalletClient } from 'viem';
+import { ethers } from 'ethers';
+import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
 import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
+import { config } from '../../config';
 import { Services } from '../../constants';
 import { erc20Functions } from '../../constants/erc20';
 import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from '../../constants/permit2';
-import { config } from '../../config';
-import { ContractVersion, PermitType, StatusCodes, TxnStatus } from '../../enums';
-import { AvailableDZapServices, HexString } from '../../types';
-import { EIP2612Types } from '../../types/eip-2612';
+import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
+import { HexString, TokenPermitData } from '../../types';
+import { EIP2612DefaultTypes } from '../../types/eip-2612';
+import { DefaultPermit2612Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';
@@ -20,14 +21,14 @@ export const checkEIP2612PermitSupport = async ({
   address,
   chainId,
   rpcUrls,
-  permitEIP2612DisabledTokens,
   owner,
+  permit,
 }: {
-  address: HexString;
   chainId: number;
+  address: HexString;
   rpcUrls?: string[];
-  permitEIP2612DisabledTokens?: string[];
   owner: HexString; // Optional owner for fetching nonce
+  permit?: TokenPermitData;
 }): Promise<{
   supportsPermit: boolean;
   data?: {
@@ -36,7 +37,7 @@ export const checkEIP2612PermitSupport = async ({
     nonce: bigint;
   };
 }> => {
-  if (permitEIP2612DisabledTokens?.some((token) => token.toLowerCase() === address.toLowerCase()) || eip2612DisabledChains.includes(chainId)) {
+  if (permit?.eip2612?.supported === false || eip2612DisabledChains.includes(chainId)) {
     return { supportsPermit: false };
   }
   const contracts = [
@@ -98,73 +99,64 @@ export const checkEIP2612PermitSupport = async ({
 /**
  * Generate EIP-2612 permit signature
  */
-export const getEIP2612PermitSignature = async ({
-  chainId,
-  spender,
-  account,
-  token,
-  signer,
-  version,
-  amount = maxUint256,
-  sigDeadline = generateDeadline(SignatureExpiryInSecs),
-  contractVersion,
-  service,
-  name,
-  nonce,
-}: {
-  chainId: number;
-  account: HexString;
-  token: HexString;
-  spender: HexString;
-  version: string;
-  sigDeadline?: bigint;
-  amount?: bigint;
-  signer: WalletClient | Signer;
-  contractVersion: ContractVersion;
-  service: AvailableDZapServices;
-  name: string;
-  nonce: bigint;
-}): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
+export const getEIP2612PermitSignature = async (
+  params: DefaultPermit2612Params,
+): Promise<{ status: TxnStatus; code: StatusCodes; permitData?: HexString }> => {
   try {
-    const address = token as HexString;
-    const owner = account as HexString;
-    const deadline = sigDeadline;
-
-    const domain = {
-      name,
-      version,
+    const {
       chainId,
-      verifyingContract: address,
-    };
+      spender,
+      account,
+      token,
+      signer,
+      contractVersion,
+      service,
+      name,
+      nonce,
+      version,
+      deadline = generateDeadline(SignatureExpiryInSecs),
+    } = params;
+
+    const { address } = token;
+    const amount = token.amount ? BigInt(token.amount) : maxUint256;
+    const domain = token?.permit?.eip2612?.data?.domain
+      ? token?.permit?.eip2612?.data?.domain
+      : {
+          name,
+          version,
+          chainId,
+          verifyingContract: address,
+        };
 
     const message = {
-      owner,
+      owner: account,
       spender,
       value: amount,
       nonce,
       deadline,
     };
 
+    const types = EIP2612DefaultTypes;
     const signature = await signTypedData({
       signer,
       domain,
       message,
-      types: EIP2612Types,
-      account: owner,
+      types,
+      account,
       primaryType: 'Permit',
     });
 
     const sig = ethers.utils.splitSignature(signature);
 
-    const data =
+    const dZapPermitData =
       contractVersion === ContractVersion.v1 && service !== Services.zap
         ? ethers.utils.defaultAbiCoder.encode(
             ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
-            [owner, spender, amount, deadline, sig.v, sig.r, sig.s],
+            [account, spender, amount, deadline, sig.v, sig.r, sig.s],
           )
         : ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
 
-    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, data as HexString]);
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData as HexString]);
 
     return {
       status: TxnStatus.success,

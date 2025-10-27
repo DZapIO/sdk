@@ -1,6 +1,6 @@
 {
   "name": "@dzapio/sdk",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations including Swaps, Bridges, and Zaps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
@@ -59,7 +59,17 @@
     "blockchain",
     "web3",
     "typescript",
-    "sdk"
+    "sdk",
+    "dzapsdk",
+    "dzap",
+    "dzapio",
+    "dzapio-sdk",
+    "dzapio-sdk-js",
+    "dzapio-sdk-ts",
+    "dzapio-sdk-typescript",
+    "dzapio-sdk-javascript",
+    "dzapio-sdk-nodejs",
+    "dzapio-sdk-react"
   ],
   "author": "DZap",
   "license": "MIT",

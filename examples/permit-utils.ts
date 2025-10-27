@@ -2,7 +2,7 @@ import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
 import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
 import { StatusCodes, TxnStatus } from '../src/enums';
-import { HexString } from '../src/types';
+import { HexString, SignatureCallbackParams } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
 // Setup a signer. This is a placeholder.
@@ -32,7 +32,7 @@ async function runPermitExamples() {
       service: Services.trade,
       tokens: [{ address: tokenToApprove, amount: amountToTrade }],
       rpcUrls,
-      mode: ApprovalModes.Permit2,
+      mode: ApprovalModes.PermitWitnessTransferFrom,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
@@ -47,7 +47,7 @@ async function runPermitExamples() {
           chainId,
           signer: walletClient,
           service: Services.trade,
-          mode: ApprovalModes.Permit2,
+          mode: ApprovalModes.PermitWitnessTransferFrom,
           tokens: [{ address: tokenToApprove, amount: amountToTrade }],
           approvalTxnCallback: async ({
             txnDetails,
@@ -57,6 +57,7 @@ async function runPermitExamples() {
             address: HexString;
           }) => {
             console.log(`Approval transaction sent for ${address}:`, txnDetails);
+            return null;
           },
         });
         console.log('Approval transaction sent. Please confirm in your wallet.');
@@ -84,15 +85,15 @@ async function runPermitExamples() {
         signer: walletClient,
         sender: senderAddress,
         service: Services.trade,
-        permitType: PermitTypes.Permit2,
+        permitType: PermitTypes.PermitWitnessTransferFrom,
         tokens: [
           {
             address: tokenToApprove,
             amount: amountToTrade.toString(),
           },
         ],
-        signatureCallback: async ({ permitData, srcToken }) => {
-          console.log(`Signature received for ${srcToken}:`, permitData);
+        signatureCallback: async (params: SignatureCallbackParams) => {
+          console.log(`Signature received for`, params);
         },
       });
       console.log('Sign response:', signResponse);

@@ -1,5 +1,5 @@
 import { encodeAbiParameters, parseAbiParameters } from 'viem';
-import { PermitType } from '../enums';
+import { DZapPermitMode } from '../enums';
 
 export const STATUS = {
   pending: 'pending',
@@ -30,6 +30,11 @@ export const Services = {
   zap: 'zap',
 } as const;
 
+export const GaslessTxType = {
+  swap: 'swap',
+  bridge: 'bridge',
+} as const;
+
 export const QuoteFilters = {
   fastest: 'fastest',
   best: 'best',
@@ -45,8 +50,8 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const dZapNativeTokenFormat = ZERO_ADDRESS;
 
 export const PERMIT_TYPEHASH_CONST = '0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9';
-export const DEFAULT_PERMIT_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT, '0x']);
-export const DEFAULT_PERMIT2_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [PermitType.PERMIT2_APPROVE, '0x']);
+export const DEFAULT_PERMIT_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, '0x']);
+export const DEFAULT_PERMIT2_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT2_APPROVE, '0x']);
 
 export const STATUS_RESPONSE = {
   COMPLETED: 'COMPLETED',
