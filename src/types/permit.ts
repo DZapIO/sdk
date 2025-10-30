@@ -1,9 +1,9 @@
-import { Signer } from 'ethers';
+import { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
 import { GaslessTxType } from '../constants';
 import { permit2PrimaryType } from '../constants/permit';
 import { ContractVersion } from '../enums';
-import { Address, WalletClient } from 'viem';
+import { Address, TypedDataDomain, WalletClient } from 'viem';
 import { AvailableDZapServices, TokenPermitData } from '.';
 
 export const defaultWitnessType = {
@@ -151,6 +151,14 @@ type GaslessBridgePermit2612Params = BasePermitParams & GaslessBridgeParams;
  */
 export type Gasless2612PermitParams = GaslessSwapPermit2612Params | GaslessBridgePermit2612Params;
 
+export type CustomTypedDataParams = {
+  account: HexString;
+  signer: WalletClient | Signer;
+  domain: TypedDataDomain;
+  types: Record<string, Array<TypedDataField>>;
+  message: Record<string, any>;
+  primaryType: string;
+};
 /**
  * Union of all EIP-2612 permit configurations
  * Supports both gasless and traditional permit flows

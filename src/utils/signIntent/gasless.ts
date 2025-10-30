@@ -1,3 +1,4 @@
+import { getContract } from 'viem';
 import { GaslessTxType } from '../../constants';
 import { dZapIntentPrimaryType, eip2612GaslessDomain } from '../../constants/permit';
 import { SignatureExpiryInSecs } from '../../constants/permit2';
@@ -5,8 +6,8 @@ import { StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from '../../types/eip-2612';
 import { Gasless2612PermitParams } from '../../types/permit';
-import { getContract } from 'viem';
 import { generateDeadline } from '../date';
+import { handleViemTransactionError } from '../errors';
 import { getDZapAbi, getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
 
@@ -122,10 +123,6 @@ export const signGaslessDzapUserIntent = async (
       },
     };
   } catch (error: any) {
-    console.log('Error generating permit signature:', error);
-    if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
-      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-    }
-    return { status: TxnStatus.error, code: StatusCodes.Error };
+    return handleViemTransactionError({ error });
   }
 };
