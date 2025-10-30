@@ -129,21 +129,18 @@ class TradeTxnHandler {
     let txnDetails;
 
     if (chainId === exclusiveChainIds.hyperLiquid) {
-      const typedData = additionalInfo
-        ? (
-            Object.values(additionalInfo)[0] as {
-              typedData: CustomTypedDataParams;
-            }
-          )?.typedData
-        : null;
+      const providerData = additionalInfo ? Object.values(additionalInfo)[0] : null;
+      const typedData =
+        providerData && 'typedData' in (providerData as { typedData: CustomTypedDataParams })
+          ? (providerData as { typedData: CustomTypedDataParams }).typedData
+          : null;
+
       if (!additionalInfo || !typedData) {
-        {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Missing additional info for HyperLiquid transaction',
-            code: StatusCodes.Error,
-          };
-        }
+        return {
+          status: TxnStatus.error,
+          errorMsg: 'Missing additional info for HyperLiquid transaction',
+          code: StatusCodes.Error,
+        };
       }
 
       const resp = await signHyperLiquidWithdrawalIntent({
