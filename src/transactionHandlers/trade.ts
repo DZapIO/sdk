@@ -16,12 +16,12 @@ import {
 import { CustomTypedDataParams } from '../types/permit';
 import { isTypeSigner } from '../utils';
 import { viemChainsById } from '../utils/chains';
-import { signHyperLiquidWithdrawalIntent } from '../utils/eip-2612/dzapUserIntentSign';
 import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 import PermitTxnHandler from './permit';
+import { signCustomTypedData } from '../utils/signIntent/custom';
 
 class TradeTxnHandler {
   private static sendTransaction = async (
@@ -143,7 +143,7 @@ class TradeTxnHandler {
         };
       }
 
-      const resp = await signHyperLiquidWithdrawalIntent({
+      const resp = await signCustomTypedData({
         signer,
         account: txnParams.from as HexString,
         domain: typedData.domain,
