@@ -518,8 +518,10 @@ export type SignPermitResponse =
       permitType: PermitMode;
     };
 
+export type BroadcastTxData = string;
+
 export type BroadcastTxParams = {
   txId: string;
   chainId: number;
-  signedTxData: HexString;
+  txData: BroadcastTxData;
 };

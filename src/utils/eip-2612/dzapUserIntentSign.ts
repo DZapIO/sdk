@@ -1,11 +1,11 @@
+import { getContract } from 'viem';
 import { GaslessTxType } from '../../constants';
 import { dZapIntentPrimaryType, eip2612GaslessDomain } from '../../constants/permit';
 import { SignatureExpiryInSecs } from '../../constants/permit2';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from '../../types/eip-2612';
-import { Gasless2612PermitParams } from '../../types/permit';
-import { getContract } from 'viem';
+import { CustomTypedDataParams, Gasless2612PermitParams } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { getDZapAbi, getPublicClient } from '../index';
 import { signTypedData } from '../signTypedData';
@@ -119,6 +119,44 @@ export const signGaslessDzapUserIntent = async (
         signature,
         nonce,
         deadline,
+      },
+    };
+  } catch (error: any) {
+    console.log('Error generating permit signature:', error);
+    if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
+      return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
+    }
+    return { status: TxnStatus.error, code: StatusCodes.Error };
+  }
+};
+
+export const signHyperLiquidWithdrawalIntent = async (
+  params: CustomTypedDataParams,
+): Promise<{
+  status: TxnStatus;
+  code: StatusCodes;
+  data?: {
+    signature: HexString;
+    message: Record<string, any>;
+  };
+}> => {
+  try {
+    const { account, signer, message, domain, primaryType, types } = params;
+
+    const signature = await signTypedData({
+      signer,
+      account,
+      domain,
+      message,
+      primaryType,
+      types,
+    });
+    return {
+      status: TxnStatus.success,
+      code: StatusCodes.Success,
+      data: {
+        signature,
+        message,
       },
     };
   } catch (error: any) {

@@ -13,8 +13,10 @@ import {
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
 } from '../types';
+import { CustomTypedDataParams } from '../types/permit';
 import { isTypeSigner } from '../utils';
 import { viemChainsById } from '../utils/chains';
+import { signHyperLiquidWithdrawalIntent } from '../utils/eip-2612/dzapUserIntentSign';
 import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
@@ -56,41 +58,6 @@ class TradeTxnHandler {
       txnHash,
       additionalInfo,
       updatedQuotes,
-    };
-  };
-
-  private static signTransaction = async (
-    signer: Signer | WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
-    chainId: number,
-  ): Promise<{
-    status: TxnStatus;
-    data: HexString;
-  }> => {
-    let signedTxData: HexString;
-
-    if (isTypeSigner(signer)) {
-      const txnRes = await signer.signTransaction({
-        from: txnParams.from,
-        to: txnParams.to,
-        data: txnParams.data,
-        value: txnParams.value,
-        gasLimit: txnParams.gasLimit,
-      });
-      signedTxData = txnRes as HexString;
-    } else {
-      signedTxData = await signer.signTransaction({
-        chain: viemChainsById[chainId],
-        account: txnParams.from as HexString,
-        to: txnParams.to as HexString,
-        data: txnParams.data as HexString,
-        value: BigInt(txnParams.value),
-      });
-    }
-
-    return {
-      status: TxnStatus.success,
-      data: signedTxData,
     };
   };
 
@@ -151,47 +118,71 @@ class TradeTxnHandler {
     };
   };
 
-  private static broadcastTransaction = async ({
-    request,
-    signer,
-    chainId,
-    txId,
-    txnParams,
-  }: {
-    request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
-    txId: string;
-    chainId: number;
-    txnParams: {
-      from: string;
-      to: `0x${string}`;
-      data: string;
-      value: string;
-      gasLimit: string;
-    };
-  }) => {
-    const signedTx = await this.signTransaction(signer, txnParams, chainId);
+  private static sendHyperLiquidTransaction = async (
+    signer: Signer | WalletClient,
+    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
+    txnData: TradeBuildTxnResponse,
+    chainId: number,
+    additionalInfo: AdditionalInfo | undefined,
+    updatedQuotes: Record<string, string>,
+  ) => {
+    let txnDetails;
 
-    if (signedTx.status !== TxnStatus.success) {
-      throw new Error('Failed to sign transaction');
+    if (chainId === exclusiveChainIds.hyperLiquid) {
+      const typedData = additionalInfo
+        ? (
+            Object.values(additionalInfo)[0] as {
+              typedData: CustomTypedDataParams;
+            }
+          )?.typedData
+        : null;
+      if (!additionalInfo || !typedData) {
+        {
+          return {
+            status: TxnStatus.error,
+            errorMsg: 'Missing additional info for HyperLiquid transaction',
+            code: StatusCodes.Error,
+          };
+        }
+      }
+
+      const resp = await signHyperLiquidWithdrawalIntent({
+        signer,
+        account: txnParams.from as HexString,
+        domain: typedData.domain,
+        types: typedData.types,
+        message: typedData.message,
+        primaryType: typedData.primaryType,
+      });
+
+      if (resp.status !== TxnStatus.success) {
+        throw new Error('Failed to sign transaction');
+      }
+      txnDetails = resp.data?.signature;
+    } else {
+      const resp = await this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+
+      if (resp.status !== TxnStatus.success) {
+        throw new Error('Failed to sign transaction');
+      }
+      txnDetails = resp.txnHash;
     }
 
     const txResp: {
       status: TxnStatus;
       txnHash: HexString;
     } = await broadcastTx({
-      chainId: request.fromChain,
-      signedTxData: signedTx.data,
-      txId,
+      chainId,
+      txData: txnDetails as HexString,
+      txId: txnData.txId,
     });
 
-    if (txResp.status !== TxnStatus.success) {
-      throw new Error('Failed to sign permit');
-    }
     return {
       status: TxnStatus.success,
       code: StatusCodes.Success,
-      txnHash: txResp.txnHash as HexString,
+      txnHash: txResp.txnHash,
+      additionalInfo,
+      updatedQuotes,
     };
   };
 
@@ -225,7 +216,7 @@ class TradeTxnHandler {
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
       if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
-        return this.broadcastTransaction({ request, signer, chainId, txId: buildTxnResponseData.txId, txnParams });
+        return this.sendHyperLiquidTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
       }
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
