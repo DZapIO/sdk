@@ -158,7 +158,6 @@ class TradeTxnHandler {
       txnDetails = resp.data?.signature;
     } else {
       const resp = await this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-
       if (resp.status !== TxnStatus.success) {
         throw new Error('Failed to sign transaction');
       }
@@ -173,6 +172,10 @@ class TradeTxnHandler {
       txData: txnDetails as HexString,
       txId: txnData.txId,
     });
+
+    if (txResp.status !== TxnStatus.success) {
+      throw new Error('Failed to broadcast or save transaction');
+    }
 
     return {
       status: TxnStatus.success,
