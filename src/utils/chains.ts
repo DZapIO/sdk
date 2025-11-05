@@ -80,11 +80,60 @@ const arthera = /*#__PURE__*/ defineChain({
   },
 });
 
-export const viemChainsById: Record<number, viemChains.Chain> = [...Object.values(viemChains), fiveIre, arthera].reduce((acc, chainData) => {
-  return chainData.id
-    ? {
-        ...acc,
-        [chainData.id]: chainData,
-      }
-    : acc;
-}, {});
+export const hyperEvm = /*#__PURE__*/ defineChain({
+  id: 999,
+  name: 'HyperEVM',
+  nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
+  contracts: {
+    multicall3: {
+      address: '0xcA11bde05977b3631167028862bE2a173976CA11',
+      blockCreated: 13051,
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'HyperEVMScan',
+      url: 'https://hyperevmscan.io/',
+    },
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc.hyperliquid.xyz/evm', 'https://rpc.hypurrscan.io', 'https://hyperliquid-json-rpc.stakely.io'],
+    },
+  },
+});
+
+export const hyperLiquid = /*#__PURE__*/ defineChain({
+  id: 998,
+  name: 'Hyper Liquid',
+  nativeCurrency: { name: 'ETH', symbol: 'HYPE', decimals: 18 },
+  contracts: {
+    multicall3: {
+      address: '0xcA11bde05977b3631167028862bE2a173976CA11',
+      blockCreated: 13051,
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Hyper Liquid Scan',
+      url: 'https://app.hyperliquid.xyz/explorer',
+    },
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://li.quest/v1/rpc/1337'],
+    },
+  },
+});
+
+export const viemChainsById: Record<number, viemChains.Chain> = [...Object.values(viemChains), fiveIre, arthera, hyperEvm, hyperLiquid].reduce(
+  (acc, chainData) => {
+    return chainData.id
+      ? {
+          ...acc,
+          [chainData.id]: chainData,
+        }
+      : acc;
+  },
+  {},
+);
