@@ -15,7 +15,7 @@ import {
 } from '../types';
 import { CustomTypedDataParams } from '../types/permit';
 import { isTypeSigner } from '../utils';
-import { viemChainsById } from '../utils/chains';
+import { viemChainsById } from '../chains';
 import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
