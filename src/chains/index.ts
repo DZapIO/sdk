@@ -2,7 +2,7 @@ import * as viemChains from 'viem/chains';
 import { arthera } from './arthera';
 import { fiveIre } from './fiveIre';
 import { hyperEvm } from './hyperEvm';
-import { hyperliquid } from './hyperLiquid';
+import { hyperliquid } from './hyperliquid';
 
 export { arthera } from './arthera';
 export { fiveIre } from './fiveIre';
