@@ -1,13 +1,13 @@
 import * as viemChains from 'viem/chains';
-import { arthera } from './definations/arthera';
-import { fiveIre } from './definations/fiveIre';
-import { hyperEvm } from './definations/hyperEvm';
-import { hyperliquid } from './definations/hyperliquid';
+import { arthera } from './definitions/arthera';
+import { fiveIre } from './definitions/fiveIre';
+import { hyperEvm } from './definitions/hyperEvm';
+import { hyperliquid } from './definitions/hyperliquid';
 
-export { arthera } from './definations/arthera';
-export { fiveIre } from './definations/fiveIre';
-export { hyperEvm } from './definations/hyperEvm';
-export { hyperliquid } from './definations/hyperliquid';
+export { arthera } from './definitions/arthera';
+export { fiveIre } from './definitions/fiveIre';
+export { hyperEvm } from './definitions/hyperEvm';
+export { hyperliquid } from './definitions/hyperliquid';
 
 export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid];
 
