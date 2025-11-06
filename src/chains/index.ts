@@ -7,6 +7,7 @@ import { hyperliquid } from './definations/hyperliquid';
 export { arthera } from './definations/arthera';
 export { fiveIre } from './definations/fiveIre';
 export { hyperEvm } from './definations/hyperEvm';
+export { hyperliquid } from './definations/hyperliquid';
 
 export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid];
 
