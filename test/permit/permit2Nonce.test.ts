@@ -1,6 +1,6 @@
 import { permit2ProxyAbi } from '../../src/artifacts/Permit2Proxy';
 import { getPublicClient } from '../../src/utils';
-import { viemChainsById } from '../../src/utils/chains';
+import { viemChainsById } from '../../src/chains';
 import { getPermit2Address } from '../../src/utils/permit2';
 import { getNextPermit2Nonce } from '../../src/utils/permit2/nonce';
 import { HexString } from '../../src/types';

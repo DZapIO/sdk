@@ -3,7 +3,7 @@ import { WalletClient } from 'viem';
 import { StatusCodes, TxnStatus } from '../enums';
 import { HexString } from '../types';
 import { isTypeSigner } from '../utils';
-import { viemChainsById } from '../utils/chains';
+import { viemChainsById } from '../chains';
 import { handleViemTransactionError } from '../utils/errors';
 
 class GenericTxnHandler {

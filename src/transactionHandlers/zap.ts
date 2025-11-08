@@ -6,7 +6,7 @@ import { DZapTransactionResponse, HexString } from '../types';
 import { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
 import { ZapStep, ZapTxnDetails } from '../types/zap/step';
 import { getPublicClient, isTypeSigner } from '../utils';
-import { viemChainsById } from '../utils/chains';
+import { viemChainsById } from '../chains';
 import { handleViemTransactionError } from '../utils/errors';
 import { zapStepAction } from '../zap/constants/step';
 
