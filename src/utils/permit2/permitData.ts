@@ -111,7 +111,8 @@ export function getPermitBatchTransferData(
       { name: 'witness', type: witness.witnessTypeName },
     ],
   };
-  const message = Object.assign(permit, { witness: witness.witness });
+
+  const message = { ...permit, witness: witness.witness };
   return {
     domain,
     types,

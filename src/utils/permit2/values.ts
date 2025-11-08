@@ -83,7 +83,7 @@ export const getPermitTransferFromValues = async ({
   firstTokenNonce: bigint | null;
   rpcUrls?: string[];
 }): Promise<{ permit2Values: PermitTransferFromValues; nonce: bigint }> => {
-  let nonce;
+  let nonce: bigint;
   if (token.index === 0) {
     nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
   } else if (firstTokenNonce === null) {
@@ -143,7 +143,7 @@ export async function getPermit2Values(
 ): Promise<{ permit2Values: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues; nonce: bigint }> {
   switch (params.primaryType) {
     case permit2PrimaryType.PermitSingle:
-      if (!params.expiration) {
+      if (params.expiration === undefined || params.expiration === null) {
         throw new Error('Expiration is required for PermitSingle');
       }
       return getPermitSingleValues({ ...params, token: params.tokens[0], expiration: params.expiration });

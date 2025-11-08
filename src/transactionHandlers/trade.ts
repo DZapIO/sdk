@@ -324,7 +324,7 @@ class TradeTxnHandler {
           permit,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
-          throw new Error('Failed to sign permit');
+          throw new Error('Failed to execute gasless transaction');
         }
         return {
           status: TxnStatus.success,

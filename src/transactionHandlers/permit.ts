@@ -78,7 +78,6 @@ class PermitTxnHandler {
           permit: token.permit,
         },
         gasless: false,
-        amount: BigInt(amount),
         version: eip2612PermitData.data.version,
         name: eip2612PermitData.data.name,
         nonce: eip2612PermitData.data.nonce,
