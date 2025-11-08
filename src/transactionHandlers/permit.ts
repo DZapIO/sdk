@@ -4,7 +4,7 @@ import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
-import { signGaslessDzapUserIntent } from '../utils/eip-2612/dzapUserIntentSign';
+import { signGaslessDzapUserIntent } from '../utils/signIntent/gasless';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/eip-2612/eip2612Permit';
 import { getPermit2Signature } from '../utils/permit2';
 
