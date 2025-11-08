@@ -128,6 +128,12 @@ export type TradeQuotesRequest = {
   account?: string;
   allowedProtocols?: string[];
   filter?: QuoteFilter;
+  timingStrategy?: Partial<{
+    minWaitTimeMs: number;
+    maxWaitTimeMs: number;
+    subsequentDelayMs: number;
+    preferredResultCount: number;
+  }>;
 };
 
 export type TradeQuotesRequestData = {
