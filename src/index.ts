@@ -46,7 +46,7 @@ import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
-import { ZapStatusResponse } from './types/zap';
+import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { broadcastTx } from './api';
 
@@ -102,6 +102,7 @@ export {
   TradeStep,
   TxnStatus,
   ZapStatusResponse,
+  ZapIntegratorConfig,
   EvmTxData,
   SvmTxData,
   BtcTxData,

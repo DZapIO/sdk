@@ -12,6 +12,12 @@ export type ZapRouteRequestPoolDetails = {
   metadata?: unknown;
 };
 
+export type ZapIntegratorConfig = {
+  id: string;
+  feeBps: number;
+  wallet: string;
+};
+
 export type ZapBuildTxnResponse = {
   amountOut: string;
   approvalData: {
@@ -31,6 +37,7 @@ export type ZapBuildTxnRequest = {
   refundee: string;
   slippage: number;
   account: string;
+  integrator?: ZapIntegratorConfig;
   permitData?: string;
   amount?: string;
   estimateGas?: boolean;
