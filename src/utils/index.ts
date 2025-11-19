@@ -2,9 +2,7 @@ import {
   Abi,
   createPublicClient,
   fallback,
-  getAddress,
   http,
-  isAddress,
   parseEventLogs,
   ParseEventLogsReturnType,
   stringToHex,
@@ -19,10 +17,10 @@ import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo }
 import { Signer } from 'ethers';
 import { viemChainsById } from '../chains';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
-import { nativeTokens } from '../constants/address';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
+import { formatToken } from './tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
@@ -37,20 +35,6 @@ export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | unde
       },
     },
   });
-};
-
-const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
-
-export const getChecksumAddress = (address: string): HexString => getAddress(address);
-
-export const formatToken = <T extends HexString | string = string>(token: T, nativeTokenAddress: T = zeroAddress as T): T => {
-  if (!isAddress(token)) {
-    return token;
-  } else if (isNativeCurrency(token)) {
-    return nativeTokenAddress;
-  } else {
-    return getChecksumAddress(token) as T;
-  }
 };
 
 export function getTokensPairKey({

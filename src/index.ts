@@ -47,9 +47,10 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { formatToken, getTokensPairKey } from './utils';
+import { getTokensPairKey } from './utils';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
+import { formatToken } from './utils/tokens';
 
 export * from './types/zap';
 export * from './zap/constants';
