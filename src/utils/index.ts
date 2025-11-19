@@ -43,7 +43,7 @@ const isNativeCurrency = (contract: string) => nativeTokens.includes(contract);
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 
-export const formatToken = <T extends HexString | string>(token: T, nativeTokenAddress: T = zeroAddress as T): T => {
+export const formatToken = <T extends HexString | string = string>(token: T, nativeTokenAddress: T = zeroAddress as T): T => {
   if (!isAddress(token)) {
     return token;
   } else if (isNativeCurrency(token)) {
@@ -269,7 +269,6 @@ export const handleDecodeTxnData = (
   // update swap info with input data
   const updatedSwapInfo =
     new SwapInputDataDecoder().updateSwapInfo({
-      chainId: chain.chainId,
       data: transaction.input,
       eventSwapInfo: swapInfo,
     }) || swapInfo;

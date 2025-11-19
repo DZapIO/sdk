@@ -84,11 +84,9 @@ export class SwapInputDataDecoder {
   };
 
   public updateSwapInfo = ({
-    chainId,
     data,
     eventSwapInfo,
   }: {
-    chainId: number;
     eventSwapInfo?: SwapInfo[] | SwapInfo;
     data?: HexString;
   }): SwapInfo[] | SwapInfo | undefined => {
@@ -102,18 +100,21 @@ export class SwapInputDataDecoder {
         return eventSwapInfo;
       }
 
-      const inputTokenData = decoder(data);
-      if (!Array.isArray(inputTokenData) || inputTokenData.length === 0) {
+      const inputTokenData: ReadonlyArray<{ token: HexString; amount: bigint }> = decoder(data);
+      if (!inputTokenData || inputTokenData.length === 0) {
         return eventSwapInfo;
       }
 
       // update input amount for each swap info
       const tokenToAmount = inputTokenData
         .filter((item) => item.token && item.amount)
-        .reduce((acc, cur) => {
-          acc[formatToken(cur.token, chainId)] = cur.amount;
-          return acc;
-        }, {});
+        .reduce(
+          (acc, cur) => {
+            acc[formatToken(cur.token)] = cur.amount;
+            return acc;
+          },
+          {} as Record<string, bigint>,
+        );
 
       if (Array.isArray(eventSwapInfo)) {
         return eventSwapInfo.map((item) => {
