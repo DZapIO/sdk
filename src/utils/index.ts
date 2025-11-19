@@ -8,6 +8,7 @@ import {
   parseEventLogs,
   ParseEventLogsReturnType,
   stringToHex,
+  Transaction,
   TransactionReceipt,
   WalletClient,
   zeroAddress,
@@ -16,11 +17,12 @@ import * as ABI from '../artifacts';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
 import { Signer } from 'ethers';
+import { viemChainsById } from '../chains';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
 import { nativeTokens } from '../constants/address';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
-import { viemChainsById } from '../chains';
+import { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
@@ -202,7 +204,8 @@ export const getDZapAbi = (service: AvailableDZapServices, version: ContractVers
 };
 
 export const handleDecodeTxnData = (
-  data: TransactionReceipt,
+  transaction: Transaction,
+  receipt: TransactionReceipt,
   service: AvailableDZapServices,
   chain: Chain,
 ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
@@ -211,7 +214,7 @@ export const handleDecodeTxnData = (
   try {
     events = parseEventLogs({
       abi: dZapAbi,
-      logs: data.logs,
+      logs: receipt.logs,
     });
   } catch (e) {
     events = [];
@@ -263,7 +266,15 @@ export const handleDecodeTxnData = (
     };
   }
 
-  return { swapInfo, swapFailPairs };
+  // update swap info with input data
+  const updatedSwapInfo =
+    new SwapInputDataDecoder().updateSwapInfo({
+      chainId: chain.chainId,
+      data: transaction.input,
+      eventSwapInfo: swapInfo,
+    }) || swapInfo;
+
+  return { swapInfo: updatedSwapInfo, swapFailPairs };
 };
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {
