@@ -1,6 +1,7 @@
 import { Signer } from 'ethers';
-import { encodeFunctionData, erc20Abi, maxUint256, MulticallParameters, WalletClient } from 'viem';
+import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
+import { erc20Abi } from '../artifacts';
 import { ApprovalModes } from '../constants/approval';
 import { erc20Functions } from '../constants/erc20';
 import { StatusCodes, TxnStatus } from '../enums';
