@@ -16,3 +16,17 @@ export const exclusiveChainIds = {
   citreaTestnet: 5115,
   hyperLiquid: 998,
 };
+
+export const chainTypes = {
+  evm: 'evm',
+  bvm: 'bvm',
+  svm: 'svm',
+  aptosvm: 'aptosvm',
+  cosmos: 'cosmos',
+  nearvm: 'nearvm',
+  starknetvm: 'starknetvm',
+  stellarvm: 'stellarvm',
+  suivm: 'suivm',
+  tonvm: 'tonvm',
+  tronvm: 'tronvm',
+} as const;
