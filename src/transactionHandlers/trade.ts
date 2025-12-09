@@ -1,6 +1,6 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
-import { broadcastTx, executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
+import { broadcastSwapBridgeTx, executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
 import { exclusiveChainIds } from '../constants/chains';
 import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
@@ -167,7 +167,7 @@ class TradeTxnHandler {
     const txResp: {
       status: TxnStatus;
       txnHash: HexString;
-    } = await broadcastTx({
+    } = await broadcastSwapBridgeTx({
       chainId,
       txData: txnDetails as HexString,
       txId: txnData.txId,

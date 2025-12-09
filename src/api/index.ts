@@ -41,9 +41,16 @@ export const executeGaslessTxnData = (request: GaslessExecuteTxParams) =>
     method: POST,
   });
 
-export const broadcastTx = (request: BroadcastTxParams) =>
+export const broadcastSwapBridgeTx = (request: BroadcastTxParams) =>
   invoke({
     endpoint: BROADCAST_TX,
+    data: request,
+    method: POST,
+  });
+
+export const broadcastZapTx = (request: BroadcastTxParams) =>
+  invoke({
+    endpoint: ZAP_ENDPOINTS.broadcast,
     data: request,
     method: POST,
   });
