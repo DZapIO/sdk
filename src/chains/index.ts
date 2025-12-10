@@ -9,6 +9,7 @@ export { arthera } from './definitions/arthera';
 export { fiveIre } from './definitions/fiveIre';
 export { hyperEvm } from './definitions/hyperEvm';
 export { hyperliquid } from './definitions/hyperliquid';
+export { stableChain } from './definitions/stable';
 
 export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain];
 
