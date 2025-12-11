@@ -67,7 +67,7 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
-import { getDZapAbi, getOtherAbis, handleDecodeTxnData } from '../utils';
+import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
@@ -633,11 +633,17 @@ class DZapClient {
    * ```
    */
   public async decodeTxnData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const chainConfig = await DZapClient.getChainConfig();
+    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
+    const [chainConfig, transactionData] = await Promise.all([
+      DZapClient.getChainConfig(),
+      publicClient.getTransaction({
+        hash: data.transactionHash,
+      }),
+    ]);
     if (chainConfig === null || chainConfig?.[chainId] == null) {
       throw new Error('Chains config not found');
     }
-    return handleDecodeTxnData(data, service, chainConfig[chainId]);
+    return handleDecodeTxnData(transactionData, data, service, chainConfig[chainId]);
   }
 
   /**
