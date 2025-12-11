@@ -531,3 +531,13 @@ export type BroadcastTxParams = {
   chainId: number;
   txData: BroadcastTxData;
 };
+
+export type BroadcastTxResponse =
+  | {
+      status: TxnStatus.success;
+      txnHash: string;
+    }
+  | {
+      status: Exclude<TxnStatus, typeof TxnStatus.success>;
+      message: string;
+    };

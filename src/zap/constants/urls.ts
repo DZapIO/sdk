@@ -9,4 +9,5 @@ export const ZAP_ENDPOINTS = {
   positions: '/user/positions',
   buildTx: '/buildTx',
   quote: '/quote',
+  broadcast: '/broadcast',
 };

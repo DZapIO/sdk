@@ -48,7 +48,7 @@ import { PermitTypes } from './constants/permit';
 import DZapClient from './dZapClient';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
-import { broadcastTx } from './api';
+import { broadcastTradeTx, broadcastZapTx } from './api';
 
 export * from './types/zap';
 export * from './zap/constants';
@@ -110,5 +110,6 @@ export {
   ParamQuotes,
   SignPermitResponse,
   TokenPermitData,
-  broadcastTx,
+  broadcastTradeTx,
+  broadcastZapTx,
 };
