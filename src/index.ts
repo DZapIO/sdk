@@ -1,4 +1,3 @@
-import { broadcastTx } from './api';
 import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
 import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
@@ -60,7 +59,6 @@ export {
   ApprovalMode,
   ApprovalModes,
   BatchPermitCallbackParams,
-  broadcastTx,
   BtcTxData,
   Chain,
   ChainData,

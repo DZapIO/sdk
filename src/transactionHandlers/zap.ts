@@ -4,7 +4,7 @@ import { fetchZapBuildTxnData } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
 import { DZapTransactionResponse, HexString } from '../types';
 import { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
-import { ZapStep, ZapTxnDetails } from '../types/zap/step';
+import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
 import { getPublicClient, isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
 import { handleViemTransactionError } from '../utils/errors';
@@ -17,7 +17,7 @@ class ZapTxnHandler {
     signer,
   }: {
     chainId: number;
-    txnData: ZapTxnDetails;
+    txnData: ZapEvmTxnDetails;
     signer: Signer | WalletClient;
   }): Promise<DZapTransactionResponse> => {
     try {
@@ -58,7 +58,7 @@ class ZapTxnHandler {
     }
   };
 
-  public static approve = async ({ chainId, data, signer }: { chainId: number; data: ZapTxnDetails; signer: Signer | WalletClient }) => {
+  public static approve = async ({ chainId, data, signer }: { chainId: number; data: ZapEvmTxnDetails; signer: Signer | WalletClient }) => {
     try {
       const { callData, callTo, value, estimatedGas } = data;
       const publicClient = getPublicClient({ chainId, rpcUrls: undefined });
@@ -140,7 +140,7 @@ class ZapTxnHandler {
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         if (step.action === zapStepAction.execute) {
-          const result = await ZapTxnHandler.execute({ chainId, txnData: step.data as ZapTxnDetails, signer });
+          const result = await ZapTxnHandler.execute({ chainId, txnData: step.data as ZapEvmTxnDetails, signer });
           if (result.status !== TxnStatus.success) {
             return result;
           }
