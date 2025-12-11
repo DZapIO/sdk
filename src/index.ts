@@ -1,4 +1,3 @@
-import { broadcastTx } from './api';
 import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
 import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
@@ -50,7 +49,6 @@ import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
-import { broadcastTradeTx, broadcastZapTx } from './api';
 import { formatToken } from './utils/tokens';
 
 export * from './types/zap';
@@ -61,7 +59,6 @@ export {
   ApprovalMode,
   ApprovalModes,
   BatchPermitCallbackParams,
-  broadcastTx,
   BtcTxData,
   Chain,
   ChainData,
@@ -114,14 +111,5 @@ export {
   TradeStep,
   TxnStatus,
   ZapIntegratorConfig,
-  EvmTxData,
-  SvmTxData,
-  BtcTxData,
-  TradeGasBuildTxnResponse,
-  ParamQuotes,
-  SignPermitResponse,
-  TokenPermitData,
-  broadcastTradeTx,
-  broadcastZapTx,
   ZapStatusResponse,
 };

@@ -3,6 +3,8 @@ import { Signer } from 'ethers';
 
 import { Prettify, TransactionReceipt, WalletClient } from 'viem';
 import {
+  broadcastTradeTx,
+  broadcastZapTx,
   fetchAllSupportedChains,
   fetchAllTokens,
   fetchBalances,
@@ -20,6 +22,7 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
+import { config } from '../config';
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
@@ -32,6 +35,8 @@ import ZapTxnHandler from '../transactionHandlers/zap';
 import {
   ApprovalMode,
   AvailableDZapServices,
+  BroadcastTxParams,
+  BroadcastTxResponse,
   CalculatePointsRequest,
   Chain,
   ChainData,
@@ -72,7 +77,6 @@ import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from 
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
 import { updateQuotes } from '../utils/updateQuotes';
-import { config } from '../config';
 
 class DZapClient {
   private static instance: DZapClient;
@@ -1214,6 +1218,26 @@ class DZapClient {
    */
   public async getZapProviders(): Promise<ZapProviders> {
     return (await fetchZapProviders()).data;
+  }
+
+  /**
+   * Broadcasts a trade transaction to the blockchain.
+   *
+   * @param request - The trade transaction request containing source chainId, txnData and txId
+   * @returns Promise resolving to the broadcasted transaction Hash in response
+   */
+  public async broadcastTradeTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
+    return await broadcastTradeTx(request);
+  }
+
+  /**
+   * Broadcasts a zap transaction to the blockchain.
+   *
+   * @param request - The trade transaction request containing source chainId, txnData and txId
+   * @returns Promise resolving to the broadcasted transaction Hash in response
+   */
+  public async broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
+    return await broadcastZapTx(request);
   }
 }
 
