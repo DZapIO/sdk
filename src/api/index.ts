@@ -55,7 +55,7 @@ export const broadcastTradeTx = (request: BroadcastTxParams): Promise<BroadcastT
     method: POST,
   });
 
-export const broadcastZapTx = (request: BroadcastTxParams): Promise<BroadcastTxResponse> =>
+export const broadcastZapTx = (request: BroadcastTxParams): Promise<{ txnHash: string; txnId: string }> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.broadcast,
     data: request,

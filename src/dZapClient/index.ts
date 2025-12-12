@@ -1237,7 +1237,21 @@ class DZapClient {
    * @returns Promise resolving to the broadcasted transaction Hash in response
    */
   public async broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
-    return await broadcastZapTx(request);
+    try {
+      const response = await broadcastZapTx(request);
+      if (response?.txnHash) {
+        return {
+          status: TxnStatus.success,
+          txnHash: response.txnHash,
+        };
+      }
+      throw new Error('Failed to broadcast zap transaction');
+    } catch (error) {
+      return {
+        status: TxnStatus.error,
+        message: 'Failed to broadcast zap transaction',
+      };
+    }
   }
 }
 
