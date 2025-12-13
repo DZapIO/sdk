@@ -1239,13 +1239,13 @@ class DZapClient {
   public async broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
     try {
       const response = await broadcastZapTx(request);
-      if (response?.txnHash) {
+      if (response.status === TxnStatus.success) {
         return {
           status: TxnStatus.success,
-          txnHash: response.txnHash,
+          txnHash: response?.data?.txnHash,
         };
       }
-      throw new Error('Failed to broadcast zap transaction');
+      throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
     } catch (error) {
       return {
         status: TxnStatus.error,
