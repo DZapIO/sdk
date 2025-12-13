@@ -25,6 +25,7 @@ import {
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
+import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
@@ -55,7 +56,7 @@ export const broadcastTradeTx = (request: BroadcastTxParams): Promise<BroadcastT
     method: POST,
   });
 
-export const broadcastZapTx = (request: BroadcastTxParams): Promise<BroadcastTxResponse> =>
+export const broadcastZapTx = (request: BroadcastTxParams): Promise<BroadcastZapTxResponse> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.broadcast,
     data: request,
