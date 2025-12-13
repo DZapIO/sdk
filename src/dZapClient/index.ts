@@ -1242,7 +1242,7 @@ class DZapClient {
       if (response.status === TxnStatus.success) {
         return {
           status: TxnStatus.success,
-          txnHash: response?.data?.txnHash,
+          txnHash: response.data.txnHash,
         };
       }
       throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
