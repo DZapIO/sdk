@@ -7,7 +7,7 @@ export class SwapInputDataDecoder {
   private decodeSingleSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
     const decodedData = decodeFunctionData({
       data,
-      abi: SwapAbisByFunctionName.SingleSwap,
+      abi: SwapAbisByFunctionName.SingleSwapAbi,
     });
     return [decodedData?.args?.[4]];
   };

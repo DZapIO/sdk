@@ -12,7 +12,7 @@ export { batchPermitSwapAbi } from './BatchPermitSwap.abi';
 export * from './gasless';
 
 export const SwapAbisByFunctionName = {
-  SingleSwap: singleSwapAbi,
+  SingleSwapAbi: singleSwapAbi,
   MultiSwapAbi: multiSwapAbi,
   BatchPermitSwapAbi: batchPermitSwapAbi,
   GaslessExecuteSwapAbi: gaslessExecuteSwapAbi,

@@ -3725,4 +3725,4 @@ export const dZapCoreV2Abi: Abi = [
     stateMutability: 'view',
     type: 'function',
   },
-] as unknown as Abi;
+] as const;

@@ -1835,4 +1835,4 @@ export const dZapDcaAbi: Abi = [
     stateMutability: 'payable',
     type: 'receive',
   },
-];
+] as const;
