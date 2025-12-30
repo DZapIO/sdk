@@ -1,5 +1,5 @@
 import { decodeFunctionData } from 'viem/utils';
-import { SwapAbisByFunctionName } from './abis';
+import { SwapAbisByFunctionName } from '../../../artifacts';
 import { HexString, SwapInfo } from '../../../types';
 import { formatToken } from '../../tokens';
 
