@@ -1,3 +1,6 @@
+/**
+ * Status values returned from API responses
+ */
 export const STATUS_RESPONSE = {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
@@ -6,10 +9,13 @@ export const STATUS_RESPONSE = {
   REFUNDED: 'REFUNDED',
 } as const;
 
+/**
+ * Internal status values for tracking transaction state
+ */
 export const STATUS = {
-  pending: 'pending',
-  inProgress: 'in-progress',
   success: 'success',
+  pending: 'pending',
   rejected: 'rejected',
+  inProgress: 'in-progress',
   error: 'error',
 } as const;
