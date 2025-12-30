@@ -1,15 +1,15 @@
 export const ZAP_ENDPOINTS = {
-  status: '/status',
+  status: 'status',
   config: {
-    chains: '/config/chains',
-    providers: '/config/providers',
+    chains: 'config/chains',
+    providers: 'config/providers',
   },
-  pools: '/pools',
-  poolDetails: '/pool/details',
-  positions: '/user/positions',
-  buildTx: '/buildTx',
-  quote: '/quote',
-  broadcast: '/broadcast',
+  pools: 'pools',
+  poolDetails: 'pool/details',
+  positions: 'user/positions',
+  buildTx: 'buildTx',
+  quote: 'quote',
+  broadcast: 'broadcast',
 };
 
 export const TRADE_ENDPOINTS = {
@@ -21,12 +21,12 @@ export const TRADE_ENDPOINTS = {
     quote: 'bridge/quote',
     buildTx: 'bridge/buildTx',
   },
-  quotes: '/quotes',
-  buildTx: '/buildTx',
+  quotes: 'quotes',
+  buildTx: 'buildTx',
   gasless: {
-    executeTx: '/gasless/executeTx',
+    executeTx: 'gasless/executeTx',
   },
-  broadcast: '/broadcast',
+  broadcast: 'broadcast',
   chains: 'chains',
   token: {
     tokens: 'token/tokens',
@@ -34,7 +34,7 @@ export const TRADE_ENDPOINTS = {
     price: 'token/price',
     balanceOf: 'token/balance-of',
   },
-  status: '/status',
+  status: 'status',
   user: {
     calculatePoints: 'user/calculatePoints',
   },
