@@ -1,5 +1,5 @@
-import { erc20PermitFunctions } from '../../constants/erc20';
-import { permit2PrimaryType } from '../../constants/permit';
+import { ERC20_FUNCTIONS } from '../../constants/blockchain/erc20';
+import { permit2PrimaryType } from '../../constants/blockchain/permit';
 import {
   BasePermitParams,
   Permit2PrimaryType,
@@ -46,7 +46,7 @@ export const getPermitSingleValues = async ({
   const nonceResult = await publicClient.readContract({
     address: permit2Address,
     abi: Permit2Abi,
-    functionName: erc20PermitFunctions.allowance,
+    functionName: ERC20_FUNCTIONS.allowance,
     args: [account, token.address, spender],
   });
   return {

@@ -16,11 +16,12 @@ import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo }
 
 import { Signer } from 'ethers';
 import { viemChainsById } from '../chains';
-import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
+import { DZapAbis, OtherAbis, Services } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
 import { formatToken } from './tokens';
+import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants/blockchain/tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
@@ -166,7 +167,7 @@ export const isTypeSigner = (variable: any): variable is Signer => {
   return variable instanceof Signer;
 };
 
-export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
+export const isDZapNativeToken = (srcToken: string) => srcToken === DZAP_NATIVE_TOKEN_FORMAT;
 
 export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
   switch (service) {

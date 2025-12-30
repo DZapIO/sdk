@@ -1,7 +1,6 @@
 import { getContract } from 'viem';
 import { GaslessTxType } from '../../constants';
-import { dZapIntentPrimaryType, eip2612GaslessDomain } from '../../constants/permit';
-import { SignatureExpiryInSecs } from '../../constants/permit2';
+import { dZapIntentPrimaryType, eip2612GaslessDomain, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/blockchain/permit';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from '../../types/eip-2612';
@@ -80,7 +79,7 @@ export const signGaslessDzapUserIntent = async (
 }> => {
   try {
     const { chainId, spender, account, signer, rpcUrls } = params;
-    const deadline = params.deadline || generateDeadline(SignatureExpiryInSecs);
+    const deadline = params.deadline || generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
 
     const contract = getContract({
       abi: getDZapAbi('trade', params.contractVersion),

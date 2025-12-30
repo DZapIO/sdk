@@ -24,8 +24,8 @@ import {
 } from '../api';
 import { config } from '../config';
 import { Services } from '../constants';
-import { ApprovalModes } from '../constants/approval';
-import { PermitTypes } from '../constants/permit';
+import { ApprovalModes } from '../constants/blockchain/approval';
+import { PermitTypes } from '../constants/blockchain/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { PriceService } from '../service/price';
 import GenericTxnHandler from '../transactionHandlers/generic';

@@ -6,3 +6,7 @@ export const zapPathAction = {
   stake: 'stake',
   unstake: 'unstake',
 } as const;
+
+export const zapStepAction = {
+  execute: 'execute',
+} as const;

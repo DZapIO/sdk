@@ -1,6 +1,5 @@
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/contract';
-import { permit2PrimaryType, PermitToDZapPermitMode } from '../../constants/permit';
-import { SignatureExpiryInSecs } from '../../constants/permit2';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/blockchain/contract';
+import { permit2PrimaryType, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/blockchain/permit';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
@@ -31,7 +30,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
       contractVersion,
       service,
     } = params;
-    const deadline = sigDeadline ?? generateDeadline(SignatureExpiryInSecs);
+    const deadline = sigDeadline ?? generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
     const expiration = params.expiration ?? maxUint48;
 
     const permit2Address = getPermit2Address(chainId);

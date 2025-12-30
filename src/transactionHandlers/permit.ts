@@ -1,5 +1,5 @@
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, Services } from '../constants';
-import { PermitTypes } from '../constants/permit';
+import { Services } from '../constants';
+import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, PermitTypes } from '../constants/blockchain/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';

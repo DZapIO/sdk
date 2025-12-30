@@ -1,5 +1,5 @@
 import { formatUnits, getAddress, isAddress, zeroAddress } from 'viem';
-import { nativeTokens } from '../constants/address';
+import { nativeTokens } from '../constants/blockchain/tokens';
 import { PriceService } from '../service/price';
 import { priceProviders } from '../service/price/types/IPriceProvider';
 import { ChainData, HexString, TokenInfo, TokenResponse } from '../types';

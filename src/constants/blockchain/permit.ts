@@ -1,5 +1,6 @@
-import { DZapPermitMode } from '../enums';
+import { DZapPermitMode } from '../../enums';
 import { encodePacked, keccak256 } from 'viem';
+import { encodeAbiParameters, parseAbiParameters } from 'viem';
 
 export const eip2612GaslessDomain = {
   name: 'DZapVerifier',
@@ -33,3 +34,9 @@ export const PermitToDZapPermitMode = {
   [PermitTypes.PermitWitnessTransferFrom]: DZapPermitMode.PERMIT2_WITNESS_TRANSFER,
   [PermitTypes.PermitBatchWitnessTransferFrom]: DZapPermitMode.BATCH_PERMIT2_WITNESS_TRANSFER,
 } as const;
+
+export const DEFAULT_PERMIT_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, '0x']);
+export const DEFAULT_PERMIT2_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT2_APPROVE, '0x']);
+
+export const SIGNATURE_EXPIRY_IN_SECS = 30 * 60; // 30 minutes
+export const DEFAULT_PERMIT_VERSION = '1';

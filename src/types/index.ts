@@ -1,11 +1,12 @@
 import { Signer } from 'ethers';
 import { Prettify, TypedDataDomain, WalletClient } from 'viem';
-import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './../constants';
-import { ApprovalModes } from './../constants/approval';
-import { PermitTypes } from './../constants/permit';
+import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services } from './../constants';
+import { ApprovalModes } from '../constants/blockchain/approval';
+import { PermitTypes } from '../constants/blockchain/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
+import { STATUS, STATUS_RESPONSE } from '../constants/status';
 
 export type HexString = `0x${string}`;
 

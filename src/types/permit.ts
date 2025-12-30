@@ -1,7 +1,7 @@
 import { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
 import { GaslessTxType } from '../constants';
-import { permit2PrimaryType } from '../constants/permit';
+import { permit2PrimaryType } from '../constants/blockchain/permit';
 import { ContractVersion } from '../enums';
 import { Address, TypedDataDomain, WalletClient } from 'viem';
 import { AvailableDZapServices, TokenPermitData } from '.';

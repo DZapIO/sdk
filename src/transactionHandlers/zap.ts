@@ -8,7 +8,7 @@ import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
 import { getPublicClient, isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
 import { handleViemTransactionError } from '../utils/errors';
-import { zapStepAction } from '../zap/constants/step';
+import { zapStepAction } from '../constants';
 
 class ZapTxnHandler {
   public static execute = async ({
