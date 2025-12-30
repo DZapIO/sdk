@@ -1,8 +1,8 @@
 import { formatUnits, getAddress, isAddress, zeroAddress } from 'viem';
-import { nativeTokens } from '../constants/address';
-import { PriceService } from '../service/price';
-import { priceProviders } from '../service/price/types/IPriceProvider';
-import { ChainData, HexString, TokenInfo, TokenResponse } from '../types';
+import { nativeTokens } from '../../constants/address';
+import { PriceService } from '../../service/price';
+import { priceProviders } from '../../service/price/types/IPriceProvider';
+import { ChainData, HexString, TokenInfo, TokenResponse } from '../../types';
 
 export const isNativeCurrency = (address: string, chainConfig: ChainData) => {
   if (!chainConfig) return false;

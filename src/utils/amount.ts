@@ -2,6 +2,12 @@ import Decimal from 'decimal.js';
 import { formatUnits } from 'viem';
 import { Fee, FeeDetails, TradeQuote } from '../types';
 
+export const calcTotalSrcTokenAmount = (data: { amount: string }[]) => {
+  return data.reduce((acc, obj) => {
+    return acc + BigInt(obj.amount);
+  }, BigInt(0));
+};
+
 export const calculateAmountUSD = (amountInWei: string, decimals: number, price: string) => {
   return decimals ? new Decimal(formatUnits(BigInt(amountInWei), decimals)).mul(price || 0).toFixed(5) : '0';
 };

@@ -74,9 +74,9 @@ import {
 } from '../types/zap';
 import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
-import { approveToken, getAllowance } from '../utils/erc20';
-import { updateTokenListPrices } from '../utils/tokens';
-import { updateQuotes } from '../utils/updateQuotes';
+import { approveToken, getAllowance } from '../utils/token/approval';
+import { updateTokenListPrices } from '../utils/token/tokens';
+import { updateQuotes } from '../utils/quotes';
 
 class DZapClient {
   private static instance: DZapClient;

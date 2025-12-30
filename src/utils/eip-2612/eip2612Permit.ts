@@ -10,8 +10,8 @@ import { HexString, TokenPermitData } from '../../types';
 import { EIP2612DefaultTypes } from '../../types/eip-2612';
 import { DefaultPermit2612Params } from '../../types/permit';
 import { generateDeadline } from '../date';
-import { multicall } from '../multicall';
-import { signTypedData } from '../signTypedData';
+import { multicall } from '../contract/multicall';
+import { signTypedData } from '../signer';
 
 export const eip2612DisabledChains = config.getEip2612DisabledChains();
 /**

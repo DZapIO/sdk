@@ -2,7 +2,7 @@ import { StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { CustomTypedDataParams } from '../../types/permit';
 import { handleViemTransactionError } from '../errors';
-import { signTypedData } from '../signTypedData';
+import { signTypedData } from '../signer';
 
 export const signCustomTypedData = async (
   params: CustomTypedDataParams,

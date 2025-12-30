@@ -6,7 +6,7 @@ import { HexString } from '../../types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { BasePermitResponse, BatchPermitAbiParams, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
-import { signTypedData } from '../signTypedData';
+import { signTypedData } from '../signer';
 import { getPermit2Data } from './permitData';
 import { getPermit2Values } from './values';
 import { getPermit2WitnessData } from './witnessData';

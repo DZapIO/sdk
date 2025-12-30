@@ -8,8 +8,9 @@ import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserInten
 import { Gasless2612PermitParams } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { handleViemTransactionError } from '../errors';
-import { getDZapAbi, getPublicClient } from '../index';
-import { signTypedData } from '../signTypedData';
+import { getDZapAbi } from '../contract/abi';
+import { getPublicClient } from '../client';
+import { signTypedData } from '../signer';
 
 const getSignTypedData = (
   params: Gasless2612PermitParams & {

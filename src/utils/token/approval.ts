@@ -1,14 +1,16 @@
 import { Signer } from 'ethers';
-import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
-import { erc20Abi } from '../artifacts';
-import { ApprovalModes } from '../constants/approval';
-import { erc20Functions } from '../constants/erc20';
-import { StatusCodes, TxnStatus } from '../enums';
-import { ApprovalMode, HexString, TokenPermitData } from '../types';
-import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
-import { multicall } from './multicall';
-import { getPermit2Address } from './permit2';
+import { Address, encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
+import { erc20Abi } from '../../artifacts';
+import { ApprovalModes } from '../../constants/approval';
+import { erc20Functions } from '../../constants/erc20';
+import { StatusCodes, TxnStatus } from '../../enums';
+import { ApprovalMode, HexString, TokenPermitData } from '../../types';
+import { checkEIP2612PermitSupport } from '../eip-2612/eip2612Permit';
+import { multicall } from '../contract/multicall';
+import { getPermit2Address } from '../permit2';
+import { isDZapNativeToken } from './tokenKeys';
+import { isTypeSigner } from '../signer';
+import { writeContract } from '../contract/contract';
 
 type AllowanceParams = {
   chainId: number;
@@ -212,3 +214,17 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
     return { status: TxnStatus.error, code: StatusCodes.Error, data };
   }
 };
+
+/**
+ * Encodes ERC20 approve function call data
+ * @param spender - The address to approve
+ * @param amount - The amount to approve
+ * @returns Encoded function call data
+ */
+export function encodeApproveCallData({ spender, amount }: { spender: Address; amount: bigint }): HexString {
+  return encodeFunctionData({
+    abi: erc20Abi,
+    functionName: erc20Functions.approve,
+    args: [spender, amount],
+  });
+}

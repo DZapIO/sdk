@@ -1,7 +1,10 @@
 import { Signer, TypedDataField, Wallet } from 'ethers';
 import { TypedDataDomain, WalletClient } from 'viem';
 import { HexString } from '../types';
-import { isTypeSigner } from './index';
+
+export const isTypeSigner = (variable: unknown): variable is Signer => {
+  return variable instanceof Signer;
+};
 
 /**
  * Helper function to sign typed data with either ethers or viem signer

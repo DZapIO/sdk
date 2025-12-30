@@ -1,7 +1,7 @@
 import { decodeFunctionData } from 'viem/utils';
 import { SwapAbisByFunctionName } from './abis';
 import { HexString, SwapInfo } from '../../../types';
-import { formatToken } from '../../tokens';
+import { formatToken } from '../../token/tokens';
 
 export class SwapInputDataDecoder {
   private decodeSingleSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {

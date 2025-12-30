@@ -1,7 +1,7 @@
 import { permit2Abi } from '../../artifacts';
 import { HexString } from '../../types';
 import { Address, getContract, maxUint256, PublicClient } from 'viem';
-import { getPublicClient } from '..';
+import { getPublicClient } from '../client';
 
 export class NonceManager {
   private static readonly POSITION_BITS = BigInt(8);
