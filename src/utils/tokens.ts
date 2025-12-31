@@ -1,5 +1,5 @@
 import { formatUnits, getAddress, isAddress, zeroAddress } from 'viem';
-import { nativeTokens } from '../constants/blockchain/tokens';
+import { NATIVE_TOKENS } from '../constants/tokens';
 import { PriceService } from '../service/price';
 import { priceProviders } from '../service/price/types/IPriceProvider';
 import { ChainData, HexString, TokenInfo, TokenResponse } from '../types';
@@ -64,7 +64,7 @@ export function isNonEVMChain(chainId: number, chainConfig: ChainData) {
   return chainConfig[chainId]?.chainType !== 'evm';
 }
 
-const isNativeAddress = (contract: string) => nativeTokens.includes(contract);
+const isNativeAddress = (contract: string) => NATIVE_TOKENS.includes(contract);
 
 export const getChecksumAddress = (address: string): HexString => getAddress(address);
 

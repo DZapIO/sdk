@@ -2,7 +2,7 @@ import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { broadcastTradeTx, executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
 import { exclusiveChainIds } from '../constants/chains';
-import { PermitTypes } from '../constants/blockchain/permit';
+import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import {
   AdditionalInfo,

@@ -1,5 +1,5 @@
 import { Address, encodeFunctionData } from 'viem';
-import { ERC20_FUNCTIONS } from '../constants/blockchain/erc20';
+import { ERC20_FUNCTIONS } from '../constants/erc20';
 import { HexString } from '../types';
 import { erc20Abi } from '../artifacts';
 

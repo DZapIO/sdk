@@ -19,4 +19,4 @@ export const CHAIN_NATIVE_TOKENS = {
 
 export const DZAP_NATIVE_TOKEN_FORMAT = NATIVE_TOKEN_FORMATS.ZERO;
 
-export const nativeTokens: string[] = [...Object.values(NATIVE_TOKEN_FORMATS), ...Object.values(CHAIN_NATIVE_TOKENS)];
+export const NATIVE_TOKENS: string[] = [...Object.values(NATIVE_TOKEN_FORMATS), ...Object.values(CHAIN_NATIVE_TOKENS)];

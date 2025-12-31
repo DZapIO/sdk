@@ -1,7 +1,7 @@
 import { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
-import { GaslessTxType } from '../constants';
-import { permit2PrimaryType } from '../constants/blockchain/permit';
+import { GASLESS_TX_TYPE } from '../constants';
+import { Permit2PrimaryTypes } from '../constants/permit';
 import { ContractVersion } from '../enums';
 import { Address, TypedDataDomain, WalletClient } from 'viem';
 import { AvailableDZapServices, TokenPermitData } from '.';
@@ -85,7 +85,7 @@ export type TokenWithPermitData = {
   permit?: TokenPermitData;
 };
 
-export type Permit2PrimaryType = (typeof permit2PrimaryType)[keyof typeof permit2PrimaryType];
+export type Permit2PrimaryType = (typeof Permit2PrimaryTypes)[keyof typeof Permit2PrimaryTypes];
 
 // Gasless common types
 type GaslessBaseParams = {
@@ -95,12 +95,12 @@ type GaslessBaseParams = {
 };
 
 export type GaslessSwapParams = {
-  txType: typeof GaslessTxType.swap;
+  txType: typeof GASLESS_TX_TYPE.swap;
   swapDataHash: HexString;
 } & GaslessBaseParams;
 
 export type GaslessBridgeParams = {
-  txType: typeof GaslessTxType.bridge;
+  txType: typeof GASLESS_TX_TYPE.bridge;
   adapterDataHash: HexString;
   swapDataHash?: HexString;
 } & GaslessBaseParams;
@@ -210,7 +210,7 @@ export type PermitResponse = {
 } & BasePermitResponse;
 
 export type BatchPermitResponse = {
-  permitType: typeof permit2PrimaryType.PermitBatchWitnessTransferFrom;
+  permitType: typeof Permit2PrimaryTypes.PermitBatchWitnessTransferFrom;
 } & BasePermitResponse;
 
 // WITNESS DATA TYPES

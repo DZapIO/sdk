@@ -1,5 +1,5 @@
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/blockchain/contract';
-import { permit2PrimaryType, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/blockchain/permit';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
@@ -69,7 +69,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
     });
 
     let dZapDataForTransfer;
-    if (permitType === permit2PrimaryType.PermitBatchWitnessTransferFrom) {
+    if (permitType === Permit2PrimaryTypes.PermitBatchWitnessTransferFrom) {
       dZapDataForTransfer = encodeAbiParameters(BatchPermitAbiParams, [
         {
           permitted: updatedTokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
@@ -78,7 +78,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
         },
         signature,
       ]);
-    } else if (permitType === permit2PrimaryType.PermitWitnessTransferFrom) {
+    } else if (permitType === Permit2PrimaryTypes.PermitWitnessTransferFrom) {
       dZapDataForTransfer = encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature]);
     } else if (contractVersion === ContractVersion.v1 && service !== Services.zap) {
       //for v1 support

@@ -12,7 +12,7 @@ export const STATUS_RESPONSE = {
 /**
  * Internal status values for tracking transaction state
  */
-export const STATUS = {
+export const TX_STATUS = {
   success: 'success',
   pending: 'pending',
   rejected: 'rejected',

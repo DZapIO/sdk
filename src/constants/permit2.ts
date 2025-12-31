@@ -1,6 +1,6 @@
-import { HexString } from '../../types';
-import { ExclusiveChainIds } from '../../types/chains';
-import { exclusiveChainIds } from '../chains';
+import { HexString } from '../types';
+import { ExclusiveChainIds } from '../types/chains';
+import { exclusiveChainIds } from './chains';
 
 /**
  * Permit2 contract addresses for chains with exclusive configurations

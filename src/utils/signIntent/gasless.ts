@@ -1,6 +1,6 @@
 import { getContract } from 'viem';
-import { GaslessTxType } from '../../constants';
-import { dZapIntentPrimaryType, eip2612GaslessDomain, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/blockchain/permit';
+import { GASLESS_TX_TYPE } from '../../constants';
+import { DZapIntentPrimaryTypes, EIP2612_GASLESS_DOMAIN, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { HexString } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from '../../types/eip-2612';
@@ -17,7 +17,7 @@ const getSignTypedData = (
 ) => {
   const { account, deadline, nonce, swapDataHash } = params;
 
-  if (params.txType === GaslessTxType.swap) {
+  if (params.txType === GASLESS_TX_TYPE.swap) {
     return {
       message: {
         //swap
@@ -29,7 +29,7 @@ const getSignTypedData = (
         deadline,
       },
       types: DzapUserIntentSwapTypes,
-      primaryType: dZapIntentPrimaryType.SignedGasLessSwapData,
+      primaryType: DZapIntentPrimaryTypes.SignedGasLessSwapData,
     };
   } else if (swapDataHash) {
     return {
@@ -44,7 +44,7 @@ const getSignTypedData = (
         adapterDataHash: params.adapterDataHash,
       },
       types: DzapUserIntentSwapBridgeTypes,
-      primaryType: dZapIntentPrimaryType.SignedGasLessSwapBridgeData,
+      primaryType: DZapIntentPrimaryTypes.SignedGasLessSwapBridgeData,
     };
   } else {
     return {
@@ -58,7 +58,7 @@ const getSignTypedData = (
         adapterDataHash: params.adapterDataHash,
       },
       types: DzapUserIntentBridgeTypes,
-      primaryType: dZapIntentPrimaryType.SignedGasLessBridgeData,
+      primaryType: DZapIntentPrimaryTypes.SignedGasLessBridgeData,
     };
   }
 };
@@ -90,11 +90,11 @@ export const signGaslessDzapUserIntent = async (
     const nonce = (await contract.read.getNonce([account])) as bigint;
 
     const domain = {
-      name: eip2612GaslessDomain.name,
-      version: eip2612GaslessDomain.version,
+      name: EIP2612_GASLESS_DOMAIN.name,
+      version: EIP2612_GASLESS_DOMAIN.version,
       chainId,
       verifyingContract: spender,
-      salt: eip2612GaslessDomain.salt,
+      salt: EIP2612_GASLESS_DOMAIN.salt,
     };
 
     const { message, types, primaryType } = getSignTypedData({

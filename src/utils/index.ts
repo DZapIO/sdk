@@ -16,12 +16,12 @@ import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo }
 
 import { Signer } from 'ethers';
 import { viemChainsById } from '../chains';
-import { DZapAbis, OtherAbis, Services } from '../constants';
+import { DZAP_ABIS, STANDARD_ABIS, Services } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
 import { formatToken } from './tokens';
-import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants/blockchain/tokens';
+import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants/tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
@@ -174,14 +174,14 @@ export const getDZapAbi = (service: AvailableDZapServices, version: ContractVers
     case Services.trade:
       switch (version) {
         case ContractVersion.v1:
-          return ABI[DZapAbis.dZapCoreAbi];
+          return ABI[DZAP_ABIS.dZapCoreAbi];
         case ContractVersion.v2:
-          return ABI[DZapAbis.dZapCoreV2Abi];
+          return ABI[DZAP_ABIS.dZapCoreV2Abi];
         default:
           throw new Error('Invalid Version for Trade');
       }
     case Services.dca:
-      return ABI[DZapAbis.dZapDcaAbi];
+      return ABI[DZAP_ABIS.dZapDcaAbi];
     case Services.zap:
     default:
       throw new Error('Invalid Service');
@@ -263,9 +263,9 @@ export const handleDecodeTxnData = (
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {
   switch (name) {
-    case OtherAbis.permit2:
+    case STANDARD_ABIS.permit2:
       return ABI.permit2Abi;
-    case OtherAbis.erc20:
+    case STANDARD_ABIS.erc20:
       return ABI.erc20Abi;
     default:
       throw new Error('Invalid Abi');

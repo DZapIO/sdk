@@ -1,20 +1,20 @@
-import { DZapPermitMode } from '../../enums';
+import { DZapPermitMode } from '../enums';
 import { encodePacked, keccak256 } from 'viem';
 import { encodeAbiParameters, parseAbiParameters } from 'viem';
 
-export const eip2612GaslessDomain = {
+export const EIP2612_GASLESS_DOMAIN = {
   name: 'DZapVerifier',
   version: '1',
   salt: keccak256(encodePacked(['string'], ['DZap-v0.1'])),
 };
 
-export const dZapIntentPrimaryType = {
+export const DZapIntentPrimaryTypes = {
   SignedGasLessSwapData: 'SignedGasLessSwapData',
   SignedGasLessSwapBridgeData: 'SignedGasLessSwapBridgeData',
   SignedGasLessBridgeData: 'SignedGasLessBridgeData',
 };
 
-export const permit2PrimaryType = {
+export const Permit2PrimaryTypes = {
   PermitSingle: 'PermitSingle',
   PermitWitnessTransferFrom: 'PermitWitnessTransferFrom',
   PermitBatchWitnessTransferFrom: 'PermitBatchWitnessTransferFrom',
