@@ -1,6 +1,8 @@
 export { getPublicClient } from './client';
 
-export { readContract, writeContract, estimateGasMultiplier, getDZapAbi, getOtherAbis, multicall, handleDecodeTxnData } from './contract';
+export { readContract, writeContract, estimateGasMultiplier, getDZapAbi, getOtherAbis, multicall } from './contract';
+
+export { handleDecodeTxnData } from './decoder/swap/transactionDecoder';
 
 export { generateUUID, getTrxId } from './uuid';
 

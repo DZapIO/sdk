@@ -61,7 +61,7 @@ export const writeContract = async ({
   functionName,
   args = [],
   value = '0',
-  rpcUrls = [''],
+  rpcUrls = [],
   signer,
 }: {
   chainId: number;

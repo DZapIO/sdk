@@ -12,8 +12,12 @@ const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDe
  */
 export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | undefined; chainId: number }) => {
   const rpcs = rpcUrls && Array.isArray(rpcUrls) && rpcUrls.length > 0;
+  const chain = viemChainsById[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
   return createPublicClient({
-    chain: viemChainsById[chainId],
+    chain,
     transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
     batch: {
       multicall: {
