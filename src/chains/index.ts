@@ -17,9 +17,9 @@ export { stableChain } from './definitions/stable';
 
 export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain, bitlayer, hemi, merlin, katana];
 
-export const allWagmiChains: viemChains.Chain[] = [...Object.values(viemChains), ...customViemChains];
+export const viemChainsList: viemChains.Chain[] = [...Object.values(viemChains), ...customViemChains];
 
-export const viemChainsById: Record<number, viemChains.Chain> = allWagmiChains.reduce((acc, chainData) => {
+export const viemChainsById: Record<number, viemChains.Chain> = viemChainsList.reduce((acc, chainData) => {
   return chainData.id
     ? {
         ...acc,

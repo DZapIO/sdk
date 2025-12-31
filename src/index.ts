@@ -50,7 +50,7 @@ import { getTokensPairKey } from './utils';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { formatToken } from './utils/tokens';
-import { allWagmiChains } from './chains';
+import { viemChains } from './chains';
 
 export * from './types/zap';
 export * from './zap/constants';
@@ -113,5 +113,5 @@ export {
   TxnStatus,
   ZapIntegratorConfig,
   ZapStatusResponse,
-  allWagmiChains,
+  viemChains as allWagmiChains,
 };
