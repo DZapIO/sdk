@@ -1,5 +1,5 @@
-import { erc20PermitFunctions } from '../../constants/erc20';
-import { permit2PrimaryType } from '../../constants/permit';
+import { ERC20_FUNCTIONS } from '../../constants/erc20';
+import { Permit2PrimaryTypes } from '../../constants/permit';
 import {
   BasePermitParams,
   Permit2PrimaryType,
@@ -46,7 +46,7 @@ export const getPermitSingleValues = async ({
   const nonceResult = await publicClient.readContract({
     address: permit2Address,
     abi: permit2Abi,
-    functionName: erc20PermitFunctions.allowance,
+    functionName: ERC20_FUNCTIONS.allowance,
     args: [account, token.address, spender],
   });
   return {
@@ -142,14 +142,14 @@ export async function getPermit2Values(
   params: Permit2ValuesParams,
 ): Promise<{ permit2Values: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues; nonce: bigint }> {
   switch (params.primaryType) {
-    case permit2PrimaryType.PermitSingle:
+    case Permit2PrimaryTypes.PermitSingle:
       if (params.expiration === undefined || params.expiration === null) {
         throw new Error('Expiration is required for PermitSingle');
       }
       return getPermitSingleValues({ ...params, token: params.tokens[0], expiration: params.expiration });
-    case permit2PrimaryType.PermitWitnessTransferFrom:
+    case Permit2PrimaryTypes.PermitWitnessTransferFrom:
       return getPermitTransferFromValues({ ...params, token: params.tokens[0] });
-    case permit2PrimaryType.PermitBatchWitnessTransferFrom:
+    case Permit2PrimaryTypes.PermitBatchWitnessTransferFrom:
       return getPermitBatchTransferFromValues(params);
     default:
       throw new Error(`Invalid permit type: ${params.primaryType}`);

@@ -1,4 +1,4 @@
-import { GaslessTxType } from '../../constants';
+import { GASLESS_TX_TYPE } from '../../constants';
 import { bridgeGaslessWitnessType, defaultWitnessType, Permit2Params, swapGaslessWitnessType, WitnessData } from '../../types/permit';
 
 export const getPermit2WitnessData = (params: Permit2Params) => {
@@ -6,7 +6,7 @@ export const getPermit2WitnessData = (params: Permit2Params) => {
 
   let witnessData: WitnessData;
   if (gasless && params.swapDataHash) {
-    if (params.txType === GaslessTxType.swap) {
+    if (params.txType === GASLESS_TX_TYPE.swap) {
       witnessData = {
         witness: {
           txId: params.txId,
