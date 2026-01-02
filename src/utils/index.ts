@@ -180,7 +180,7 @@ export const getDZapAbi = (service: AvailableDZapServices, version: ContractVers
           throw new Error('Invalid Version for Trade');
       }
     case Services.dca:
-      return ABI[DZapAbis.dZapDcaAbi];
+      return ABI.dca.dZapDcaAbi;
     case Services.zap:
     default:
       throw new Error('Invalid Service');
