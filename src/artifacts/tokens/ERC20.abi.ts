@@ -1,4 +1,13 @@
-export const abi = [
+/**
+ * ERC-20 Token Standard ABI
+ *
+ * Standard interface for fungible tokens on EVM-compatible blockchains.
+ * Includes core functionality for transfers, approvals, and balance queries.
+ *
+ * @standard ERC-20
+ * @see https://eips.ethereum.org/EIPS/eip-20
+ */
+export const erc20Abi = [
   {
     constant: true,
     inputs: [],

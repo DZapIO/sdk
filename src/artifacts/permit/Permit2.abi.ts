@@ -1,4 +1,19 @@
-export const abi = [
+/**
+ * Uniswap Permit2 Contract ABI
+ *
+ * Permit2 is a token approval contract that enables advanced signature-based transfers.
+ * Provides a single approval for all tokens with granular control over spending.
+ *
+ * Features:
+ * - Batch token approvals and transfers
+ * - Signature-based transfers without separate approvals
+ * - Witness data support for complex operations
+ * - Nonce management and invalidation
+ *
+ * @protocol Uniswap Permit2
+ * @see https://github.com/Uniswap/permit2
+ */
+export const permit2Abi = [
   {
     inputs: [
       {

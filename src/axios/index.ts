@@ -1,6 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
-import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../constants/axios';
+import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../constants/api/axios';
 import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
 
 class AxiosClient {

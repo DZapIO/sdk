@@ -1,3 +1,17 @@
+/**
+ * ERC-20 Permit Extension ABI (EIP-2612)
+ *
+ * Extension to the ERC-20 standard that allows gasless approvals through signatures.
+ * Implements both the standard ERC-2612 permit and DAI-style permit functions.
+ *
+ * Features:
+ * - Gasless token approvals via off-chain signatures
+ * - Nonce-based replay protection
+ * - Domain separator for EIP-712 compliance
+ *
+ * @standard EIP-2612
+ * @see https://eips.ethereum.org/EIPS/eip-2612
+ */
 export const erc20PermitAbi = [
   {
     inputs: [],

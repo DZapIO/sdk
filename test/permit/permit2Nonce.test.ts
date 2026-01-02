@@ -1,4 +1,4 @@
-import { permit2ProxyAbi } from '../../src/artifacts/Permit2Proxy';
+import { permit2ProxyAbi } from '../../src/artifacts';
 import { getPublicClient } from '../../src/utils';
 import { viemChainsById } from '../../src/chains';
 import { getPermit2Address } from '../../src/utils/permit2';

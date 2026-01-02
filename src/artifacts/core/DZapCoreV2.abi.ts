@@ -1,6 +1,16 @@
 import { Abi } from 'viem';
 
-export const abi: Abi = [
+/**
+ * DZap Core Contract ABI (Version 2)
+ *
+ * Enhanced version of the core contract with additional features:
+ * - Optimized gas consumption
+ * - Extended swap capabilities
+ * - Improved error handling
+ *
+ * @version 2.0
+ */
+export const dZapCoreV2Abi: Abi = [
   {
     inputs: [],
     name: 'CalldataEmptyButInitNotZero',
@@ -3715,4 +3725,4 @@ export const abi: Abi = [
     stateMutability: 'view',
     type: 'function',
   },
-] as unknown as Abi;
+] as const;
