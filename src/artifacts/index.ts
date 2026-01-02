@@ -1,4 +1,4 @@
-export { dZapCoreAbi, dZapCoreV2Abi, dZapDcaAbi } from './core';
+export { dZapCoreAbi, dZapCoreV2Abi } from './core';
 
 export {
   singleSwapAbi,
@@ -16,3 +16,4 @@ export { permit2Abi, permit2FullAbi, permit2ProxyAbi } from './permit';
 
 export * as tokens from './tokens';
 export * as protocols from './permit';
+export * as dca from './dca';
