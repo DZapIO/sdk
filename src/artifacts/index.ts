@@ -8,7 +8,7 @@ export {
   gaslessExecuteMultiSwapAbi,
   gaslessExecuteMultiSwapWithWitnessAbi,
   SwapAbisByFunctionName,
-} from './core/swap';
+} from './swap';
 
 export { erc20Abi, erc20PermitAbi } from './tokens';
 
