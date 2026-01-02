@@ -3,8 +3,8 @@ import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
 import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
 import { config } from '../../config';
 import { Services } from '../../constants';
-import { erc20Functions } from '../../constants/erc20';
-import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from '../../constants/permit2';
+import { ERC20_FUNCTIONS } from '../../constants/erc20';
+import { DEFAULT_PERMIT_VERSION, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { HexString, TokenPermitData } from '../../types';
 import { EIP2612DefaultTypes } from '../../types/eip-2612';
@@ -44,23 +44,23 @@ export const checkEIP2612PermitSupport = async ({
     {
       address: address as HexString,
       abi: erc20PermitAbi,
-      functionName: erc20Functions.domainSeparator,
+      functionName: ERC20_FUNCTIONS.domainSeparator,
     },
     {
       address: address as HexString,
       abi: erc20PermitAbi,
-      functionName: erc20Functions.nonces,
+      functionName: ERC20_FUNCTIONS.nonces,
       args: [owner],
     },
     {
       address: address as HexString,
       abi: erc20PermitAbi,
-      functionName: erc20Functions.version,
+      functionName: ERC20_FUNCTIONS.version,
     },
     {
       address: address as HexString,
       abi: erc20PermitAbi,
-      functionName: erc20Functions.name,
+      functionName: ERC20_FUNCTIONS.name,
     },
   ];
 
@@ -114,7 +114,7 @@ export const getEIP2612PermitSignature = async (
       name,
       nonce,
       version,
-      deadline = generateDeadline(SignatureExpiryInSecs),
+      deadline = generateDeadline(SIGNATURE_EXPIRY_IN_SECS),
     } = params;
 
     const { address } = token;

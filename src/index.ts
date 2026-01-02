@@ -1,8 +1,3 @@
-import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
-import { ApprovalModes } from './constants/approval';
-import { erc20Functions } from './constants/erc20';
-import { PermitTypes } from './constants/permit';
-import { SignatureExpiryInSecs } from './constants/permit2';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
@@ -52,12 +47,11 @@ import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { formatToken } from './utils/tokens';
 
 export * from './types/zap';
-export * from './zap/constants';
+export * from './constants';
 
 export {
   ApiRpcResponse,
   ApprovalMode,
-  ApprovalModes,
   BatchPermitCallbackParams,
   BtcTxData,
   Chain,
@@ -68,7 +62,6 @@ export {
   DZapClient,
   DZapPermitMode,
   DZapTransactionResponse,
-  erc20Functions,
   EvmTxData,
   Fee,
   FeeDetails,
@@ -76,21 +69,15 @@ export {
   GaslessTradeBuildTxnResponse,
   getTokensPairKey,
   HexString,
-  OtherAbis,
   ParamQuotes,
   PermitMode,
-  PermitTypes,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,
   QuoteFilter,
-  QuoteFilters,
-  Services,
   SignatureCallbackParams,
-  SignatureExpiryInSecs,
   SignPermitResponse,
   SinglePermitCallbackParams,
-  STATUS,
   StatusCodes,
   SvmTxData,
   SwapInfo,

@@ -2,19 +2,6 @@ import { CancelToken } from 'axios';
 
 import { GET, POST } from '../constants/httpMethods';
 import {
-  BROADCAST_TX,
-  BUILD_TX_URL,
-  CALCULATE_POINTS_URL,
-  GASLESS_EXECUTE_TX_URL,
-  GET_ALL_CHAINS_URL,
-  GET_ALL_TOKENS_URL,
-  GET_BALANCES,
-  GET_STATUS,
-  GET_TOKEN_DETAILS_URL,
-  GET_TOKEN_PRICE,
-  QUOTES_URL,
-} from '../constants/urlConstants';
-import {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
@@ -24,12 +11,12 @@ import {
 } from '../types';
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { invoke, invokeZap } from '../utils/axios';
-import { ZAP_ENDPOINTS } from '../zap/constants/urls';
+import { ZAP_ENDPOINTS, TRADE_ENDPOINTS } from '../constants/api/endpoints';
 import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
-    endpoint: QUOTES_URL,
+    endpoint: TRADE_ENDPOINTS.quotes,
     data: request,
     method: POST,
     shouldRetry: true,
@@ -37,21 +24,21 @@ export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
 
 export const fetchTradeBuildTxnData = (request: TradeBuildTxnRequest) =>
   invoke({
-    endpoint: BUILD_TX_URL,
+    endpoint: TRADE_ENDPOINTS.buildTx,
     data: request,
     method: POST,
   });
 
 export const executeGaslessTxnData = (request: GaslessExecuteTxParams) =>
   invoke({
-    endpoint: GASLESS_EXECUTE_TX_URL,
+    endpoint: TRADE_ENDPOINTS.gasless.executeTx,
     data: request,
     method: POST,
   });
 
 export const broadcastTradeTx = (request: BroadcastTxParams): Promise<BroadcastTxResponse> =>
   invoke({
-    endpoint: BROADCAST_TX,
+    endpoint: TRADE_ENDPOINTS.broadcast,
     data: request,
     method: POST,
   });
@@ -121,7 +108,7 @@ export const fetchZapProviders = () =>
 
 export const fetchAllSupportedChains = () =>
   invoke({
-    endpoint: GET_ALL_CHAINS_URL,
+    endpoint: TRADE_ENDPOINTS.chains,
     data: {},
     method: GET,
     shouldRetry: true,
@@ -129,7 +116,7 @@ export const fetchAllSupportedChains = () =>
 
 export const fetchAllTokens = (chainId: number, source?: string, account?: string) =>
   invoke({
-    endpoint: GET_ALL_TOKENS_URL,
+    endpoint: TRADE_ENDPOINTS.token.tokens,
     data: { chainId, source, account },
     method: GET,
     shouldRetry: true,
@@ -151,7 +138,7 @@ export const fetchTokenDetails = (
     includePrice,
   };
   return invoke({
-    endpoint: GET_TOKEN_DETAILS_URL,
+    endpoint: TRADE_ENDPOINTS.token.details,
     data,
     method: GET,
   });
@@ -159,14 +146,14 @@ export const fetchTokenDetails = (
 
 export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
   invoke({
-    endpoint: GET_TOKEN_PRICE,
+    endpoint: TRADE_ENDPOINTS.token.price,
     data: { tokenAddresses, chainId },
     method: GET,
   });
 
 export const fetchStatus = ({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }) =>
   invoke({
-    endpoint: GET_STATUS,
+    endpoint: TRADE_ENDPOINTS.status,
     data: {
       txHash,
       txIds,
@@ -177,14 +164,14 @@ export const fetchStatus = ({ txHash, txIds, chainId }: { txHash?: string; txIds
 
 export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
   invoke({
-    endpoint: CALCULATE_POINTS_URL,
+    endpoint: TRADE_ENDPOINTS.user.calculatePoints,
     data: request,
     method: POST,
   });
 
 export const fetchBalances = (chainId: number, account: string) => {
   return invoke({
-    endpoint: GET_BALANCES,
+    endpoint: TRADE_ENDPOINTS.token.balanceOf,
     data: { chainId, account },
     method: GET,
   });
