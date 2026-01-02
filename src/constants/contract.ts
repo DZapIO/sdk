@@ -17,3 +17,8 @@ export const exclusivePermit2Addresses: { [key: ExclusiveChainIds]: HexString } 
 };
 
 export const DEFAULT_PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
+
+/**
+ * Gas estimation multiplier for transactions
+ */
+export const estimateGasMultiplier = BigInt(15) / BigInt(10);
