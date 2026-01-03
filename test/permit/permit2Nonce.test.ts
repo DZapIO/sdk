@@ -1,4 +1,4 @@
-import { permit2ProxyAbi } from '../../src/artifacts';
+import * as ABI from '../../src/artifacts';
 import { getPublicClient } from '../../src/utils';
 import { viemChainsById } from '../../src/chains';
 import { getPermit2Address } from '../../src/utils/permit2';
@@ -21,7 +21,7 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
     }
     const nonce = await getPublicClient({ chainId, rpcUrls }).readContract({
       address: permitProxy[chainId],
-      abi: permit2ProxyAbi,
+      abi: ABI.permit.permit2ProxyAbi,
       functionName: 'nextNonce',
       args: [account],
     });
@@ -35,7 +35,7 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
 describe('Permit2 Nonce Tests', () => {
   const account = '0x4ab9F97585B0161f1aDa8484B209C44be54dad73';
 
-  Object.entries(permitProxy).forEach(([chainIdStr, proxyAddress]) => {
+  Object.entries(permitProxy).forEach(([chainIdStr]) => {
     const chainId = parseInt(chainIdStr);
     const chainName = viemChainsById[chainId]?.name || `Chain ${chainId}`;
 
