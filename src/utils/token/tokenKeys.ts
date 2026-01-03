@@ -1,5 +1,5 @@
 import { zeroAddress } from 'viem';
-import { dZapNativeTokenFormat } from '../../constants';
+import { DZAP_NATIVE_TOKEN_FORMAT } from '../../constants';
 import { formatToken } from './tokens';
 
 /**
@@ -45,4 +45,4 @@ export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: strin
  * @param srcToken - Token address to check
  * @returns True if the token is in native format
  */
-export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
+export const isDZapNativeToken = (srcToken: string) => srcToken === DZAP_NATIVE_TOKEN_FORMAT;

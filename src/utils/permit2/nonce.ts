@@ -1,4 +1,4 @@
-import { permit2Abi } from '../../artifacts';
+import * as ABI from '../../artifacts';
 import { HexString } from '../../types';
 import { Address, getContract, maxUint256, PublicClient } from 'viem';
 import { getPublicClient } from '../client';
@@ -13,7 +13,7 @@ export class NonceManager {
   constructor(publicClient: PublicClient, permit2Address: HexString) {
     this.permit2Contract = getContract({
       address: permit2Address,
-      abi: permit2Abi,
+      abi: ABI.permit.permit2Abi,
       client: publicClient,
     });
   }

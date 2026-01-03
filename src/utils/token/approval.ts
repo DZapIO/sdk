@@ -2,7 +2,7 @@ import { Signer } from 'ethers';
 import { Address, encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { erc20Abi } from '../../artifacts';
 import { ApprovalModes } from '../../constants/approval';
-import { erc20Functions } from '../../constants/erc20';
+import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { ApprovalMode, HexString, TokenPermitData } from '../../types';
 import { checkEIP2612PermitSupport } from '../eip-2612/eip2612Permit';
@@ -54,7 +54,7 @@ export const approveToken = async ({
       const from = await signer.getAddress();
       const callData = encodeFunctionData({
         abi: erc20Abi,
-        functionName: erc20Functions.approve,
+        functionName: ERC20_FUNCTIONS.approve,
         args: [spender, BigInt(tokens[dataIdx].amount)],
       });
       await signer.sendTransaction({
@@ -72,7 +72,7 @@ export const approveToken = async ({
         chainId,
         contractAddress: tokens[dataIdx].address,
         abi: erc20Abi,
-        functionName: erc20Functions.approve,
+        functionName: ERC20_FUNCTIONS.approve,
         args: [spender, tokens[dataIdx].amount],
         rpcUrls,
         signer,
@@ -116,7 +116,7 @@ export const batchGetAllowances = async ({
   const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
     address: token,
     abi: erc20Abi,
-    functionName: erc20Functions.allowance,
+    functionName: ERC20_FUNCTIONS.allowance,
     args: [owner, spender],
   }));
 
@@ -224,7 +224,7 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
 export function encodeApproveCallData({ spender, amount }: { spender: Address; amount: bigint }): HexString {
   return encodeFunctionData({
     abi: erc20Abi,
-    functionName: erc20Functions.approve,
+    functionName: ERC20_FUNCTIONS.approve,
     args: [spender, amount],
   });
 }

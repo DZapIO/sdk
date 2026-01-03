@@ -8,7 +8,7 @@ import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
 import { getPublicClient, isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
 import { handleViemTransactionError } from '../utils/errors';
-import { zapStepAction } from '../zap/constants/step';
+import { ZAP_STEP_ACTIONS } from '../constants';
 
 class ZapTxnHandler {
   public static execute = async ({
@@ -139,7 +139,7 @@ class ZapTxnHandler {
       let txnHash: HexString | undefined;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        if (step.action === zapStepAction.execute) {
+        if (step.action === ZAP_STEP_ACTIONS.execute) {
           const result = await ZapTxnHandler.execute({ chainId, txnData: step.data as ZapEvmTxnDetails, signer });
           if (result.status !== TxnStatus.success) {
             return result;
