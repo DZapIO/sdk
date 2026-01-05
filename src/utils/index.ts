@@ -2,27 +2,13 @@ export { getPublicClient } from './client';
 
 export { readContract, writeContract, estimateGasMultiplier, getDZapAbi, getOtherAbis, multicall } from './contract';
 
-export { handleDecodeTxnData } from './decoder/swap/transactionDecoder';
-
 export { generateUUID, getTrxId } from './uuid';
 
 export { isTypeSigner, signTypedData } from './signer';
 
-export {
-  getTokensPairKey,
-  isOneToMany,
-  isDZapNativeToken,
-  isNativeCurrency,
-  sortByBalanceInUsd,
-  updateTokenListPrices,
-  isNonEVMChain,
-  getChecksumAddress,
-  formatToken,
-  approveToken,
-  batchGetAllowances,
-  getAllowance,
-  encodeApproveCallData,
-} from './token';
+export { getTokensPairKey, isOneToMany, isDZapNativeToken, isNativeCurrency, isNonEVMChain, getChecksumAddress, formatToken } from './token';
+
+export { encodeApproveCallData } from './approval';
 
 export {
   calcTotalSrcTokenAmount,
@@ -49,15 +35,6 @@ export {
 
 export { updateQuotes } from './quotes';
 
-export { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
-
 export { checkEIP2612PermitSupport, getEIP2612PermitSignature } from './eip-2612';
 
-export { batchApproveTokens } from './eip-5792/batchApproveTokens';
-export { sendBatchCalls, type BatchCallParams } from './eip-5792/sendBatchCalls';
-export { waitForBatchTransactionReceipt } from './eip-5792/waitForBatchTransactionReceipt';
-
 export { getPermit2Address, getPermit2Signature } from './permit2';
-
-export { signCustomTypedData } from './signIntent/custom';
-export { signGaslessDzapUserIntent } from './signIntent/gasless';

@@ -1,10 +1,10 @@
 import { Services } from '../constants';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
+import { SignIntent } from '../service/signIntent';
 import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
-import { signGaslessDzapUserIntent } from '../utils/signIntent/gasless';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/eip-2612/eip2612Permit';
 import { getPermit2Signature } from '../utils/permit2';
 
@@ -121,7 +121,7 @@ class PermitTxnHandler {
     const type = permitType === PermitTypes.AutoPermit ? PermitTypes.PermitBatchWitnessTransferFrom : permitType;
 
     if (type === PermitTypes.EIP2612Permit) {
-      const resp = await signGaslessDzapUserIntent({
+      const resp = await SignIntent.signGaslessIntent({
         ...signPermitReq,
         account: sender,
       });

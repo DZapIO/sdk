@@ -42,7 +42,8 @@ import {
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey, formatToken } from './utils';
-import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
+import { SwapInfoDecoder } from './service/decoder/SwapInfoDecoder';
+import { Token as TokenService } from './service/token';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { viemChainsList } from './chains';
 
@@ -81,7 +82,8 @@ export {
   StatusCodes,
   SvmTxData,
   SwapInfo,
-  SwapInputDataDecoder,
+  SwapInfoDecoder,
+  TokenService,
   Token,
   TokenInfo,
   TokenPermitData,

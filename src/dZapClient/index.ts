@@ -6,11 +6,9 @@ import {
   broadcastTradeTx,
   broadcastZapTx,
   fetchAllSupportedChains,
-  fetchAllTokens,
   fetchBalances,
   fetchCalculatedPoints,
   fetchStatus,
-  fetchTokenDetails,
   fetchTradeBuildTxnData,
   fetchTradeQuotes,
   fetchZapBuildTxnData,
@@ -35,6 +33,7 @@ import ZapTxnHandler from '../transactionHandlers/zap';
 import {
   ApprovalMode,
   AvailableDZapServices,
+  BatchCallParams,
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
@@ -72,17 +71,17 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
-import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
-import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
-import { approveToken, getAllowance } from '../utils/token/approval';
-import { updateTokenListPrices } from '../utils/token/tokens';
+import { getDZapAbi, getOtherAbis, getPublicClient } from '../utils';
+import { SwapInfoDecoder } from '../service/decoder/SwapInfoDecoder';
 import { updateQuotes } from '../utils/quotes';
+import { Token } from '../service/token';
 
 class DZapClient {
   private static instance: DZapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
   private static chainConfig: ChainData | null = null;
-  private priceService;
+  private priceService: PriceService;
+
   private constructor() {
     this.priceService = new PriceService();
   }
@@ -321,19 +320,8 @@ class DZapClient {
    * ```
    */
   public async getAllTokens(chainId: number, source?: string, account?: string) {
-    try {
-      const [tokensResult, chainConfigResult] = await Promise.allSettled([fetchAllTokens(chainId, source, account), DZapClient.getChainConfig()]);
-
-      const tokens = tokensResult.status === 'fulfilled' ? tokensResult.value : {};
-      const chainConfig = chainConfigResult.status === 'fulfilled' ? chainConfigResult.value : null;
-
-      if (!chainConfig) return tokens;
-
-      return await updateTokenListPrices(tokens, chainId, chainConfig, this.priceService);
-    } catch (error) {
-      console.error('Error fetching or updating tokens:', error);
-      return {};
-    }
+    const chainConfig = await DZapClient.getChainConfig();
+    return await Token.getAllTokens(chainId, chainConfig, this.priceService, source, account);
   }
 
   /**
@@ -372,7 +360,7 @@ class DZapClient {
     includeBalance?: boolean,
     includePrice?: boolean,
   ): Promise<TokenInfo> {
-    return await fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
+    return await Token.getTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
   }
 
   /**
@@ -389,14 +377,14 @@ class DZapClient {
    * @example
    * ```typescript
    * // Get basic token details
-   * const tokenInfo = await client.getTokenDetails(
-   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
+   * const tokenInfo = await client.getTokensDetails(
+   *   ['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'], // USDC
    *   1 // Ethereum
    * );
    *
    * // Get token details with balance and price
-   * const fullTokenInfo = await client.getTokenDetails(
-   *   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+   * const fullTokenInfo = await client.getTokensDetails(
+   *   ['0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'],
    *   1,
    *   '0x...', // user address
    *   true, // include balance
@@ -404,7 +392,6 @@ class DZapClient {
    * );
    * ```
    */
-
   public async getTokensDetails(
     tokenAddresses: string[],
     chainId: number,
@@ -412,7 +399,7 @@ class DZapClient {
     includeBalance?: boolean,
     includePrice?: boolean,
   ): Promise<Record<string, TokenInfo> | TokenInfo> {
-    return await fetchTokenDetails(tokenAddresses, chainId, account, includeBalance, includePrice);
+    return await Token.getTokensDetails(tokenAddresses, chainId, account, includeBalance, includePrice);
   }
 
   /**
@@ -611,7 +598,7 @@ class DZapClient {
    * ```
    */
   public async waitForBatchTransactionReceipt({ walletClient, batchHash }: { walletClient: WalletClient; batchHash: HexString }) {
-    return await waitForBatchTransactionReceipt(walletClient, batchHash);
+    return await TradeTxnHandler.waitForBatchTransactionReceipt(walletClient, batchHash);
   }
 
   /**
@@ -647,7 +634,8 @@ class DZapClient {
     if (chainConfig === null || chainConfig?.[chainId] == null) {
       throw new Error('Chains config not found');
     }
-    return handleDecodeTxnData(transactionData, data, service, chainConfig[chainId]);
+    const decoder = new SwapInfoDecoder();
+    return decoder.decodeTransactionData(transactionData, data, service, chainConfig[chainId]);
   }
 
   /**
@@ -772,7 +760,7 @@ class DZapClient {
     const chainConfig = await DZapClient.getChainConfig();
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
-    return await getAllowance({
+    return await Token.getAllowance({
       chainId,
       sender,
       tokens,
@@ -843,7 +831,7 @@ class DZapClient {
     mode?: ApprovalMode;
   }) {
     const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
-    return await approveToken({
+    return await Token.approveToken({
       chainId,
       signer,
       rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
@@ -1101,7 +1089,7 @@ class DZapClient {
    * ```
    */
   public async sendBatchCalls({ walletClient, calls }: { walletClient: WalletClient; calls: BatchCallParams[] }) {
-    return await sendBatchCalls(walletClient, calls);
+    return await TradeTxnHandler.sendBatchCalls(walletClient, calls);
   }
 
   /**

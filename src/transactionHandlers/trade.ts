@@ -1,5 +1,7 @@
 import { Signer } from 'ethers';
-import { WalletClient } from 'viem';
+import { type Client, WalletClient } from 'viem';
+import { sendCalls, waitForCallsStatus } from 'viem/actions';
+import { getAction } from 'viem/utils';
 import { broadcastTradeTx, executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
 import { exclusiveChainIds } from '../constants/chains';
 import { PermitTypes } from '../constants/permit';
@@ -14,14 +16,13 @@ import {
   TradeBuildTxnResponse,
 } from '../types';
 import { CustomTypedDataParams } from '../types/permit';
+import { WalletCallReceipt } from '../types/wallet';
 import { isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
-import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
-import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
-import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 import PermitTxnHandler from './permit';
-import { signCustomTypedData } from '../utils/signIntent/custom';
+import { SignIntent } from '../service/signIntent';
+import { Token } from '../service/token';
 
 class TradeTxnHandler {
   private static sendTransaction = async (
@@ -61,6 +62,67 @@ class TradeTxnHandler {
     };
   };
 
+  /**
+   * Send batch transactions using EIP-5792 via Viem experimental sendCalls
+   */
+  public static sendBatchCalls = async (
+    walletClient: WalletClient,
+    calls: Array<{
+      to: HexString;
+      data: HexString;
+      value?: bigint;
+    }>,
+  ): Promise<{ id: string } | null> => {
+    try {
+      const result = await getAction(
+        walletClient,
+        sendCalls,
+        'sendCalls',
+      )({
+        account: walletClient.account!,
+        calls: calls.map((call) => ({
+          to: call.to,
+          data: call.data,
+          value: call.value ?? BigInt(0),
+        })),
+      });
+      return result;
+    } catch (error) {
+      console.warn('EIP-5792 batch calls not supported:', error);
+      return null;
+    }
+  };
+
+  /**
+   * Wait for batch transaction receipt using EIP-5792
+   */
+  public static waitForBatchTransactionReceipt = async (client: Client, batchHash: HexString): Promise<WalletCallReceipt> => {
+    const { receipts, status, statusCode } = await getAction(
+      client,
+      waitForCallsStatus,
+      'waitForCallsStatus',
+    )({
+      id: batchHash,
+      timeout: 3_600_000 * 24,
+    });
+
+    if (status === TxnStatus.success) {
+      if (
+        !receipts?.length ||
+        !receipts.every((receipt) => receipt.transactionHash) ||
+        receipts.some((receipt) => receipt.status === TxnStatus.reverted)
+      ) {
+        throw new Error('Transaction was reverted.');
+      }
+      const transactionReceipt = receipts[receipts.length - 1]!;
+      return transactionReceipt;
+    }
+    if (statusCode >= 400 && statusCode < 500) {
+      throw new Error('Transaction was canceled.');
+    }
+    throw new Error('Transaction failed.');
+  };
+
   private static sendTxnWithBatch = async (
     request: TradeBuildTxnRequest,
     signer: WalletClient,
@@ -71,7 +133,7 @@ class TradeTxnHandler {
     multicallAddress?: HexString,
     rpcUrls?: string[],
   ): Promise<DZapTransactionResponse> => {
-    const approvalBatchCalls = await generateApprovalBatchCalls({
+    const approvalBatchCalls = await Token.generateApprovalBatchCalls({
       tokens: request.data.map((token) => ({
         address: token.srcToken as HexString,
         amount: token.amount,
@@ -83,7 +145,7 @@ class TradeTxnHandler {
       rpcUrls,
     });
 
-    const batchCalls: BatchCallParams[] = [
+    const batchCalls = [
       ...approvalBatchCalls,
       {
         to: txnParams.to as HexString,
@@ -97,7 +159,7 @@ class TradeTxnHandler {
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
     }
 
-    const batchResult = await sendBatchCalls(signer, batchCalls);
+    const batchResult = await this.sendBatchCalls(signer, batchCalls);
     if (!batchResult) {
       return {
         status: TxnStatus.error,
@@ -107,7 +169,7 @@ class TradeTxnHandler {
     }
 
     console.log('Waiting for batch transaction completion...');
-    const receipt = await waitForBatchTransactionReceipt(signer, batchResult.id as HexString);
+    const receipt = await this.waitForBatchTransactionReceipt(signer, batchResult.id as HexString);
     console.log({ receipt });
     return {
       status: TxnStatus.success,
@@ -143,7 +205,7 @@ class TradeTxnHandler {
         };
       }
 
-      const resp = await signCustomTypedData({
+      const resp = await SignIntent.signCustomTypedData({
         signer,
         account: txnParams.from as HexString,
         domain: typedData.domain,

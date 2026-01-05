@@ -10,7 +10,7 @@ import {
 } from '../../types/permit';
 import type { Address } from 'viem';
 import { getPublicClient } from '../client';
-import { getNextPermit2Nonce } from './nonce';
+import { getNextPermit2Nonce } from '../nonce';
 import { HexString } from '../../types';
 import * as ABI from '../../artifacts';
 

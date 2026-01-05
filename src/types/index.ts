@@ -10,6 +10,12 @@ import { TX_STATUS, STATUS_RESPONSE } from '../constants/status';
 
 export type HexString = `0x${string}`;
 
+export type BatchCallParams = {
+  to: HexString;
+  data: HexString;
+  value?: bigint;
+};
+
 export type ChainData = {
   [key in number]: Chain;
 };
