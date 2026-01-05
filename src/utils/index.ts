@@ -1,12 +1,20 @@
 export { getPublicClient } from './client';
 
-export { readContract, writeContract, estimateGasMultiplier, getDZapAbi, getOtherAbis, multicall } from './contract';
+export { readContract, writeContract, estimateGasMultiplier } from './contract';
+
+export { getDZapAbi, getOtherAbis } from './abi';
+
+export { multicall } from './multicall';
 
 export { generateUUID, getTrxId } from './uuid';
 
 export { isTypeSigner, signTypedData } from './signer';
 
-export { getTokensPairKey, isOneToMany, isDZapNativeToken, isNativeCurrency, isNonEVMChain, getChecksumAddress, formatToken } from './token';
+export { getTokensPairKey } from './token';
+
+export { isNativeCurrency, getChecksumAddress, formatToken, isOneToMany, isDZapNativeToken } from './address';
+
+export { isNonEVMChain, extendViemChain } from './chain';
 
 export { encodeApproveCallData } from './approval';
 

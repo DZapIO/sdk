@@ -1,4 +1,4 @@
-import { extendViemChain } from '../../utils/extendViemChain';
+import { extendViemChain } from '../../utils/chain';
 import { katana as Katana } from 'viem/chains';
 
 export const katana = extendViemChain(Katana, {

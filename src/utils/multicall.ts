@@ -1,7 +1,7 @@
 import { MulticallParameters } from 'viem';
-import { StatusCodes, TxnStatus } from '../../enums';
-import { HexString } from '../../types';
-import { getPublicClient } from '../client';
+import { StatusCodes, TxnStatus } from '../enums';
+import { HexString } from '../types';
+import { getPublicClient } from './client';
 
 /**
  * Batch multiple contract calls using multicall

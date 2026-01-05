@@ -1,7 +1,7 @@
-import * as ABI from '../../artifacts';
-import { AvailableDZapServices, OtherAvailableAbis } from '../../types';
-import { STANDARD_ABIS, Services } from '../../constants';
-import { ContractVersion } from '../../enums';
+import * as ABI from '../artifacts';
+import { AvailableDZapServices, OtherAvailableAbis } from '../types';
+import { STANDARD_ABIS, Services } from '../constants';
+import { ContractVersion } from '../enums';
 
 /**
  * Gets the appropriate DZap contract ABI based on service and version

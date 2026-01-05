@@ -1,4 +1,5 @@
 import type { Assign, Chain, ChainFormatters, Prettify } from 'viem';
+import { ChainData } from '../types';
 
 export function extendViemChain<
   Formatter extends ChainFormatters,
@@ -13,4 +14,8 @@ export function extendViemChain<
     ...extension,
   };
   return chain as Prettify<Assign<Chain<undefined>, Assign<Base, Extension>>>;
+}
+
+export function isNonEVMChain(chainId: number, chainConfig: ChainData) {
+  return chainConfig[chainId]?.chainType !== 'evm';
 }

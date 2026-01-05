@@ -1,5 +1,5 @@
 import { bitlayer as Bitlayer } from 'viem/chains';
-import { extendViemChain } from '../../utils/extendViemChain';
+import { extendViemChain } from '../../utils/chain';
 
 export const bitlayer = extendViemChain(Bitlayer, {
   contracts: {

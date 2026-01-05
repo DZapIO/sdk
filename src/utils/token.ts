@@ -1,6 +1,5 @@
 import { zeroAddress } from 'viem';
-import { DZAP_NATIVE_TOKEN_FORMAT } from '../../constants';
-import { formatToken } from './tokens';
+import { formatToken } from './address';
 
 /**
  * Generates a unique key for a token pair across chains
@@ -31,18 +30,3 @@ export function getTokensPairKey({
   const destFormattedAddress = formatToken(destToken, destChainNativeAddress);
   return `${srcChainId}_${srcFormattedAddress}-${destChainId}_${destFormattedAddress}`;
 }
-
-/**
- * Checks if a swap operation is one-to-many (same source token for multiple destinations)
- * @param firstTokenAddress - First token address
- * @param secondTokenAddress - Second token address
- * @returns True if addresses are the same
- */
-export const isOneToMany = (firstTokenAddress: string, secondTokenAddress: string) => firstTokenAddress === secondTokenAddress;
-
-/**
- * Checks if a token address is the DZap native token format
- * @param srcToken - Token address to check
- * @returns True if the token is in native format
- */
-export const isDZapNativeToken = (srcToken: string) => srcToken === DZAP_NATIVE_TOKEN_FORMAT;

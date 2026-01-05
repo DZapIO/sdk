@@ -1,7 +1,7 @@
 import { Abi, WalletClient } from 'viem';
-import { HexString } from '../../types';
-import { StatusCodes, TxnStatus } from '../../enums';
-import { getPublicClient } from '../client';
+import { HexString } from '../types';
+import { StatusCodes, TxnStatus } from '../enums';
+import { getPublicClient } from './client';
 
 /**
  * Reads data from a smart contract

@@ -7,7 +7,7 @@ import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserInten
 import { Gasless2612PermitParams, CustomTypedDataParams } from '../../types/permit';
 import { generateDeadline } from '../../utils/date';
 import { handleViemTransactionError } from '../../utils/errors';
-import { getDZapAbi } from '../../utils/contract/abi';
+import { getDZapAbi } from '../../utils/abi';
 import { getPublicClient } from '../../utils/client';
 import { signTypedData } from '../../utils/signer';
 
