@@ -36,5 +36,3 @@ export {
 export { updateQuotes } from './quotes';
 
 export { checkEIP2612PermitSupport, getEIP2612PermitSignature } from './eip-2612';
-
-export { getPermit2Address, getPermit2Signature } from './permit2';

@@ -1,7 +1,7 @@
 import * as ABI from '../../src/artifacts';
 import { getPublicClient } from '../../src/utils';
 import { viemChainsById } from '../../src/chains';
-import { getPermit2Address } from '../../src/utils/permit2';
+import { Permit2Service } from '../../src/service/permit2';
 import { getNextPermit2Nonce } from '../../src/utils/nonce';
 import { HexString } from '../../src/types';
 
@@ -54,7 +54,7 @@ describe('Permit2 Nonce Tests', () => {
 
         try {
           const urls = [...rpcUrls];
-          const permitAddress = getPermit2Address(chainId);
+          const permitAddress = Permit2Service.getContractAddress(chainId);
 
           if (!permitAddress) {
             throw new Error(`No Permit2 address found for chain ${chainId}`);
@@ -85,7 +85,7 @@ describe('Permit2 Nonce Tests', () => {
         return;
       }
 
-      const permitAddress = getPermit2Address(testChainId);
+      const permitAddress = Permit2Service.getContractAddress(testChainId);
       const urls = [...rpcUrls];
 
       const results = await Promise.all([

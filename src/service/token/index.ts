@@ -8,7 +8,7 @@ import { StatusCodes, TxnStatus } from '../../enums';
 import { ApprovalMode, ChainData, HexString, TokenInfo, TokenPermitData, TokenResponse } from '../../types';
 import { checkEIP2612PermitSupport } from '../../utils/eip-2612/eip2612Permit';
 import { multicall } from '../../utils/contract/multicall';
-import { getPermit2Address } from '../../utils/permit2';
+import { Permit2Service } from '../permit2';
 import { isDZapNativeToken } from '../../utils/token/tokenKeys';
 import { isTypeSigner } from '../../utils/signer';
 import { writeContract } from '../../utils/contract/contract';
@@ -193,7 +193,7 @@ export class Token {
     spender: HexString;
   }): Promise<{ status: TxnStatus; code: StatusCodes }> {
     if (mode !== ApprovalModes.Default) {
-      spender = getPermit2Address(chainId);
+      spender = Permit2Service.getContractAddress(chainId);
     }
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
@@ -320,7 +320,7 @@ export class Token {
           });
           return {
             token: address,
-            spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId), // @dev: not needed, but added for consistency
+            spender: eip2612PermitData.supportsPermit ? spender : Permit2Service.getContractAddress(chainId), // @dev: not needed, but added for consistency
             amount,
             isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
             isDefaultApprovalMode: false,
@@ -333,7 +333,7 @@ export class Token {
             isDefaultApprovalMode: true,
           };
         } else {
-          const permit2Address = getPermit2Address(chainId);
+          const permit2Address = Permit2Service.getContractAddress(chainId);
           return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
         }
       }),

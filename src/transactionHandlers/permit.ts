@@ -2,11 +2,11 @@ import { Services } from '../constants';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { SignIntent } from '../service/signIntent';
+import { Permit2Service } from '../service/permit2';
 import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
 import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/eip-2612/eip2612Permit';
-import { getPermit2Signature } from '../utils/permit2';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
@@ -27,7 +27,7 @@ type BatchPermitParams = BaseBatchPermitParams & ({ gasless: false } | GaslessSw
 
 class PermitTxnHandler {
   static generateBatchPermitDataForTokens = async (params: BatchPermitParams): Promise<BatchPermitResponse> => {
-    const resp = await getPermit2Signature(params);
+    const resp = await Permit2Service.generateSignature(params);
     return {
       ...resp,
       permitType: PermitTypes.PermitBatchWitnessTransferFrom,
@@ -102,7 +102,7 @@ class PermitTxnHandler {
           permitType: normalizedPermitType,
         };
       } else {
-        const resp = await getPermit2Signature({
+        const resp = await Permit2Service.generateSignature({
           ...params,
           tokens: [token],
           permitType: normalizedPermitType,
@@ -134,7 +134,7 @@ class PermitTxnHandler {
         },
       };
     }
-    const resp = await getPermit2Signature({
+    const resp = await Permit2Service.generateSignature({
       ...signPermitReq,
       tokens: tokens.map((token, index) => ({ ...token, index })),
       account: sender,
