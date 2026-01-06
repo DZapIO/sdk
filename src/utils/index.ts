@@ -43,4 +43,4 @@ export {
 
 export { updateQuotes } from './quotes';
 
-export { checkEIP2612PermitSupport, getEIP2612PermitSignature } from './eip-2612';
+export { checkEIP2612PermitSupport } from './eip-2612';

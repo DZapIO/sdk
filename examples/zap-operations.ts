@@ -37,7 +37,7 @@ async function runZapExamples() {
   };
 
   try {
-    const zapQuoteResponse = await dZapClient.getZapQuote(zapQuoteRequest);
+    const zapQuoteResponse = await dZapClient.zap.getQuote(zapQuoteRequest);
     console.log('Zap quote received:', JSON.stringify(zapQuoteResponse, null, 2));
 
     if (!zapQuoteResponse) {
@@ -55,7 +55,7 @@ async function runZapExamples() {
     if (walletClient.account) {
       try {
         // The `zap` method can take the request and optionally pre-built steps
-        const zapResult = await dZapClient.zap({
+        const zapResult = await dZapClient.zap.execute({
           request: zapQuoteRequest,
           signer: walletClient,
         });
@@ -71,7 +71,7 @@ async function runZapExamples() {
 
         setTimeout(async () => {
           try {
-            const statusResponse = await dZapClient.getZapTxnStatus({ chainId: 42161, txnHash });
+            const statusResponse = await dZapClient.zap.getStatus({ chainId: '42161', txnHash });
             console.log('Zap transaction status:', JSON.stringify(statusResponse, null, 2));
           } catch (e) {
             console.error('Error getting zap status:', e);
