@@ -250,12 +250,14 @@ class TradeTxnHandler {
     rpcUrls,
     spender,
     txnData,
+    updateTxnStatusForGasless,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     rpcUrls: string[];
     spender: HexString;
     txnData?: GaslessTradeBuildTxnResponse;
+    updateTxnStatusForGasless?: (status: TxnStatus) => void;
   }): Promise<DZapTransactionResponse> => {
     try {
       const chainId = request.fromChain;
@@ -295,6 +297,9 @@ class TradeTxnHandler {
       });
 
       if (resp.status === TxnStatus.success && resp.data) {
+        if (updateTxnStatusForGasless) {
+          updateTxnStatusForGasless(TxnStatus.executingGasless);
+        }
         const permit =
           resp.data.type === PermitTypes.EIP2612Permit
             ? {

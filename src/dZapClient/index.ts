@@ -546,10 +546,12 @@ class DZapClient {
     request,
     signer,
     txnData,
+    updateTxnStatusForGasless,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: GaslessTradeBuildTxnResponse;
+    updateTxnStatusForGasless?: (status: string) => void;
   }) {
     const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
@@ -558,6 +560,7 @@ class DZapClient {
       rpcUrls: config.getRpcUrlsByChainId(request.fromChain),
       spender,
       txnData,
+      updateTxnStatusForGasless,
     });
   }
 
