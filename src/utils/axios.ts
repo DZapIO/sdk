@@ -1,9 +1,8 @@
-import { CancelToken, Method } from 'axios';
-import AxiosClient from '../axios';
-import { baseApiClient, baseZapApiClient } from '../axios/baseClient';
+import { AxiosInstance, CancelToken, Method } from 'axios';
+import { tradeApiClient, zapApiClient } from '../axios/api';
 import { GET, POST } from '../constants/httpMethods';
 import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
-import { config } from '../config';
+import { getConfig } from '../config';
 
 type Invoke = {
   endpoint: string;
@@ -11,11 +10,10 @@ type Invoke = {
   method?: Method;
   cancelToken?: CancelToken;
   shouldRetry?: boolean;
-  baseClient?: AxiosClient;
 };
 
-export const invoke = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false }: Invoke) => {
-  const apiKey = config.getApiKey();
+const invoke = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false, baseClient }: Invoke & { baseClient: AxiosInstance }) => {
+  const config = getConfig();
   const axiosConfig: ExtendedAxiosRequestConfig = {
     method,
     url: endpoint,
@@ -23,35 +21,22 @@ export const invoke = async ({ endpoint, data, method = POST, cancelToken, shoul
     params: method === GET ? data : undefined,
     headers: {
       'Content-Type': 'application/json',
-      ...(apiKey ? { 'x-api-key': apiKey } : {}),
+      ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
     },
     cancelToken,
     shouldRetry,
   };
-  return baseApiClient(axiosConfig)
-    .then((res) => res.data)
-    .catch((error) => {
+  return baseClient(axiosConfig)
+    .then((res: any) => res.data)
+    .catch((error: any) => {
       return Promise.reject(error);
     });
 };
 
-export const invokeZap = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false }: Invoke) => {
-  const apiKey = config.getApiKey();
-  const axiosConfig: ExtendedAxiosRequestConfig = {
-    method,
-    url: endpoint,
-    data: method === GET ? undefined : data,
-    params: method === GET ? data : undefined,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(apiKey ? { 'x-api-key': apiKey } : {}),
-    },
-    cancelToken,
-    shouldRetry,
-  };
-  return baseZapApiClient(axiosConfig)
-    .then((res) => res.data)
-    .catch((error) => {
-      return Promise.reject(error);
-    });
+export const invokeTrade = async (params: Invoke) => {
+  return invoke({ ...params, baseClient: tradeApiClient });
+};
+
+export const invokeZap = async (params: Invoke) => {
+  return invoke({ ...params, baseClient: zapApiClient });
 };

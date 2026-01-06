@@ -22,7 +22,7 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
-import { config } from '../config';
+import { getConfig, DZapConfigOptions } from '../config';
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
@@ -88,33 +88,34 @@ class DZapClient {
   }
 
   /**
-   * Returns the singleton instance of DZapClient with optional custom RPC configuration.
-   * This ensures only one instance of the client exists throughout the application lifecycle.
+   * Returns the singleton instance of DZapClient with the provided configuration.
    *
-   * @param rpcUrlsByChainId - Optional mapping of chain IDs to custom RPC URLs for blockchain interactions
-   * @returns The singleton DZapClient instance
+   * @param configOptions - Configuration options for the SDK
+   * @returns DZapClient instance
    *
    * @example
    * ```typescript
    * // Basic initialization
-   * const client = DZapClient.getInstance();
+   * const client = DZapClient.getInstance({
+   *   apiKey: 'your-api-key'
+   * });
    *
    * // With custom RPC URLs
    * const clientWithRpc = DZapClient.getInstance({
-   *   1: ['https://eth.llamarpc.com'],
-   *   42161: ['https://arbitrum.llamarpc.com']
+   *   apiKey: 'your-api-key',
+   *   rpcUrlsByChainId: {
+   *     1: ['https://eth.llamarpc.com'],
+   *     42161: ['https://arbitrum.llamarpc.com']
+   *   }
    * });
    * ```
    */
-  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(configOptions: DZapConfigOptions = {}): DZapClient {
+    // Initialize global config
+    getConfig(configOptions);
+
     if (!DZapClient.instance) {
       DZapClient.instance = new DZapClient();
-    }
-    if (apiKey) {
-      config.setApiKey(apiKey);
-    }
-    if (rpcUrlsByChainId) {
-      config.setRpcUrlsByChainId(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }
@@ -555,7 +556,7 @@ class DZapClient {
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
       request,
       signer,
-      rpcUrls: config.getRpcUrlsByChainId(request.fromChain),
+      rpcUrls: getConfig().rpcUrlsByChainId[request.fromChain] ? [...getConfig().rpcUrlsByChainId[request.fromChain]] : [],
       spender,
       txnData,
     });
@@ -637,7 +638,10 @@ class DZapClient {
    * ```
    */
   public async decodeTxnData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
+    const publicClient = getPublicClient({
+      chainId,
+      rpcUrls: getConfig().rpcUrlsByChainId[chainId] ? [...getConfig().rpcUrlsByChainId[chainId]] : [],
+    });
     const [chainConfig, transactionData] = await Promise.all([
       DZapClient.getChainConfig(),
       publicClient.getTransaction({
@@ -776,7 +780,7 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
+      rpcUrls: rpcUrls || (getConfig().rpcUrlsByChainId[chainId] ? [...getConfig().rpcUrlsByChainId[chainId]] : []),
       mode,
       spender: spenderAddress,
       multicallAddress,
@@ -846,7 +850,7 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
+      rpcUrls: rpcUrls || (getConfig().rpcUrlsByChainId[chainId] ? [...getConfig().rpcUrlsByChainId[chainId]] : []),
       tokens,
       approvalTxnCallback,
       mode,
@@ -906,7 +910,7 @@ class DZapClient {
 
     const request = {
       ...params,
-      rpcUrls: params?.rpcUrls || config.getRpcUrlsByChainId(chainId),
+      rpcUrls: params?.rpcUrls || getConfig().rpcUrlsByChainId[chainId] || [],
       permitType,
       spender: spenderAddress,
       gasless: false,
