@@ -1,6 +1,16 @@
 import { Abi } from 'viem';
 
-export const abi: Abi = [
+/**
+ * DZap DCA (Dollar Cost Averaging) Contract ABI
+ *
+ * Enables automated recurring token purchases:
+ * - Schedule periodic swaps
+ * - Manage DCA positions
+ * - Track execution history
+ *
+ * @version 1.0
+ */
+export const dZapDcaAbi: Abi = [
   {
     inputs: [
       {
@@ -1825,4 +1835,4 @@ export const abi: Abi = [
     stateMutability: 'payable',
     type: 'receive',
   },
-];
+] as const;

@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
-import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
+import { erc20PermitAbi } from '../../artifacts';
 import { getConfig } from '../../config';
 import { Services } from '../../constants';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';

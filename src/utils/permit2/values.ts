@@ -9,10 +9,10 @@ import {
   TokenWithIndex,
 } from '../../types/permit';
 import type { Address } from 'viem';
-import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { getPublicClient } from '../index';
 import { getNextPermit2Nonce } from './nonce';
 import { HexString } from '../../types';
+import { permit2Abi } from '../../artifacts';
 
 type Permit2ValuesParams = {
   deadline: bigint;
@@ -45,7 +45,7 @@ export const getPermitSingleValues = async ({
   const publicClient = getPublicClient({ chainId, rpcUrls });
   const nonceResult = await publicClient.readContract({
     address: permit2Address,
-    abi: Permit2Abi,
+    abi: permit2Abi,
     functionName: ERC20_FUNCTIONS.allowance,
     args: [account, token.address, spender],
   });

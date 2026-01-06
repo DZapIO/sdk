@@ -1,4 +1,16 @@
-export const abi = [
+/**
+ * Uniswap Permit2 Full Contract ABI
+ *
+ * Complete ABI for the Permit2 contract including all functions and events.
+ * This is the full version with extended functionality beyond the basic operations.
+ *
+ * Use this for advanced interactions requiring the complete contract interface.
+ * For basic operations, consider using the standard permit2Abi instead.
+ *
+ * @protocol Uniswap Permit2
+ * @see https://github.com/Uniswap/permit2
+ */
+export const permit2FullAbi = [
   {
     inputs: [
       {
