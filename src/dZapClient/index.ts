@@ -539,7 +539,7 @@ class DZapClient {
    *     swapDataHash: '0x...',
    *     adapterDataHash: '0x...',
    *     txType: 'swap' // example only; depends on GaslessTxType keys
-   *   },
+   *   }
    * });
    * ```
    */
