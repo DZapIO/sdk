@@ -34,7 +34,7 @@ export enum TxnStatus {
   reverted = 'reverted',
   pendingWalletConfirmation = 'pendingWalletConfirmation',
   partialSuccess = 'partialSuccess',
-  executingGasless = 'executingGasless',
+  waitingForExecution = 'waitingForExecution',
 }
 
 export enum Versions {
