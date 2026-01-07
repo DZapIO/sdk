@@ -26,7 +26,7 @@ import { CustomTypedDataParams } from '../../types/permit';
 import { updateQuotes } from '../../utils/quotes';
 import { PriceService } from '../price';
 import { config } from '../../config';
-import { SwapInfoDecoder } from '../decoder/SwapInfoDecoder';
+import { SwapDecoder } from '../decoder';
 import { getPublicClient, isTypeSigner } from '../../utils';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { SignatureService } from '../signature';
@@ -323,7 +323,7 @@ export class TradeService {
     if (chainConfig === null || chainConfig?.[chainId] == null) {
       throw new Error('Chains config not found');
     }
-    const decoder = new SwapInfoDecoder();
+    const decoder = new SwapDecoder();
     return decoder.decodeTransactionData(transactionData, data, service, chainConfig[chainId]);
   }
 

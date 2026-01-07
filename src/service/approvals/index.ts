@@ -22,7 +22,7 @@ import { multicall } from '../../utils/multicall';
 import { Permit2Service } from '../permit2';
 import { isDZapNativeToken } from '../../utils/address';
 import { isTypeSigner } from '../../utils/signer';
-import { writeContract } from '../../utils/contract';
+import { getPublicClient } from '../../utils/client';
 import { encodeApproveCallData } from '../../utils/approval';
 
 /**
@@ -445,29 +445,14 @@ export class ApprovalsService {
       value: bigint;
     }>
   > {
-    const tokensToCheck = tokens.filter((token) => !isDZapNativeToken(token.address));
-    if (tokensToCheck.length === 0) {
-      return [];
-    }
-    const { data: allowanceData } = await this.getAllowanceInternal({
+    return ApprovalsService.generateApprovalBatchCalls({
+      tokens,
       chainId,
       sender,
-      tokens: tokensToCheck,
       spender,
       multicallAddress,
       rpcUrls,
     });
-
-    const tokensNeedingApproval = tokensToCheck.filter((token) => allowanceData[token.address]?.approvalNeeded);
-
-    return tokensNeedingApproval.map((token) => ({
-      to: token.address,
-      data: encodeApproveCallData({
-        spender,
-        amount: BigInt(token.amount),
-      }),
-      value: BigInt(0),
-    }));
   }
 
   /**
@@ -574,15 +559,25 @@ export class ApprovalsService {
           code: StatusCodes.Success,
         };
       } else {
-        txnDetails = await writeContract({
-          chainId,
-          contractAddress: tokens[dataIdx].address,
-          abi: erc20Abi,
-          functionName: ERC20_FUNCTIONS.approve,
-          args: [spender, tokens[dataIdx].amount],
-          rpcUrls,
-          signer,
-        });
+        const publicClient = getPublicClient({ chainId, rpcUrls });
+        try {
+          const { request } = await publicClient.simulateContract({
+            address: tokens[dataIdx].address,
+            abi: erc20Abi,
+            functionName: ERC20_FUNCTIONS.approve,
+            args: [spender, BigInt(tokens[dataIdx].amount)],
+            account: signer.account,
+          });
+          const hash = await signer.writeContract(request);
+          txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
+        } catch (e: any) {
+          console.log({ e });
+          if (e?.code === StatusCodes.UserRejectedRequest) {
+            txnDetails = { status: TxnStatus.rejected, code: e?.code, txnHash: '' };
+          } else {
+            txnDetails = { status: TxnStatus.error, code: e?.code, txnHash: '' };
+          }
+        }
       }
       if (txnDetails.code !== StatusCodes.Success) {
         return {
@@ -601,55 +596,6 @@ export class ApprovalsService {
       }
     }
     return { status: TxnStatus.success, code: StatusCodes.Success };
-  }
-
-  /**
-   * Batch ERC20 allowance checks using multicall
-   * @param params - Parameters for batch allowance check
-   * @returns Promise resolving to allowance data for each token
-   */
-  private async batchGetAllowances({
-    chainId,
-    data,
-    owner,
-    multicallAddress,
-    rpcUrls,
-  }: {
-    chainId: number;
-    data: { token: HexString; spender: HexString }[];
-    owner: HexString;
-    multicallAddress?: HexString;
-    rpcUrls?: string[];
-  }): Promise<{ status: TxnStatus; code: StatusCodes; data: Record<string, bigint> }> {
-    const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
-      address: token,
-      abi: erc20Abi,
-      functionName: ERC20_FUNCTIONS.allowance,
-      args: [owner, spender],
-    }));
-
-    const {
-      status,
-      code,
-      data: allowances,
-    } = await multicall({
-      chainId,
-      contracts,
-      rpcUrls,
-      multicallAddress,
-      allowFailure: false,
-    });
-
-    if (status !== TxnStatus.success) {
-      return { status, code, data: {} };
-    }
-
-    const tokenAllowances: Record<string, bigint> = {};
-    for (let i = 0; i < data.length; i++) {
-      tokenAllowances[data[i].token] = allowances[i] as bigint;
-    }
-
-    return { status, code, data: tokenAllowances };
   }
 
   /**
@@ -678,70 +624,14 @@ export class ApprovalsService {
     code: StatusCodes;
     data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } };
   }> {
-    const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
-
-    const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
-    const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
-
-    const approvalData = await Promise.all(
-      erc20Tokens.map(async ({ address, amount, permit }) => {
-        if (mode === ApprovalModes.AutoPermit) {
-          const eip2612PermitData = await checkEIP2612PermitSupport({
-            address,
-            chainId,
-            rpcUrls,
-            owner: sender,
-            permit,
-          });
-          return {
-            token: address,
-            spender: eip2612PermitData.supportsPermit ? spender : Permit2Service.getContractAddress(chainId),
-            amount,
-            isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
-            isDefaultApprovalMode: false,
-          };
-        } else if (mode === ApprovalModes.Default) {
-          return {
-            token: address,
-            spender,
-            amount,
-            isDefaultApprovalMode: true,
-          };
-        } else {
-          const permit2Address = Permit2Service.getContractAddress(chainId);
-          return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
-        }
-      }),
-    );
-
-    for (const { address } of nativeTokens) {
-      data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false };
-    }
-
-    if (erc20Tokens.length === 0) {
-      return { status: TxnStatus.success, code: StatusCodes.Success, data };
-    }
-    try {
-      const { data: allowances } = await this.batchGetAllowances({
-        chainId,
-        data: approvalData,
-        owner: sender,
-        multicallAddress,
-        rpcUrls,
-      });
-
-      for (let i = 0; i < approvalData.length; i++) {
-        const { token, amount, isEIP2612PermitSupported, isDefaultApprovalMode } = approvalData[i];
-        const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
-        const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
-        const signatureNeeded = isDefaultApprovalMode ? false : true;
-        data[token] = { allowance, approvalNeeded, signatureNeeded };
-      }
-
-      return { status: TxnStatus.success, code: StatusCodes.Success, data };
-    } catch (error: unknown) {
-      console.error('Multicall allowance check failed:', error);
-      return { status: TxnStatus.error, code: StatusCodes.Error, data };
-    }
+    return ApprovalsService.getAllowanceStatic({
+      chainId,
+      sender,
+      tokens,
+      spender,
+      multicallAddress,
+      rpcUrls,
+      mode,
+    });
   }
 }

@@ -166,7 +166,7 @@ export class TransactionsService {
         sendCalls,
         'sendCalls',
       )({
-        account: walletClient.account!,
+        account: walletClient.account,
         calls: calls.map((call) => ({
           to: call.to,
           data: call.data,

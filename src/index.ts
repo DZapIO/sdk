@@ -42,7 +42,7 @@ import {
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey, formatToken } from './utils';
-import { SwapInfoDecoder } from './service/decoder/SwapInfoDecoder';
+import { SwapDecoder } from './service/decoder';
 import { TokenService } from './service/token';
 import { Permit2Service } from './service/permit2';
 import { SignatureService } from './service/signature';
@@ -95,7 +95,7 @@ export {
   StatusCodes,
   SvmTxData,
   SwapInfo,
-  SwapInfoDecoder,
+  SwapDecoder,
   Token,
   TokenInfo,
   TokenPermitData,

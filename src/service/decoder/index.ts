@@ -6,7 +6,7 @@ import { getDZapAbi } from '../../utils/abi';
 import { formatToken } from '../../utils/address';
 import { getTokensPairKey } from '../../utils/token';
 
-export class SwapInfoDecoder {
+export class SwapDecoder {
   private decodeSingleSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
     const decodedData = decodeFunctionData({
       data,

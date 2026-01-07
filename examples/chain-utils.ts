@@ -7,7 +7,7 @@ async function runChainUtilsExamples() {
 
   console.log('\nFetching all supported chains...');
   try {
-    const allChains = await dZapClient.chains.getAll();
+    const allChains = await dZapClient.chains.getSupportedChains();
     console.log(`Found ${Object.keys(allChains).length} supported chains.`);
     // Log a few chain details for brevity
     const chainSubset = Object.fromEntries(

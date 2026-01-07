@@ -20,7 +20,7 @@ export class ChainsService {
    * console.log('Supported chains:', chainIds);
    * ```
    */
-  public async getAll(): Promise<ChainData> {
+  public async getSupportedChains(): Promise<ChainData> {
     return fetchAllSupportedChains();
   }
 

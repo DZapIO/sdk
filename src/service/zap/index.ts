@@ -429,6 +429,15 @@ export class ZapService {
           txnHash = result.txnHash as HexString;
         }
       }
+
+      if (!txnHash) {
+        return {
+          status: TxnStatus.error,
+          code: StatusCodes.FunctionNotFound,
+          errorMsg: 'No execute steps found in the zap route.',
+        };
+      }
+
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,
