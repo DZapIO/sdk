@@ -506,6 +506,7 @@ class DZapClient {
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
    * @param params.txnData - Optional pre-built gasless transaction data. If provided, skips the build step
+   * @param params.txnStatusCallback - Optional callback to notify the status of the transaction execution
    * @returns Promise resolving to the transaction execution result
    *
    * @example
@@ -538,7 +539,7 @@ class DZapClient {
    *     swapDataHash: '0x...',
    *     adapterDataHash: '0x...',
    *     txType: 'swap' // example only; depends on GaslessTxType keys
-   *   }
+   *   },
    * });
    * ```
    */
