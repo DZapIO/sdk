@@ -32,10 +32,11 @@ import {
   ZapTransactionStep,
 } from '../../types/zap';
 import { ZapStep, ZapEvmTxnDetails } from '../../types/zap/step';
-import { getPublicClient } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { ZAP_STEP_ACTIONS } from '../../constants';
 import { TransactionsService } from '../transactions';
+import { logger } from '../../utils/logger';
+import { getPublicClient } from '../../utils';
 
 /**
  * ZapService handles all zap-related operations including quotes, transaction building, execution, and pool management.
@@ -357,8 +358,8 @@ export class ZapService {
         value: BigInt(value),
         gasLimit: estimatedGas ? BigInt(estimatedGas) : undefined,
       });
-    } catch (error: any) {
-      console.log({ error });
+    } catch (error: unknown) {
+      logger.error('Zap step execution failed', { service: 'ZapService', method: 'executeStep', chainId, error });
       return handleViemTransactionError({ error });
     }
   }
@@ -371,14 +372,15 @@ export class ZapService {
       const { callData, callTo, value, estimatedGas } = data;
       const publicClient = getPublicClient({ chainId, rpcUrls: undefined });
       const blockNumber = await publicClient.getBlockNumber();
-      console.log('block Number and data');
-      console.dir(
-        {
-          blockNumber,
-          ...data,
-        },
-        { depth: null },
-      );
+      logger.debug('Zap approval block data', {
+        service: 'ZapService',
+        method: 'approve',
+        chainId,
+        blockNumber: blockNumber.toString(),
+        callTo,
+        value,
+        estimatedGas,
+      });
       return await TransactionsService.sendTransaction({
         chainId,
         signer,
@@ -387,8 +389,8 @@ export class ZapService {
         value: BigInt(value),
         gasLimit: estimatedGas ? BigInt(estimatedGas) : undefined,
       });
-    } catch (error: any) {
-      console.log({ error });
+    } catch (error: unknown) {
+      logger.error('Zap approval failed', { service: 'ZapService', method: 'approve', chainId, error });
       return handleViemTransactionError({ error });
     }
   }
@@ -411,6 +413,13 @@ export class ZapService {
         const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request)).data;
         steps = route.steps;
         if (!steps || steps.length === 0) {
+          logger.error('No steps found in zap route', {
+            service: 'ZapService',
+            method: 'executeZap',
+            chainId,
+            srcToken: request.srcToken,
+            destToken: request.destToken,
+          });
           return {
             status: TxnStatus.error,
             code: StatusCodes.FunctionNotFound,
@@ -431,6 +440,12 @@ export class ZapService {
       }
 
       if (!txnHash) {
+        logger.error('No execute steps found in zap route', {
+          service: 'ZapService',
+          method: 'executeZap',
+          chainId,
+          stepsCount: steps.length,
+        });
         return {
           status: TxnStatus.error,
           code: StatusCodes.FunctionNotFound,
@@ -443,8 +458,8 @@ export class ZapService {
         code: StatusCodes.Success,
         txnHash,
       };
-    } catch (error: any) {
-      console.log({ error });
+    } catch (error: unknown) {
+      logger.error('Zap execution failed', { service: 'ZapService', method: 'executeZap', chainId: request.srcChainId, error });
       return handleViemTransactionError({ error });
     }
   }
