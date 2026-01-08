@@ -1,3 +1,5 @@
+import { AxiosError } from 'axios';
+
 enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -90,9 +92,86 @@ class Logger {
   }
 
   /**
+   * Check if error is an Axios error
+   */
+  private isAxiosError(error: unknown): error is AxiosError {
+    return Boolean(error) && (error as AxiosError).isAxiosError === true;
+  }
+
+  /**
+   * Serialize Axios error with detailed HTTP context
+   */
+  private serializeAxiosError(error: AxiosError): Record<string, unknown> {
+    const serialized: Record<string, unknown> = {
+      errorName: 'AxiosError',
+      errorMessage: error.message,
+      errorCode: error.code, // e.g., 'ECONNABORTED', 'ERR_NETWORK', 'ERR_BAD_REQUEST'
+    };
+
+    // Include stack trace in non-production
+    if (!this.isProd && error.stack) {
+      serialized.stack = error.stack;
+    }
+
+    // Add HTTP request details (if available)
+    if (error.config) {
+      const requestInfo: Record<string, unknown> = {
+        method: error.config.method?.toUpperCase(),
+        url: error.config.url,
+        baseURL: error.config.baseURL,
+        headers: this.sanitize(error.config.headers as Record<string, unknown>),
+      };
+
+      // Include request params/data in non-production
+      if (!this.isProd) {
+        if (error.config.params) {
+          requestInfo.params = this.sanitize(error.config.params);
+        }
+        if (error.config.data) {
+          try {
+            const parsedData = typeof error.config.data === 'string' ? JSON.parse(error.config.data) : error.config.data;
+            requestInfo.data = this.sanitize(parsedData);
+          } catch {
+            requestInfo.data = '[Unable to parse request data]';
+          }
+        }
+      }
+
+      serialized.request = requestInfo;
+    }
+
+    if (error.response) {
+      const responseInfo: Record<string, unknown> = {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+      };
+
+      if (!this.isProd && error.response.headers) {
+        responseInfo.headers = this.sanitize(error.response.headers as Record<string, unknown>);
+      }
+
+      serialized.response = responseInfo;
+    } else if (error.request) {
+      // Request was made but no response received (network error, timeout, etc.)
+      serialized.errorType = 'NO_RESPONSE';
+      serialized.errorContext = 'Request was sent but no response was received. This could be due to network issues, server being down, or timeout.';
+    } else {
+      // Error occurred during request setup
+      serialized.errorType = 'REQUEST_SETUP';
+      serialized.errorContext = 'Error occurred while setting up the request.';
+    }
+
+    return serialized;
+  }
+
+  /**
    * Serialize error objects properly
    */
   private serializeError(error: unknown): unknown {
+    if (this.isAxiosError(error)) {
+      return this.serializeAxiosError(error);
+    }
     if (error instanceof Error) {
       const serialized: Record<string, unknown> = {
         errorName: error.name,

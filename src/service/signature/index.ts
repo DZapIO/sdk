@@ -591,7 +591,7 @@ export class SignatureService {
       const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
       logger.error('Error generating permit signature', {
         service: 'SignatureService',
-        method: 'signPermit',
+        method: 'getEIP2612PermitSignature',
         chainId: params.chainId,
         error,
       });
