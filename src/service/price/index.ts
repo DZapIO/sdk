@@ -5,6 +5,7 @@ import { CoingeckoPriceProvider } from './provider/coingecko';
 import { DefiLlamaPriceProvider } from './provider/defiLlama';
 import { DZapPriceProvider } from './provider/dzap';
 import { IPriceProvider, PriceProvider, priceProviders } from './types/IPriceProvider';
+import { logger } from '../../utils/logger';
 
 export class PriceService {
   private providers: Map<PriceProvider, IPriceProvider>;
@@ -94,7 +95,11 @@ export class PriceService {
       const isAllowed = allowedSources ? isInAllowedSources && !isInNotAllowedSources : !isInNotAllowedSources;
 
       if (provider.requiresChainConfig && !chainConfig) {
-        console.error(`Provider ${provider.id} requires chainConfig but none was provided.`);
+        logger.error('Provider requires chainConfig but none provided', {
+          service: 'PriceService',
+          method: 'fetchPrices',
+          providerId: provider.id,
+        });
         return false;
       }
 

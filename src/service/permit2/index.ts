@@ -27,6 +27,7 @@ import { generateDeadline } from '../../utils/date';
 import { signTypedData } from '../../utils/signer';
 import { getPublicClient } from '../../utils/client';
 import { getNextPermit2Nonce } from '../../utils/nonce';
+import { logger } from '../../utils/logger';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -158,9 +159,15 @@ export class Permit2Service {
         permitData,
         nonce,
       };
-    } catch (error: any) {
-      console.log('Error generating permit2 signature:', error);
-      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
+    } catch (error: unknown) {
+      const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
+      logger.error('Error generating permit2 signature', {
+        service: 'Permit2Service',
+        method: 'signPermit2',
+        chainId: params.chainId,
+        error,
+      });
+      if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
         return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
       }
       return { status: TxnStatus.error, code: StatusCodes.Error };
@@ -239,6 +246,12 @@ export class Permit2Service {
         return this.buildBatchPermitValues(params);
 
       default:
+        logger.error('Invalid permit type', {
+          service: 'Permit2Service',
+          method: 'buildPermitValues',
+          permitType: params.primaryType,
+          chainId: params.chainId,
+        });
         throw new Error(`Invalid permit type: ${params.primaryType}`);
     }
   }
@@ -320,6 +333,13 @@ export class Permit2Service {
     if (token.index === 0) {
       nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
     } else if (firstTokenNonce === null) {
+      logger.error('Unable to find nonce for token', {
+        service: 'Permit2Service',
+        method: 'buildTransferPermitValues',
+        tokenAddress: token.address,
+        tokenIndex: token.index,
+        chainId,
+      });
       throw new Error(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
     } else {
       nonce = BigInt(firstTokenNonce) + BigInt(token.index);
@@ -396,6 +416,11 @@ export class Permit2Service {
     }
 
     if (!witness) {
+      logger.error('Witness is required for PermitTransferFrom', {
+        service: 'Permit2Service',
+        method: 'buildTypedData',
+        chainId,
+      });
       throw new Error('Witness is required for PermitTransferFrom');
     }
 

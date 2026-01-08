@@ -3,6 +3,7 @@ import { fetchAllTokens, fetchBalances, fetchTokenDetails } from '../../api';
 import { ChainData, TokenInfo, TokenResponse } from '../../types';
 import { PriceService } from '../price';
 import { priceProviders } from '../price/types/IPriceProvider';
+import { logger } from '../../utils/logger';
 
 /**
  * TokenService handles all token-related operations including fetching token data, balances, prices, and approvals.
@@ -43,8 +44,8 @@ export class TokenService {
       if (!chainConfig) return tokens;
 
       return await this.updateTokenListPrices(tokens, chainId, chainConfig);
-    } catch (error) {
-      console.error('Error fetching or updating tokens:', error);
+    } catch (error: unknown) {
+      logger.error('Error fetching or updating tokens', { service: 'TokenService', method: 'getAll', chainId, error });
       return {};
     }
   }
@@ -217,8 +218,8 @@ export class TokenService {
           : null;
       });
       return this.sortByBalanceInUsd(Object.entries(tokens));
-    } catch (error) {
-      console.error('Error fetching token prices:', error);
+    } catch (error: unknown) {
+      logger.error('Error fetching token prices', { service: 'TokenService', method: 'updateTokenListPrices', chainId, error });
       return tokens;
     }
   }

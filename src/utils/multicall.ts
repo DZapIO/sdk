@@ -2,6 +2,7 @@ import { MulticallParameters } from 'viem';
 import { StatusCodes, TxnStatus } from '../enums';
 import { HexString } from '../types';
 import { getPublicClient } from './client';
+import { logger } from './logger';
 
 /**
  * Batch multiple contract calls using multicall
@@ -32,11 +33,12 @@ export const multicall = async ({
       code: StatusCodes.Success,
       data: results,
     };
-  } catch (error: any) {
-    console.error('Multicall failed:', error);
+  } catch (error: unknown) {
+    const err = error as { code?: StatusCodes };
+    logger.error('Multicall failed', { service: 'MulticallUtil', chainId, error });
     return {
       status: TxnStatus.error,
-      code: error.code || StatusCodes.Error,
+      code: err.code || StatusCodes.Error,
       data: [],
     };
   }

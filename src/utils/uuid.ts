@@ -29,8 +29,6 @@ export const generateUUID = () => {
  */
 export const getTrxId = (account: string) => {
   const uuid = `${account.slice(0, 6)}...${account.slice(36, 42)}-${Date.now()}`;
-  console.log(uuid);
-
   const uuidInBytes = stringToHex(uuid, { size: 32 });
   return uuidInBytes;
 };

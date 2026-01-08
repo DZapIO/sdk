@@ -1,5 +1,6 @@
 import { fetchTokenPrice } from '../../../../api';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
+import { logger } from '../../../../utils/logger';
 
 export class DZapPriceProvider implements IPriceProvider {
   public id = priceProviders.dZap;
@@ -9,8 +10,13 @@ export class DZapPriceProvider implements IPriceProvider {
     try {
       const tokenPrices = await fetchTokenPrice(tokenAddresses, chainId);
       return tokenPrices;
-    } catch (e) {
-      console.error('Failed to fetch token price', e);
+    } catch (e: unknown) {
+      logger.error('Failed to fetch token price from DZap API', {
+        service: 'DZapPriceProvider',
+        method: 'fetchPrices',
+        chainId,
+        error: e,
+      });
       return {};
     }
   };
