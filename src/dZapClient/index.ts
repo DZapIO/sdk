@@ -22,7 +22,7 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
-import { getConfig, DZapConfigOptions } from '../config';
+import { Config, DZapConfigOptions } from '../config';
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
@@ -111,8 +111,7 @@ class DZapClient {
    * ```
    */
   public static getInstance(configOptions: DZapConfigOptions = {}): DZapClient {
-    // Initialize global config
-    getConfig(configOptions);
+    Config.getInstance(configOptions);
 
     if (!DZapClient.instance) {
       DZapClient.instance = new DZapClient();
@@ -556,7 +555,7 @@ class DZapClient {
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
       request,
       signer,
-      rpcUrls: getConfig().rpcUrlsByChainId[request.fromChain] ? [...getConfig().rpcUrlsByChainId[request.fromChain]] : [],
+      rpcUrls: Config.getInstance().getRpcUrlsByChainId(request.fromChain),
       spender,
       txnData,
     });
@@ -640,7 +639,7 @@ class DZapClient {
   public async decodeTxnData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
     const publicClient = getPublicClient({
       chainId,
-      rpcUrls: getConfig().rpcUrlsByChainId[chainId] ? [...getConfig().rpcUrlsByChainId[chainId]] : [],
+      rpcUrls: Config.getInstance().getRpcUrlsByChainId(chainId),
     });
     const [chainConfig, transactionData] = await Promise.all([
       DZapClient.getChainConfig(),
@@ -780,7 +779,7 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || (getConfig().rpcUrlsByChainId[chainId] ? [...getConfig().rpcUrlsByChainId[chainId]] : []),
+      rpcUrls: rpcUrls || Config.getInstance().getRpcUrlsByChainId(chainId),
       mode,
       spender: spenderAddress,
       multicallAddress,
@@ -850,7 +849,7 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      rpcUrls: rpcUrls || (getConfig().rpcUrlsByChainId[chainId] ? [...getConfig().rpcUrlsByChainId[chainId]] : []),
+      rpcUrls: rpcUrls || Config.getInstance().getRpcUrlsByChainId(chainId),
       tokens,
       approvalTxnCallback,
       mode,
@@ -910,7 +909,7 @@ class DZapClient {
 
     const request = {
       ...params,
-      rpcUrls: params?.rpcUrls || getConfig().rpcUrlsByChainId[chainId] || [],
+      rpcUrls: params?.rpcUrls || Config.getInstance().getRpcUrlsByChainId(chainId),
       permitType,
       spender: spenderAddress,
       gasless: false,

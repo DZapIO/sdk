@@ -2,7 +2,7 @@ import { AxiosInstance, CancelToken, Method } from 'axios';
 import { tradeApiClient, zapApiClient } from '../axios/api';
 import { GET, POST } from '../constants/httpMethods';
 import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
-import { getConfig } from '../config';
+import { Config } from '../config';
 
 type Invoke = {
   endpoint: string;
@@ -13,7 +13,7 @@ type Invoke = {
 };
 
 const invoke = async ({ endpoint, data, method = POST, cancelToken, shouldRetry = false, baseClient }: Invoke & { baseClient: AxiosInstance }) => {
-  const config = getConfig();
+  const config = Config.getInstance();
   const axiosConfig: ExtendedAxiosRequestConfig = {
     method,
     url: endpoint,

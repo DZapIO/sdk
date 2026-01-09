@@ -1,13 +1,13 @@
 import AxiosClient from '.';
-import { getConfig } from '../config';
+import { Config } from '../config';
 
 function getBaseTradeUrl() {
-  const config = getConfig();
+  const config = Config.getInstance();
   return `${config.baseApiUrl}/${config.versionPostfix}`;
 }
 
 function getBaseZapUrl() {
-  const config = getConfig();
+  const config = Config.getInstance();
   return `${config.zapApiUrl}/${config.versionPostfix}`;
 }
 
