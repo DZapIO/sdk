@@ -41,11 +41,19 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { getTokensPairKey } from './utils';
-import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
-import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
-import { formatToken } from './utils/tokens';
+import { getTokensPairKey, formatToken } from './utils';
+import { SwapDecoder } from './service/decoder';
+import { TokenService } from './service/token';
+import { Permit2 } from './service/permit2';
+import { SignatureService } from './service/signature';
+import { checkEIP2612PermitSupport } from './utils/eip2612Permit';
 import { viemChainsList } from './chains';
+import { ChainsService } from './service/chains';
+import { TradeService } from './service/trade';
+import { ZapService } from './service/zap';
+import { ApprovalsService } from './service/approvals';
+import { TransactionsService } from './service/transactions';
+import { ContractsService } from './service/contracts';
 
 export * from './types/zap';
 export * from './constants';
@@ -53,13 +61,16 @@ export * from './constants';
 export {
   ApiRpcResponse,
   ApprovalMode,
+  ApprovalsService,
   BatchPermitCallbackParams,
   BtcTxData,
   Chain,
   ChainData,
+  ChainsService,
   checkEIP2612PermitSupport,
   contractErrorActions,
   ContractErrorResponse,
+  ContractsService,
   DZapClient,
   DZapPermitMode,
   DZapTransactionResponse,
@@ -72,21 +83,24 @@ export {
   HexString,
   ParamQuotes,
   PermitMode,
+  Permit2,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,
   QuoteFilter,
   SignatureCallbackParams,
+  SignatureService,
   SignPermitResponse,
   SinglePermitCallbackParams,
   StatusCodes,
   SvmTxData,
   SwapInfo,
-  SwapInputDataDecoder,
+  SwapDecoder,
   Token,
   TokenInfo,
   TokenPermitData,
   TokenResponse,
+  TokenService,
   TradeBuildTxnRequest,
   TradeBuildTxnRequestData,
   TradeBuildTxnResponse,
@@ -95,10 +109,13 @@ export {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeService,
   TradeStatusResponse,
   TradeStep,
+  TransactionsService,
   TxnStatus,
-  ZapIntegratorConfig,
-  ZapStatusResponse,
   viemChainsList,
+  ZapIntegratorConfig,
+  ZapService,
+  ZapStatusResponse,
 };

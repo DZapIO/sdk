@@ -1,7 +1,7 @@
 import { GET } from '../../../../constants/httpMethods';
 import { ChainData } from '../../../../types';
+import { isNativeCurrency } from '../../../../utils';
 import { invoke } from '../../../../utils/axios';
-import { isNativeCurrency } from '../../../../utils/tokens';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 import { coingeckoConfig } from './config';
 

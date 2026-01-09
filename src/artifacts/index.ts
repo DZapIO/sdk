@@ -12,8 +12,7 @@ export {
 
 export { erc20Abi, erc20PermitAbi } from './tokens';
 
-export { permit2Abi, permit2FullAbi, permit2ProxyAbi } from './permit';
-
 export * as tokens from './tokens';
-export * as protocols from './permit';
+export * as permit from './permit';
 export * as dca from './dca';
+export * as core from './core';

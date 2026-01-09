@@ -1,6 +1,6 @@
 import { Signer } from 'ethers';
 import { Prettify, TypedDataDomain, WalletClient } from 'viem';
-import { DZAP_ABIS, GASLESS_TX_TYPE, STANDARD_ABIS, QUOTE_FILTERS, Services } from './../constants';
+import { GASLESS_TX_TYPE, STANDARD_ABIS, QUOTE_FILTERS, Services } from './../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
@@ -9,6 +9,12 @@ import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 import { TX_STATUS, STATUS_RESPONSE } from '../constants/status';
 
 export type HexString = `0x${string}`;
+
+export type BatchCallParams = {
+  to: HexString;
+  data: HexString;
+  value?: bigint;
+};
 
 export type ChainData = {
   [key in number]: Chain;
@@ -372,9 +378,7 @@ export type GaslessTradeBuildTxnResponse = {
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
 
-export type DZapAvailableAbis = (typeof DZAP_ABIS)[keyof typeof DZAP_ABIS];
-
-export type OtherAvailableAbis = (typeof STANDARD_ABIS)[keyof typeof STANDARD_ABIS];
+export type StandardAbis = (typeof STANDARD_ABIS)[keyof typeof STANDARD_ABIS];
 
 export type AppEnvType = `${AppEnv}`;
 

@@ -30,7 +30,7 @@ describe('DZapClient - buildTxn', () => {
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
     };
 
-    const result = await client.buildTradeTxn(request);
+    const result = await client.trade.buildTxn(request);
     expect(result).toBeDefined();
     expect(result.data).toBeDefined();
     expect(result.to).toBeDefined();
@@ -60,7 +60,7 @@ describe('DZapClient - buildTxn', () => {
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
     };
 
-    const result = await client.buildTradeTxn(request);
+    const result = await client.trade.buildTxn(request);
     expect(result).toBeDefined();
     expect(result.data).toBeDefined();
     expect(result.to).toBeDefined();

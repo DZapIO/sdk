@@ -35,7 +35,7 @@ async function runTradeExamples() {
   };
 
   try {
-    const quotesResponse = await dZapClient.getTradeQuotes(quotesRequest);
+    const quotesResponse = await dZapClient.trade.getQuotes(quotesRequest);
     console.log('Quotes received:', JSON.stringify(quotesResponse, null, 2));
 
     // The response is an object with keys for each requested pair.
@@ -76,7 +76,7 @@ async function runTradeExamples() {
       ],
     };
 
-    const txResult = await dZapClient.trade({
+    const txResult = await dZapClient.trade.execute({
       request: buildTxRequest,
       signer: walletClient,
     });
@@ -91,7 +91,7 @@ async function runTradeExamples() {
       console.log('\nFetching transaction status in 15 seconds...');
       setTimeout(async () => {
         try {
-          const statusResponse = (await dZapClient.getTradeTxnStatus({
+          const statusResponse = (await dZapClient.trade.getStatus({
             txHash: txResult.txnHash,
             chainId: 42161,
           })) as TradeStatusResponse;
