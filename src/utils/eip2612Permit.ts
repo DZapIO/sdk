@@ -1,10 +1,10 @@
-import { erc20PermitAbi } from '../../artifacts';
-import { config } from '../../config';
-import { ERC20_FUNCTIONS } from '../../constants/erc20';
-import { DEFAULT_PERMIT_VERSION } from '../../constants/permit';
-import { TxnStatus } from '../../enums';
-import { HexString, TokenPermitData } from '../../types';
-import { multicall } from '../multicall';
+import { erc20PermitAbi } from '../artifacts';
+import { config } from '../config';
+import { ERC20_FUNCTIONS } from '../constants/erc20';
+import { DEFAULT_PERMIT_VERSION } from '../constants/permit';
+import { TxnStatus } from '../enums';
+import { HexString, TokenPermitData } from '../types';
+import { multicall } from './multicall';
 
 export const eip2612DisabledChains = config.getEip2612DisabledChains();
 /**
