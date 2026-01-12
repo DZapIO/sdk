@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import { AxiosError, isAxiosError } from 'axios';
 import { BaseError } from 'viem';
 
 enum LogLevel {
@@ -48,13 +48,6 @@ class Logger {
   }
 
   /**
-   * Check if error is an Axios error
-   */
-  private isAxiosError(error: unknown): error is AxiosError {
-    return Boolean(error) && (error as AxiosError).isAxiosError === true;
-  }
-
-  /**
    * Check if error is a Viem BaseError
    */
   private isViemError(error: unknown): error is BaseError {
@@ -76,8 +69,8 @@ class Logger {
     }
 
     return {
-      errorName: 'AxiosError',
-      errorMessage: error.message,
+      name: 'AxiosError',
+      message: error.message,
       errorCode: error.code,
       ...(error.response?.status && { statusCode: error.response.status }),
       ...(url && { url }),
@@ -91,13 +84,6 @@ class Logger {
         },
       }),
       ...(!this.isProd && error.stack && { stack: error.stack }),
-      ...(error.response && {
-        response: {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          ...(error.response.headers && !this.isProd && { headers: error.response.headers }),
-        },
-      }),
     };
   }
 
@@ -106,8 +92,8 @@ class Logger {
    */
   private serializeViemError(error: BaseError): Record<string, unknown> {
     return {
-      errorName: error.name || 'BaseError',
-      errorMessage: error.shortMessage || error.message,
+      name: error.name,
+      message: error.shortMessage || error.message,
       ...(error.details && { details: error.details }),
       ...(!this.isProd && error.stack && { stack: error.stack }),
     };
@@ -117,15 +103,14 @@ class Logger {
    * Serialize error objects properly
    */
   private serializeError(error: unknown): unknown {
-    if (this.isAxiosError(error)) return this.serializeAxiosError(error);
+    if (isAxiosError(error)) return this.serializeAxiosError(error);
     if (this.isViemError(error)) return this.serializeViemError(error);
     if (!(error instanceof Error)) return error;
 
     const serialized: Record<string, unknown> = {
-      errorName: error.name,
-      errorMessage: error.message,
+      name: error.name,
+      message: error.message,
       ...(!this.isProd && error.stack && { stack: error.stack }),
-      ...Object.fromEntries(Object.entries(error).filter(([key]) => !['name', 'message', 'stack'].includes(key))),
     };
 
     return serialized;
