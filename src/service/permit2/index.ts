@@ -160,7 +160,11 @@ export class Permit2 {
         nonce,
       };
     } catch (error: any) {
-      console.log('Error generating permit2 signature:', error);
+      logger.error('Error generating permit2 signature', {
+        service: 'Permit2Service',
+        method: 'generateSignature',
+        error,
+      });
       if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
         return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
       }

@@ -306,7 +306,11 @@ export class SignatureService {
         nonce,
       };
     } catch (error: any) {
-      console.log('Error generating permit2 signature:', error);
+      logger.error('Error generating permit2 signature', {
+        service: 'SignatureService',
+        method: 'generatePermit2Signature',
+        error,
+      });
       if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
         return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
       }
