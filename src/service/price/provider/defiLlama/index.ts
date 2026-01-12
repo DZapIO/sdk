@@ -1,6 +1,6 @@
 import { GET } from '../../../../constants/httpMethods';
 import { ChainData } from '../../../../types';
-import { invokeTrade } from '../../../../utils/axios';
+import { TradeApiClient } from '../../../../axios/api';
 import { isNativeCurrency } from '../../../../utils/tokens';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 import { defiLlamaConfig } from './config';
@@ -46,7 +46,7 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
     try {
       const requestTokens = this.preProcess(chainId, tokenAddresses, chainConfig);
       if (!requestTokens.length) return {};
-      const response: DefiLlamaResponse = await invokeTrade({
+      const response: DefiLlamaResponse = await TradeApiClient.invoke({
         endpoint: defiLlamaConfig.url(requestTokens),
         method: GET,
       });
