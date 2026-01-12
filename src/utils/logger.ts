@@ -128,7 +128,24 @@ class Logger {
     }
 
     const logEntry: LogEntry = { level: levelName, message, ...sanitizedContext };
-    console.log(JSON.stringify(logEntry, null, this.isProd ? 0 : 2));
+    const formattedLog = JSON.stringify(logEntry, null, this.isProd ? 0 : 2);
+
+    switch (level) {
+      case LogLevel.ERROR:
+        console.error(formattedLog);
+        break;
+      case LogLevel.WARN:
+        console.warn(formattedLog);
+        break;
+      case LogLevel.INFO:
+        console.info(formattedLog);
+        break;
+      case LogLevel.DEBUG:
+        console.log(formattedLog);
+        break;
+      default:
+        console.log(formattedLog);
+    }
   }
 
   public debug(message: string, context?: LogContext): void {
