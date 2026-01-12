@@ -23,6 +23,7 @@ import { Permit2 } from '../permit2';
 import { isDZapNativeToken } from '../../utils/address';
 import { isEthersSigner } from '../../utils/signer';
 import { getPublicClient } from '../../utils/client';
+import { logger } from '../../utils/logger';
 
 /**
  * ApprovalsService handles all approval and permit operations for token spending.
@@ -168,7 +169,13 @@ export class ApprovalsService {
 
       return { status: TxnStatus.success, code: StatusCodes.Success, data };
     } catch (error: unknown) {
-      console.error('Multicall allowance check failed:', error);
+      logger.error('Multicall allowance check failed', {
+        service: 'ApprovalsService',
+        method: 'getAllowanceStatic',
+        chainId,
+        tokensCount: erc20Tokens.length,
+        error,
+      });
       return { status: TxnStatus.error, code: StatusCodes.Error, data };
     }
   }
@@ -211,6 +218,14 @@ export class ApprovalsService {
     });
 
     if (status !== TxnStatus.success) {
+      logger.error('Batch allowance check failed', {
+        service: 'ApprovalsService',
+        method: 'batchGetAllowancesStatic',
+        chainId,
+        tokensCount: data.length,
+        status,
+        code,
+      });
       return { status, code, data: {} };
     }
 
@@ -501,6 +516,14 @@ export class ApprovalsService {
       return { success: true };
     }
     const batchResult = await sendBatchCalls(walletClient, approveCalls);
+    if (!batchResult) {
+      logger.warn('Batch approval calls failed or not supported', {
+        service: 'ApprovalsService',
+        method: 'batchApproveTokens',
+        chainId,
+        tokensCount: approveCalls.length,
+      });
+    }
     return {
       success: Boolean(batchResult),
       batchId: batchResult?.id,
@@ -569,12 +592,19 @@ export class ApprovalsService {
           });
           const hash = await signer.writeContract(request);
           txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
-        } catch (e: any) {
-          console.log({ e });
-          if (e?.code === StatusCodes.UserRejectedRequest) {
-            txnDetails = { status: TxnStatus.rejected, code: e?.code, txnHash: '' };
+        } catch (e: unknown) {
+          const error = e as { code?: StatusCodes };
+          logger.error('Token approval transaction failed', {
+            service: 'ApprovalsService',
+            method: 'approveToken',
+            chainId,
+            tokenAddress: tokens[dataIdx].address,
+            error: e,
+          });
+          if (error?.code === StatusCodes.UserRejectedRequest) {
+            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
           } else {
-            txnDetails = { status: TxnStatus.error, code: e?.code, txnHash: '' };
+            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
           }
         }
       }
@@ -587,6 +617,13 @@ export class ApprovalsService {
       if (approvalTxnCallback) {
         const callbackStatus = await approvalTxnCallback({ txnDetails, address: tokens[dataIdx].address });
         if (callbackStatus && callbackStatus !== TxnStatus.success) {
+          logger.warn('Approval callback returned non-success status', {
+            service: 'ApprovalsService',
+            method: 'approveToken',
+            tokenAddress: tokens[dataIdx].address,
+            callbackStatus,
+            chainId,
+          });
           return {
             status: txnDetails.status,
             code: txnDetails?.code || StatusCodes.Error,

@@ -4,6 +4,7 @@ import { isNativeCurrency } from '../../../../utils';
 import { invoke } from '../../../../utils/axios';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 import { coingeckoConfig } from './config';
+import { logger } from '../../../../utils/logger';
 
 export class CoingeckoPriceProvider implements IPriceProvider {
   public id = priceProviders.coingecko;
@@ -38,7 +39,13 @@ export class CoingeckoPriceProvider implements IPriceProvider {
         acc[address] = tokenPrice === undefined ? null : tokenPrice.toString();
       } else {
         acc[address] = null;
-        console.error(`Error fetching data for address ${address}:`, result.reason);
+        logger.error('Error fetching price data from Coingecko', {
+          service: 'CoingeckoPriceProvider',
+          method: 'fetchPrices',
+          address,
+          chainId,
+          error: result.reason,
+        });
       }
       return acc;
     }, {});

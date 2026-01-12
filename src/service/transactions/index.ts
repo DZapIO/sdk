@@ -8,6 +8,7 @@ import { WalletCallReceipt } from '../../types/wallet';
 import { isTypeSigner } from '../../utils';
 import { viemChainsById } from '../../chains';
 import { handleViemTransactionError } from '../../utils/errors';
+import { logger } from '../../utils/logger';
 
 /**
  * TransactionsService handles generic transaction operations including sending, decoding, and batch transactions.
@@ -113,7 +114,6 @@ export class TransactionsService {
   }): Promise<DZapTransactionResponse> {
     try {
       if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
         const fromAddress = from || (await signer.getAddress());
         const txnRes = await signer.sendTransaction({
           from: fromAddress,
@@ -128,7 +128,6 @@ export class TransactionsService {
           txnHash: txnRes.hash as HexString,
         };
       } else {
-        console.log('Using viem walletClient.');
         const txnHash = await signer.sendTransaction({
           chain: viemChainsById[chainId],
           account: (from || signer.account?.address) as HexString,
@@ -143,8 +142,8 @@ export class TransactionsService {
           txnHash,
         };
       }
-    } catch (error: any) {
-      console.log({ error });
+    } catch (error: unknown) {
+      logger.error('Transaction send failed', { service: 'TransactionsService', method: 'sendTransaction', chainId, error });
       return handleViemTransactionError({ error });
     }
   }
@@ -174,8 +173,8 @@ export class TransactionsService {
         })),
       });
       return result;
-    } catch (error) {
-      console.warn('EIP-5792 batch calls not supported:', error);
+    } catch (error: unknown) {
+      logger.warn('EIP-5792 batch calls not supported', { service: 'TransactionsService', method: 'sendBatchCalls', error });
       return null;
     }
   }

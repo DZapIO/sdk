@@ -1,15 +1,16 @@
 import { TypedDataField } from 'ethers';
-import { Address, encodeAbiParameters, parseAbiParameters, TypedDataDomain } from 'viem';
+import { Address, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, TypedDataDomain } from 'viem';
 import * as ABI from '../../artifacts';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { GASLESS_TX_TYPE } from '../../constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
-import { Permit2PrimaryTypes, PermitToDZapPermitMode } from '../../constants/permit';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { Services } from '../../constants';
-import { ContractVersion, DZapV1PermitMode } from '../../enums';
+import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { AvailableDZapServices, HexString } from '../../types';
 import {
   BasePermitParams,
+  BasePermitResponse,
   BatchPermitAbiParams,
   bridgeGaslessWitnessType,
   defaultWitnessType,
@@ -24,6 +25,9 @@ import {
 } from '../../types/permit';
 import { getPublicClient } from '../../utils/client';
 import { getNextPermit2Nonce } from '../../utils/nonce';
+import { logger } from '../../utils/logger';
+import { generateDeadline } from '../../utils';
+import { SignatureService } from '../signature';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -66,6 +70,106 @@ export class Permit2 {
    */
   public static getAddress(chainId: number): HexString {
     return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
+  }
+
+  /**
+   * Generates a complete Permit2 signature with encoded data ready for transaction
+   * Handles single token, batch, and witness transfer types
+   * @param params - Permit2 parameters including tokens, spender, and chain info
+   * @returns Promise resolving to permit response with signature and encoded data
+   */
+  public static async generateSignature(params: Permit2Params): Promise<BasePermitResponse> {
+    try {
+      const {
+        chainId,
+        account,
+        tokens,
+        spender,
+        rpcUrls,
+        deadline: sigDeadline,
+        signer,
+        permitType,
+        firstTokenNonce,
+        contractVersion,
+        service,
+      } = params;
+
+      // Set default deadline and expiration
+      const deadline = sigDeadline ?? generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
+      const expiration = params.expiration ?? maxUint48;
+      const permit2Address = this.getAddress(chainId);
+
+      // Normalize token amounts
+      const normalizedTokens = tokens.map((token) => ({
+        ...token,
+        amount: BigInt(token.amount || maxUint256).toString(),
+      }));
+
+      // Build witness data for signature
+      const witnessData = this.buildWitnessData(params);
+
+      // Get permit2 values and nonce
+      const { permit2Values, nonce } = await this.buildPermitValues({
+        primaryType: permitType,
+        spender,
+        account,
+        deadline,
+        chainId,
+        permit2Address,
+        rpcUrls,
+        tokens: normalizedTokens,
+        expiration,
+        firstTokenNonce: firstTokenNonce ?? null,
+        service,
+        contractVersion,
+      });
+
+      // Build typed data for signature
+      const typedData = this.buildTypedData(permit2Values, permit2Address, chainId, witnessData);
+
+      // Sign the permit2 data
+      const signature = await SignatureService.signTypedData({
+        signer,
+        domain: typedData.domain,
+        message: typedData.message,
+        types: typedData.types,
+        account,
+        primaryType: permitType,
+      });
+
+      // Encode transfer data based on permit type
+      const encodedTransferData = this.encodeTransferData({
+        permitType,
+        tokens: normalizedTokens,
+        nonce,
+        deadline,
+        expiration,
+        signature,
+        contractVersion,
+        service,
+      });
+
+      // Encode final permit data with mode
+      const permitMode = this.getPermitMode(service, contractVersion, permitType);
+      const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitMode, encodedTransferData]);
+
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        permitData,
+        nonce,
+      };
+    } catch (error: any) {
+      logger.error('Error generating permit2 signature', {
+        service: 'Permit2Service',
+        method: 'generateSignature',
+        error,
+      });
+      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
+        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
+      }
+      return { status: TxnStatus.error, code: StatusCodes.Error };
+    }
   }
 
   /**
@@ -140,6 +244,12 @@ export class Permit2 {
         return this.buildBatchPermitValues(params);
 
       default:
+        logger.error('Invalid permit type', {
+          service: 'Permit2Service',
+          method: 'buildPermitValues',
+          permitType: params.primaryType,
+          chainId: params.chainId,
+        });
         throw new Error(`Invalid permit type: ${params.primaryType}`);
     }
   }
@@ -221,6 +331,13 @@ export class Permit2 {
     if (token.index === 0) {
       nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
     } else if (firstTokenNonce === null) {
+      logger.error('Unable to find nonce for token', {
+        service: 'Permit2Service',
+        method: 'buildTransferPermitValues',
+        tokenAddress: token.address,
+        tokenIndex: token.index,
+        chainId,
+      });
       throw new Error(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
     } else {
       nonce = BigInt(firstTokenNonce) + BigInt(token.index);
@@ -297,6 +414,11 @@ export class Permit2 {
     }
 
     if (!witness) {
+      logger.error('Witness is required for PermitTransferFrom', {
+        service: 'Permit2Service',
+        method: 'buildTypedData',
+        chainId,
+      });
       throw new Error('Witness is required for PermitTransferFrom');
     }
 

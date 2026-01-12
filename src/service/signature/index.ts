@@ -27,6 +27,7 @@ import { isEthersSigner } from '../../utils/signer';
 import { Permit2 } from '../permit2';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
+import { logger } from '../../utils/logger';
 import { ContractsService } from '../contracts';
 
 type BasePermitDataParams = {
@@ -168,7 +169,14 @@ export class SignatureService {
           deadline,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error('Failed to sign gasless intent', {
+        service: 'SignatureService',
+        method: 'signGaslessIntent',
+        chainId: params.chainId,
+        txType: params.txType,
+        error,
+      });
       return handleViemTransactionError({ error });
     }
   }
@@ -206,7 +214,12 @@ export class SignatureService {
           message,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error('Failed to sign custom typed data', {
+        service: 'SignatureService',
+        method: 'signCustomTypedData',
+        error,
+      });
       return handleViemTransactionError({ error });
     }
   }
@@ -293,7 +306,11 @@ export class SignatureService {
         nonce,
       };
     } catch (error: any) {
-      console.log('Error generating permit2 signature:', error);
+      logger.error('Error generating permit2 signature', {
+        service: 'SignatureService',
+        method: 'generatePermit2Signature',
+        error,
+      });
       if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
         return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
       }
@@ -342,6 +359,13 @@ export class SignatureService {
     });
     if (permitType === PermitTypes.EIP2612Permit || (permitType === PermitTypes.AutoPermit && eip2612PermitData.supportsPermit)) {
       if (!eip2612PermitData.supportsPermit || !eip2612PermitData.data) {
+        logger.error('Token does not support EIP-2612 permits', {
+          service: 'SignatureService',
+          method: 'generatePermitDataForToken',
+          chainId,
+          tokenAddress: token.address,
+          permitType,
+        });
         throw new Error('Token does not support EIP-2612 permits');
       }
 
@@ -511,6 +535,13 @@ export class SignatureService {
       });
 
       if (resp.status !== TxnStatus.success) {
+        logger.error('Batch permit generation failed', {
+          service: 'SignatureService',
+          method: 'signPermit',
+          status: resp.status,
+          code: resp.code,
+          tokensCount: tokens.length,
+        });
         return { status: resp.status, code: resp.code, permitType: PermitTypes.PermitBatchWitnessTransferFrom };
       }
       if (signPermitReq.signatureCallback) {
@@ -551,6 +582,14 @@ export class SignatureService {
         });
         permitType = res.permitType;
         if (res.status !== TxnStatus.success) {
+          logger.error('Token permit generation failed', {
+            service: 'SignatureService',
+            method: 'signPermit',
+            tokenAddress: tokens[dataIdx].address,
+            tokenIndex: dataIdx,
+            status: res.status,
+            code: res.code,
+          });
           return { status: res.status, code: res.code, permitType: res.permitType };
         }
 
@@ -644,9 +683,15 @@ export class SignatureService {
         code: StatusCodes.Success,
         permitData,
       };
-    } catch (error: any) {
-      console.log('Error generating permit signature:', error);
-      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
+    } catch (error: unknown) {
+      const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
+      logger.error('Error generating permit signature', {
+        service: 'SignatureService',
+        method: 'getEIP2612PermitSignature',
+        chainId: params.chainId,
+        error,
+      });
+      if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
         return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
       }
       return { status: TxnStatus.error, code: StatusCodes.Error };

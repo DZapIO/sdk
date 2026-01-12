@@ -32,6 +32,7 @@ import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { SignatureService } from '../signature';
 import { ApprovalsService } from '../approvals';
 import { TransactionsService } from '../transactions';
+import { logger } from '../../utils/logger';
 
 /**
  * TradeService handles all trade-related operations including swaps, bridges, quotes, and transaction execution.
@@ -404,9 +405,20 @@ export class TradeService {
       };
     }
 
-    console.log('Waiting for batch transaction completion...');
+    logger.info('Waiting for batch transaction completion', {
+      service: 'TradeService',
+      method: 'executeBatch',
+      batchId: batchResult.id,
+      chainId,
+    });
     const receipt = await TransactionsService.waitForBatchReceipt(signer, batchResult.id as HexString);
-    console.log({ receipt });
+    logger.info('Batch transaction completed', {
+      service: 'TradeService',
+      method: 'executeBatch',
+      chainId,
+      txHash: receipt.transactionHash,
+      status: receipt.status,
+    });
     return {
       status: TxnStatus.success,
       code: StatusCodes.Success,
@@ -525,11 +537,9 @@ export class TradeService {
       if (batchTransaction && !isTypeSigner(signer)) {
         return this.sendTxnWithBatch(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
       }
-
-      console.log('Using viem walletClient - sending regular transaction.');
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-    } catch (error: any) {
-      console.log({ error });
+    } catch (error: unknown) {
+      logger.error('Trade execution failed', { service: 'TradeService', method: 'execute', chainId: request.fromChain, error });
       if (isAxiosError(error)) {
         if (error?.response?.status === StatusCodes.SimulationFailure) {
           return {
@@ -641,8 +651,8 @@ export class TradeService {
         };
       }
       throw new Error('Gasless Transaction Failed');
-    } catch (error: any) {
-      console.log({ error });
+    } catch (error: unknown) {
+      logger.error('Gasless transaction failed', { service: 'TradeService', method: 'executeGasless', chainId: request.fromChain, error });
       if (isAxiosError(error)) {
         if (error?.response?.status === StatusCodes.SimulationFailure) {
           return {
