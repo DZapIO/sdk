@@ -1,15 +1,16 @@
 import { TypedDataField } from 'ethers';
-import { Address, encodeAbiParameters, parseAbiParameters, TypedDataDomain } from 'viem';
+import { Address, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, TypedDataDomain } from 'viem';
 import * as ABI from '../../artifacts';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { GASLESS_TX_TYPE } from '../../constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
-import { Permit2PrimaryTypes, PermitToDZapPermitMode } from '../../constants/permit';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { Services } from '../../constants';
-import { ContractVersion, DZapV1PermitMode } from '../../enums';
+import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { AvailableDZapServices, HexString } from '../../types';
 import {
   BasePermitParams,
+  BasePermitResponse,
   BatchPermitAbiParams,
   bridgeGaslessWitnessType,
   defaultWitnessType,
@@ -25,6 +26,8 @@ import {
 import { getPublicClient } from '../../utils/client';
 import { getNextPermit2Nonce } from '../../utils/nonce';
 import { logger } from '../../utils/logger';
+import { generateDeadline } from '../../utils';
+import { SignatureService } from '../signature';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -94,7 +97,7 @@ export class Permit2 {
       // Set default deadline and expiration
       const deadline = sigDeadline ?? generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
       const expiration = params.expiration ?? maxUint48;
-      const permit2Address = this.getContractAddress(chainId);
+      const permit2Address = this.getAddress(chainId);
 
       // Normalize token amounts
       const normalizedTokens = tokens.map((token) => ({
@@ -125,7 +128,7 @@ export class Permit2 {
       const typedData = this.buildTypedData(permit2Values, permit2Address, chainId, witnessData);
 
       // Sign the permit2 data
-      const signature = await signTypedData({
+      const signature = await SignatureService.signTypedData({
         signer,
         domain: typedData.domain,
         message: typedData.message,
