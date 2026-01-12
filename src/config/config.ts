@@ -68,8 +68,10 @@ export class Config {
 
   private constructor(options: DZapConfigOptions = {}) {
     this._apiKey = options.apiKey !== undefined ? options.apiKey : DEFAULT_CONFIG.apiKey;
-    this._rpcUrlsByChainId = options.rpcUrlsByChainId || DEFAULT_CONFIG.rpcUrlsByChainId;
-    this._eip2612DisabledChains = options.eip2612DisabledChains || DEFAULT_CONFIG.eip2612DisabledChains;
+    this._rpcUrlsByChainId = options.rpcUrlsByChainId
+      ? Object.fromEntries(Object.entries(options.rpcUrlsByChainId).map(([chainId, urls]) => [chainId, [...urls]]))
+      : {};
+    this._eip2612DisabledChains = options.eip2612DisabledChains ? [...options.eip2612DisabledChains] : [...DEFAULT_CONFIG.eip2612DisabledChains];
     this._baseApiUrl = options.baseApiUrl || DEFAULT_CONFIG.baseApiUrl;
     this._zapApiUrl = options.zapApiUrl || DEFAULT_CONFIG.zapApiUrl;
     this._versionPostfix = options.versionPostfix || DEFAULT_CONFIG.versionPostfix;
@@ -86,7 +88,9 @@ export class Config {
    * @returns The Config singleton instance
    */
   public static getInstance(options?: DZapConfigOptions): Config {
-    if (!Config.instance || options) {
+    // Only recreate instance if it doesn't exist or if actual options are provided
+    const hasOptions = options && Object.keys(options).length > 0;
+    if (!Config.instance || hasOptions) {
       Config.instance = new Config(options || {});
     }
     return Config.instance;
@@ -129,7 +133,11 @@ export class Config {
     }
 
     // Validate timeout
-    if (typeof this._timeout !== 'number' || this._timeout < 1000) {
+    if (typeof this._timeout !== 'number' || !Number.isFinite(this._timeout)) {
+      throw new ConfigValidationError(`Invalid timeout: ${this._timeout}. Must be a finite number.`, 'timeout');
+    }
+
+    if (this._timeout < 1000) {
       throw new ConfigValidationError(`Invalid timeout: ${this._timeout}. Must be at least 1000ms.`, 'timeout');
     }
 
@@ -138,7 +146,15 @@ export class Config {
     }
 
     // Validate retries
-    if (typeof this._retries !== 'number' || this._retries < 0 || this._retries > 10) {
+    if (typeof this._retries !== 'number' || !Number.isFinite(this._retries)) {
+      throw new ConfigValidationError(`Invalid retries: ${this._retries}. Must be a finite number.`, 'retries');
+    }
+
+    if (!Number.isInteger(this._retries)) {
+      throw new ConfigValidationError(`Invalid retries: ${this._retries}. Must be an integer.`, 'retries');
+    }
+
+    if (this._retries < 0 || this._retries > 10) {
       throw new ConfigValidationError(`Invalid retries: ${this._retries}. Must be between 0 and 10.`, 'retries');
     }
 
@@ -189,8 +205,14 @@ export class Config {
     return this._retries;
   }
 
+  /**
+   * Get a copy of the EIP-2612 disabled chains array
+   * Returns a copy to prevent external modifications
+   *
+   * @returns Array of chain IDs where EIP-2612 is disabled
+   */
   public get eip2612DisabledChains(): number[] {
-    return this._eip2612DisabledChains;
+    return [...this._eip2612DisabledChains];
   }
 
   /**

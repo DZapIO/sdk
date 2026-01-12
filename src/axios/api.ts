@@ -15,25 +15,25 @@ import {
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
-export class TradeApiClient {
-  private static instance: AxiosInstance;
+export class BaseApiClient {
+  protected static instance: AxiosInstance;
+  protected static baseUrl: string = '';
 
-  private static getBaseUrl(): string {
-    const config = Config.getInstance();
-    return `${config.baseApiUrl}/${config.versionPostfix}`;
+  protected static getAxiosInstance(baseUrl: string = ''): AxiosInstance {
+    return AxiosClient.getInstance(baseUrl);
   }
 
   public static getInstance(): AxiosInstance {
-    if (!TradeApiClient.instance) {
-      TradeApiClient.instance = AxiosClient.getInstance(TradeApiClient.getBaseUrl());
+    if (!this.instance) {
+      this.instance = this.getAxiosInstance(this.baseUrl);
     }
-    return TradeApiClient.instance;
+    return this.instance;
   }
 
   public static async invoke({
     endpoint,
     data,
-    method = POST,
+    method = GET,
     cancelToken,
     shouldRetry = false,
   }: {
@@ -43,24 +43,50 @@ export class TradeApiClient {
     cancelToken?: CancelToken;
     shouldRetry?: boolean;
   }) {
-    const config = Config.getInstance();
     const axiosConfig: ExtendedAxiosRequestConfig = {
       method,
       url: endpoint,
       data: method === GET ? undefined : data,
       params: method === GET ? data : undefined,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
-      },
+      headers: this.getHeaders(),
       cancelToken,
       shouldRetry,
     };
-    return TradeApiClient.getInstance()(axiosConfig)
+    return this.getInstance()(axiosConfig)
       .then((res: any) => res.data)
       .catch((error: any) => {
         return Promise.reject(error);
       });
+  }
+
+  protected static getHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+    };
+  }
+}
+
+export class TradeApiClient extends BaseApiClient {
+  private static tradeInstance: AxiosInstance;
+
+  private static getBaseUrl(): string {
+    const config = Config.getInstance();
+    return `${config.baseApiUrl}/${config.versionPostfix}`;
+  }
+
+  public static getInstance(): AxiosInstance {
+    if (!TradeApiClient.tradeInstance) {
+      TradeApiClient.tradeInstance = this.getAxiosInstance(TradeApiClient.getBaseUrl());
+    }
+    return TradeApiClient.tradeInstance;
+  }
+
+  protected static getHeaders(): Record<string, string> {
+    const config = Config.getInstance();
+    return {
+      'Content-Type': 'application/json',
+      ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
+    };
   }
 
   public static fetchTradeQuotes(request: TradeQuotesRequest) {
@@ -172,9 +198,8 @@ export class TradeApiClient {
     });
   }
 }
-
-export class ZapApiClient {
-  private static instance: AxiosInstance;
+export class ZapApiClient extends BaseApiClient {
+  private static zapInstance: AxiosInstance;
 
   private static getBaseUrl(): string {
     const config = Config.getInstance();
@@ -182,43 +207,18 @@ export class ZapApiClient {
   }
 
   public static getInstance(): AxiosInstance {
-    if (!ZapApiClient.instance) {
-      ZapApiClient.instance = AxiosClient.getInstance(ZapApiClient.getBaseUrl());
+    if (!ZapApiClient.zapInstance) {
+      ZapApiClient.zapInstance = this.getAxiosInstance(ZapApiClient.getBaseUrl());
     }
-    return ZapApiClient.instance;
+    return ZapApiClient.zapInstance;
   }
 
-  public static async invoke({
-    endpoint,
-    data,
-    method = POST,
-    cancelToken,
-    shouldRetry = false,
-  }: {
-    endpoint: string;
-    data?: any;
-    method?: Method;
-    cancelToken?: CancelToken;
-    shouldRetry?: boolean;
-  }) {
+  protected static getHeaders(): Record<string, string> {
     const config = Config.getInstance();
-    const axiosConfig: ExtendedAxiosRequestConfig = {
-      method,
-      url: endpoint,
-      data: method === GET ? undefined : data,
-      params: method === GET ? data : undefined,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
-      },
-      cancelToken,
-      shouldRetry,
+    return {
+      'Content-Type': 'application/json',
+      ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
     };
-    return ZapApiClient.getInstance()(axiosConfig)
-      .then((res: any) => res.data)
-      .catch((error: any) => {
-        return Promise.reject(error);
-      });
   }
 
   public static broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastZapTxResponse> {
