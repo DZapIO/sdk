@@ -44,9 +44,9 @@ import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey, formatToken } from './utils';
 import { SwapDecoder } from './service/decoder';
 import { TokenService } from './service/token';
-import { Permit2Service } from './service/permit2';
+import { Permit2 } from './service/permit2';
 import { SignatureService } from './service/signature';
-import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
+import { checkEIP2612PermitSupport } from './utils/eip2612Permit';
 import { viemChainsList } from './chains';
 import { ChainsService } from './service/chains';
 import { TradeService } from './service/trade';
@@ -83,7 +83,7 @@ export {
   HexString,
   ParamQuotes,
   PermitMode,
-  Permit2Service,
+  Permit2,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,

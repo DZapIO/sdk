@@ -1,6 +1,7 @@
-import { AvailableDZapServices, ChainData, OtherAvailableAbis } from '../../types';
-import { getDZapAbi, getOtherAbis } from '../../utils';
+import { AvailableDZapServices, ChainData, StandardAbis } from '../../types';
 import { ContractVersion } from '../../enums';
+import * as ABI from '../../artifacts';
+import { STANDARD_ABIS, Services } from '../../constants';
 
 /**
  * ContractsService handles ABI and contract address operations for DZap protocol.
@@ -71,8 +72,23 @@ export class ContractsService {
    * const zapAbi = client.contracts.getDZapAbi('zap', ContractVersion.v2);
    * ```
    */
-  public getDZapAbi(service: AvailableDZapServices, version: ContractVersion) {
-    return getDZapAbi(service, version);
+  public static getDZapAbi(service: AvailableDZapServices, version: ContractVersion) {
+    switch (service) {
+      case Services.trade:
+        switch (version) {
+          case ContractVersion.v1:
+            return ABI.core.dZapCoreAbi;
+          case ContractVersion.v2:
+            return ABI.core.dZapCoreV2Abi;
+          default:
+            throw new Error('Invalid Version for Trade');
+        }
+      case Services.dca:
+        return ABI.dca.dZapDcaAbi;
+      case Services.zap:
+      default:
+        throw new Error('Invalid Service');
+    }
   }
 
   /**
@@ -84,11 +100,18 @@ export class ContractsService {
    *
    * @example
    * ```typescript
-   * const erc20Abi = client.contracts.getOtherAbi('ERC20');
-   * const permit2Abi = client.contracts.getOtherAbi('Permit2');
+   * const erc20Abi = client.contracts.getStandardAbi('ERC20');
+   * const permit2Abi = client.contracts.getStandardAbi('Permit2');
    * ```
    */
-  public getOtherAbi(name: OtherAvailableAbis) {
-    return getOtherAbis(name);
+  public static getStandardAbi(name: StandardAbis) {
+    switch (name) {
+      case STANDARD_ABIS.permit2:
+        return ABI.permit.permit2Abi;
+      case STANDARD_ABIS.erc20:
+        return ABI.erc20Abi;
+      default:
+        throw new Error('Invalid Abi');
+    }
   }
 }

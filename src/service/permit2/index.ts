@@ -1,16 +1,15 @@
 import { TypedDataField } from 'ethers';
-import { Address, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, TypedDataDomain } from 'viem';
+import { Address, encodeAbiParameters, parseAbiParameters, TypedDataDomain } from 'viem';
 import * as ABI from '../../artifacts';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { GASLESS_TX_TYPE } from '../../constants';
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
-import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode } from '../../constants/permit';
 import { Services } from '../../constants';
-import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
+import { ContractVersion, DZapV1PermitMode } from '../../enums';
 import { AvailableDZapServices, HexString } from '../../types';
 import {
   BasePermitParams,
-  BasePermitResponse,
   BatchPermitAbiParams,
   bridgeGaslessWitnessType,
   defaultWitnessType,
@@ -23,8 +22,6 @@ import {
   TokenWithIndex,
   WitnessData,
 } from '../../types/permit';
-import { generateDeadline } from '../../utils/date';
-import { signTypedData } from '../../utils/signer';
 import { getPublicClient } from '../../utils/client';
 import { getNextPermit2Nonce } from '../../utils/nonce';
 import { logger } from '../../utils/logger';
@@ -59,16 +56,16 @@ type Permit2ValuesParams = {
 } & Omit<BasePermitParams, 'deadline' | 'signer'>;
 
 /**
- * Permit2Service - Static class for handling Permit2 signature generation and management
+ * Permit2 - Static class for handling Permit2 signature generation and management
  * This service provides methods for generating and encoding Permit2 signatures used in gasless transactions
  */
-export class Permit2Service {
+export class Permit2 {
   /**
    * Gets the Permit2 contract address for the specified chain
    * @param chainId - The blockchain network ID
    * @returns The Permit2 contract address
    */
-  public static getContractAddress(chainId: number): HexString {
+  public static getAddress(chainId: number): HexString {
     return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
   }
 
@@ -159,15 +156,9 @@ export class Permit2Service {
         permitData,
         nonce,
       };
-    } catch (error: unknown) {
-      const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
-      logger.error('Error generating permit2 signature', {
-        service: 'Permit2Service',
-        method: 'signPermit2',
-        chainId: params.chainId,
-        error,
-      });
-      if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
+    } catch (error: any) {
+      console.log('Error generating permit2 signature:', error);
+      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
         return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
       }
       return { status: TxnStatus.error, code: StatusCodes.Error };
@@ -180,7 +171,7 @@ export class Permit2Service {
    * @param params - Permit2 parameters containing gasless and transaction data
    * @returns Witness data object with type and witness fields
    */
-  private static buildWitnessData(params: Permit2Params): WitnessData {
+  public static buildWitnessData(params: Permit2Params): WitnessData {
     const { gasless, account, spender } = params;
 
     // Gasless swap witness
@@ -229,7 +220,7 @@ export class Permit2Service {
    * @param params - Parameters for building permit values
    * @returns Promise with permit2 values and nonce
    */
-  private static async buildPermitValues(
+  public static async buildPermitValues(
     params: Permit2ValuesParams,
   ): Promise<{ permit2Values: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues; nonce: bigint }> {
     switch (params.primaryType) {
@@ -405,7 +396,7 @@ export class Permit2Service {
    * @param witness - Optional witness data
    * @returns Typed data object ready for signing
    */
-  private static buildTypedData(
+  public static buildTypedData(
     permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues,
     permit2Address: Address,
     chainId: number,
@@ -532,7 +523,7 @@ export class Permit2Service {
    * @param params - Parameters including permit type, tokens, nonce, and signature
    * @returns Encoded transfer data as hex string
    */
-  private static encodeTransferData({
+  public static encodeTransferData({
     permitType,
     tokens,
     nonce,
@@ -592,7 +583,7 @@ export class Permit2Service {
    * @param permitType - Permit2 primary type
    * @returns Permit mode value
    */
-  private static getPermitMode(service?: AvailableDZapServices, contractVersion?: ContractVersion, permitType?: Permit2PrimaryType): number {
+  public static getPermitMode(service?: AvailableDZapServices, contractVersion?: ContractVersion, permitType?: Permit2PrimaryType): number {
     if (service !== Services.zap && contractVersion === ContractVersion.v1) {
       return DZapV1PermitMode.PERMIT2_APPROVE;
     }

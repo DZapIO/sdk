@@ -378,7 +378,7 @@ export type GaslessTradeBuildTxnResponse = {
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
 
-export type OtherAvailableAbis = (typeof STANDARD_ABIS)[keyof typeof STANDARD_ABIS];
+export type StandardAbis = (typeof STANDARD_ABIS)[keyof typeof STANDARD_ABIS];
 
 export type AppEnvType = `${AppEnv}`;
 

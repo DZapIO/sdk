@@ -2,9 +2,9 @@ import { Abi, decodeFunctionData, parseEventLogs, ParseEventLogsReturnType, Tran
 import { SwapAbisByFunctionName } from '../../artifacts';
 import { ContractVersion } from '../../enums';
 import { AvailableDZapServices, Chain, HexString, SwapInfo } from '../../types';
-import { getDZapAbi } from '../../utils/abi';
 import { formatToken } from '../../utils/address';
 import { getTokensPairKey } from '../../utils/token';
+import { ContractsService } from '../contracts';
 
 export class SwapDecoder {
   private decodeSingleSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
@@ -156,7 +156,7 @@ export class SwapDecoder {
     chain: Chain,
   ): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } {
     let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-    const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
+    const dZapAbi = ContractsService.getDZapAbi(service, chain?.version || ContractVersion.v1);
     try {
       events = parseEventLogs({
         abi: dZapAbi,

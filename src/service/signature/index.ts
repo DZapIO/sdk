@@ -1,5 +1,5 @@
-import { ethers } from 'ethers';
-import { getContract, encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
+import { ethers, Signer, TypedDataField, Wallet } from 'ethers';
+import { getContract, encodeAbiParameters, maxUint256, parseAbiParameters, WalletClient, TypedDataDomain } from 'viem';
 import { Services } from '../../constants';
 import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, PermitTypes } from '../../constants/permit';
 import { GASLESS_TX_TYPE } from '../../constants';
@@ -17,16 +17,18 @@ import {
   PermitResponse,
   TokenWithPermitData,
   DefaultPermit2612Params,
+  Permit2Params,
+  BasePermitResponse,
 } from '../../types/permit';
 import { generateDeadline } from '../../utils/date';
 import { handleViemTransactionError } from '../../utils/errors';
-import { getDZapAbi } from '../../utils/abi';
 import { getPublicClient } from '../../utils/client';
-import { signTypedData } from '../../utils/signer';
-import { Permit2Service } from '../permit2';
+import { isEthersSigner } from '../../utils/signer';
+import { Permit2 } from '../permit2';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
-import { checkEIP2612PermitSupport } from '../../utils/eip-2612/eip2612Permit';
+import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { logger } from '../../utils/logger';
+import { ContractsService } from '../contracts';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
@@ -128,7 +130,7 @@ export class SignatureService {
       const deadline = params.deadline || generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
 
       const contract = getContract({
-        abi: getDZapAbi('trade', params.contractVersion),
+        abi: ContractsService.getDZapAbi('trade', params.contractVersion),
         address: spender,
         client: getPublicClient({ chainId, rpcUrls }),
       });
@@ -149,7 +151,7 @@ export class SignatureService {
         nonce,
       });
 
-      const signature = await signTypedData({
+      const signature = await this.signTypedData({
         signer,
         domain,
         message,
@@ -196,7 +198,7 @@ export class SignatureService {
     try {
       const { account, signer, message, domain, primaryType, types } = params;
 
-      const signature = await signTypedData({
+      const signature = await this.signTypedData({
         signer,
         account,
         domain,
@@ -223,12 +225,102 @@ export class SignatureService {
   }
 
   /**
+   * Generates a complete Permit2 signature with encoded data ready for transaction
+   * Handles single token, batch, and witness transfer types
+   * @param params - Permit2 parameters including tokens, spender, and chain info
+   * @returns Promise resolving to permit response with signature and encoded data
+   */
+  public static async generatePermit2Signature(params: Permit2Params): Promise<BasePermitResponse> {
+    try {
+      const {
+        chainId,
+        account,
+        tokens,
+        spender,
+        rpcUrls,
+        deadline: sigDeadline,
+        signer,
+        permitType,
+        firstTokenNonce,
+        contractVersion,
+        service,
+      } = params;
+
+      const deadline = sigDeadline ?? generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
+      const expiration = params.expiration ?? maxUint256;
+      const permit2Address = Permit2.getAddress(chainId);
+
+      const normalizedTokens = tokens.map((token) => ({
+        ...token,
+        amount: BigInt(token.amount || maxUint256).toString(),
+      }));
+
+      const witnessData = Permit2.buildWitnessData(params);
+
+      const { permit2Values, nonce } = await Permit2.buildPermitValues({
+        primaryType: permitType,
+        spender,
+        account,
+        deadline,
+        chainId,
+        permit2Address,
+        rpcUrls,
+        tokens: normalizedTokens,
+        expiration,
+        firstTokenNonce: firstTokenNonce ?? null,
+        service,
+        contractVersion,
+      });
+
+      const typedData = Permit2.buildTypedData(permit2Values, permit2Address, chainId, witnessData);
+
+      const signature = await SignatureService.signTypedData({
+        signer,
+        domain: typedData.domain,
+        message: typedData.message,
+        types: typedData.types,
+        account,
+        primaryType: permitType,
+      });
+
+      // Encode transfer data based on permit type
+      const encodedTransferData = Permit2.encodeTransferData({
+        permitType,
+        tokens: normalizedTokens,
+        nonce,
+        deadline,
+        expiration,
+        signature,
+        contractVersion,
+        service,
+      });
+
+      // Encode final permit data with mode
+      const permitMode = Permit2.getPermitMode(service, contractVersion, permitType);
+      const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitMode, encodedTransferData]);
+
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        permitData,
+        nonce,
+      };
+    } catch (error: any) {
+      console.log('Error generating permit2 signature:', error);
+      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
+        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
+      }
+      return { status: TxnStatus.error, code: StatusCodes.Error };
+    }
+  }
+
+  /**
    * Generate batch permit data for multiple tokens
    * @param params - Batch permit parameters
    * @returns Promise resolving to batch permit response
    */
   static generateBatchPermitDataForTokens = async (params: BatchPermitParams): Promise<BatchPermitResponse> => {
-    const resp = await Permit2Service.generateSignature(params);
+    const resp = await this.generatePermit2Signature(params);
     return {
       ...resp,
       permitType: PermitTypes.PermitBatchWitnessTransferFrom,
@@ -315,7 +407,7 @@ export class SignatureService {
           permitType: normalizedPermitType,
         };
       } else {
-        const resp = await Permit2Service.generateSignature({
+        const resp = await this.generatePermit2Signature({
           ...params,
           tokens: [token],
           permitType: normalizedPermitType,
@@ -352,7 +444,7 @@ export class SignatureService {
         },
       };
     }
-    const resp = await Permit2Service.generateSignature({
+    const resp = await this.generatePermit2Signature({
       ...signPermitReq,
       tokens: tokens.map((token, index) => ({ ...token, index })),
       account: sender,
@@ -561,7 +653,7 @@ export class SignatureService {
       };
 
       const types = EIP2612DefaultTypes;
-      const signature = await signTypedData({
+      const signature = await this.signTypedData({
         signer,
         domain,
         message,
@@ -601,4 +693,39 @@ export class SignatureService {
       return { status: TxnStatus.error, code: StatusCodes.Error };
     }
   }
+
+  /**
+   * Helper function to sign typed data with either ethers or viem signer
+   */
+  public static signTypedData = async ({
+    signer,
+    domain,
+    message,
+    types,
+    account,
+    primaryType,
+  }: {
+    signer: WalletClient | Signer;
+    domain: TypedDataDomain;
+    types: Record<string, Array<TypedDataField>>;
+    message: Record<string, any>;
+    account: string;
+    primaryType: string;
+  }): Promise<HexString> => {
+    let signature: HexString;
+
+    if (isEthersSigner(signer)) {
+      signature = (await (signer as Wallet)._signTypedData(domain, types, message)) as HexString;
+    } else {
+      signature = await signer.signTypedData({
+        account: account as HexString,
+        domain,
+        message,
+        primaryType,
+        types,
+      });
+    }
+
+    return signature;
+  };
 }

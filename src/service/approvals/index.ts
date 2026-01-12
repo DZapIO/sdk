@@ -1,5 +1,5 @@
 import { Signer } from 'ethers';
-import { encodeFunctionData, maxUint256, MulticallParameters, Prettify, WalletClient } from 'viem';
+import { Address, encodeFunctionData, maxUint256, MulticallParameters, Prettify, WalletClient } from 'viem';
 import { ApprovalModes } from '../../constants/approval';
 import { PermitTypes } from '../../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
@@ -17,13 +17,12 @@ import {
 import { config } from '../../config';
 import { erc20Abi } from '../../artifacts';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
-import { checkEIP2612PermitSupport } from '../../utils/eip-2612/eip2612Permit';
+import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { multicall } from '../../utils/multicall';
-import { Permit2Service } from '../permit2';
+import { Permit2 } from '../permit2';
 import { isDZapNativeToken } from '../../utils/address';
-import { isTypeSigner } from '../../utils/signer';
+import { isEthersSigner } from '../../utils/signer';
 import { getPublicClient } from '../../utils/client';
-import { encodeApproveCallData } from '../../utils/approval';
 import { logger } from '../../utils/logger';
 
 /**
@@ -81,7 +80,7 @@ export class ApprovalsService {
 
     return tokensNeedingApproval.map((token) => ({
       to: token.address,
-      data: encodeApproveCallData({
+      data: this.encodeApproveCallData({
         spender,
         amount: BigInt(token.amount),
       }),
@@ -125,7 +124,7 @@ export class ApprovalsService {
           });
           return {
             token: address,
-            spender: eip2612PermitData.supportsPermit ? spender : Permit2Service.getContractAddress(chainId),
+            spender: eip2612PermitData.supportsPermit ? spender : Permit2.getAddress(chainId),
             amount,
             isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
             isDefaultApprovalMode: false,
@@ -138,7 +137,7 @@ export class ApprovalsService {
             isDefaultApprovalMode: true,
           };
         } else {
-          const permit2Address = Permit2Service.getContractAddress(chainId);
+          const permit2Address = Permit2.getAddress(chainId);
           return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
         }
       }),
@@ -560,11 +559,11 @@ export class ApprovalsService {
     spender: HexString;
   }): Promise<{ status: TxnStatus; code: StatusCodes }> {
     if (mode !== ApprovalModes.Default) {
-      spender = Permit2Service.getContractAddress(chainId);
+      spender = Permit2.getAddress(chainId);
     }
     for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
       let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
-      if (isTypeSigner(signer)) {
+      if (isEthersSigner(signer)) {
         const from = await signer.getAddress();
         const callData = encodeFunctionData({
           abi: erc20Abi,
@@ -669,6 +668,20 @@ export class ApprovalsService {
       multicallAddress,
       rpcUrls,
       mode,
+    });
+  }
+
+  /**
+   * Encodes ERC20 approve function call data
+   * @param spender - The address to approve
+   * @param amount - The amount to approve
+   * @returns Encoded function call data
+   */
+  private static encodeApproveCallData({ spender, amount }: { spender: Address; amount: bigint }): HexString {
+    return encodeFunctionData({
+      abi: erc20Abi,
+      functionName: ERC20_FUNCTIONS.approve,
+      args: [spender, amount],
     });
   }
 }
