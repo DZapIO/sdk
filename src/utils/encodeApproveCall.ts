@@ -1,7 +1,9 @@
-import { Address, encodeFunctionData } from 'viem';
-import { ERC20_FUNCTIONS } from '../constants/erc20';
-import { HexString } from '../types';
+import type { Address } from 'viem';
+import { encodeFunctionData } from 'viem';
+
 import { erc20Abi } from '../artifacts';
+import { ERC20_FUNCTIONS } from '../constants/erc20';
+import type { HexString } from '../types';
 
 export function encodeApproveCallData({ spender, amount }: { spender: Address; amount: bigint }): HexString {
   return encodeFunctionData({

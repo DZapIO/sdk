@@ -1,7 +1,8 @@
-import { CancelToken } from 'axios';
+import type { CancelToken } from 'axios';
 
+import { TRADE_ENDPOINTS, ZAP_ENDPOINTS } from '../constants/api/endpoints';
 import { GET, POST } from '../constants/httpMethods';
-import {
+import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
@@ -9,10 +10,16 @@ import {
   TradeBuildTxnRequest,
   TradeQuotesRequest,
 } from '../types';
-import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
+import type {
+  ZapBuildTxnRequest,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPositionsRequest,
+  ZapQuoteRequest,
+  ZapStatusRequest,
+} from '../types/zap';
+import type { BroadcastZapTxResponse } from '../types/zap/broadcast';
 import { invoke, invokeZap } from '../utils/axios';
-import { ZAP_ENDPOINTS, TRADE_ENDPOINTS } from '../constants/api/endpoints';
-import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({

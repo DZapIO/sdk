@@ -1,9 +1,10 @@
-import { CancelToken, Method } from 'axios';
-import AxiosClient from '../axios';
+import type { CancelToken, Method } from 'axios';
+
+import type AxiosClient from '../axios';
 import { baseApiClient, baseZapApiClient } from '../axios/baseClient';
-import { GET, POST } from '../constants/httpMethods';
-import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
 import { config } from '../config';
+import { GET, POST } from '../constants/httpMethods';
+import type { ExtendedAxiosRequestConfig } from '../types/axiosClient';
 
 type Invoke = {
   endpoint: string;

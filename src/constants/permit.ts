@@ -1,6 +1,7 @@
-import { DZapPermitMode } from '../enums';
 import { encodePacked, keccak256 } from 'viem';
 import { encodeAbiParameters, parseAbiParameters } from 'viem';
+
+import { DZapPermitMode } from '../enums';
 
 export const EIP2612_GASLESS_DOMAIN = {
   name: 'DZapVerifier',

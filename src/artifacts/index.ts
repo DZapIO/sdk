@@ -1,3 +1,3 @@
-import { dZapCoreAbi, dZapCoreV2Abi, dZapDcaAbi, permit2Abi, erc20Abi } from './default';
+import { dZapCoreAbi, dZapCoreV2Abi, dZapDcaAbi, erc20Abi, permit2Abi } from './default';
 
-export { dZapCoreAbi, dZapCoreV2Abi, dZapDcaAbi, permit2Abi, erc20Abi };
+export { dZapCoreAbi, dZapCoreV2Abi, dZapDcaAbi, erc20Abi, permit2Abi };

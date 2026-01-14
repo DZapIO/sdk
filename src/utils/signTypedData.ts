@@ -1,6 +1,7 @@
-import { Signer, TypedDataField, Wallet } from 'ethers';
-import { TypedDataDomain, WalletClient } from 'viem';
-import { HexString } from '../types';
+import type { Signer, TypedDataField, Wallet } from 'ethers';
+import type { TypedDataDomain, WalletClient } from 'viem';
+
+import type { HexString } from '../types';
 import { isTypeSigner } from './index';
 
 /**

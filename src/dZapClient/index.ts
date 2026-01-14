@@ -1,7 +1,8 @@
-import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
+import type { CancelTokenSource } from 'axios';
+import Axios from 'axios';
+import type { Signer } from 'ethers';
+import type { Prettify, TransactionReceipt, WalletClient } from 'viem';
 
-import { Prettify, TransactionReceipt, WalletClient } from 'viem';
 import {
   broadcastTradeTx,
   broadcastZapTx,
@@ -26,13 +27,14 @@ import { config } from '../config';
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
-import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
+import type { StatusCodes } from '../enums';
+import { ContractVersion, TxnStatus } from '../enums';
 import { PriceService } from '../service/price';
 import GenericTxnHandler from '../transactionHandlers/generic';
 import PermitTxnHandler from '../transactionHandlers/permit';
 import TradeTxnHandler from '../transactionHandlers/trade';
 import ZapTxnHandler from '../transactionHandlers/zap';
-import {
+import type {
   ApprovalMode,
   AvailableDZapServices,
   BroadcastTxParams,
@@ -55,7 +57,7 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from '../types';
-import {
+import type {
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
   ZapChains,
@@ -73,15 +75,16 @@ import {
   ZapTransactionStep,
 } from '../types/zap';
 import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
-import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
+import type { BatchCallParams } from '../utils/eip-5792';
+import { sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
 import { updateQuotes } from '../utils/updateQuotes';
 
 class DZapClient {
   private static instance: DZapClient;
-  private cancelTokenSource: CancelTokenSource | null = null;
   private static chainConfig: ChainData | null = null;
+  private cancelTokenSource: CancelTokenSource | null = null;
   private priceService;
   private constructor() {
     this.priceService = new PriceService();
@@ -1246,7 +1249,7 @@ class DZapClient {
         };
       }
       throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
-    } catch (error) {
+    } catch {
       return {
         status: TxnStatus.error,
         message: 'Failed to broadcast zap transaction',
