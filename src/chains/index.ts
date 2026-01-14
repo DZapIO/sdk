@@ -1,13 +1,14 @@
 import * as viemChains from 'viem/chains';
+
 import { arthera } from './definitions/arthera';
+import { bitlayer } from './definitions/bitlayer';
 import { fiveIre } from './definitions/fiveIre';
+import { hemi } from './definitions/hemi';
 import { hyperEvm } from './definitions/hyperEvm';
 import { hyperliquid } from './definitions/hyperliquid';
-import { stableChain } from './definitions/stable';
-import { bitlayer } from './definitions/bitlayer';
-import { hemi } from './definitions/hemi';
-import { merlin } from './definitions/merlin';
 import { katana } from './definitions/katana';
+import { merlin } from './definitions/merlin';
+import { stableChain } from './definitions/stable';
 
 export { arthera } from './definitions/arthera';
 export { fiveIre } from './definitions/fiveIre';

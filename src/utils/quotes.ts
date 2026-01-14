@@ -1,7 +1,8 @@
 import Decimal from 'decimal.js';
-import { PriceService } from '../service/price';
+
+import type { PriceService } from '../service/price';
 import { priceProviders } from '../service/price/types/IPriceProvider';
-import { ChainData, TradeQuotesRequest, TradeQuotesResponse } from '../types';
+import type { ChainData, TradeQuotesRequest, TradeQuotesResponse } from '../types';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from './amount';
 
 export const updateQuotes = async (

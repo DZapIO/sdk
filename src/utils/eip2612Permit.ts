@@ -3,7 +3,7 @@ import { config } from '../config';
 import { ERC20_FUNCTIONS } from '../constants/erc20';
 import { DEFAULT_PERMIT_VERSION } from '../constants/permit';
 import { TxnStatus } from '../enums';
-import { HexString, TokenPermitData } from '../types';
+import type { HexString, TokenPermitData } from '../types';
 import { multicall } from './multicall';
 
 /**

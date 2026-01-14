@@ -1,4 +1,5 @@
-import { Client, withTimeout } from 'viem';
+import type { Client } from 'viem';
+import { withTimeout } from 'viem';
 import { getCapabilities } from 'viem/actions';
 import { getAction } from 'viem/utils';
 

@@ -1,4 +1,5 @@
 import { zeroAddress } from 'viem';
+
 import { formatToken } from './address';
 
 /**

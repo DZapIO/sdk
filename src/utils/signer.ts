@@ -1,6 +1,8 @@
-import { Signer, TypedDataField, Wallet } from 'ethers';
-import { TypedDataDomain, WalletClient } from 'viem';
-import { HexString } from '../types';
+import type { TypedDataField, Wallet } from 'ethers';
+import { Signer } from 'ethers';
+import type { TypedDataDomain, WalletClient } from 'viem';
+
+import type { HexString } from '../types';
 
 export const isEthersSigner = (variable: unknown): variable is Signer => {
   return variable instanceof Signer;

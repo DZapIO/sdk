@@ -1,8 +1,8 @@
-import { AxiosInstance } from 'axios';
-import { ApiClient } from './base';
+import type { AxiosInstance } from 'axios';
+
 import { config } from '../config';
 import { GET, POST } from '../constants/httpMethods';
-import {
+import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
@@ -10,6 +10,7 @@ import {
   TradeBuildTxnRequest,
   TradeQuotesRequest,
 } from '../types';
+import { ApiClient } from './base';
 
 export class TradeApiClient extends ApiClient {
   private static tradeInstance: AxiosInstance;

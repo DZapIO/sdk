@@ -1,6 +1,7 @@
 import Decimal from 'decimal.js';
 import { formatUnits } from 'viem';
-import { Fee, FeeDetails, TradeQuote } from '../types';
+
+import type { Fee, FeeDetails, TradeQuote } from '../types';
 
 export const calcTotalSrcTokenAmount = (data: { amount: string }[]) => {
   return data.reduce((acc, obj) => {

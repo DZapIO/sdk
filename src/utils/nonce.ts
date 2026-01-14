@@ -1,6 +1,8 @@
+import type { Address, PublicClient } from 'viem';
+import { getContract, maxUint256 } from 'viem';
+
 import * as ABI from '../artifacts';
-import { HexString } from '../types';
-import { Address, getContract, maxUint256, PublicClient } from 'viem';
+import type { HexString } from '../types';
 import { getPublicClient } from './client';
 
 export class NonceManager {

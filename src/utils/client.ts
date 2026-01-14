@@ -1,4 +1,5 @@
 import { createPublicClient, fallback, http } from 'viem';
+
 import { viemChainsById } from '../chains';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 

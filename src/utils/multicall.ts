@@ -1,6 +1,7 @@
-import { MulticallParameters } from 'viem';
+import type { MulticallParameters } from 'viem';
+
 import { StatusCodes, TxnStatus } from '../enums';
-import { HexString } from '../types';
+import type { HexString } from '../types';
 import { getPublicClient } from './client';
 import { logger } from './logger';
 

@@ -1,5 +1,6 @@
 import type { Assign, Chain, ChainFormatters, Prettify } from 'viem';
-import { ChainData } from '../types';
+
+import type { ChainData } from '../types';
 
 export function extendViemChain<
   Formatter extends ChainFormatters,

@@ -1,16 +1,18 @@
-import { CancelTokenSource } from 'axios';
+import type { CancelTokenSource } from 'axios';
+
 import { fetchAllSupportedChains } from '../api';
-import { config, DZapConfigOptions } from '../config';
+import type { DZapConfigOptions } from '../config';
+import { config } from '../config';
 import { Services } from '../constants';
-import { PriceService } from '../service/price';
-import { AvailableDZapServices, Chain, ChainData } from '../types';
-import { ChainsService } from '../service/chains';
-import { TradeService } from '../service/trade';
-import { TokenService } from '../service/token';
-import { ZapService } from '../service/zap';
 import { ApprovalsService } from '../service/approvals';
-import { TransactionsService } from '../service/transactions';
+import { ChainsService } from '../service/chains';
 import { ContractsService } from '../service/contracts';
+import { PriceService } from '../service/price';
+import { TokenService } from '../service/token';
+import { TradeService } from '../service/trade';
+import { TransactionsService } from '../service/transactions';
+import { ZapService } from '../service/zap';
+import type { AvailableDZapServices, Chain, ChainData } from '../types';
 
 class DZapClient {
   private static instance: DZapClient;

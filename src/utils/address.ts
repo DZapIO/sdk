@@ -1,7 +1,8 @@
 import { getAddress, isAddress, zeroAddress } from 'viem';
-import { NATIVE_TOKENS } from '../constants/tokens';
+
 import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants';
-import { ChainData, HexString } from '../types';
+import { NATIVE_TOKENS } from '../constants/tokens';
+import type { ChainData, HexString } from '../types';
 
 export const isNativeCurrency = (address: string, chainConfig: ChainData) => {
   if (!chainConfig) return false;

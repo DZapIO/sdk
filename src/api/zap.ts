@@ -1,10 +1,18 @@
-import { AxiosInstance, CancelToken } from 'axios';
-import { ApiClient } from './base';
+import type { AxiosInstance, CancelToken } from 'axios';
+
 import { config } from '../config';
 import { GET, POST } from '../constants/httpMethods';
-import { BroadcastTxParams } from '../types';
-import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
-import { BroadcastZapTxResponse } from '../types/zap/broadcast';
+import type { BroadcastTxParams } from '../types';
+import type {
+  ZapBuildTxnRequest,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPositionsRequest,
+  ZapQuoteRequest,
+  ZapStatusRequest,
+} from '../types/zap';
+import type { BroadcastZapTxResponse } from '../types/zap/broadcast';
+import { ApiClient } from './base';
 
 export class ZapApiClient extends ApiClient {
   private static zapInstance: AxiosInstance;
