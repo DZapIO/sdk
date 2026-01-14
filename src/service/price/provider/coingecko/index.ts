@@ -1,6 +1,6 @@
 import { GET } from '../../../../constants/httpMethods';
 import { ChainData } from '../../../../types';
-import { BaseApiClient } from '../../../../axios/api';
+import { BaseApiClient } from '../../../../api/base';
 import { isNativeCurrency } from '../../../../utils/tokens';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 import { coingeckoConfig } from './config';

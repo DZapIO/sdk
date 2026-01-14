@@ -1,5 +1,6 @@
 import { CancelToken } from 'axios';
-import { TradeApiClient, ZapApiClient } from '../axios/api';
+import { TradeApiClient } from './trade';
+import { ZapApiClient } from './zap';
 import {
   BroadcastTxParams,
   BroadcastTxResponse,
@@ -11,6 +12,7 @@ import {
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
+// TODO : Remove this function
 // Trade API methods
 export const fetchTradeQuotes = (request: TradeQuotesRequest) => TradeApiClient.fetchTradeQuotes(request);
 
