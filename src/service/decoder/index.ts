@@ -1,7 +1,9 @@
-import { Abi, decodeFunctionData, parseEventLogs, ParseEventLogsReturnType, Transaction, TransactionReceipt } from 'viem';
+import type { Abi, ParseEventLogsReturnType, Transaction, TransactionReceipt } from 'viem';
+import { decodeFunctionData, parseEventLogs } from 'viem';
+
 import { SwapAbisByFunctionName } from '../../artifacts';
 import { ContractVersion } from '../../enums';
-import { AvailableDZapServices, Chain, HexString, SwapInfo } from '../../types';
+import type { AvailableDZapServices, Chain, HexString, SwapInfo } from '../../types';
 import { formatToken } from '../../utils/address';
 import { getTokensPairKey } from '../../utils/token';
 import { ContractsService } from '../contracts';
@@ -136,7 +138,7 @@ export class SwapDecoder {
           fromAmount: inputAmount,
         };
       }
-    } catch (error) {
+    } catch {
       return eventSwapInfo;
     }
   };
@@ -162,7 +164,7 @@ export class SwapDecoder {
         abi: dZapAbi,
         logs: receipt.logs,
       });
-    } catch (e) {
+    } catch {
       events = [];
     }
 

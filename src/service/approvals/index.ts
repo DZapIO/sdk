@@ -11,7 +11,6 @@ import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
 import type {
   ApprovalMode,
   AvailableDZapServices,
-  ChainData,
   GasSignatureParams,
   HexString,
   PermitMode,
@@ -19,11 +18,12 @@ import type {
   TokenPermitData,
 } from '../../types';
 import { isDZapNativeToken } from '../../utils/address';
-import { getPublicClient } from '../../utils/client';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { logger } from '../../utils/logger';
 import { multicall } from '../../utils/multicall';
 import { isEthersSigner } from '../../utils/signer';
+import { ChainsService } from '../chains';
+import type { ContractsService } from '../contracts';
 import { Permit2 } from '../permit2';
 import { SignatureService } from '../signature';
 
@@ -32,8 +32,8 @@ import { SignatureService } from '../signature';
  */
 export class ApprovalsService {
   constructor(
-    private getChainConfig: () => Promise<ChainData>,
-    private getDZapContractAddress: (params: { chainId: number; service: AvailableDZapServices }) => Promise<string>,
+    private chainsService: ChainsService,
+    private contractsService: ContractsService,
   ) {}
 
   /**
@@ -286,8 +286,8 @@ export class ApprovalsService {
     spender?: HexString;
     mode?: ApprovalMode;
   }) {
-    const chainConfig = await this.getChainConfig();
-    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const chainConfig = await this.chainsService.getConfig();
+    const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
     const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
     return await this.getAllowanceInternal({
       chainId,
@@ -359,7 +359,7 @@ export class ApprovalsService {
     rpcUrls?: string[];
     mode?: ApprovalMode;
   }) {
-    const spenderAddress = spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
+    const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
     return await this.approveToken({
       chainId,
       signer,
@@ -416,8 +416,8 @@ export class ApprovalsService {
     >,
   ): Promise<SignPermitResponse> {
     const { service, chainId } = params;
-    const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
-    const chainConfig = await this.getChainConfig();
+    const spenderAddress = params?.spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
+    const chainConfig = await this.chainsService.getConfig();
 
     const permitType = params?.permitType || PermitTypes.AutoPermit;
 
@@ -583,7 +583,7 @@ export class ApprovalsService {
           code: StatusCodes.Success,
         };
       } else {
-        const publicClient = getPublicClient({ chainId, rpcUrls });
+        const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
         try {
           const { request } = await publicClient.simulateContract({
             address: tokens[dataIdx].address,

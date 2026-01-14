@@ -13,7 +13,6 @@ import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
-  ChainData,
   ContractErrorResponse,
   DZapTransactionResponse,
   GaslessTradeBuildTxnResponse,
@@ -25,11 +24,13 @@ import type {
   TradeStatusResponse,
 } from '../../types';
 import type { CustomTypedDataParams } from '../../types/permit';
-import { getPublicClient, isTypeSigner } from '../../utils';
+import { isTypeSigner } from '../../utils';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { updateQuotes } from '../../utils/quotes';
 import { ApprovalsService } from '../approvals';
+import { ChainsService } from '../chains';
+import type { ContractsService } from '../contracts';
 import { SwapDecoder } from '../decoder';
 import type { PriceService } from '../price';
 import { SignatureService } from '../signature';
@@ -41,8 +42,8 @@ import { TransactionsService } from '../transactions';
 export class TradeService {
   constructor(
     private priceService: PriceService,
-    private getChainConfig: () => Promise<ChainData>,
-    private getDZapContractAddress: (params: { chainId: number; service: AvailableDZapServices }) => Promise<string>,
+    private chainsService: ChainsService,
+    private contractsService: ContractsService,
   ) {}
 
   /**
@@ -72,7 +73,7 @@ export class TradeService {
    */
   public async getQuotes(request: TradeQuotesRequest): Promise<TradeQuotesResponse> {
     const quotes: TradeQuotesResponse = await TradeApiClient.fetchTradeQuotes(request);
-    const chainConfig = await this.getChainConfig();
+    const chainConfig = await this.chainsService.getConfig();
     if (chainConfig === null) {
       return quotes;
     }
@@ -151,7 +152,7 @@ export class TradeService {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    const chainConfig = await this.getChainConfig();
+    const chainConfig = await this.chainsService.getConfig();
 
     return await this.buildAndSendTransaction({
       request,
@@ -203,7 +204,7 @@ export class TradeService {
     signer: Signer | WalletClient;
     txnData?: GaslessTradeBuildTxnResponse;
   }) {
-    const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
+    const spender = (await this.contractsService.getAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await this.buildGaslessTxAndSignPermit({
       request,
       signer,
@@ -315,9 +316,9 @@ export class TradeService {
    * ```
    */
   public async decodeTxn({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
+    const publicClient = ChainsService.getPublicClient(chainId, config.getRpcUrlsByChainId(chainId));
     const [chainConfig, transactionData] = await Promise.all([
-      this.getChainConfig(),
+      this.chainsService.getConfig(),
       publicClient.getTransaction({
         hash: data.transactionHash,
       }),

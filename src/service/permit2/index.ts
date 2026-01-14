@@ -1,33 +1,36 @@
-import { TypedDataField } from 'ethers';
-import { Address, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, TypedDataDomain } from 'viem';
+import type { TypedDataField } from 'ethers';
+import type { Address, TypedDataDomain } from 'viem';
+import { encodeAbiParameters, maxUint48, maxUint256, parseAbiParameters } from 'viem';
+
 import * as ABI from '../../artifacts';
-import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { GASLESS_TX_TYPE } from '../../constants';
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
-import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { Services } from '../../constants';
+import { ERC20_FUNCTIONS } from '../../constants/erc20';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { AvailableDZapServices, HexString } from '../../types';
-import {
+import type { AvailableDZapServices, HexString } from '../../types';
+import type {
   BasePermitParams,
   BasePermitResponse,
-  BatchPermitAbiParams,
-  bridgeGaslessWitnessType,
-  defaultWitnessType,
   Permit2Params,
   Permit2PrimaryType,
   PermitBatchTransferFromValues,
   PermitSingleValues,
   PermitTransferFromValues,
-  swapGaslessWitnessType,
   TokenWithIndex,
-  WitnessData,
+  WitnessData } from '../../types/permit';
+import {
+  BatchPermitAbiParams,
+  bridgeGaslessWitnessType,
+  defaultWitnessType,
+  swapGaslessWitnessType
 } from '../../types/permit';
-import { getPublicClient } from '../../utils/client';
-import { getNextPermit2Nonce } from '../../utils/nonce';
-import { logger } from '../../utils/logger';
 import { generateDeadline } from '../../utils';
+import { logger } from '../../utils/logger';
+import { getNextPermit2Nonce } from '../../utils/nonce';
 import { signTypedData } from '../../utils/signer';
+import { ChainsService } from '../chains';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -278,7 +281,7 @@ export class Permit2 {
     permit2Address: HexString;
     rpcUrls?: string[];
   }): Promise<{ permit2Values: PermitSingleValues; nonce: bigint }> {
-    const publicClient = getPublicClient({ chainId, rpcUrls });
+    const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
     const allowanceResult = await publicClient.readContract({
       address: permit2Address,
       abi: ABI.permit.permit2Abi,
