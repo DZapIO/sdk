@@ -6,7 +6,6 @@ import { TxnStatus } from '../enums';
 import { HexString, TokenPermitData } from '../types';
 import { multicall } from './multicall';
 
-export const eip2612DisabledChains = config.getEip2612DisabledChains();
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
  */
@@ -30,7 +29,7 @@ export const checkEIP2612PermitSupport = async ({
     nonce: bigint;
   };
 }> => {
-  if (permit?.eip2612?.supported === false || eip2612DisabledChains.includes(chainId)) {
+  if (permit?.eip2612?.supported === false || config.eip2612DisabledChains.includes(chainId)) {
     return { supportsPermit: false };
   }
   const contracts = [

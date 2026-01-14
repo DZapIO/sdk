@@ -1,6 +1,6 @@
 import { CancelTokenSource } from 'axios';
 import { fetchAllSupportedChains } from '../api';
-import { config } from '../config';
+import { config, DZapConfigOptions } from '../config';
 import { Services } from '../constants';
 import { PriceService } from '../service/price';
 import { AvailableDZapServices, Chain, ChainData } from '../types';
@@ -52,37 +52,35 @@ class DZapClient {
   }
 
   /**
-   * Returns the singleton instance of DZapClient with optional custom RPC configuration.
-   * This ensures only one instance of the client exists throughout the application lifecycle.
+   * Returns the singleton instance of DZapClient with the provided configuration.
    *
-   * @param apiKey - Optional API key for DZap services
-   * @param rpcUrlsByChainId - Optional mapping of chain IDs to custom RPC URLs for blockchain interactions
-   * @returns The singleton DZapClient instance
+   * @param configOptions - Configuration options for the SDK
+   * @returns DZapClient instance
    *
    * @example
    * ```typescript
    * // Basic initialization
-   * const client = DZapClient.getInstance();
-   *
-   * // With API key
-   * const client = DZapClient.getInstance('your-api-key');
+   * const client = DZapClient.getInstance({
+   *   apiKey: 'your-api-key'
+   * });
    *
    * // With custom RPC URLs
-   * const client = DZapClient.getInstance('your-api-key', {
-   *   1: ['https://eth.llamarpc.com'],
-   *   42161: ['https://arbitrum.llamarpc.com']
+   * const clientWithRpc = DZapClient.getInstance({
+   *   apiKey: 'your-api-key',
+   *   rpcUrlsByChainId: {
+   *     1: ['https://eth.llamarpc.com'],
+   *     42161: ['https://arbitrum.llamarpc.com']
+   *   }
    * });
    * ```
    */
-  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(configOptions: DZapConfigOptions = {}): DZapClient {
+    if (configOptions && Object.keys(configOptions).length > 0) {
+      config.updateConfig(configOptions);
+    }
+
     if (!DZapClient.instance) {
       DZapClient.instance = new DZapClient();
-    }
-    if (apiKey) {
-      config.setApiKey(apiKey);
-    }
-    if (rpcUrlsByChainId) {
-      config.setRpcUrlsByChainId(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }

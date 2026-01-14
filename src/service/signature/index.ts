@@ -1,34 +1,39 @@
-import { ethers, Signer, TypedDataField, Wallet } from 'ethers';
-import { getContract, encodeAbiParameters, maxUint256, parseAbiParameters, WalletClient, TypedDataDomain } from 'viem';
-import { Services } from '../../constants';
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, PermitTypes } from '../../constants/permit';
-import { GASLESS_TX_TYPE } from '../../constants';
-import { DZapIntentPrimaryTypes, EIP2612_GASLESS_DOMAIN, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
+import { ethers } from 'ethers';
+import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
+import { GASLESS_TX_TYPE, Services } from '../../constants';
+import {
+  DEFAULT_PERMIT2_DATA,
+  DEFAULT_PERMIT_DATA,
+  DZapIntentPrimaryTypes,
+  EIP2612_GASLESS_DOMAIN,
+  PermitTypes,
+  SIGNATURE_EXPIRY_IN_SECS,
+} from '../../constants/permit';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { HexString, AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, PermitMode, SignPermitResponse } from '../../types';
+import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes, EIP2612DefaultTypes } from '../../types/eip-2612';
 import {
-  Gasless2612PermitParams,
-  CustomTypedDataParams,
+  BasePermitResponse,
   BatchPermitResponse,
+  CustomTypedDataParams,
+  DefaultPermit2612Params,
+  Gasless2612PermitParams,
   GaslessBridgeParams,
   GaslessSwapParams,
+  Permit2Params,
   PermitParams,
   PermitResponse,
   TokenWithPermitData,
-  DefaultPermit2612Params,
-  Permit2Params,
-  BasePermitResponse,
 } from '../../types/permit';
-import { generateDeadline } from '../../utils/date';
-import { handleViemTransactionError } from '../../utils/errors';
-import { getPublicClient } from '../../utils/client';
-import { isEthersSigner } from '../../utils/signer';
-import { Permit2 } from '../permit2';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
+import { getPublicClient } from '../../utils/client';
+import { generateDeadline } from '../../utils/date';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
+import { handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { signTypedData } from '../../utils/signer';
 import { ContractsService } from '../contracts';
+import { Permit2 } from '../permit2';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
@@ -151,7 +156,7 @@ export class SignatureService {
         nonce,
       });
 
-      const signature = await this.signTypedData({
+      const signature = await signTypedData({
         signer,
         domain,
         message,
@@ -198,7 +203,7 @@ export class SignatureService {
     try {
       const { account, signer, message, domain, primaryType, types } = params;
 
-      const signature = await this.signTypedData({
+      const signature = await signTypedData({
         signer,
         account,
         domain,
@@ -274,7 +279,7 @@ export class SignatureService {
 
       const typedData = Permit2.buildTypedData(permit2Values, permit2Address, chainId, witnessData);
 
-      const signature = await SignatureService.signTypedData({
+      const signature = await signTypedData({
         signer,
         domain: typedData.domain,
         message: typedData.message,
@@ -657,7 +662,7 @@ export class SignatureService {
       };
 
       const types = EIP2612DefaultTypes;
-      const signature = await this.signTypedData({
+      const signature = await signTypedData({
         signer,
         domain,
         message,
@@ -697,39 +702,4 @@ export class SignatureService {
       return { status: TxnStatus.error, code: StatusCodes.Error };
     }
   }
-
-  /**
-   * Helper function to sign typed data with either ethers or viem signer
-   */
-  public static signTypedData = async ({
-    signer,
-    domain,
-    message,
-    types,
-    account,
-    primaryType,
-  }: {
-    signer: WalletClient | Signer;
-    domain: TypedDataDomain;
-    types: Record<string, Array<TypedDataField>>;
-    message: Record<string, any>;
-    account: string;
-    primaryType: string;
-  }): Promise<HexString> => {
-    let signature: HexString;
-
-    if (isEthersSigner(signer)) {
-      signature = (await (signer as Wallet)._signTypedData(domain, types, message)) as HexString;
-    } else {
-      signature = await signer.signTypedData({
-        account: account as HexString,
-        domain,
-        message,
-        primaryType,
-        types,
-      });
-    }
-
-    return signature;
-  };
 }

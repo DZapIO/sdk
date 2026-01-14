@@ -27,7 +27,7 @@ import { getPublicClient } from '../../utils/client';
 import { getNextPermit2Nonce } from '../../utils/nonce';
 import { logger } from '../../utils/logger';
 import { generateDeadline } from '../../utils';
-import { SignatureService } from '../signature';
+import { signTypedData } from '../../utils/signer';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -128,7 +128,7 @@ export class Permit2 {
       const typedData = this.buildTypedData(permit2Values, permit2Address, chainId, witnessData);
 
       // Sign the permit2 data
-      const signature = await SignatureService.signTypedData({
+      const signature = await signTypedData({
         signer,
         domain: typedData.domain,
         message: typedData.message,

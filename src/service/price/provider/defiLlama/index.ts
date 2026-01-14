@@ -1,10 +1,10 @@
 import { GET } from '../../../../constants/httpMethods';
 import { ChainData } from '../../../../types';
 import { isNativeCurrency } from '../../../../utils';
-import { invoke } from '../../../../utils/axios';
 import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
 import { defiLlamaConfig } from './config';
 import { DefiLlamaResponse } from './types';
+import { ApiClient } from '../../../../api/base';
 
 export class DefiLlamaPriceProvider implements IPriceProvider {
   public id = priceProviders.defiLlama;
@@ -46,7 +46,7 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
     try {
       const requestTokens = this.preProcess(chainId, tokenAddresses, chainConfig);
       if (!requestTokens.length) return {};
-      const response: DefiLlamaResponse = await invoke({
+      const response: DefiLlamaResponse = await ApiClient.invoke({
         endpoint: defiLlamaConfig.url(requestTokens),
         method: GET,
       });
