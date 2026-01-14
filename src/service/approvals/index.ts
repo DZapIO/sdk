@@ -1,10 +1,14 @@
-import { Signer } from 'ethers';
-import { Address, encodeFunctionData, maxUint256, MulticallParameters, Prettify, WalletClient } from 'viem';
+import type { Signer } from 'ethers';
+import type { Address, MulticallParameters, Prettify, WalletClient } from 'viem';
+import { encodeFunctionData, maxUint256 } from 'viem';
+
+import { erc20Abi } from '../../artifacts';
+import { config } from '../../config';
 import { ApprovalModes } from '../../constants/approval';
+import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { PermitTypes } from '../../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
-import { SignatureService } from '../signature';
-import {
+import type {
   ApprovalMode,
   AvailableDZapServices,
   ChainData,
@@ -14,16 +18,14 @@ import {
   SignPermitResponse,
   TokenPermitData,
 } from '../../types';
-import { config } from '../../config';
-import { erc20Abi } from '../../artifacts';
-import { ERC20_FUNCTIONS } from '../../constants/erc20';
-import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
-import { multicall } from '../../utils/multicall';
-import { Permit2 } from '../permit2';
 import { isDZapNativeToken } from '../../utils/address';
-import { isEthersSigner } from '../../utils/signer';
 import { getPublicClient } from '../../utils/client';
+import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { logger } from '../../utils/logger';
+import { multicall } from '../../utils/multicall';
+import { isEthersSigner } from '../../utils/signer';
+import { Permit2 } from '../permit2';
+import { SignatureService } from '../signature';
 
 /**
  * ApprovalsService handles all approval and permit operations for token spending.

@@ -1,6 +1,6 @@
 import type { CancelTokenSource } from 'axios';
 
-import { fetchAllSupportedChains } from '../api';
+import { TradeApiClient } from '../api';
 import type { DZapConfigOptions } from '../config';
 import { config } from '../config';
 import { Services } from '../constants';
@@ -93,7 +93,7 @@ class DZapClient {
    */
   private static async getChainConfig(): Promise<ChainData> {
     if (!DZapClient.chainConfig) {
-      const data = await fetchAllSupportedChains();
+      const data = await TradeApiClient.fetchAllSupportedChains();
       const chains: ChainData = {};
       data.forEach((chain: Chain) => {
         if (!chains[chain.chainId]) {

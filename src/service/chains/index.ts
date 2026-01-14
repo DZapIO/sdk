@@ -1,5 +1,5 @@
-import { fetchAllSupportedChains } from '../../api';
-import { Chain, ChainData } from '../../types';
+import { TradeApiClient } from '../../api';
+import type { Chain, ChainData } from '../../types';
 
 /**
  * ChainsService handles all chain configuration and chain-related operations.
@@ -21,7 +21,7 @@ export class ChainsService {
    * ```
    */
   public async getSupportedChains(): Promise<ChainData> {
-    return fetchAllSupportedChains();
+    return TradeApiClient.fetchAllSupportedChains();
   }
 
   /**
@@ -40,7 +40,7 @@ export class ChainsService {
    */
   public async getConfig(): Promise<ChainData> {
     if (!ChainsService.chainConfig) {
-      const data = await fetchAllSupportedChains();
+      const data = await TradeApiClient.fetchAllSupportedChains();
       const chains: ChainData = {};
       data.forEach((chain: Chain) => {
         if (!chains[chain.chainId]) {

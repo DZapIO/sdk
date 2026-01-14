@@ -1,9 +1,10 @@
 import { formatUnits } from 'viem';
-import { fetchAllTokens, fetchBalances, fetchTokenDetails } from '../../api';
-import { ChainData, TokenInfo, TokenResponse } from '../../types';
-import { PriceService } from '../price';
-import { priceProviders } from '../price/types/IPriceProvider';
+
+import { TradeApiClient } from '../../api';
+import type { ChainData, TokenInfo, TokenResponse } from '../../types';
 import { logger } from '../../utils/logger';
+import type { PriceService } from '../price';
+import { priceProviders } from '../price/types/IPriceProvider';
 
 /**
  * TokenService handles all token-related operations including fetching token data, balances, prices, and approvals.
@@ -38,7 +39,7 @@ export class TokenService {
    */
   public async getAll(chainId: number, source?: string, account?: string): Promise<TokenResponse> {
     try {
-      const tokens = await fetchAllTokens(chainId, source, account);
+      const tokens = await TradeApiClient.fetchAllTokens(chainId, source, account);
       const chainConfig = await this.getChainConfig();
 
       if (!chainConfig) return tokens;
@@ -109,7 +110,7 @@ export class TokenService {
     includeBalance?: boolean,
     includePrice?: boolean,
   ): Promise<TokenInfo | Record<string, TokenInfo>> {
-    return await fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
+    return await TradeApiClient.fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
   }
 
   /**
@@ -162,7 +163,7 @@ export class TokenService {
    * ```
    */
   public async getBalances(chainId: number, account: string): Promise<TokenResponse> {
-    const balanceData = await fetchBalances(chainId, account);
+    const balanceData = await TradeApiClient.fetchBalances(chainId, account);
     return balanceData.result;
   }
 

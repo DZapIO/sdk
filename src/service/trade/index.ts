@@ -1,11 +1,13 @@
-import { Signer } from 'ethers';
-import { TransactionReceipt, WalletClient } from 'viem';
-import { broadcastTradeTx, executeGaslessTxnData, fetchCalculatedPoints, fetchStatus, fetchTradeBuildTxnData, fetchTradeQuotes } from '../../api';
+import type { Signer } from 'ethers';
+import type { TransactionReceipt, WalletClient } from 'viem';
+
+import { TradeApiClient } from '../../api';
+import { config } from '../../config';
 import { Services } from '../../constants';
 import { exclusiveChainIds } from '../../constants/chains';
 import { PermitTypes } from '../../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
-import {
+import type {
   AdditionalInfo,
   AvailableDZapServices,
   BroadcastTxParams,
@@ -22,17 +24,16 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from '../../types';
-import { CustomTypedDataParams } from '../../types/permit';
-import { updateQuotes } from '../../utils/quotes';
-import { PriceService } from '../price';
-import { config } from '../../config';
-import { SwapDecoder } from '../decoder';
+import type { CustomTypedDataParams } from '../../types/permit';
 import { getPublicClient, isTypeSigner } from '../../utils';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
-import { SignatureService } from '../signature';
-import { ApprovalsService } from '../approvals';
-import { TransactionsService } from '../transactions';
 import { logger } from '../../utils/logger';
+import { updateQuotes } from '../../utils/quotes';
+import { ApprovalsService } from '../approvals';
+import { SwapDecoder } from '../decoder';
+import type { PriceService } from '../price';
+import { SignatureService } from '../signature';
+import { TransactionsService } from '../transactions';
 
 /**
  * TradeService handles all trade-related operations including swaps, bridges, quotes, and transaction execution.
@@ -70,7 +71,7 @@ export class TradeService {
    * ```
    */
   public async getQuotes(request: TradeQuotesRequest): Promise<TradeQuotesResponse> {
-    const quotes: TradeQuotesResponse = await fetchTradeQuotes(request);
+    const quotes: TradeQuotesResponse = await TradeApiClient.fetchTradeQuotes(request);
     const chainConfig = await this.getChainConfig();
     if (chainConfig === null) {
       return quotes;
@@ -104,7 +105,7 @@ export class TradeService {
    * ```
    */
   public async buildTxn(request: TradeBuildTxnRequest): Promise<TradeBuildTxnResponse> {
-    return await fetchTradeBuildTxnData(request);
+    return await TradeApiClient.fetchTradeBuildTxnData(request);
   }
 
   /**
@@ -246,7 +247,7 @@ export class TradeService {
     txIds?: string;
     chainId?: number;
   }): Promise<TradeStatusResponse | Record<string, TradeStatusResponse>> {
-    return fetchStatus({ txHash, txIds, chainId });
+    return TradeApiClient.fetchStatus({ txHash, txIds, chainId });
   }
 
   /**
@@ -265,7 +266,7 @@ export class TradeService {
    * ```
    */
   public async broadcast(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
-    return await broadcastTradeTx(request);
+    return await TradeApiClient.broadcastTradeTx(request);
   }
 
   /**
@@ -288,7 +289,7 @@ export class TradeService {
    * ```
    */
   public async calculatePoints(request: CalculatePointsRequest): Promise<{ points: number }> {
-    return await fetchCalculatedPoints(request);
+    return await TradeApiClient.fetchCalculatedPoints(request);
   }
 
   /**
@@ -478,7 +479,7 @@ export class TradeService {
       txnDetails = resp.txnHash;
     }
 
-    const txResp = await broadcastTradeTx({
+    const txResp = await TradeApiClient.broadcastTradeTx({
       chainId,
       txData: txnDetails as HexString,
       txId: txnData.txId,
@@ -524,7 +525,7 @@ export class TradeService {
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
-        buildTxnResponseData = await fetchTradeBuildTxnData(request);
+        buildTxnResponseData = await TradeApiClient.fetchTradeBuildTxnData(request);
       }
 
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
@@ -585,7 +586,7 @@ export class TradeService {
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
-        buildTxnResponseData = await fetchTradeBuildTxnData({
+        buildTxnResponseData = await TradeApiClient.fetchTradeBuildTxnData({
           ...request,
           gasless: true,
         });
@@ -636,7 +637,7 @@ export class TradeService {
         const gaslessTxResp: {
           status: TxnStatus;
           txnHash: HexString;
-        } = await executeGaslessTxnData({
+        } = await TradeApiClient.executeGaslessTxnData({
           chainId: request.fromChain,
           txId,
           permit,

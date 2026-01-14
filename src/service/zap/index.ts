@@ -1,20 +1,13 @@
-import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
-import { WalletClient } from 'viem';
-import {
-  broadcastZapTx,
-  fetchZapBuildTxnData,
-  fetchZapChains,
-  fetchZapPoolDetails,
-  fetchZapPools,
-  fetchZapPositions,
-  fetchZapProviders,
-  fetchZapQuote,
-  fetchZapTxnStatus,
-} from '../../api';
+import type { CancelTokenSource } from 'axios';
+import Axios from 'axios';
+import type { Signer } from 'ethers';
+import type { WalletClient } from 'viem';
+
+import { ZapApiClient } from '../../api';
+import { ZAP_STEP_ACTIONS } from '../../constants';
 import { StatusCodes, TxnStatus } from '../../enums';
-import { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, HexString } from '../../types';
-import {
+import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, HexString } from '../../types';
+import type {
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
   ZapChains,
@@ -31,12 +24,11 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../../types/zap';
-import { ZapStep, ZapEvmTxnDetails } from '../../types/zap/step';
-import { handleViemTransactionError } from '../../utils/errors';
-import { ZAP_STEP_ACTIONS } from '../../constants';
-import { TransactionsService } from '../transactions';
-import { logger } from '../../utils/logger';
+import type { ZapEvmTxnDetails, ZapStep } from '../../types/zap/step';
 import { getPublicClient } from '../../utils';
+import { handleViemTransactionError } from '../../utils/errors';
+import { logger } from '../../utils/logger';
+import { TransactionsService } from '../transactions';
 
 /**
  * ZapService handles all zap-related operations including quotes, transaction building, execution, and pool management.
@@ -79,7 +71,7 @@ export class ZapService {
     }
     const newCancelTokenSource = Axios.CancelToken.source();
     this.setCancelTokenSource(newCancelTokenSource);
-    const route: ZapQuoteResponse = (await fetchZapQuote(request, newCancelTokenSource.token)).data;
+    const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, newCancelTokenSource.token)).data;
     return route;
   }
 
@@ -115,7 +107,7 @@ export class ZapService {
     }
     const newCancelTokenSource = Axios.CancelToken.source();
     this.setCancelTokenSource(newCancelTokenSource);
-    const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request, newCancelTokenSource.token)).data;
+    const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, newCancelTokenSource.token)).data;
     return route;
   }
 
@@ -182,7 +174,7 @@ export class ZapService {
    * ```
    */
   public async getStatus(request: ZapStatusRequest): Promise<ZapStatusResponse> {
-    const status: ZapStatusResponse = (await fetchZapTxnStatus(request)).data;
+    const status: ZapStatusResponse = (await ZapApiClient.fetchZapTxnStatus(request)).data;
     return status;
   }
 
@@ -211,7 +203,7 @@ export class ZapService {
    * ```
    */
   public async getPositions(request: ZapPositionsRequest): Promise<ZapPositionsResponse> {
-    return (await fetchZapPositions(request)).data;
+    return (await ZapApiClient.fetchZapPositions(request)).data;
   }
 
   /**
@@ -234,7 +226,7 @@ export class ZapService {
    * ```
    */
   public async getPools(request: ZapPoolsRequest): Promise<ZapPoolsResponse> {
-    return (await fetchZapPools(request)).data;
+    return (await ZapApiClient.fetchZapPools(request)).data;
   }
 
   /**
@@ -260,7 +252,7 @@ export class ZapService {
    * ```
    */
   public async getPoolDetails(request: ZapPoolDetailsRequest): Promise<ZapPoolDetails> {
-    return (await fetchZapPoolDetails(request)).data;
+    return (await ZapApiClient.fetchZapPoolDetails(request)).data;
   }
 
   /**
@@ -280,7 +272,7 @@ export class ZapService {
    * ```
    */
   public async getChains(): Promise<ZapChains> {
-    return (await fetchZapChains()).data;
+    return (await ZapApiClient.fetchZapChains()).data;
   }
 
   /**
@@ -299,7 +291,7 @@ export class ZapService {
    * ```
    */
   public async getProviders(): Promise<ZapProviders> {
-    return (await fetchZapProviders()).data;
+    return (await ZapApiClient.fetchZapProviders()).data;
   }
 
   /**
@@ -319,7 +311,7 @@ export class ZapService {
    */
   public async broadcast(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
     try {
-      const response = await broadcastZapTx(request);
+      const response = await ZapApiClient.broadcastZapTx(request);
       if (response.status === TxnStatus.success) {
         return {
           status: TxnStatus.success,
@@ -327,7 +319,7 @@ export class ZapService {
         };
       }
       throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
-    } catch (error) {
+    } catch {
       return {
         status: TxnStatus.error,
         message: 'Failed to broadcast zap transaction',
@@ -410,7 +402,7 @@ export class ZapService {
     try {
       const { srcChainId: chainId } = request;
       if (!steps || steps.length === 0) {
-        const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request)).data;
+        const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request)).data;
         steps = route.steps;
         if (!steps || steps.length === 0) {
           logger.error('No steps found in zap route', {
