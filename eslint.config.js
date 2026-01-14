@@ -15,7 +15,6 @@ export default [
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/member-ordering': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       '@typescript-eslint/return-await': 'off',
@@ -28,6 +27,6 @@ export default [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs', 'jest.config.mjs'],
+    ignores: ['dist/**', 'node_modules/**', 'scripts/**', '*.config.js', '*.config.mjs', 'jest.config.mjs'],
   },
 ];
