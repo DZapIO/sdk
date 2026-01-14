@@ -37,65 +37,11 @@ export class ApprovalsService {
   ) {}
 
   /**
-   * Generates approval batch call parameters for tokens that need approval (static version for external use)
-   * @param params - Parameters for generating batch approval calls
-   * @returns Promise resolving to array of batch call parameters
-   */
-  public static async generateApprovalBatchCalls({
-    tokens,
-    chainId,
-    sender,
-    spender,
-    multicallAddress,
-    rpcUrls,
-  }: {
-    tokens: Array<{
-      address: HexString;
-      amount: string;
-    }>;
-    chainId: number;
-    sender: HexString;
-    spender: HexString;
-    multicallAddress?: HexString;
-    rpcUrls?: string[];
-  }): Promise<
-    Array<{
-      to: HexString;
-      data: HexString;
-      value: bigint;
-    }>
-  > {
-    const tokensToCheck = tokens.filter((token) => !isDZapNativeToken(token.address));
-    if (tokensToCheck.length === 0) {
-      return [];
-    }
-    const { data: allowanceData } = await ApprovalsService.getAllowanceStatic({
-      chainId,
-      sender,
-      tokens: tokensToCheck,
-      spender,
-      multicallAddress,
-      rpcUrls,
-    });
-
-    const tokensNeedingApproval = tokensToCheck.filter((token) => allowanceData[token.address]?.approvalNeeded);
-
-    return tokensNeedingApproval.map((token) => ({
-      to: token.address,
-      data: this.encodeApproveCallData({
-        spender,
-        amount: BigInt(token.amount),
-      }),
-      value: BigInt(0),
-    }));
-  }
-
-  /**
-   * Checks current token allowances for a sender address across multiple tokens (static version for external use)
+   * Checks current token allowances for a sender address across multiple tokens
    * @param params - Configuration object for allowance checking
    * @returns Promise resolving to allowance information including current allowances and required actions
    */
-  private static async getAllowanceStatic(params: {
+  private async getAllowanceData(params: {
     chainId: number;
     sender: HexString;
     tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
@@ -153,7 +99,7 @@ export class ApprovalsService {
       return { status: TxnStatus.success, code: StatusCodes.Success, data };
     }
     try {
-      const { data: allowances } = await ApprovalsService.batchGetAllowancesStatic({
+      const { data: allowances } = await this.batchGetAllowances({
         chainId,
         data: approvalData,
         owner: sender,
@@ -173,7 +119,7 @@ export class ApprovalsService {
     } catch (error: unknown) {
       logger.error('Multicall allowance check failed', {
         service: 'ApprovalsService',
-        method: 'getAllowanceStatic',
+        method: 'getAllowanceData',
         chainId,
         tokensCount: erc20Tokens.length,
         error,
@@ -183,11 +129,11 @@ export class ApprovalsService {
   }
 
   /**
-   * Batch ERC20 allowance checks using multicall (static version for external use)
+   * Batch ERC20 allowance checks using multicall
    * @param params - Parameters for batch allowance check
    * @returns Promise resolving to allowance data for each token
    */
-  private static async batchGetAllowancesStatic({
+  private async batchGetAllowances({
     chainId,
     data,
     owner,
@@ -222,7 +168,7 @@ export class ApprovalsService {
     if (status !== TxnStatus.success) {
       logger.error('Batch allowance check failed', {
         service: 'ApprovalsService',
-        method: 'batchGetAllowancesStatic',
+        method: 'batchGetAllowances',
         chainId,
         tokensCount: data.length,
         status,
@@ -289,7 +235,7 @@ export class ApprovalsService {
     const chainConfig = await this.chainsService.getConfig();
     const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
     const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
-    return await this.getAllowanceInternal({
+    return await this.getAllowanceData({
       chainId,
       sender,
       tokens,
@@ -360,15 +306,82 @@ export class ApprovalsService {
     mode?: ApprovalMode;
   }) {
     const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    return await this.approveToken({
-      chainId,
-      signer,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
-      tokens,
-      approvalTxnCallback,
-      mode,
-      spender: spenderAddress,
-    });
+    const finalRpcUrls = rpcUrls || config.getRpcUrlsByChainId(chainId);
+    let finalSpender = spenderAddress;
+    if (mode !== ApprovalModes.Default) {
+      finalSpender = Permit2.getAddress(chainId);
+    }
+    for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
+      let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
+      if (isEthersSigner(signer)) {
+        const from = await signer.getAddress();
+        const callData = encodeFunctionData({
+          abi: erc20Abi,
+          functionName: ERC20_FUNCTIONS.approve,
+          args: [finalSpender, BigInt(tokens[dataIdx].amount)],
+        });
+        await signer.sendTransaction({
+          from,
+          chainId,
+          to: tokens[dataIdx].address,
+          data: callData,
+        });
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+        };
+      } else {
+        const publicClient = ChainsService.getPublicClient(chainId, finalRpcUrls);
+        try {
+          const { request } = await publicClient.simulateContract({
+            address: tokens[dataIdx].address,
+            abi: erc20Abi,
+            functionName: ERC20_FUNCTIONS.approve,
+            args: [finalSpender, BigInt(tokens[dataIdx].amount)],
+            account: signer.account,
+          });
+          const hash = await signer.writeContract(request);
+          txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
+        } catch (e: unknown) {
+          const error = e as { code?: StatusCodes };
+          logger.error('Token approval transaction failed', {
+            service: 'ApprovalsService',
+            method: 'approve',
+            chainId,
+            tokenAddress: tokens[dataIdx].address,
+            error: e,
+          });
+          if (error?.code === StatusCodes.UserRejectedRequest) {
+            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
+          } else {
+            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
+          }
+        }
+      }
+      if (txnDetails.code !== StatusCodes.Success) {
+        return {
+          status: txnDetails.status,
+          code: txnDetails?.code || StatusCodes.FunctionNotFound,
+        };
+      }
+      if (approvalTxnCallback) {
+        const callbackStatus = await approvalTxnCallback({ txnDetails, address: tokens[dataIdx].address });
+        if (callbackStatus && callbackStatus !== TxnStatus.success) {
+          logger.warn('Approval callback returned non-success status', {
+            service: 'ApprovalsService',
+            method: 'approve',
+            tokenAddress: tokens[dataIdx].address,
+            callbackStatus,
+            chainId,
+          });
+          return {
+            status: txnDetails.status,
+            code: txnDetails?.code || StatusCodes.Error,
+          };
+        }
+      }
+    }
+    return { status: TxnStatus.success, code: StatusCodes.Success };
   }
 
   /**
@@ -461,14 +474,29 @@ export class ApprovalsService {
       value: bigint;
     }>
   > {
-    return ApprovalsService.generateApprovalBatchCalls({
-      tokens,
+    const tokensToCheck = tokens.filter((token) => !isDZapNativeToken(token.address));
+    if (tokensToCheck.length === 0) {
+      return [];
+    }
+    const { data: allowanceData } = await this.getAllowanceData({
       chainId,
       sender,
+      tokens: tokensToCheck,
       spender,
       multicallAddress,
       rpcUrls,
     });
+
+    const tokensNeedingApproval = tokensToCheck.filter((token) => allowanceData[token.address]?.approvalNeeded);
+
+    return tokensNeedingApproval.map((token) => ({
+      to: token.address,
+      data: ApprovalsService.encodeApproveCallData({
+        spender,
+        amount: BigInt(token.amount),
+      }),
+      value: BigInt(0),
+    }));
   }
 
   /**
@@ -530,147 +558,6 @@ export class ApprovalsService {
       success: Boolean(batchResult),
       batchId: batchResult?.id,
     };
-  }
-
-  /**
-   * Approves tokens for spending by a spender address
-   * @param params - Approval parameters including signer, tokens, spender
-   * @returns Promise resolving to transaction status
-   */
-  private async approveToken({
-    chainId,
-    signer,
-    rpcUrls,
-    mode,
-    tokens,
-    approvalTxnCallback,
-    spender,
-  }: {
-    chainId: number;
-    signer: WalletClient | Signer;
-    mode: ApprovalMode;
-    tokens: { address: HexString; amount: string }[];
-    rpcUrls?: string[];
-    approvalTxnCallback?: ({
-      txnDetails,
-      address,
-    }: {
-      txnDetails: { txnHash: string; code: StatusCodes; status: TxnStatus };
-      address: HexString;
-    }) => Promise<TxnStatus | null>;
-    spender: HexString;
-  }): Promise<{ status: TxnStatus; code: StatusCodes }> {
-    if (mode !== ApprovalModes.Default) {
-      spender = Permit2.getAddress(chainId);
-    }
-    for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
-      let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
-      if (isEthersSigner(signer)) {
-        const from = await signer.getAddress();
-        const callData = encodeFunctionData({
-          abi: erc20Abi,
-          functionName: ERC20_FUNCTIONS.approve,
-          args: [spender, BigInt(tokens[dataIdx].amount)],
-        });
-        await signer.sendTransaction({
-          from,
-          chainId,
-          to: tokens[dataIdx].address,
-          data: callData,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-        };
-      } else {
-        const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
-        try {
-          const { request } = await publicClient.simulateContract({
-            address: tokens[dataIdx].address,
-            abi: erc20Abi,
-            functionName: ERC20_FUNCTIONS.approve,
-            args: [spender, BigInt(tokens[dataIdx].amount)],
-            account: signer.account,
-          });
-          const hash = await signer.writeContract(request);
-          txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
-        } catch (e: unknown) {
-          const error = e as { code?: StatusCodes };
-          logger.error('Token approval transaction failed', {
-            service: 'ApprovalsService',
-            method: 'approveToken',
-            chainId,
-            tokenAddress: tokens[dataIdx].address,
-            error: e,
-          });
-          if (error?.code === StatusCodes.UserRejectedRequest) {
-            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
-          } else {
-            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
-          }
-        }
-      }
-      if (txnDetails.code !== StatusCodes.Success) {
-        return {
-          status: txnDetails.status,
-          code: txnDetails?.code || StatusCodes.FunctionNotFound,
-        };
-      }
-      if (approvalTxnCallback) {
-        const callbackStatus = await approvalTxnCallback({ txnDetails, address: tokens[dataIdx].address });
-        if (callbackStatus && callbackStatus !== TxnStatus.success) {
-          logger.warn('Approval callback returned non-success status', {
-            service: 'ApprovalsService',
-            method: 'approveToken',
-            tokenAddress: tokens[dataIdx].address,
-            callbackStatus,
-            chainId,
-          });
-          return {
-            status: txnDetails.status,
-            code: txnDetails?.code || StatusCodes.Error,
-          };
-        }
-      }
-    }
-    return { status: TxnStatus.success, code: StatusCodes.Success };
-  }
-
-  /**
-   * Get allowance information for tokens based on approval mode
-   * @param params - Allowance parameters
-   * @returns Promise resolving to allowance data for each token
-   */
-  private async getAllowanceInternal({
-    chainId,
-    sender,
-    tokens,
-    rpcUrls,
-    multicallAddress,
-    mode,
-    spender,
-  }: {
-    chainId: number;
-    sender: HexString;
-    tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
-    spender: HexString;
-    rpcUrls?: string[];
-    mode?: ApprovalMode;
-    multicallAddress?: HexString;
-  }): Promise<{
-    status: TxnStatus;
-    code: StatusCodes;
-    data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } };
-  }> {
-    return ApprovalsService.getAllowanceStatic({
-      chainId,
-      sender,
-      tokens,
-      spender,
-      multicallAddress,
-      rpcUrls,
-      mode,
-    });
   }
 
   /**

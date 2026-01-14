@@ -28,7 +28,7 @@ import { isTypeSigner } from '../../utils';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { updateQuotes } from '../../utils/quotes';
-import { ApprovalsService } from '../approvals';
+import type { ApprovalsService } from '../approvals';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
 import { SwapDecoder } from '../decoder';
@@ -44,6 +44,7 @@ export class TradeService {
     private priceService: PriceService,
     private chainsService: ChainsService,
     private contractsService: ContractsService,
+    private approvalsService: ApprovalsService,
   ) {}
 
   /**
@@ -372,7 +373,7 @@ export class TradeService {
     multicallAddress?: HexString,
     rpcUrls?: string[],
   ): Promise<DZapTransactionResponse> {
-    const approvalBatchCalls = await ApprovalsService.generateApprovalBatchCalls({
+    const approvalBatchCalls = await this.approvalsService.generateApprovalBatchCalls({
       tokens: request.data.map((token) => ({
         address: token.srcToken as HexString,
         amount: token.amount,
