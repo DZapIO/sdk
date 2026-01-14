@@ -1,10 +1,11 @@
-import { Signer, TypedDataField } from 'ethers';
-import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
-import { GASLESS_TX_TYPE } from '../constants';
-import { Permit2PrimaryTypes } from '../constants/permit';
-import { ContractVersion } from '../enums';
-import { Address, TypedDataDomain, WalletClient } from 'viem';
-import { AvailableDZapServices, TokenPermitData } from '.';
+import type { Signer, TypedDataField } from 'ethers';
+import type { Address, TypedDataDomain, WalletClient } from 'viem';
+
+import type { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
+import type { GASLESS_TX_TYPE } from '../constants';
+import type { Permit2PrimaryTypes } from '../constants/permit';
+import type { ContractVersion } from '../enums';
+import type { AvailableDZapServices, TokenPermitData } from '.';
 
 export const defaultWitnessType = {
   typeName: 'DZapTransferWitness',

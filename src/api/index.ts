@@ -1,7 +1,6 @@
-import { CancelToken } from 'axios';
-import { TradeApiClient } from './trade';
-import { ZapApiClient } from './zap';
-import {
+import type { CancelToken } from 'axios';
+
+import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
@@ -9,8 +8,17 @@ import {
   TradeBuildTxnRequest,
   TradeQuotesRequest,
 } from '../types';
-import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
-import { BroadcastZapTxResponse } from '../types/zap/broadcast';
+import type {
+  ZapBuildTxnRequest,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPositionsRequest,
+  ZapQuoteRequest,
+  ZapStatusRequest,
+} from '../types/zap';
+import type { BroadcastZapTxResponse } from '../types/zap/broadcast';
+import { TradeApiClient } from './trade';
+import { ZapApiClient } from './zap';
 
 // TODO : Remove this function
 // Trade API methods

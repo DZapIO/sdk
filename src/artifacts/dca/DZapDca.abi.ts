@@ -1,4 +1,4 @@
-import { Abi } from 'viem';
+import type { Abi } from 'viem';
 
 /**
  * DZap DCA (Dollar Cost Averaging) Contract ABI

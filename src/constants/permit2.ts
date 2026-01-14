@@ -1,5 +1,5 @@
-import { HexString } from '../types';
-import { ExclusiveChainIds } from '../types/chains';
+import type { HexString } from '../types';
+import type { ExclusiveChainIds } from '../types/chains';
 import { exclusiveChainIds } from './chains';
 
 /**

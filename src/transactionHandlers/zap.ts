@@ -1,14 +1,15 @@
-import { Signer } from 'ethers';
-import { WalletClient } from 'viem';
+import type { Signer } from 'ethers';
+import type { WalletClient } from 'viem';
+
 import { fetchZapBuildTxnData } from '../api';
-import { StatusCodes, TxnStatus } from '../enums';
-import { DZapTransactionResponse, HexString } from '../types';
-import { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
-import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
-import { getPublicClient, isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
-import { handleViemTransactionError } from '../utils/errors';
 import { ZAP_STEP_ACTIONS } from '../constants';
+import { StatusCodes, TxnStatus } from '../enums';
+import type { DZapTransactionResponse, HexString } from '../types';
+import type { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
+import type { ZapEvmTxnDetails, ZapStep } from '../types/zap/step';
+import { getPublicClient, isTypeSigner } from '../utils';
+import { handleViemTransactionError } from '../utils/errors';
 
 class ZapTxnHandler {
   public static execute = async ({

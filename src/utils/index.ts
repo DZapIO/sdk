@@ -1,27 +1,16 @@
-import {
-  Abi,
-  createPublicClient,
-  fallback,
-  http,
-  parseEventLogs,
-  ParseEventLogsReturnType,
-  stringToHex,
-  Transaction,
-  TransactionReceipt,
-  WalletClient,
-  zeroAddress,
-} from 'viem';
-import * as ABI from '../artifacts';
-import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
-
 import { Signer } from 'ethers';
+import type { Abi, ParseEventLogsReturnType, Transaction, TransactionReceipt, WalletClient } from 'viem';
+import { createPublicClient, fallback, http, parseEventLogs, stringToHex, zeroAddress } from 'viem';
+
+import * as ABI from '../artifacts';
 import { viemChainsById } from '../chains';
-import { DZAP_ABIS, STANDARD_ABIS, Services } from '../constants';
+import { DZAP_ABIS, Services, STANDARD_ABIS } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
+import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants/tokens';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
+import type { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 import { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
 import { formatToken } from './tokens';
-import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants/tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
@@ -201,7 +190,7 @@ export const handleDecodeTxnData = (
       abi: dZapAbi,
       logs: receipt.logs,
     });
-  } catch (e) {
+  } catch {
     events = [];
   }
 

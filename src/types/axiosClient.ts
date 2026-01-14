@@ -1,4 +1,4 @@
-import { AxiosRequestConfig, CancelToken } from 'axios';
+import type { AxiosRequestConfig, CancelToken } from 'axios';
 
 export type ExtendedAxiosRequestConfig = {
   shouldRetry?: boolean;

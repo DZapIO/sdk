@@ -1,5 +1,5 @@
-import { AvailableDZapServices } from '.';
-import { Versions } from '../enums';
+import type { Versions } from '../enums';
+import type { AvailableDZapServices } from '.';
 
 export type ContractConfig = {
   [serviceKey in AvailableDZapServices]: {

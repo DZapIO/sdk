@@ -1,6 +1,10 @@
+import type { Address } from 'viem';
+
+import { permit2Abi } from '../../artifacts';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { Permit2PrimaryTypes } from '../../constants/permit';
-import {
+import type { HexString } from '../../types';
+import type {
   BasePermitParams,
   Permit2PrimaryType,
   PermitBatchTransferFromValues,
@@ -8,11 +12,8 @@ import {
   PermitTransferFromValues,
   TokenWithIndex,
 } from '../../types/permit';
-import type { Address } from 'viem';
 import { getPublicClient } from '../index';
 import { getNextPermit2Nonce } from './nonce';
-import { HexString } from '../../types';
-import { permit2Abi } from '../../artifacts';
 
 type Permit2ValuesParams = {
   deadline: bigint;

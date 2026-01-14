@@ -1,7 +1,8 @@
+import type { AxiosInstance, CancelToken, Method } from 'axios';
+
 import AxiosClient from '../axios';
-import { AxiosInstance, CancelToken, Method } from 'axios';
 import { GET } from '../constants/httpMethods';
-import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
+import type { ExtendedAxiosRequestConfig } from '../types/axiosClient';
 
 export class ApiClient {
   protected static instance: AxiosInstance;

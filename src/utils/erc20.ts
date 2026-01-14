@@ -1,11 +1,13 @@
-import { Signer } from 'ethers';
-import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
+import type { Signer } from 'ethers';
+import type { MulticallParameters, WalletClient } from 'viem';
+import { encodeFunctionData, maxUint256 } from 'viem';
+
 import { erc20Abi } from '../artifacts';
 import { ApprovalModes } from '../constants/approval';
 import { ERC20_FUNCTIONS } from '../constants/erc20';
 import { StatusCodes, TxnStatus } from '../enums';
-import { ApprovalMode, HexString, TokenPermitData } from '../types';
+import type { ApprovalMode, HexString, TokenPermitData } from '../types';
+import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
 import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
 import { multicall } from './multicall';
 import { getPermit2Address } from './permit2';

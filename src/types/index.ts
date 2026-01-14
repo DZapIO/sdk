@@ -1,12 +1,13 @@
-import { Signer } from 'ethers';
-import { Prettify, TypedDataDomain, WalletClient } from 'viem';
-import { DZAP_ABIS, GASLESS_TX_TYPE, STANDARD_ABIS, QUOTE_FILTERS, Services } from './../constants';
-import { ApprovalModes } from '../constants/approval';
-import { PermitTypes } from '../constants/permit';
-import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
-import { PsbtInput, PsbtOutput } from './btc';
-import { GaslessBridgeParams, GaslessSwapParams } from './permit';
-import { TX_STATUS, STATUS_RESPONSE } from '../constants/status';
+import type { Signer } from 'ethers';
+import type { Prettify, TypedDataDomain, WalletClient } from 'viem';
+
+import type { ApprovalModes } from '../constants/approval';
+import type { PermitTypes } from '../constants/permit';
+import type { STATUS_RESPONSE, TX_STATUS } from '../constants/status';
+import type { DZAP_ABIS, GASLESS_TX_TYPE, QUOTE_FILTERS, Services, STANDARD_ABIS } from './../constants';
+import type { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
+import type { PsbtInput, PsbtOutput } from './btc';
+import type { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
 export type HexString = `0x${string}`;
 

@@ -1,19 +1,15 @@
 export { dZapCoreAbi, dZapCoreV2Abi } from './core';
-
 export {
-  singleSwapAbi,
-  multiSwapAbi,
   batchPermitSwapAbi,
-  gaslessExecuteSwapAbi,
   gaslessExecuteMultiSwapAbi,
   gaslessExecuteMultiSwapWithWitnessAbi,
+  gaslessExecuteSwapAbi,
+  multiSwapAbi,
+  singleSwapAbi,
   SwapAbisByFunctionName,
 } from './core/swap';
-
-export { erc20Abi, erc20PermitAbi } from './tokens';
-
-export { permit2Abi, permit2FullAbi, permit2ProxyAbi } from './permit';
-
-export * as tokens from './tokens';
-export * as protocols from './permit';
 export * as dca from './dca';
+export { permit2Abi, permit2FullAbi, permit2ProxyAbi } from './permit';
+export * as protocols from './permit';
+export { erc20Abi, erc20PermitAbi } from './tokens';
+export * as tokens from './tokens';

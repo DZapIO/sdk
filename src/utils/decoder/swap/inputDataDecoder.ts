@@ -1,6 +1,7 @@
 import { decodeFunctionData } from 'viem/utils';
+
 import { SwapAbisByFunctionName } from '../../../artifacts';
-import { HexString, SwapInfo } from '../../../types';
+import type { HexString, SwapInfo } from '../../../types';
 import { formatToken } from '../../tokens';
 
 export class SwapInputDataDecoder {
@@ -133,7 +134,7 @@ export class SwapInputDataDecoder {
           fromAmount: inputAmount,
         };
       }
-    } catch (error) {
+    } catch {
       return eventSwapInfo;
     }
   };

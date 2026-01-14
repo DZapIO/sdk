@@ -1,8 +1,9 @@
-import { GET } from '../../../../constants/httpMethods';
-import { ChainData } from '../../../../types';
 import { ApiClient } from '../../../../api/base';
+import { GET } from '../../../../constants/httpMethods';
+import type { ChainData } from '../../../../types';
 import { isNativeCurrency } from '../../../../utils/tokens';
-import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
+import type { IPriceProvider } from '../../types/IPriceProvider';
+import { priceProviders } from '../../types/IPriceProvider';
 import { coingeckoConfig } from './config';
 
 export class CoingeckoPriceProvider implements IPriceProvider {
@@ -58,7 +59,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
       }
 
       return erc20Prices;
-    } catch (e) {
+    } catch {
       return {};
     }
   };

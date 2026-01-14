@@ -1,12 +1,12 @@
 import { Services } from '../constants';
-import { DEFAULT_PERMIT2_DATA, DEFAULT_PERMIT_DATA, PermitTypes } from '../constants/permit';
+import { DEFAULT_PERMIT_DATA, DEFAULT_PERMIT2_DATA, PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
-import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
-import { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
+import type { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../types';
+import type { BatchPermitResponse, GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../utils';
-import { signGaslessDzapUserIntent } from '../utils/signIntent/gasless';
 import { checkEIP2612PermitSupport, getEIP2612PermitSignature } from '../utils/eip-2612/eip2612Permit';
 import { getPermit2Signature } from '../utils/permit2';
+import { signGaslessDzapUserIntent } from '../utils/signIntent/gasless';
 
 type BasePermitDataParams = {
   oneToMany: boolean;

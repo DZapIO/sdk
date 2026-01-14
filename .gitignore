@@ -19,3 +19,5 @@ public/**/*.js
 jest.results.json
 *.#*
 bun.lockb
+docs/
+.eslintcache
