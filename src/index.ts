@@ -1,5 +1,16 @@
+import { viemChainsList } from './chains';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
+import { ApprovalsService } from './service/approvals';
+import { ChainsService } from './service/chains';
+import { ContractsService } from './service/contracts';
+import { SwapDecoder } from './service/decoder';
+import { Permit2 } from './service/permit2';
+import { SignatureService } from './service/signature';
+import { TokenService } from './service/token';
+import { TradeService } from './service/trade';
+import { TransactionsService } from './service/transactions';
+import { ZapService } from './service/zap';
 import {
   ApiRpcResponse,
   ApprovalMode,
@@ -41,22 +52,11 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { getTokensPairKey, formatToken } from './utils';
-import { SwapDecoder } from './service/decoder';
-import { TokenService } from './service/token';
-import { Permit2 } from './service/permit2';
-import { SignatureService } from './service/signature';
+import { formatToken, getTokensPairKey } from './utils';
 import { checkEIP2612PermitSupport } from './utils/eip2612Permit';
-import { viemChainsList } from './chains';
-import { ChainsService } from './service/chains';
-import { TradeService } from './service/trade';
-import { ZapService } from './service/zap';
-import { ApprovalsService } from './service/approvals';
-import { TransactionsService } from './service/transactions';
-import { ContractsService } from './service/contracts';
 
-export * from './types/zap';
 export * from './constants';
+export * from './types/zap';
 
 export {
   ApiRpcResponse,
@@ -82,8 +82,8 @@ export {
   getTokensPairKey,
   HexString,
   ParamQuotes,
-  PermitMode,
   Permit2,
+  PermitMode,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,
@@ -94,8 +94,8 @@ export {
   SinglePermitCallbackParams,
   StatusCodes,
   SvmTxData,
-  SwapInfo,
   SwapDecoder,
+  SwapInfo,
   Token,
   TokenInfo,
   TokenPermitData,

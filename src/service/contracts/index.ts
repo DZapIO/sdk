@@ -1,13 +1,14 @@
 import * as ABI from '../../artifacts';
 import { Services, STANDARD_ABIS } from '../../constants';
 import { ContractVersion } from '../../enums';
-import type { AvailableDZapServices, ChainData, StandardAbis } from '../../types';
+import type { AvailableDZapServices, StandardAbis } from '../../types';
+import type { ChainsService } from '../chains';
 
 /**
  * ContractsService handles ABI and contract address operations for DZap protocol.
  */
 export class ContractsService {
-  constructor(private getChainConfig: () => Promise<ChainData>) {}
+  constructor(private chainsService: ChainsService) {}
 
   /**
    * Retrieves the deployed contract address for a specific DZap service on a given blockchain.
@@ -33,7 +34,7 @@ export class ContractsService {
    * ```
    */
   public async getAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
-    const chainConfig = await this.getChainConfig();
+    const chainConfig = await this.chainsService.getConfig();
     if (!chainConfig[chainId]?.isEnabled || !chainConfig) {
       throw new Error('Chains config not found');
     }

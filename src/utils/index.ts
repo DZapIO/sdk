@@ -9,7 +9,6 @@ export {
   updatePath,
 } from './amount';
 export { extendViemChain, isNonEVMChain } from './chain';
-export { getPublicClient } from './client';
 export { generateDeadline } from './date';
 export { checkEIP2612PermitSupport } from './eip2612Permit';
 export {

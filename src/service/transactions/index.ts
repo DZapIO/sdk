@@ -1,12 +1,14 @@
-import { Signer } from 'ethers';
-import { type Client, WalletClient } from 'viem';
+import type { Signer } from 'ethers';
+import type { WalletClient } from 'viem';
+import { type Client } from 'viem';
 import { sendCalls, waitForCallsStatus } from 'viem/actions';
 import { getAction } from 'viem/utils';
-import { StatusCodes, TxnStatus } from '../../enums';
-import { BatchCallParams, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
-import { WalletCallReceipt } from '../../types/wallet';
-import { isTypeSigner } from '../../utils';
+
 import { viemChainsById } from '../../chains';
+import { StatusCodes, TxnStatus } from '../../enums';
+import type { BatchCallParams, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
+import type { WalletCallReceipt } from '../../types/wallet';
+import { isTypeSigner } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 

@@ -1,18 +1,19 @@
 import { ethers } from 'ethers';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
+
 import { GASLESS_TX_TYPE, Services } from '../../constants';
 import {
-  DEFAULT_PERMIT2_DATA,
   DEFAULT_PERMIT_DATA,
+  DEFAULT_PERMIT2_DATA,
   DZapIntentPrimaryTypes,
   EIP2612_GASLESS_DOMAIN,
   PermitTypes,
   SIGNATURE_EXPIRY_IN_SECS,
 } from '../../constants/permit';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../../types';
+import type { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes, EIP2612DefaultTypes } from '../../types/eip-2612';
-import {
+import type {
   BasePermitResponse,
   BatchPermitResponse,
   CustomTypedDataParams,
@@ -26,12 +27,12 @@ import {
   TokenWithPermitData,
 } from '../../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
-import { getPublicClient } from '../../utils/client';
 import { generateDeadline } from '../../utils/date';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
+import { ChainsService } from '../chains';
 import { ContractsService } from '../contracts';
 import { Permit2 } from '../permit2';
 
@@ -137,7 +138,7 @@ export class SignatureService {
       const contract = getContract({
         abi: ContractsService.getDZapAbi('trade', params.contractVersion),
         address: spender,
-        client: getPublicClient({ chainId, rpcUrls }),
+        client: ChainsService.getPublicClient(chainId, rpcUrls),
       });
 
       const nonce = (await contract.read.getNonce([account])) as bigint;
