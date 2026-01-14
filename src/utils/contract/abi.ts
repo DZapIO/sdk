@@ -1,7 +1,7 @@
 import * as ABI from '../../artifacts';
-import { AvailableDZapServices, OtherAvailableAbis } from '../../types';
-import { DZAP_ABIS, STANDARD_ABIS, Services } from '../../constants';
+import { DZAP_ABIS, Services,STANDARD_ABIS } from '../../constants';
 import { ContractVersion } from '../../enums';
+import type { AvailableDZapServices, OtherAvailableAbis } from '../../types';
 
 /**
  * Gets the appropriate DZap contract ABI based on service and version
@@ -22,7 +22,7 @@ export const getDZapAbi = (service: AvailableDZapServices, version: ContractVers
           throw new Error('Invalid Version for Trade');
       }
     case Services.dca:
-      return ABI[DZAP_ABIS.dZapDcaAbi];
+      return ABI.dca.dZapDcaAbi;
     case Services.zap:
     default:
       throw new Error('Invalid Service');

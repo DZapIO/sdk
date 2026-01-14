@@ -1,14 +1,15 @@
 import { ethers } from 'ethers';
 import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
-import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
+
+import { erc20PermitAbi } from '../../artifacts';
 import { config } from '../../config';
 import { Services } from '../../constants';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { DEFAULT_PERMIT_VERSION, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { HexString, TokenPermitData } from '../../types';
+import type { HexString, TokenPermitData } from '../../types';
 import { EIP2612DefaultTypes } from '../../types/eip-2612';
-import { DefaultPermit2612Params } from '../../types/permit';
+import type { DefaultPermit2612Params } from '../../types/permit';
 import { generateDeadline } from '../date';
 import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';

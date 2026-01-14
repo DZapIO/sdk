@@ -1,6 +1,16 @@
-import { Abi } from 'viem';
+import type { Abi } from 'viem';
 
-export const abi: Abi = [
+/**
+ * DZap Core Contract ABI (Version 1)
+ *
+ * Main contract for DZap protocol operations including:
+ * - Token swaps
+ * - Cross-chain bridges
+ * - Liquidity operations
+ *
+ * @version 1.0
+ */
+export const dZapCoreAbi: Abi = [
   {
     type: 'error',
     name: 'CalldataEmptyButInitNotZero',

@@ -1,13 +1,14 @@
 import { decodeFunctionData } from 'viem/utils';
-import { SwapAbisByFunctionName } from './abis';
-import { HexString, SwapInfo } from '../../../types';
+
+import { SwapAbisByFunctionName } from '../../../artifacts';
+import type { HexString, SwapInfo } from '../../../types';
 import { formatToken } from '../../tokens';
 
 export class SwapInputDataDecoder {
   private decodeSingleSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
     const decodedData = decodeFunctionData({
       data,
-      abi: SwapAbisByFunctionName.SingleSwap,
+      abi: SwapAbisByFunctionName.SingleSwapAbi,
     });
     return [decodedData?.args?.[4]];
   };
@@ -133,7 +134,7 @@ export class SwapInputDataDecoder {
           fromAmount: inputAmount,
         };
       }
-    } catch (error) {
+    } catch {
       return eventSwapInfo;
     }
   };

@@ -1,6 +1,10 @@
+import type { Address } from 'viem';
+
+import { permit2Abi } from '../../artifacts';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { Permit2PrimaryTypes } from '../../constants/permit';
-import {
+import type { HexString } from '../../types';
+import type {
   BasePermitParams,
   Permit2PrimaryType,
   PermitBatchTransferFromValues,
@@ -8,11 +12,8 @@ import {
   PermitTransferFromValues,
   TokenWithIndex,
 } from '../../types/permit';
-import type { Address } from 'viem';
-import { abi as Permit2Abi } from '../../artifacts/Permit2';
 import { getPublicClient } from '../index';
 import { getNextPermit2Nonce } from './nonce';
-import { HexString } from '../../types';
 
 type Permit2ValuesParams = {
   deadline: bigint;
@@ -45,7 +46,7 @@ export const getPermitSingleValues = async ({
   const publicClient = getPublicClient({ chainId, rpcUrls });
   const nonceResult = await publicClient.readContract({
     address: permit2Address,
-    abi: Permit2Abi,
+    abi: permit2Abi,
     functionName: ERC20_FUNCTIONS.allowance,
     args: [account, token.address, spender],
   });
