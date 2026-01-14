@@ -1,5 +1,4 @@
 export * from './api/axios';
-export * from './api/endpoints';
 export * from './abi';
 export * from './approval';
 export * from './permit2';

@@ -1,4 +1,5 @@
 import DZapClient from './dZapClient';
+import { ConfigValidationError, DZapConfigOptions } from './config';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
   ApiRpcResponse,
@@ -58,9 +59,11 @@ export {
   Chain,
   ChainData,
   checkEIP2612PermitSupport,
+  ConfigValidationError,
   contractErrorActions,
   ContractErrorResponse,
   DZapClient,
+  DZapConfigOptions,
   DZapPermitMode,
   DZapTransactionResponse,
   EvmTxData,
