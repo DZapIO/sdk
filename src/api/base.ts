@@ -3,7 +3,7 @@ import { AxiosInstance, CancelToken, Method } from 'axios';
 import { GET } from '../constants/httpMethods';
 import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
 
-export class BaseApiClient {
+export class ApiClient {
   protected static instance: AxiosInstance;
   protected static baseUrl: string = '';
 

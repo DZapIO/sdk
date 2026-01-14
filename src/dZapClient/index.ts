@@ -22,7 +22,7 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
-import { Config, DZapConfigOptions } from '../config';
+import { config, DZapConfigOptions } from '../config';
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
@@ -111,7 +111,9 @@ class DZapClient {
    * ```
    */
   public static getInstance(configOptions: DZapConfigOptions = {}): DZapClient {
-    Config.getInstance(configOptions);
+    if (configOptions && Object.keys(configOptions).length > 0) {
+      config.updateConfig(configOptions);
+    }
 
     if (!DZapClient.instance) {
       DZapClient.instance = new DZapClient();
@@ -555,7 +557,7 @@ class DZapClient {
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
       request,
       signer,
-      rpcUrls: Config.getInstance().getRpcUrlsByChainId(request.fromChain),
+      rpcUrls: config.getRpcUrlsByChainId(request.fromChain),
       spender,
       txnData,
     });
@@ -639,7 +641,7 @@ class DZapClient {
   public async decodeTxnData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
     const publicClient = getPublicClient({
       chainId,
-      rpcUrls: Config.getInstance().getRpcUrlsByChainId(chainId),
+      rpcUrls: config.getRpcUrlsByChainId(chainId),
     });
     const [chainConfig, transactionData] = await Promise.all([
       DZapClient.getChainConfig(),
@@ -779,7 +781,7 @@ class DZapClient {
       chainId,
       sender,
       tokens,
-      rpcUrls: rpcUrls || Config.getInstance().getRpcUrlsByChainId(chainId),
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       mode,
       spender: spenderAddress,
       multicallAddress,
@@ -849,7 +851,7 @@ class DZapClient {
     return await approveToken({
       chainId,
       signer,
-      rpcUrls: rpcUrls || Config.getInstance().getRpcUrlsByChainId(chainId),
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
       tokens,
       approvalTxnCallback,
       mode,
@@ -909,7 +911,7 @@ class DZapClient {
 
     const request = {
       ...params,
-      rpcUrls: params?.rpcUrls || Config.getInstance().getRpcUrlsByChainId(chainId),
+      rpcUrls: params?.rpcUrls || config.getRpcUrlsByChainId(chainId),
       permitType,
       spender: spenderAddress,
       gasless: false,

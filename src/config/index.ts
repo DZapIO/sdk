@@ -28,53 +28,49 @@ const DEFAULT_CONFIG = {
   eip2612DisabledChains: [747474], // Katana chain
   tradeApi: {
     url: 'https://api.dzap.io',
-    version: 'v1/',
+    version: 'v1',
   },
   zapApi: {
     url: 'https://zap.dzap.io',
-    version: 'v1/',
+    version: 'v1',
   },
-} as const;
+};
 
-export class Config {
-  private static instance: Config | null = null;
+class Config {
+  private _apiKey: string | null = DEFAULT_CONFIG.apiKey;
+  private _rpcUrlsByChainId: Record<number, string[]> = DEFAULT_CONFIG.rpcUrlsByChainId;
+  private _eip2612DisabledChains: number[] = DEFAULT_CONFIG.eip2612DisabledChains;
+  private _tradeApi: ApiConfig = DEFAULT_CONFIG.tradeApi;
+  private _zapApi: ApiConfig = DEFAULT_CONFIG.zapApi;
 
-  private _apiKey: string | null;
-  private _rpcUrlsByChainId: Record<number, string[]>;
-  private _eip2612DisabledChains: number[];
-  private _tradeApi: ApiConfig;
-  private _zapApi: ApiConfig;
-
-  private constructor(options: DZapConfigOptions = {}) {
-    this._apiKey = options.apiKey !== undefined ? options.apiKey : DEFAULT_CONFIG.apiKey;
-    this._rpcUrlsByChainId = options.rpcUrlsByChainId
-      ? Object.fromEntries(Object.entries(options.rpcUrlsByChainId).map(([chainId, urls]) => [chainId, [...urls]]))
-      : {};
-    this._eip2612DisabledChains = [...DEFAULT_CONFIG.eip2612DisabledChains];
-    this._tradeApi = {
-      url: options.tradeApi?.url || DEFAULT_CONFIG.tradeApi.url,
-      version: options.tradeApi?.version || DEFAULT_CONFIG.tradeApi.version,
-    };
-    this._zapApi = {
-      url: options.zapApi?.url || DEFAULT_CONFIG.zapApi.url,
-      version: options.zapApi?.version || DEFAULT_CONFIG.zapApi.version,
-    };
-
-    this.validate();
+  public constructor(options: DZapConfigOptions = {}) {
+    const hasOptions = options && Object.keys(options).length > 0;
+    if (hasOptions) {
+      this.updateConfig(options);
+    }
   }
 
-  /**
-   * Get or initialize the singleton instance
-   *
-   * @param options - Optional configuration options
-   * @returns The Config singleton instance
-   */
-  public static getInstance(options?: DZapConfigOptions): Config {
-    const hasOptions = options && Object.keys(options).length > 0;
-    if (!Config.instance || hasOptions) {
-      Config.instance = new Config(options || {});
+  public updateConfig(options: DZapConfigOptions) {
+    if (options.apiKey) {
+      this._apiKey = options.apiKey;
     }
-    return Config.instance;
+    if (options.rpcUrlsByChainId) {
+      this._rpcUrlsByChainId = Object.fromEntries(Object.entries(options.rpcUrlsByChainId).map(([chainId, urls]) => [chainId, [...urls]]));
+    }
+    if (options.tradeApi) {
+      this._tradeApi = {
+        url: options.tradeApi.url ?? DEFAULT_CONFIG.tradeApi.url,
+        version: options.tradeApi.version ?? DEFAULT_CONFIG.tradeApi.version,
+      };
+    }
+    if (options.zapApi) {
+      this._zapApi = {
+        url: options.zapApi.url ?? DEFAULT_CONFIG.zapApi.url,
+        version: options.zapApi.version ?? DEFAULT_CONFIG.zapApi.version,
+      };
+    }
+
+    this.validate();
   }
 
   private validateRpcUrls(chainId: number, urls: string[]): void {
@@ -165,3 +161,5 @@ export class Config {
     this._rpcUrlsByChainId[chainId] = [...urls];
   }
 }
+
+export const config = new Config();

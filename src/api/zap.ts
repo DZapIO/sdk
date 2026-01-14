@@ -1,29 +1,40 @@
 import { AxiosInstance, CancelToken } from 'axios';
-import { BaseApiClient } from './base';
-import { Config } from '../config';
+import { ApiClient } from './base';
+import { config } from '../config';
 import { GET, POST } from '../constants/httpMethods';
-import { ZAP_ENDPOINTS } from '../constants/api/endpoints';
 import { BroadcastTxParams } from '../types';
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
 import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
-export class ZapApiClient extends BaseApiClient {
+export class ZapApiClient extends ApiClient {
   private static zapInstance: AxiosInstance;
 
+  private static readonly endpoints = {
+    status: 'status',
+    config: {
+      chains: 'config/chains',
+      providers: 'config/providers',
+    },
+    pools: 'pools',
+    poolDetails: 'pool/details',
+    positions: 'user/positions',
+    buildTx: 'buildTx',
+    quote: 'quote',
+    broadcast: 'broadcast',
+  } as const;
+
   private static getBaseUrl(): string {
-    const config = Config.getInstance();
     return `${config.zapApi.url}/${config.zapApi.version}`;
   }
 
   public static getInstance(): AxiosInstance {
-    if (!ZapApiClient.zapInstance) {
-      ZapApiClient.zapInstance = this.getAxiosInstance(ZapApiClient.getBaseUrl());
+    if (!this.zapInstance) {
+      this.zapInstance = this.getAxiosInstance(this.getBaseUrl());
     }
-    return ZapApiClient.zapInstance;
+    return this.zapInstance;
   }
 
   protected static getHeaders(): Record<string, string> {
-    const config = Config.getInstance();
     return {
       'Content-Type': 'application/json',
       ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
@@ -31,16 +42,16 @@ export class ZapApiClient extends BaseApiClient {
   }
 
   public static broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastZapTxResponse> {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.broadcast,
+    return this.invoke({
+      endpoint: this.endpoints.broadcast,
       data: request,
       method: POST,
     });
   }
 
   public static fetchZapBuildTxnData(request: ZapBuildTxnRequest, cancelToken?: CancelToken) {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.buildTx,
+    return this.invoke({
+      endpoint: this.endpoints.buildTx,
       data: request,
       method: POST,
       cancelToken,
@@ -48,8 +59,8 @@ export class ZapApiClient extends BaseApiClient {
   }
 
   public static fetchZapQuote(request: ZapQuoteRequest, cancelToken?: CancelToken) {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.quote,
+    return this.invoke({
+      endpoint: this.endpoints.quote,
       data: request,
       method: POST,
       cancelToken,
@@ -57,47 +68,47 @@ export class ZapApiClient extends BaseApiClient {
   }
 
   public static fetchZapTxnStatus(request: ZapStatusRequest) {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.status,
+    return this.invoke({
+      endpoint: this.endpoints.status,
       data: request,
       method: GET,
     });
   }
 
   public static fetchZapPositions(request: ZapPositionsRequest) {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.positions,
+    return this.invoke({
+      endpoint: this.endpoints.positions,
       data: request,
       method: GET,
     });
   }
 
   public static fetchZapPools(request: ZapPoolsRequest) {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.pools,
+    return this.invoke({
+      endpoint: this.endpoints.pools,
       data: request,
       method: GET,
     });
   }
 
   public static fetchZapPoolDetails(request: ZapPoolDetailsRequest) {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.poolDetails,
+    return this.invoke({
+      endpoint: this.endpoints.poolDetails,
       data: request,
       method: GET,
     });
   }
 
   public static fetchZapChains() {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.config.chains,
+    return this.invoke({
+      endpoint: this.endpoints.config.chains,
       method: GET,
     });
   }
 
   public static fetchZapProviders() {
-    return ZapApiClient.invoke({
-      endpoint: ZAP_ENDPOINTS.config.providers,
+    return this.invoke({
+      endpoint: this.endpoints.config.providers,
       method: GET,
     });
   }

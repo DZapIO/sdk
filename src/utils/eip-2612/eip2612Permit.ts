@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
 import { erc20PermitAbi } from '../../artifacts';
-import { Config } from '../../config';
+import { config } from '../../config';
 import { Services } from '../../constants';
 import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { DEFAULT_PERMIT_VERSION, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
@@ -36,7 +36,7 @@ export const checkEIP2612PermitSupport = async ({
     nonce: bigint;
   };
 }> => {
-  if (permit?.eip2612?.supported === false || Config.getInstance().eip2612DisabledChains.includes(chainId)) {
+  if (permit?.eip2612?.supported === false || config.eip2612DisabledChains.includes(chainId)) {
     return { supportsPermit: false };
   }
   const contracts = [

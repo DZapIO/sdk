@@ -1,8 +1,7 @@
 import { AxiosInstance } from 'axios';
-import { BaseApiClient } from './base';
-import { Config } from '../config';
+import { ApiClient } from './base';
+import { config } from '../config';
 import { GET, POST } from '../constants/httpMethods';
-import { TRADE_ENDPOINTS } from '../constants/api/endpoints';
 import {
   BroadcastTxParams,
   BroadcastTxResponse,
@@ -12,23 +11,49 @@ import {
   TradeQuotesRequest,
 } from '../types';
 
-export class TradeApiClient extends BaseApiClient {
+export class TradeApiClient extends ApiClient {
   private static tradeInstance: AxiosInstance;
 
+  private static readonly endpoints = {
+    swap: {
+      quote: 'swap/quote',
+      buildTx: 'swap/buildTx',
+    },
+    bridge: {
+      quote: 'bridge/quote',
+      buildTx: 'bridge/buildTx',
+    },
+    quotes: 'quotes',
+    buildTx: 'buildTx',
+    gasless: {
+      executeTx: 'gasless/executeTx',
+    },
+    broadcast: 'broadcast',
+    chains: 'chains',
+    token: {
+      tokens: 'token/tokens',
+      details: 'token/details',
+      price: 'token/price',
+      balanceOf: 'token/balance-of',
+    },
+    status: 'status',
+    user: {
+      calculatePoints: 'user/calculatePoints',
+    },
+  } as const;
+
   private static getBaseUrl(): string {
-    const config = Config.getInstance();
     return `${config.tradeApi.url}/${config.tradeApi.version}`;
   }
 
   public static getInstance(): AxiosInstance {
-    if (!TradeApiClient.tradeInstance) {
-      TradeApiClient.tradeInstance = this.getAxiosInstance(TradeApiClient.getBaseUrl());
+    if (!this.tradeInstance) {
+      this.tradeInstance = this.getAxiosInstance(this.getBaseUrl());
     }
-    return TradeApiClient.tradeInstance;
+    return this.tradeInstance;
   }
 
   protected static getHeaders(): Record<string, string> {
-    const config = Config.getInstance();
     return {
       'Content-Type': 'application/json',
       ...(config.apiKey ? { 'x-api-key': config.apiKey } : {}),
@@ -36,8 +61,8 @@ export class TradeApiClient extends BaseApiClient {
   }
 
   public static fetchTradeQuotes(request: TradeQuotesRequest) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.quotes,
+    return this.invoke({
+      endpoint: this.endpoints.quotes,
       data: request,
       method: POST,
       shouldRetry: true,
@@ -45,32 +70,32 @@ export class TradeApiClient extends BaseApiClient {
   }
 
   public static fetchTradeBuildTxnData(request: TradeBuildTxnRequest) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.buildTx,
+    return this.invoke({
+      endpoint: this.endpoints.buildTx,
       data: request,
       method: POST,
     });
   }
 
   public static executeGaslessTxnData(request: GaslessExecuteTxParams) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.gasless.executeTx,
+    return this.invoke({
+      endpoint: this.endpoints.gasless.executeTx,
       data: request,
       method: POST,
     });
   }
 
   public static broadcastTradeTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.broadcast,
+    return this.invoke({
+      endpoint: this.endpoints.broadcast,
       data: request,
       method: POST,
     });
   }
 
   public static fetchAllSupportedChains() {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.chains,
+    return this.invoke({
+      endpoint: this.endpoints.chains,
       data: {},
       method: GET,
       shouldRetry: true,
@@ -78,8 +103,8 @@ export class TradeApiClient extends BaseApiClient {
   }
 
   public static fetchAllTokens(chainId: number, source?: string, account?: string) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.token.tokens,
+    return this.invoke({
+      endpoint: this.endpoints.token.tokens,
       data: { chainId, source, account },
       method: GET,
       shouldRetry: true,
@@ -101,24 +126,24 @@ export class TradeApiClient extends BaseApiClient {
       includeBalance,
       includePrice,
     };
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.token.details,
+    return this.invoke({
+      endpoint: this.endpoints.token.details,
       data,
       method: GET,
     });
   }
 
   public static fetchTokenPrice(tokenAddresses: string[], chainId: number) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.token.price,
+    return this.invoke({
+      endpoint: this.endpoints.token.price,
       data: { tokenAddresses, chainId },
       method: GET,
     });
   }
 
   public static fetchStatus({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.status,
+    return this.invoke({
+      endpoint: this.endpoints.status,
       data: {
         txHash,
         txIds,
@@ -129,16 +154,16 @@ export class TradeApiClient extends BaseApiClient {
   }
 
   public static fetchCalculatedPoints(request: CalculatePointsRequest) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.user.calculatePoints,
+    return this.invoke({
+      endpoint: this.endpoints.user.calculatePoints,
       data: request,
       method: POST,
     });
   }
 
   public static fetchBalances(chainId: number, account: string) {
-    return TradeApiClient.invoke({
-      endpoint: TRADE_ENDPOINTS.token.balanceOf,
+    return this.invoke({
+      endpoint: this.endpoints.token.balanceOf,
       data: { chainId, account },
       method: GET,
     });
