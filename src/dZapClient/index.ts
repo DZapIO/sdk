@@ -23,6 +23,7 @@ import {
   fetchZapQuote,
   fetchZapTxnStatus,
 } from '../api';
+import type { DZapConfigOptions } from '../config';
 import { config } from '../config';
 import { Services } from '../constants';
 import { ApprovalModes } from '../constants/approval';
@@ -91,33 +92,35 @@ class DZapClient {
   }
 
   /**
-   * Returns the singleton instance of DZapClient with optional custom RPC configuration.
-   * This ensures only one instance of the client exists throughout the application lifecycle.
+   * Returns the singleton instance of DZapClient with the provided configuration.
    *
-   * @param rpcUrlsByChainId - Optional mapping of chain IDs to custom RPC URLs for blockchain interactions
-   * @returns The singleton DZapClient instance
+   * @param configOptions - Configuration options for the SDK
+   * @returns DZapClient instance
    *
    * @example
    * ```typescript
    * // Basic initialization
-   * const client = DZapClient.getInstance();
+   * const client = DZapClient.getInstance({
+   *   apiKey: 'your-api-key'
+   * });
    *
    * // With custom RPC URLs
    * const clientWithRpc = DZapClient.getInstance({
-   *   1: ['https://eth.llamarpc.com'],
-   *   42161: ['https://arbitrum.llamarpc.com']
+   *   apiKey: 'your-api-key',
+   *   rpcUrlsByChainId: {
+   *     1: ['https://eth.llamarpc.com'],
+   *     42161: ['https://arbitrum.llamarpc.com']
+   *   }
    * });
    * ```
    */
-  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(configOptions: DZapConfigOptions = {}): DZapClient {
+    if (configOptions && Object.keys(configOptions).length > 0) {
+      config.updateConfig(configOptions);
+    }
+
     if (!DZapClient.instance) {
       DZapClient.instance = new DZapClient();
-    }
-    if (apiKey) {
-      config.setApiKey(apiKey);
-    }
-    if (rpcUrlsByChainId) {
-      config.setRpcUrlsByChainId(rpcUrlsByChainId);
     }
     return DZapClient.instance;
   }
@@ -640,7 +643,10 @@ class DZapClient {
    * ```
    */
   public async decodeTxnData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
+    const publicClient = getPublicClient({
+      chainId,
+      rpcUrls: config.getRpcUrlsByChainId(chainId),
+    });
     const [chainConfig, transactionData] = await Promise.all([
       DZapClient.getChainConfig(),
       publicClient.getTransaction({

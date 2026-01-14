@@ -1,8 +1,9 @@
+import { ApiClient } from '../../../../api/base';
 import { GET } from '../../../../constants/httpMethods';
-import { ChainData } from '../../../../types';
-import { invoke } from '../../../../utils/axios';
+import type { ChainData } from '../../../../types';
 import { isNativeCurrency } from '../../../../utils/tokens';
-import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
+import type { IPriceProvider } from '../../types/IPriceProvider';
+import { priceProviders } from '../../types/IPriceProvider';
 import { coingeckoConfig } from './config';
 
 export class CoingeckoPriceProvider implements IPriceProvider {
@@ -13,7 +14,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
     if (!chainConfig || !chainConfig[chainId].isEnabled) return 0;
     const { coingecko } = chainConfig[chainId];
     if (!coingecko) return 0;
-    const response: Record<string, { usd: number }> = await invoke({
+    const response: Record<string, { usd: number }> = await ApiClient.invoke({
       endpoint: coingeckoConfig.urls.nativeTokenPrice(coingecko?.nativeTokenKey),
       method: GET,
     });
@@ -27,7 +28,9 @@ export class CoingeckoPriceProvider implements IPriceProvider {
     const { coingecko } = chainConfig[chainId];
     if (!coingecko) return {};
 
-    const requests = addresses.map((address) => invoke({ endpoint: coingeckoConfig.urls.ecr20TokenPrice(address, coingecko.chainKey), method: GET }));
+    const requests = addresses.map((address) =>
+      ApiClient.invoke({ endpoint: coingeckoConfig.urls.ecr20TokenPrice(address, coingecko.chainKey), method: GET }),
+    );
 
     const responses = await Promise.allSettled(requests);
 
@@ -56,7 +59,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
       }
 
       return erc20Prices;
-    } catch (e) {
+    } catch {
       return {};
     }
   };

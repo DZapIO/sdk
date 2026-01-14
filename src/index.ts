@@ -1,3 +1,5 @@
+import { viemChainsList } from './chains';
+import { ConfigValidationError, DZapConfigOptions } from './config';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
@@ -45,10 +47,9 @@ import { getTokensPairKey } from './utils';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { formatToken } from './utils/tokens';
-import { viemChainsList } from './chains';
 
-export * from './types/zap';
 export * from './constants';
+export * from './types/zap';
 
 export {
   ApiRpcResponse,
@@ -58,9 +59,11 @@ export {
   Chain,
   ChainData,
   checkEIP2612PermitSupport,
+  ConfigValidationError,
   contractErrorActions,
   ContractErrorResponse,
   DZapClient,
+  DZapConfigOptions,
   DZapPermitMode,
   DZapTransactionResponse,
   EvmTxData,
@@ -98,7 +101,7 @@ export {
   TradeStatusResponse,
   TradeStep,
   TxnStatus,
+  viemChainsList,
   ZapIntegratorConfig,
   ZapStatusResponse,
-  viemChainsList,
 };
