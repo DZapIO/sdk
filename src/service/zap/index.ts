@@ -34,10 +34,9 @@ import { TransactionsService } from '../transactions';
  * ZapService handles all zap-related operations including quotes, transaction building, execution, and pool management.
  */
 export class ZapService {
-  constructor(
-    private getCancelTokenSource: () => CancelTokenSource | null,
-    private setCancelTokenSource: (source: CancelTokenSource | null) => void,
-  ) {}
+  private cancelTokenSource: CancelTokenSource | null = null;
+
+  constructor() {}
 
   /**
    * Fetches pricing and routing information for zap operations without building full transactions.
@@ -65,13 +64,11 @@ export class ZapService {
    * ```
    */
   public async getQuote(request: ZapQuoteRequest): Promise<ZapQuoteResponse> {
-    const cancelTokenSource = this.getCancelTokenSource();
-    if (cancelTokenSource) {
-      cancelTokenSource.cancel('Cancelled due to new request');
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
     }
-    const newCancelTokenSource = Axios.CancelToken.source();
-    this.setCancelTokenSource(newCancelTokenSource);
-    const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, newCancelTokenSource.token)).data;
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, this.cancelTokenSource.token)).data;
     return route;
   }
 
@@ -101,13 +98,11 @@ export class ZapService {
    * ```
    */
   public async buildTxn(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse> {
-    const cancelTokenSource = this.getCancelTokenSource();
-    if (cancelTokenSource) {
-      cancelTokenSource.cancel('Cancelled due to new request');
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
     }
-    const newCancelTokenSource = Axios.CancelToken.source();
-    this.setCancelTokenSource(newCancelTokenSource);
-    const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, newCancelTokenSource.token)).data;
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
     return route;
   }
 

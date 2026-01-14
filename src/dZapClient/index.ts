@@ -1,9 +1,6 @@
-import type { CancelTokenSource } from 'axios';
-
 import { TradeApiClient } from '../api';
 import type { DZapConfigOptions } from '../config';
 import { config } from '../config';
-import { Services } from '../constants';
 import { ApprovalsService } from '../service/approvals';
 import { ChainsService } from '../service/chains';
 import { ContractsService } from '../service/contracts';
@@ -12,11 +9,10 @@ import { TokenService } from '../service/token';
 import { TradeService } from '../service/trade';
 import { TransactionsService } from '../service/transactions';
 import { ZapService } from '../service/zap';
-import type { AvailableDZapServices, Chain, ChainData } from '../types';
+import type { Chain, ChainData } from '../types';
 
 class DZapClient {
   private static instance: DZapClient;
-  private cancelTokenSource: CancelTokenSource | null = null;
   private static chainConfig: ChainData | null = null;
   private priceService: PriceService;
 
@@ -33,24 +29,19 @@ class DZapClient {
 
     // Initialize service modules
     this.chains = new ChainsService();
+    this.contracts = new ContractsService(() => DZapClient.getChainConfig());
     this.trade = new TradeService(
       this.priceService,
       () => DZapClient.getChainConfig(),
-      (params) => this.getDZapContractAddress(params),
+      (params) => this.contracts.getAddress(params),
     );
     this.tokens = new TokenService(this.priceService, () => DZapClient.getChainConfig());
-    this.zap = new ZapService(
-      () => this.cancelTokenSource,
-      (source) => {
-        this.cancelTokenSource = source;
-      },
-    );
+    this.zap = new ZapService();
     this.approvals = new ApprovalsService(
       () => DZapClient.getChainConfig(),
-      (params) => this.getDZapContractAddress(params),
+      (params) => this.contracts.getAddress(params),
     );
     this.transactions = new TransactionsService();
-    this.contracts = new ContractsService(() => DZapClient.getChainConfig());
   }
 
   /**
@@ -103,36 +94,6 @@ class DZapClient {
       DZapClient.chainConfig = chains;
     }
     return DZapClient.chainConfig;
-  }
-
-  /**
-   * Internal method to get DZap contract address for a service
-   * @internal
-   */
-  private async getDZapContractAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
-    const chainConfig = await DZapClient.getChainConfig();
-    if (!chainConfig[chainId]?.isEnabled || !chainConfig) {
-      throw new Error('Chains config not found');
-    }
-
-    const chainData = chainConfig[chainId];
-    if (!chainData?.contracts) {
-      throw new Error(`No contracts found for chain: ${chainId}`);
-    }
-
-    const contractMap: Record<string, string | undefined> = {
-      [Services.trade]: chainData.contracts.router,
-      [Services.dca]: chainData.contracts.dca,
-      [Services.zap]: chainData.contracts.zap,
-    };
-
-    const contractAddress = contractMap[service];
-
-    if (!contractAddress) {
-      throw new Error(`Contract not found for service "${service}" on chain: ${chainId}`);
-    }
-
-    return contractAddress;
   }
 }
 

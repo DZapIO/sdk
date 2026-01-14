@@ -1,7 +1,7 @@
-import { AvailableDZapServices, ChainData, StandardAbis } from '../../types';
-import { ContractVersion } from '../../enums';
 import * as ABI from '../../artifacts';
-import { STANDARD_ABIS, Services } from '../../constants';
+import { Services, STANDARD_ABIS } from '../../constants';
+import { ContractVersion } from '../../enums';
+import type { AvailableDZapServices, ChainData, StandardAbis } from '../../types';
 
 /**
  * ContractsService handles ABI and contract address operations for DZap protocol.
@@ -44,9 +44,9 @@ export class ContractsService {
     }
 
     const contractMap: Record<string, string | undefined> = {
-      trade: chainData.contracts.router,
-      dca: chainData.contracts.dca,
-      zap: chainData.contracts.zap,
+      [Services.trade]: chainData.contracts.router,
+      [Services.dca]: chainData.contracts.dca,
+      [Services.zap]: chainData.contracts.zap,
     };
 
     const contractAddress = contractMap[service];
