@@ -574,12 +574,14 @@ export class TradeService {
     rpcUrls,
     spender,
     txnData,
+    txnStatusCallback,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     rpcUrls: string[];
     spender: HexString;
     txnData?: GaslessTradeBuildTxnResponse;
+    txnStatusCallback?: (status: TxnStatus) => void;
   }): Promise<DZapTransactionResponse> {
     try {
       const chainId = request.fromChain;
@@ -619,6 +621,9 @@ export class TradeService {
       });
 
       if (resp.status === TxnStatus.success && resp.data) {
+        if (txnStatusCallback) {
+          txnStatusCallback(TxnStatus.waitingForExecution);
+        }
         const permit =
           resp.data.type === PermitTypes.EIP2612Permit
             ? {
