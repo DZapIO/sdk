@@ -21,6 +21,7 @@ import type {
 import { isDZapNativeToken } from '../../utils/address';
 import { getPublicClient } from '../../utils/client';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
+import { handleStandardError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { multicall } from '../../utils/multicall';
 import { isEthersSigner } from '../../utils/signer';
@@ -595,7 +596,6 @@ export class ApprovalsService {
           const hash = await signer.writeContract(request);
           txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
         } catch (e: unknown) {
-          const error = e as { code?: StatusCodes };
           logger.error('Token approval transaction failed', {
             service: 'ApprovalsService',
             method: 'approveToken',
@@ -603,11 +603,8 @@ export class ApprovalsService {
             tokenAddress: tokens[dataIdx].address,
             error: e,
           });
-          if (error?.code === StatusCodes.UserRejectedRequest) {
-            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
-          } else {
-            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
-          }
+          const errorResponse = handleStandardError(e);
+          txnDetails = { ...errorResponse, txnHash: '' };
         }
       }
       if (txnDetails.code !== StatusCodes.Success) {

@@ -66,7 +66,14 @@ export class CoingeckoPriceProvider implements IPriceProvider {
       }
 
       return erc20Prices;
-    } catch {
+    } catch (error) {
+      logger.debug('Failed to fetch prices from Coingecko', {
+        service: 'CoingeckoPriceProvider',
+        method: 'fetchPrices',
+        chainId,
+        tokenAddressesCount: tokenAddresses.length,
+        error,
+      });
       return {};
     }
   };

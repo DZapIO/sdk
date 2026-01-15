@@ -1,11 +1,9 @@
+import { DZapValidationError } from '../utils/errors';
 import { isValidUrl } from '../utils/url';
 
-export class ConfigValidationError extends Error {
-  constructor(
-    message: string,
-    public field: string,
-  ) {
-    super(message);
+export class ConfigValidationError extends DZapValidationError {
+  constructor(message: string, field: string) {
+    super(message, field);
     this.name = 'ConfigValidationError';
   }
 }
