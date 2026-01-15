@@ -1,11 +1,12 @@
-import { ChainData } from '../../types';
+import type { ChainData } from '../../types';
+import { logger } from '../../utils/logger';
 import { CacheProvider } from '../cache/cacheProvider';
 import { getTokensPriceCacheKey, TOKENS_PRICE_EXPIRY } from '../cache/constant';
 import { CoingeckoPriceProvider } from './provider/coingecko';
 import { DefiLlamaPriceProvider } from './provider/defiLlama';
 import { DZapPriceProvider } from './provider/dzap';
-import { IPriceProvider, PriceProvider, priceProviders } from './types/IPriceProvider';
-import { logger } from '../../utils/logger';
+import type { IPriceProvider, PriceProvider } from './types/IPriceProvider';
+import { priceProviders } from './types/IPriceProvider';
 
 export class PriceService {
   private providers: Map<PriceProvider, IPriceProvider>;

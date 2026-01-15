@@ -1,12 +1,14 @@
-import { Signer } from 'ethers';
-import { type Client, WalletClient } from 'viem';
+import type { Signer } from 'ethers';
+import type { WalletClient } from 'viem';
+import { type Client } from 'viem';
 import { sendCalls, waitForCallsStatus } from 'viem/actions';
 import { getAction } from 'viem/utils';
-import { StatusCodes, TxnStatus } from '../../enums';
-import { BatchCallParams, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
-import { WalletCallReceipt } from '../../types/wallet';
-import { isTypeSigner } from '../../utils';
+
 import { viemChainsById } from '../../chains';
+import { StatusCodes, TxnStatus } from '../../enums';
+import type { BatchCallParams, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
+import type { WalletCallReceipt } from '../../types/wallet';
+import { isEthersSigner } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 
@@ -45,26 +47,6 @@ export class TransactionsService {
       chainId,
       ...txnData,
     });
-  }
-
-  /**
-   * Waits for a batch transaction to be mined and returns the transaction receipt.
-   *
-   * @param params - Configuration object for transaction sending
-   * @param params.walletClient - The wallet client
-   * @param params.batchHash - The hash of the batch transaction
-   * @returns Promise resolving to the transaction execution result
-   *
-   * @example
-   * ```typescript
-   * const result = await client.transactions.waitForBatch({
-   *   walletClient: walletClient,
-   *   batchHash: '0x...',
-   * });
-   * ```
-   */
-  public async waitForBatchTransactionReceipt({ walletClient, batchHash }: { walletClient: WalletClient; batchHash: HexString }) {
-    return await TransactionsService.waitForBatchReceipt(walletClient, batchHash);
   }
 
   /**
@@ -113,7 +95,7 @@ export class TransactionsService {
     gasLimit?: string | bigint;
   }): Promise<DZapTransactionResponse> {
     try {
-      if (isTypeSigner(signer)) {
+      if (isEthersSigner(signer)) {
         const fromAddress = from || (await signer.getAddress());
         const txnRes = await signer.sendTransaction({
           from: fromAddress,
@@ -182,7 +164,7 @@ export class TransactionsService {
   /**
    * Wait for batch transaction receipt using EIP-5792
    */
-  public static async waitForBatchReceipt(client: Client, batchHash: HexString): Promise<WalletCallReceipt> {
+  public static async waitForBatchTransactionReceipt(client: Client, batchHash: HexString): Promise<WalletCallReceipt> {
     const { receipts, status, statusCode } = await getAction(
       client,
       waitForCallsStatus,

@@ -1,6 +1,6 @@
-import { HexString } from '..';
-import { ZapPath } from './path';
-import { ZapStep } from './step';
+import type { HexString } from '..';
+import type { ZapPath } from './path';
+import type { ZapStep } from './step';
 
 export type ZapRouteRequestPositionDetails = {
   nftId: string;

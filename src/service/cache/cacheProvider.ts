@@ -5,8 +5,9 @@ const isNode = typeof process !== 'undefined' && process.versions && process.ver
 let Cache: typeof NodeCache | null = null;
 if (isNode) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     Cache = require('node-cache');
-  } catch (error) {
+  } catch {
     // Fallback to in-memory cache if node-cache is not available
     Cache = null;
   }

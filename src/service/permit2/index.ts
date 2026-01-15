@@ -1,32 +1,31 @@
-import { TypedDataField } from 'ethers';
-import { Address, encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters, TypedDataDomain } from 'viem';
+import type { TypedDataField } from 'ethers';
+import type { Address, TypedDataDomain } from 'viem';
+import { encodeAbiParameters, maxUint48, maxUint256, parseAbiParameters } from 'viem';
+
 import * as ABI from '../../artifacts';
-import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { GASLESS_TX_TYPE } from '../../constants';
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
-import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
 import { Services } from '../../constants';
+import { ERC20_FUNCTIONS } from '../../constants/erc20';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { AvailableDZapServices, HexString } from '../../types';
-import {
+import type { AvailableDZapServices, HexString } from '../../types';
+import type {
   BasePermitParams,
   BasePermitResponse,
-  BatchPermitAbiParams,
-  bridgeGaslessWitnessType,
-  defaultWitnessType,
   Permit2Params,
   Permit2PrimaryType,
   PermitBatchTransferFromValues,
   PermitSingleValues,
   PermitTransferFromValues,
-  swapGaslessWitnessType,
   TokenWithIndex,
   WitnessData,
 } from '../../types/permit';
-import { getPublicClient } from '../../utils/client';
-import { getNextPermit2Nonce } from '../../utils/nonce';
-import { logger } from '../../utils/logger';
+import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from '../../types/permit';
 import { generateDeadline } from '../../utils';
+import { getPublicClient } from '../../utils/client';
+import { logger } from '../../utils/logger';
+import { getNextPermit2Nonce } from '../../utils/nonce';
 import { signTypedData } from '../../utils/signer';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';

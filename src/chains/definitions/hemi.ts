@@ -1,5 +1,6 @@
-import { extendViemChain } from '../../utils/chain';
 import { hemi as Hemi } from 'viem/chains';
+
+import { extendViemChain } from '../../utils/chain';
 
 export const hemi = extendViemChain(Hemi, {
   contracts: {

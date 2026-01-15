@@ -1,6 +1,6 @@
-import { ZapFee, ZapUnderlyingToken } from '.';
-import { HexString, ProviderDetails } from '..';
-import { ZAP_PATH_ACTIONS } from '../../constants';
+import type { ZAP_PATH_ACTIONS } from '../../constants';
+import type { HexString, ProviderDetails } from '..';
+import type { ZapFee, ZapUnderlyingToken } from '.';
 
 export type ZapPathAction = keyof typeof ZAP_PATH_ACTIONS;
 

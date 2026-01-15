@@ -1,18 +1,19 @@
 import { ethers } from 'ethers';
 import { encodeAbiParameters, getContract, maxUint256, parseAbiParameters } from 'viem';
+
 import { GASLESS_TX_TYPE, Services } from '../../constants';
 import {
-  DEFAULT_PERMIT2_DATA,
   DEFAULT_PERMIT_DATA,
+  DEFAULT_PERMIT2_DATA,
   DZapIntentPrimaryTypes,
   EIP2612_GASLESS_DOMAIN,
   PermitTypes,
   SIGNATURE_EXPIRY_IN_SECS,
 } from '../../constants/permit';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../../types';
+import type { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../../types';
 import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes, EIP2612DefaultTypes } from '../../types/eip-2612';
-import {
+import type {
   BasePermitResponse,
   BatchPermitResponse,
   CustomTypedDataParams,

@@ -21,8 +21,6 @@ export {
   isAxiosError,
 } from './errors';
 export { multicall } from './multicall';
-export { updateQuotes } from './quotes';
-export { isEthersSigner as isTypeSigner } from './signer';
+export { isEthersSigner } from './signer';
 export { getTokensPairKey } from './token';
 export { isValidUrl } from './url';
-export { generateUUID, getTrxId } from './uuid';

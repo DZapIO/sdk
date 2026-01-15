@@ -1,4 +1,4 @@
-import { Abi } from 'viem';
+import type { Abi } from 'viem';
 
 /**
  * DZap Core Contract ABI (Version 2)
