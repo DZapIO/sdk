@@ -47,12 +47,15 @@ class DZapClient {
   /**
    * Returns the singleton instance of DZapClient with the provided configuration.
    *
-   * @param configOptions - Configuration options for the SDK
+   * @param configOptions - Optional configuration options for the SDK
    * @returns DZapClient instance
    *
    * @example
    * ```typescript
-   * // Basic initialization
+   * // Initialize without configuration
+   * const client = DZapClient.getInstance();
+   *
+   * // Basic initialization with API key
    * const client = DZapClient.getInstance({
    *   apiKey: 'your-api-key'
    * });
@@ -67,7 +70,7 @@ class DZapClient {
    * });
    * ```
    */
-  public static getInstance(configOptions: DZapConfigOptions = {}): DZapClient {
+  public static getInstance(configOptions?: DZapConfigOptions): DZapClient {
     if (configOptions && Object.keys(configOptions).length > 0) {
       config.updateConfig(configOptions);
     }

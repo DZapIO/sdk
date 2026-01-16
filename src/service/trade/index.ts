@@ -200,10 +200,12 @@ export class TradeService {
     request,
     signer,
     txnData,
+    txnStatusCallback,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: GaslessTradeBuildTxnResponse;
+    txnStatusCallback: (status: TxnStatus) => void;
   }) {
     const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await this.buildGaslessTxAndSignPermit({
@@ -212,6 +214,7 @@ export class TradeService {
       rpcUrls: config.getRpcUrlsByChainId(request.fromChain),
       spender,
       txnData,
+      txnStatusCallback,
     });
   }
 
