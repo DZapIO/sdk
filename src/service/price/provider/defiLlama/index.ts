@@ -2,6 +2,7 @@ import { ApiClient } from '../../../../api/base';
 import { GET } from '../../../../constants/httpMethods';
 import type { ChainData } from '../../../../types';
 import { isNativeCurrency } from '../../../../utils';
+import { logger } from '../../../../utils/logger';
 import type { IPriceProvider } from '../../types/IPriceProvider';
 import { priceProviders } from '../../types/IPriceProvider';
 import { defiLlamaConfig } from './config';
@@ -52,7 +53,14 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
         method: GET,
       });
       return this.postProcess(chainId, tokenAddresses, chainConfig, response);
-    } catch {
+    } catch (error) {
+      logger.debug('Failed to fetch prices from DefiLlama', {
+        service: 'DefiLlamaPriceProvider',
+        method: 'fetchPrices',
+        chainId,
+        tokenAddresses: tokenAddresses,
+        error,
+      });
       return {};
     }
   };

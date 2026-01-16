@@ -30,7 +30,7 @@ import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../u
 import { getPublicClient } from '../../utils/client';
 import { generateDeadline } from '../../utils/date';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
-import { handleViemTransactionError } from '../../utils/errors';
+import { handleStandardError, handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
 import { ContractsService } from '../contracts';
@@ -311,16 +311,13 @@ export class SignatureService {
         permitData,
         nonce,
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error generating permit2 signature', {
         service: 'SignatureService',
         method: 'generatePermit2Signature',
         error,
       });
-      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return handleStandardError(error);
     }
   }
 
@@ -689,18 +686,14 @@ export class SignatureService {
         code: StatusCodes.Success,
         permitData,
       };
-    } catch (error: unknown) {
-      const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
+    } catch (error) {
       logger.error('Error generating permit signature', {
         service: 'SignatureService',
         method: 'getEIP2612PermitSignature',
         chainId: params.chainId,
         error,
       });
-      if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return handleStandardError(error);
     }
   }
 }

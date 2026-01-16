@@ -24,6 +24,7 @@ import type {
 import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from '../../types/permit';
 import { generateDeadline } from '../../utils';
 import { getPublicClient } from '../../utils/client';
+import { handleStandardError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { getNextPermit2Nonce } from '../../utils/nonce';
 import { signTypedData } from '../../utils/signer';
@@ -158,16 +159,13 @@ export class Permit2 {
         permitData,
         nonce,
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error generating permit2 signature', {
         service: 'Permit2Service',
         method: 'generateSignature',
         error,
       });
-      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return handleStandardError(error);
     }
   }
 
