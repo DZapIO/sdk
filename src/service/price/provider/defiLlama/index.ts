@@ -58,7 +58,7 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
         service: 'DefiLlamaPriceProvider',
         method: 'fetchPrices',
         chainId,
-        tokenAddressesCount: tokenAddresses.length,
+        tokenAddresses: tokenAddresses,
         error,
       });
       return {};

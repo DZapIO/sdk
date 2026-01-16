@@ -140,7 +140,7 @@ export class SwapDecoder {
         };
       }
     } catch (error) {
-      logger.error('Failed to update swap info', {
+      logger.error('Failed to decode swap info', {
         service: 'SwapDecoder',
         method: 'updateSwapInfo',
         error,

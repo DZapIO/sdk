@@ -71,7 +71,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
         service: 'CoingeckoPriceProvider',
         method: 'fetchPrices',
         chainId,
-        tokenAddressesCount: tokenAddresses.length,
+        tokenAddresses: tokenAddresses,
         error,
       });
       return {};

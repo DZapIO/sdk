@@ -511,7 +511,7 @@ export class TradeService {
       typeof responseData === 'object' && responseData !== null && 'message' in responseData ? String(responseData.message) : 'Unknown error';
     return {
       status: TxnStatus.error,
-      errorMsg: 'Params Failed: ' + errorMessage,
+      errorMsg: errorMessage,
       error: responseData ?? error,
       code: error.response?.status ?? StatusCodes.Error,
     };
@@ -536,7 +536,10 @@ export class TradeService {
    * Handles axios errors (simulation failures and API errors) and viem transaction errors
    * @private
    */
-  private handleTradeError(error: unknown, context: { service: string; method: string; chainId: number }): DZapTransactionResponse {
+  private handleTradeError(
+    error: unknown,
+    context: { service: string; method: string; chainId: number; [key: string]: unknown },
+  ): DZapTransactionResponse {
     logger.error('Trade operation failed', { ...context, error });
 
     if (isAxiosError(error)) {
@@ -596,6 +599,11 @@ export class TradeService {
         service: 'TradeService',
         method: 'execute',
         chainId: request.fromChain,
+        sender: request.sender,
+        refundee: request.refundee,
+        tradeCount: request.data?.length,
+        txnData: txnData,
+        request: request.data,
       });
     }
   }
@@ -695,6 +703,10 @@ export class TradeService {
         service: 'TradeService',
         method: 'executeGasless',
         chainId: request.fromChain,
+        sender: request.sender,
+        refundee: request.refundee,
+        request: request.data,
+        txnData: txnData,
       });
     }
   }
