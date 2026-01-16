@@ -1,6 +1,5 @@
 export * from './abi';
 export * from './api/axios';
-export * from './api/endpoints';
 export * from './approval';
 export * from './chains';
 export * from './erc20';
