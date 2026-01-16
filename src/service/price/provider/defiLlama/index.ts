@@ -1,10 +1,11 @@
+import { ApiClient } from '../../../../api/base';
 import { GET } from '../../../../constants/httpMethods';
-import { ChainData } from '../../../../types';
-import { invoke } from '../../../../utils/axios';
-import { isNativeCurrency } from '../../../../utils/tokens';
-import { IPriceProvider, priceProviders } from '../../types/IPriceProvider';
+import type { ChainData } from '../../../../types';
+import { isNativeCurrency } from '../../../../utils';
+import type { IPriceProvider } from '../../types/IPriceProvider';
+import { priceProviders } from '../../types/IPriceProvider';
 import { defiLlamaConfig } from './config';
-import { DefiLlamaResponse } from './types';
+import type { DefiLlamaResponse } from './types';
 
 export class DefiLlamaPriceProvider implements IPriceProvider {
   public id = priceProviders.defiLlama;
@@ -46,12 +47,12 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
     try {
       const requestTokens = this.preProcess(chainId, tokenAddresses, chainConfig);
       if (!requestTokens.length) return {};
-      const response: DefiLlamaResponse = await invoke({
+      const response: DefiLlamaResponse = await ApiClient.invoke({
         endpoint: defiLlamaConfig.url(requestTokens),
         method: GET,
       });
       return this.postProcess(chainId, tokenAddresses, chainConfig, response);
-    } catch (e) {
+    } catch {
       return {};
     }
   };

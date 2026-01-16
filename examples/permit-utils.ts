@@ -26,7 +26,7 @@ async function runPermitExamples() {
 
   console.log('\nChecking allowance...');
   try {
-    const allowanceResponse = await dZapClient.getAllowance({
+    const allowanceResponse = await dZapClient.approvals.getAllowance({
       chainId,
       sender: senderAddress,
       service: Services.trade,
@@ -43,7 +43,7 @@ async function runPermitExamples() {
     if (walletClient.account && approvalNeeded) {
       console.log('\nAllowance is insufficient. Requesting approval...');
       try {
-        await dZapClient.approve({
+        await dZapClient.approvals.approve({
           chainId,
           signer: walletClient,
           service: Services.trade,
@@ -80,7 +80,7 @@ async function runPermitExamples() {
   console.log('\nSigning permit...');
   if (walletClient.account) {
     try {
-      const signResponse = await dZapClient.sign({
+      const signResponse = await dZapClient.approvals.sign({
         chainId,
         signer: walletClient,
         sender: senderAddress,

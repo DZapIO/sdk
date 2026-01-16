@@ -1,8 +1,8 @@
-import { ZapFee, ZapUnderlyingToken } from '.';
-import { HexString, ProviderDetails } from '../..';
-import { zapPathAction } from '../../zap/constants/path';
+import type { ZAP_PATH_ACTIONS } from '../../constants';
+import type { HexString, ProviderDetails } from '..';
+import type { ZapFee, ZapUnderlyingToken } from '.';
 
-export type ZapPathAction = keyof typeof zapPathAction;
+export type ZapPathAction = keyof typeof ZAP_PATH_ACTIONS;
 
 export type ZapPathAsset = {
   chainId: number;

@@ -1,10 +1,12 @@
-import { ChainData } from '../../types';
+import type { ChainData } from '../../types';
+import { logger } from '../../utils/logger';
 import { CacheProvider } from '../cache/cacheProvider';
 import { getTokensPriceCacheKey, TOKENS_PRICE_EXPIRY } from '../cache/constant';
 import { CoingeckoPriceProvider } from './provider/coingecko';
 import { DefiLlamaPriceProvider } from './provider/defiLlama';
 import { DZapPriceProvider } from './provider/dzap';
-import { IPriceProvider, PriceProvider, priceProviders } from './types/IPriceProvider';
+import type { IPriceProvider, PriceProvider } from './types/IPriceProvider';
+import { priceProviders } from './types/IPriceProvider';
 
 export class PriceService {
   private providers: Map<PriceProvider, IPriceProvider>;
@@ -94,7 +96,11 @@ export class PriceService {
       const isAllowed = allowedSources ? isInAllowedSources && !isInNotAllowedSources : !isInNotAllowedSources;
 
       if (provider.requiresChainConfig && !chainConfig) {
-        console.error(`Provider ${provider.id} requires chainConfig but none was provided.`);
+        logger.error('Provider requires chainConfig but none provided', {
+          service: 'PriceService',
+          method: 'fetchPrices',
+          providerId: provider.id,
+        });
         return false;
       }
 

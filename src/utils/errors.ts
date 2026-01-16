@@ -1,7 +1,8 @@
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { AtomicReadyWalletRejectedUpgradeError, decodeAbiParameters, parseAbiParameters } from 'viem';
+
 import { StatusCodes, TxnStatus } from '../enums';
-import { HexString } from '../types';
+import type { HexString } from '../types';
 
 export const BRIDGE_ERRORS = {
   BridgeCallFailed: 'BridgeCallFailed',
@@ -50,7 +51,7 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
     let msg = error.metaMessages[1];
     try {
       msg = getRevertMsg(error.metaMessages[1].match(/\((.*?)\)/)[1]);
-    } catch (err) {
+    } catch {
       // pass
     }
     errMsg = `${BRIDGE_ERRORS.BridgeCallFailed} : ${msg}`;

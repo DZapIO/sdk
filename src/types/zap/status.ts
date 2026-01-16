@@ -1,5 +1,5 @@
-import { ProviderDetails } from '..';
-import { ZapPathAsset } from './path';
+import type { ProviderDetails } from '..';
+import type { ZapPathAsset } from './path';
 
 export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 

@@ -1,13 +1,21 @@
-import { Signer } from 'ethers';
-import { Prettify, TypedDataDomain, WalletClient } from 'viem';
-import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './../constants';
-import { ApprovalModes } from './../constants/approval';
-import { PermitTypes } from './../constants/permit';
-import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
-import { PsbtInput, PsbtOutput } from './btc';
-import { GaslessBridgeParams, GaslessSwapParams } from './permit';
+import type { Signer } from 'ethers';
+import type { Prettify, TypedDataDomain, WalletClient } from 'viem';
+
+import type { ApprovalModes } from '../constants/approval';
+import type { PermitTypes } from '../constants/permit';
+import type { STATUS_RESPONSE, TX_STATUS } from '../constants/status';
+import type { GASLESS_TX_TYPE, QUOTE_FILTERS, Services, STANDARD_ABIS } from './../constants';
+import type { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
+import type { PsbtInput, PsbtOutput } from './btc';
+import type { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
 export type HexString = `0x${string}`;
+
+export type BatchCallParams = {
+  to: HexString;
+  data: HexString;
+  value?: bigint;
+};
 
 export type ChainData = {
   [key in number]: Chain;
@@ -118,7 +126,7 @@ export type Fee = {
   providerFee: FeeDetails[];
 };
 
-export type QuoteFilter = keyof typeof QuoteFilters;
+export type QuoteFilter = keyof typeof QUOTE_FILTERS;
 
 export type TradeQuotesRequest = {
   fromChain: number;
@@ -312,7 +320,7 @@ export type BtcTxData = {
 export type TxData = EvmTxData | SvmTxData | BtcTxData;
 
 export type TxRequestData<T> = {
-  status: typeof STATUS.success;
+  status: typeof TX_STATUS.success;
   txId: string;
   chainId: number;
   transaction: T;
@@ -343,20 +351,20 @@ export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
   updatedQuotes: Record<string, string>;
 };
 
-export type GaslessTxTypes = keyof typeof GaslessTxType;
+export type GaslessTxTypes = keyof typeof GASLESS_TX_TYPE;
 
 type BridgeGaslessTxData = {
   executorFeesHash: HexString;
   swapDataHash?: HexString; //undefined for eip2612, bridge only,
   adapterDataHash: HexString;
-  txType: typeof GaslessTxType.bridge;
+  txType: typeof GASLESS_TX_TYPE.bridge;
   value: string;
 };
 
 type SwapGaslessTxData = {
   executorFeesHash: HexString;
   swapDataHash: HexString;
-  txType: typeof GaslessTxType.swap;
+  txType: typeof GASLESS_TX_TYPE.swap;
   value: string;
 };
 
@@ -371,9 +379,7 @@ export type GaslessTradeBuildTxnResponse = {
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
 
-export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
-
-export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
+export type StandardAbis = (typeof STANDARD_ABIS)[keyof typeof STANDARD_ABIS];
 
 export type AppEnvType = `${AppEnv}`;
 

@@ -1,10 +1,16 @@
-import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
-import { ApprovalModes } from './constants/approval';
-import { erc20Functions } from './constants/erc20';
-import { PermitTypes } from './constants/permit';
-import { SignatureExpiryInSecs } from './constants/permit2';
+import { viemChainsList } from './chains';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
+import { ApprovalsService } from './service/approvals';
+import { ChainsService } from './service/chains';
+import { ContractsService } from './service/contracts';
+import { SwapDecoder } from './service/decoder';
+import { Permit2 } from './service/permit2';
+import { SignatureService } from './service/signature';
+import { TokenService } from './service/token';
+import { TradeService } from './service/trade';
+import { TransactionsService } from './service/transactions';
+import { ZapService } from './service/zap';
 import {
   ApiRpcResponse,
   ApprovalMode,
@@ -46,29 +52,28 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { getTokensPairKey } from './utils';
-import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
-import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
-import { formatToken } from './utils/tokens';
+import { formatToken, getTokensPairKey } from './utils';
+import { checkEIP2612PermitSupport } from './utils/eip2612Permit';
 
+export * from './constants';
 export * from './types/zap';
-export * from './zap/constants';
 
 export {
   ApiRpcResponse,
   ApprovalMode,
-  ApprovalModes,
+  ApprovalsService,
   BatchPermitCallbackParams,
   BtcTxData,
   Chain,
   ChainData,
+  ChainsService,
   checkEIP2612PermitSupport,
   contractErrorActions,
   ContractErrorResponse,
+  ContractsService,
   DZapClient,
   DZapPermitMode,
   DZapTransactionResponse,
-  erc20Functions,
   EvmTxData,
   Fee,
   FeeDetails,
@@ -76,29 +81,26 @@ export {
   GaslessTradeBuildTxnResponse,
   getTokensPairKey,
   HexString,
-  OtherAbis,
   ParamQuotes,
+  Permit2,
   PermitMode,
-  PermitTypes,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,
   QuoteFilter,
-  QuoteFilters,
-  Services,
   SignatureCallbackParams,
-  SignatureExpiryInSecs,
+  SignatureService,
   SignPermitResponse,
   SinglePermitCallbackParams,
-  STATUS,
   StatusCodes,
   SvmTxData,
+  SwapDecoder,
   SwapInfo,
-  SwapInputDataDecoder,
   Token,
   TokenInfo,
   TokenPermitData,
   TokenResponse,
+  TokenService,
   TradeBuildTxnRequest,
   TradeBuildTxnRequestData,
   TradeBuildTxnResponse,
@@ -107,9 +109,13 @@ export {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeService,
   TradeStatusResponse,
   TradeStep,
+  TransactionsService,
   TxnStatus,
+  viemChainsList,
   ZapIntegratorConfig,
+  ZapService,
   ZapStatusResponse,
 };

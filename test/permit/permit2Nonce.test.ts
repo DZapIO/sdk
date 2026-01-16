@@ -1,8 +1,8 @@
-import { permit2ProxyAbi } from '../../src/artifacts/Permit2Proxy';
+import * as ABI from '../../src/artifacts';
 import { getPublicClient } from '../../src/utils';
 import { viemChainsById } from '../../src/chains';
-import { getPermit2Address } from '../../src/utils/permit2';
-import { getNextPermit2Nonce } from '../../src/utils/permit2/nonce';
+import { Permit2 } from '../../src/service/permit2';
+import { getNextPermit2Nonce } from '../../src/utils/nonce';
 import { HexString } from '../../src/types';
 
 const permitProxy: Record<number, HexString> = {
@@ -21,7 +21,7 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
     }
     const nonce = await getPublicClient({ chainId, rpcUrls }).readContract({
       address: permitProxy[chainId],
-      abi: permit2ProxyAbi,
+      abi: ABI.permit.permit2ProxyAbi,
       functionName: 'nextNonce',
       args: [account],
     });
@@ -35,7 +35,7 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
 describe('Permit2 Nonce Tests', () => {
   const account = '0x4ab9F97585B0161f1aDa8484B209C44be54dad73';
 
-  Object.entries(permitProxy).forEach(([chainIdStr, proxyAddress]) => {
+  Object.entries(permitProxy).forEach(([chainIdStr]) => {
     const chainId = parseInt(chainIdStr);
     const chainName = viemChainsById[chainId]?.name || `Chain ${chainId}`;
 
@@ -54,7 +54,7 @@ describe('Permit2 Nonce Tests', () => {
 
         try {
           const urls = [...rpcUrls];
-          const permitAddress = getPermit2Address(chainId);
+          const permitAddress = Permit2.getAddress(chainId);
 
           if (!permitAddress) {
             throw new Error(`No Permit2 address found for chain ${chainId}`);
@@ -85,7 +85,7 @@ describe('Permit2 Nonce Tests', () => {
         return;
       }
 
-      const permitAddress = getPermit2Address(testChainId);
+      const permitAddress = Permit2.getAddress(testChainId);
       const urls = [...rpcUrls];
 
       const results = await Promise.all([

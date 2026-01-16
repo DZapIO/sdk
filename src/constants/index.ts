@@ -1,62 +1,15 @@
-import { encodeAbiParameters, parseAbiParameters } from 'viem';
-import { DZapPermitMode } from '../enums';
-
-export const STATUS = {
-  pending: 'pending',
-  inProgress: 'in-progress',
-  success: 'success',
-  rejected: 'rejected',
-  error: 'error',
-};
-
-export const ERRORS = {
-  NOT_FOUND: 'Request not found',
-};
-
-export const DZapAbis = {
-  dZapCoreAbi: 'dZapCoreAbi',
-  dZapCoreV2Abi: 'dZapCoreV2Abi',
-  dZapDcaAbi: 'dZapDcaAbi',
-} as const;
-
-export const OtherAbis = {
-  permit2: 'permit2',
-  erc20: 'erc20',
-} as const;
-
-export const Services = {
-  trade: 'trade',
-  dca: 'dca',
-  zap: 'zap',
-} as const;
-
-export const GaslessTxType = {
-  swap: 'swap',
-  bridge: 'bridge',
-} as const;
-
-export const QuoteFilters = {
-  fastest: 'fastest',
-  best: 'best',
-  all: 'all',
-} as const;
-
-export const HISTORICAL_BLOCK = 10;
-
-export const NATIVE_TOKEN_DECIMAL = 18;
-export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-
-export const dZapNativeTokenFormat = ZERO_ADDRESS;
-
-export const PERMIT_TYPEHASH_CONST = '0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9';
-export const DEFAULT_PERMIT_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, '0x']);
-export const DEFAULT_PERMIT2_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT2_APPROVE, '0x']);
-
-export const STATUS_RESPONSE = {
-  COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED',
-  PENDING: 'PENDING',
-  PARTIAL_SUCCESS: 'PARTIAL_SUCCESS',
-  REFUNDED: 'REFUNDED',
-} as const;
+export * from './abi';
+export * from './api/axios';
+export * from './approval';
+export * from './chains';
+export * from './erc20';
+export * from './gasless';
+export * from './httpMethods';
+export * from './permit';
+export * from './permit2';
+export * from './quotes';
+export * from './rpc';
+export * from './services';
+export * from './status';
+export * from './tokens';
+export * from './zap';
