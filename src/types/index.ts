@@ -416,9 +416,11 @@ export type TxPairData = {
   providerTxLink?: string;
 };
 
-export type TradeStatusResponse = {
+export type TradeStatusResponseForTx = {
   [pair: string]: TxPairData;
 };
+
+export type TradeStatusResponse = TradeStatusResponseForTx | Record<string, TradeStatusResponseForTx>;
 
 export type EIP2612GaslessExecuteTxParams = {
   permitData: {
