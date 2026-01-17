@@ -41,6 +41,7 @@ import {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeStatusResponseForTx,
   TradeStatusResponse,
   TradeStep,
 } from './types';
@@ -107,6 +108,7 @@ export {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeStatusResponseForTx,
   TradeStatusResponse,
   TradeStep,
   TxnStatus,

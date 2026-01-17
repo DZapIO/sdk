@@ -1,5 +1,5 @@
 import DZapClient from '../src/dZapClient';
-import { TradeStatusResponse } from '../src/types';
+import { TradeStatusResponseForTx } from '../src/types';
 
 describe('DZapClient - getStatus', () => {
   let client: DZapClient;
@@ -17,7 +17,7 @@ describe('DZapClient - getStatus', () => {
 
     expect(result).toBeDefined();
     // Cast the result to the expected record type for multi-ID lookups
-    const typedResult = result as Record<string, TradeStatusResponse>;
+    const typedResult = result as Record<string, TradeStatusResponseForTx>;
     const resultKeys = Object.keys(typedResult);
     expect(resultKeys.length).toBe(txIdArray.length);
 
@@ -38,7 +38,7 @@ describe('DZapClient - getStatus', () => {
 
     const result = await client.getTradeTxnStatus({ txHash, chainId });
     expect(result).toBeDefined();
-    const typedResult = result as TradeStatusResponse;
+    const typedResult = result as TradeStatusResponseForTx;
     const resultKeys = Object.keys(typedResult);
     expect(resultKeys.length).toBeGreaterThan(0);
     // Check that the first value has a 'status' property
