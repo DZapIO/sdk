@@ -43,7 +43,6 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
-  TradeTxStatusResponse,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
@@ -109,7 +108,6 @@ export {
   TradeQuotesRequestData,
   TradeQuotesResponse,
   TradeStatusResponse,
-  TradeTxStatusResponse,
   TradeStep,
   TxnStatus,
   ZapIntegratorConfig,

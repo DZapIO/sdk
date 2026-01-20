@@ -9,6 +9,7 @@ import {
   fetchAllTokens,
   fetchBalances,
   fetchCalculatedPoints,
+  fetchMultiTxStatus,
   fetchStatus,
   fetchTokenDetails,
   fetchTradeBuildTxnData,
@@ -41,8 +42,8 @@ import {
   Chain,
   ChainData,
   EvmTxData,
-  GaslessTradeBuildTxnResponse,
   GasSignatureParams,
+  GaslessTradeBuildTxnResponse,
   HexString,
   OtherAvailableAbis,
   PermitMode,
@@ -246,12 +247,11 @@ class DZapClient {
 
   /**
    * Fetches the current status of trade transactions including swaps and bridges.
-   * Can check single or multiple transactions and provides detailed execution status.
+   * Can check single transactions and provides detailed execution status.
    * For cross-chain transactions, this tracks the complete bridge process across both chains.
    *
    * @param params - Configuration object for status checking
    * @param params.txHash - Transaction hash for single transaction status (requires chainId)
-   * @param params.txIds - Comma-separated list of transaction IDs in format "chainId-txHash" for multiple transactions
    * @param params.chainId - Chain ID for single transaction status (requires txHash)
    * @returns Promise resolving to status response(s) with transaction state and details
    *
@@ -262,15 +262,34 @@ class DZapClient {
    *   txHash: '0x123...',
    *   chainId: '1'
    * });
+   * ```
+   */
+  public getTradeTxnStatus({ txHash, chainId }: { txHash: string; chainId: number }): Promise<TradeStatusResponse> {
+    return fetchStatus({ txHash, chainId });
+  }
+
+  /**
+   * Fetches the current status of trade transactions including swaps and bridges.
+   * Can check single or multiple transactions and provides detailed execution status.
+   * For cross-chain transactions, this tracks the complete bridge process across both chains.
+   *
+   * @param params - Configuration object for status checking
+   * @param params.txHashes - Transaction hash for single transaction status (requires chainId)
+   * @param params.chainIds - Chain ID for single transaction status (requires txHash)
+   * @returns Promise resolving to status response(s) with transaction state and details
+   *
+   * @example
+   * ```typescript
    *
    * // Multiple transactions status
    * const multiStatus = await client.getTradeTxnStatus({
-   *   txIds: '1-0x123...,42161-0x456...'
+   *   txHashes: '0x123...,0x456...',
+   *   chainIds: '1,42161'
    * });
    * ```
    */
-  public getTradeTxnStatus({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }): Promise<TradeStatusResponse> {
-    return fetchStatus({ txHash, txIds, chainId });
+  public getTradeMultiTxnStatus({ txHashes, chainIds }: { txHashes: string; chainIds: string }): Promise<TradeStatusResponse[]> {
+    return fetchMultiTxStatus({ txHashes, chainIds });
   }
 
   /**

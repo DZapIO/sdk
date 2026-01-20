@@ -427,15 +427,13 @@ export type SubTransaction = {
   protocolExplorerLink?: string;
 };
 
-export type TradeTxStatusResponse = {
+export type TradeStatusResponse = {
   status: StatusResponse;
   gasless: boolean;
   timestamp: number;
   txHash: string;
   transactions: SubTransaction[];
 };
-
-export type TradeStatusResponse = TradeTxStatusResponse | TradeTxStatusResponse[];
 
 export type EIP2612GaslessExecuteTxParams = {
   permitData: {

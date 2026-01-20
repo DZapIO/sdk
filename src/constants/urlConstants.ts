@@ -17,6 +17,7 @@ export const GET_ALL_TOKENS_URL = 'token/tokens';
 export const GET_TOKEN_DETAILS_URL = 'token/details';
 export const GET_TOKEN_PRICE = 'token/price';
 export const GET_STATUS = '/status';
+export const GET_MULTI_STATUS = '/status/batch';
 export const GET_BALANCES = 'token/balance-of';
 
 // user
