@@ -11,6 +11,7 @@ import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
 import type {
   ApprovalMode,
   AvailableDZapServices,
+  ChainData,
   GasSignatureParams,
   HexString,
   PermitMode,
@@ -26,6 +27,7 @@ import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
 import { Permit2 } from '../permit2';
 import { SignatureService } from '../signature';
+import { TransactionsService } from '../transactions';
 
 /**
  * ApprovalsService handles all approval and permit operations for token spending.
@@ -35,6 +37,30 @@ export class ApprovalsService {
     private chainsService: ChainsService,
     private contractsService: ContractsService,
   ) {}
+
+  /**
+   * Gets approval context (chain config and spender address) in a single batch call
+   * This optimizes the common pattern of fetching both chainConfig and contract address
+   * @param params - Parameters for getting approval context
+   * @returns Promise resolving to approval context with chainConfig and spenderAddress
+   */
+  private async getApprovalContext({ chainId, service, spender }: { chainId: number; service: AvailableDZapServices; spender?: HexString }): Promise<{
+    chainConfig: ChainData;
+    spenderAddress: HexString;
+    multicallAddress?: HexString;
+  }> {
+    // Batch fetch chain config and contract address in parallel
+    const [chainConfig, contractAddress] = await Promise.all([
+      this.chainsService.getConfig(),
+      spender ? Promise.resolve(spender) : this.contractsService.getAddress({ chainId, service }),
+    ]);
+
+    return {
+      chainConfig,
+      spenderAddress: contractAddress as HexString,
+      multicallAddress: chainConfig?.[chainId]?.multicallAddress,
+    };
+  }
 
   /**
    * Checks current token allowances for a sender address across multiple tokens
@@ -67,7 +93,6 @@ export class ApprovalsService {
             address,
             chainId,
             rpcUrls,
-            owner: sender,
             permit,
           });
           return {
@@ -226,15 +251,17 @@ export class ApprovalsService {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: string }[];
+    tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString;
     mode?: ApprovalMode;
   }) {
-    const chainConfig = await this.chainsService.getConfig();
-    const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
+    const { spenderAddress, multicallAddress } = await this.getApprovalContext({
+      chainId,
+      service,
+      spender,
+    });
     return await this.getAllowanceData({
       chainId,
       sender,
@@ -261,6 +288,7 @@ export class ApprovalsService {
    * @param params.mode - Optional approval mode (defaults to AutoPermit for optimal UX)
    * @param params.spender - Optional custom spender address (if not using default DZap contract)
    * @param params.service - The DZap service that will spend the approved tokens
+   * @param params.batchTransaction - Optional flag to use batch transaction (EIP-5792) for multiple approvals
    * @returns Promise resolving to approval transaction results
    *
    * @example
@@ -305,8 +333,11 @@ export class ApprovalsService {
     rpcUrls?: string[];
     mode?: ApprovalMode;
   }) {
-    const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    const finalRpcUrls = rpcUrls || config.getRpcUrlsByChainId(chainId);
+    const { spenderAddress } = await this.getApprovalContext({
+      chainId,
+      service,
+      spender,
+    });
     let finalSpender = spenderAddress;
     if (mode !== ApprovalModes.Default) {
       finalSpender = Permit2.getAddress(chainId);
@@ -331,7 +362,7 @@ export class ApprovalsService {
           code: StatusCodes.Success,
         };
       } else {
-        const publicClient = ChainsService.getPublicClient(chainId, finalRpcUrls);
+        const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
         try {
           const { request } = await publicClient.simulateContract({
             address: tokens[dataIdx].address,
@@ -429,8 +460,11 @@ export class ApprovalsService {
     >,
   ): Promise<SignPermitResponse> {
     const { service, chainId } = params;
-    const spenderAddress = params?.spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    const chainConfig = await this.chainsService.getConfig();
+    const { spenderAddress, chainConfig } = await this.getApprovalContext({
+      chainId,
+      service,
+      spender: params?.spender,
+    });
 
     const permitType = params?.permitType || PermitTypes.AutoPermit;
 
@@ -513,7 +547,6 @@ export class ApprovalsService {
     sender,
     multicallAddress,
     rpcUrls,
-    sendBatchCalls,
   }: {
     walletClient: WalletClient;
     tokens: Array<{
@@ -525,14 +558,6 @@ export class ApprovalsService {
     sender: HexString;
     multicallAddress?: HexString;
     rpcUrls?: string[];
-    sendBatchCalls: (
-      walletClient: WalletClient,
-      calls: Array<{
-        to: HexString;
-        data: HexString;
-        value?: bigint;
-      }>,
-    ) => Promise<{ id: string } | null>;
   }): Promise<{ success: boolean; batchId?: string }> {
     const approveCalls = await this.generateApprovalBatchCalls({
       tokens,
@@ -545,7 +570,7 @@ export class ApprovalsService {
     if (approveCalls.length === 0) {
       return { success: true };
     }
-    const batchResult = await sendBatchCalls(walletClient, approveCalls);
+    const batchResult = await TransactionsService.sendBatchCalls(walletClient, approveCalls);
     if (!batchResult) {
       logger.warn('Batch approval calls failed or not supported', {
         service: 'ApprovalsService',

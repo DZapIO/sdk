@@ -28,7 +28,7 @@ import type {
 } from '../../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
 import { generateDeadline } from '../../utils/date';
-import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
+import { getEIP2612PermitData } from '../../utils/eip2612Permit';
 import { handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
@@ -356,7 +356,7 @@ export class SignatureService {
     }
 
     const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(token.amount);
-    const eip2612PermitData = await checkEIP2612PermitSupport({
+    const eip2612PermitData = await getEIP2612PermitData({
       address: token.address,
       chainId,
       rpcUrls,

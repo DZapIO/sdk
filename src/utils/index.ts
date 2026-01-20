@@ -10,7 +10,7 @@ export {
 } from './amount';
 export { extendViemChain, isNonEVMChain } from './chain';
 export { generateDeadline } from './date';
-export { checkEIP2612PermitSupport } from './eip2612Permit';
+export { checkEIP2612PermitSupport, getEIP2612PermitData } from './eip2612Permit';
 export {
   BRIDGE_ERRORS,
   getErrorName,
@@ -19,6 +19,7 @@ export {
   isAtomicReadyWalletRejectedUpgradeError,
   isAxiosError,
 } from './errors';
+export { isBatchTxnSupportedByWallet } from './isBatchTxnSupportedByWallet';
 export { multicall } from './multicall';
 export { isEthersSigner } from './signer';
 export { getTokensPairKey } from './token';

@@ -52,8 +52,8 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { formatToken, getTokensPairKey } from './utils';
-import { checkEIP2612PermitSupport } from './utils/eip2612Permit';
+import { formatToken, getTokensPairKey, isBatchTxnSupportedByWallet } from './utils';
+import { checkEIP2612PermitSupport, getEIP2612PermitData } from './utils/eip2612Permit';
 
 export * from './constants';
 export * from './types/zap';
@@ -79,8 +79,10 @@ export {
   FeeDetails,
   formatToken,
   GaslessTradeBuildTxnResponse,
+  getEIP2612PermitData,
   getTokensPairKey,
   HexString,
+  isBatchTxnSupportedByWallet,
   ParamQuotes,
   Permit2,
   PermitMode,

@@ -14,6 +14,7 @@ import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
+  ChainData,
   ContractErrorResponse,
   DZapTransactionResponse,
   GaslessTradeBuildTxnResponse,
@@ -25,7 +26,6 @@ import type {
   TradeStatusResponse,
 } from '../../types';
 import type { CustomTypedDataParams } from '../../types/permit';
-import { isEthersSigner } from '../../utils';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
@@ -146,8 +146,6 @@ export class TradeService {
     request,
     signer,
     txnData,
-    batchTransaction = false,
-    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
@@ -155,15 +153,10 @@ export class TradeService {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    const chainConfig = await this.chainsService.getConfig();
-
     return await this.buildAndSendTransaction({
       request,
       signer,
       txnData,
-      batchTransaction,
-      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
-      rpcUrls,
     });
   }
 
@@ -365,78 +358,6 @@ export class TradeService {
   }
 
   /**
-   * Sends transaction with batch approvals.
-   * @private
-   */
-  private async sendBatchTxn(
-    request: TradeBuildTxnRequest,
-    signer: WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string },
-    chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-    multicallAddress?: HexString,
-    rpcUrls?: string[],
-  ): Promise<DZapTransactionResponse> {
-    const approvalBatchCalls = await this.approvalsService.generateApprovalBatchCalls({
-      tokens: request.data.map((token) => ({
-        address: token.srcToken as HexString,
-        amount: token.amount,
-      })),
-      chainId,
-      multicallAddress,
-      sender: txnParams.from as HexString,
-      spender: txnParams.to as HexString,
-      rpcUrls,
-    });
-
-    const batchCalls = [
-      ...approvalBatchCalls,
-      {
-        to: txnParams.to as HexString,
-        data: txnParams.data as HexString,
-        value: BigInt(txnParams.value),
-      },
-    ];
-
-    // If no approvals are needed, send regular transaction for efficiency
-    if (approvalBatchCalls.length === 0) {
-      return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-    }
-
-    const batchResult = await TransactionsService.sendBatchCalls(signer, batchCalls);
-    if (!batchResult) {
-      return {
-        status: TxnStatus.error,
-        errorMsg: 'Batch call failed',
-        code: StatusCodes.Error,
-      };
-    }
-
-    logger.info('Waiting for batch transaction completion', {
-      service: 'TradeService',
-      method: 'executeBatch',
-      batchId: batchResult.id,
-      chainId,
-    });
-    const receipt = await TransactionsService.waitForBatchTransactionReceipt(signer, batchResult.id as HexString);
-    logger.info('Batch transaction completed', {
-      service: 'TradeService',
-      method: 'executeBatch',
-      chainId,
-      txHash: receipt.transactionHash,
-      status: receipt.status,
-    });
-    return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      txnHash: receipt.transactionHash as HexString,
-      additionalInfo,
-      updatedQuotes,
-    };
-  }
-
-  /**
    * Sends HyperLiquid transaction.
    * @private
    */
@@ -513,16 +434,10 @@ export class TradeService {
     request,
     signer,
     txnData,
-    batchTransaction = false,
-    multicallAddress,
-    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
-    batchTransaction: boolean;
-    multicallAddress?: HexString;
-    rpcUrls?: string[];
   }): Promise<DZapTransactionResponse> {
     try {
       const chainId = request.fromChain;
@@ -540,10 +455,6 @@ export class TradeService {
 
       if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
         return this.sendHyperLiquidTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
-      }
-      // Handle ethers signer (no batching support)
-      if (batchTransaction && !isEthersSigner(signer)) {
-        return this.sendBatchTxn(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
       }
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
     } catch (error: unknown) {
