@@ -92,7 +92,7 @@ async function runTradeExamples() {
       setTimeout(async () => {
         try {
           const statusResponse = (await dZapClient.getTradeTxnStatus({
-            txHash: txResult.txnHash,
+            txHash: txResult.txnHash!,
             chainId: 42161,
           })) as TradeStatusResponse;
           console.log('Transaction status:', JSON.stringify(statusResponse, null, 2));
