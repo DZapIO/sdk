@@ -269,15 +269,7 @@ class DZapClient {
    * });
    * ```
    */
-  public getTradeTxnStatus({
-    txHash,
-    txIds,
-    chainId,
-  }: {
-    txHash?: string;
-    txIds?: string;
-    chainId?: number;
-  }): Promise<TradeStatusResponse | Record<string, TradeStatusResponse>> {
+  public getTradeTxnStatus({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }): Promise<TradeStatusResponse> {
     return fetchStatus({ txHash, txIds, chainId });
   }
 

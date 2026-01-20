@@ -9,6 +9,7 @@ import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
 export type HexString = `0x${string}`;
 
+export type StatusResponse = keyof typeof STATUS_RESPONSE;
 export type ChainData = {
   [key in number]: Chain;
 };
@@ -396,29 +397,45 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type HistoryTokenData = {
-  asset: Omit<TokenInfo, 'price' | 'balance'>;
-  amount: string;
-  amountUSD: string;
-  status: keyof typeof STATUS_RESPONSE;
-  txHash: string;
-  account: string;
-  timestamp: number;
+type StatusAsset = {
+  address: string;
+  chainId: number;
+  name?: string;
+  symbol?: string;
+  decimals?: number;
+  logo?: string | undefined;
 };
 
-export type TxPairData = {
-  input: HistoryTokenData;
-  output: Omit<HistoryTokenData, 'txHash' | 'status' | 'timestamp'>;
-  received: HistoryTokenData;
+export type TransactionInfo = {
+  asset: StatusAsset;
+  amount: string;
+  amountUSD: number;
+  txHash: string;
+  account: string;
+};
+
+export type SubTransaction = {
+  source: TransactionInfo;
+  destination: TransactionInfo & {
+    timestamp?: number;
+  };
+  expected?: Omit<TransactionInfo, 'txHash' | 'status'>;
+  status: StatusResponse;
   provider: ProviderDetails;
   allowUserTxOnDestChain: boolean;
   message?: string;
-  providerTxLink?: string;
+  protocolExplorerLink?: string;
 };
 
-export type TradeStatusResponse = {
-  [pair: string]: TxPairData;
+export type TradeTxStatusResponse = {
+  status: StatusResponse;
+  gasless: boolean;
+  timestamp: number;
+  txHash: string;
+  transactions: SubTransaction[];
 };
+
+export type TradeStatusResponse = TradeTxStatusResponse | TradeTxStatusResponse[];
 
 export type EIP2612GaslessExecuteTxParams = {
   permitData: {
