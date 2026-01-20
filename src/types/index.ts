@@ -398,7 +398,7 @@ export type SwapInfo = {
 };
 
 type StatusAsset = {
-  address: string;
+  contract: string;
   chainId: number;
   name?: string;
   symbol?: string;
