@@ -9,6 +9,7 @@ import {
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
   GET_BALANCES,
+  GET_MULTI_STATUS,
   GET_STATUS,
   GET_TOKEN_DETAILS_URL,
   GET_TOKEN_PRICE,
@@ -23,9 +24,9 @@ import {
   TradeQuotesRequest,
 } from '../types';
 import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
+import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
-import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 
 export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
   invoke({
@@ -164,13 +165,22 @@ export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
     method: GET,
   });
 
-export const fetchStatus = ({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }) =>
+export const fetchStatus = ({ txHash, chainId }: { txHash: string; chainId: number }) =>
   invoke({
     endpoint: GET_STATUS,
     data: {
       txHash,
-      txIds,
       chainId,
+    },
+    method: GET,
+  });
+
+export const fetchMultiTxStatus = ({ txHashes, chainIds }: { txHashes: string; chainIds: string }) =>
+  invoke({
+    endpoint: GET_MULTI_STATUS,
+    data: {
+      txHashes,
+      chainIds,
     },
     method: GET,
   });
