@@ -29,6 +29,7 @@ import type { CustomTypedDataParams } from '../../types/permit';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { signTypedData } from '../../utils/signer';
 import type { ApprovalsService } from '../approvals';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
@@ -358,6 +359,49 @@ export class TradeService {
   }
 
   /**
+   * Sign custom typed data for transaction signing
+   *
+   * @param params - Parameters for custom typed data signing
+   * @returns Promise with signature and message
+   */
+  private async signCustomTypedData(params: CustomTypedDataParams): Promise<{
+    status: TxnStatus;
+    code: StatusCodes;
+    data?: {
+      signature: HexString;
+      message: Record<string, any>;
+    };
+  }> {
+    try {
+      const { account, signer, message, domain, primaryType, types } = params;
+
+      const signature = await signTypedData({
+        signer,
+        account,
+        domain,
+        message,
+        primaryType,
+        types,
+      });
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        data: {
+          signature,
+          message,
+        },
+      };
+    } catch (error: unknown) {
+      logger.error('Failed to sign custom typed data', {
+        service: 'TradeService',
+        method: 'signCustomTypedData',
+        error,
+      });
+      return handleViemTransactionError({ error });
+    }
+  }
+
+  /**
    * Sends HyperLiquid transaction.
    * @private
    */
@@ -386,7 +430,7 @@ export class TradeService {
         };
       }
 
-      const resp = await SignatureService.signCustomTypedData({
+      const resp = await this.signCustomTypedData({
         signer,
         account: txnParams.from as HexString,
         domain: typedData.domain,

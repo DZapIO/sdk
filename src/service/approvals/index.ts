@@ -25,8 +25,8 @@ import { multicall } from '../../utils/multicall';
 import { isEthersSigner } from '../../utils/signer';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
-import { Permit2 } from '../permit2';
 import { SignatureService } from '../signature';
+import { Permit2 } from '../signature/permit2';
 import { TransactionsService } from '../transactions';
 
 /**
