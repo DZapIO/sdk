@@ -23,10 +23,10 @@ import type {
 } from '../../types/permit';
 import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from '../../types/permit';
 import { generateDeadline } from '../../utils';
-import { getPublicClient } from '../../utils/client';
 import { logger } from '../../utils/logger';
 import { getNextPermit2Nonce } from '../../utils/nonce';
 import { signTypedData } from '../../utils/signer';
+import { ChainsService } from '../chains';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -277,7 +277,7 @@ export class Permit2 {
     permit2Address: HexString;
     rpcUrls?: string[];
   }): Promise<{ permit2Values: PermitSingleValues; nonce: bigint }> {
-    const publicClient = getPublicClient({ chainId, rpcUrls });
+    const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
     const allowanceResult = await publicClient.readContract({
       address: permit2Address,
       abi: ABI.permit.permit2Abi,

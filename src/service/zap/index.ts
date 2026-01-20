@@ -25,9 +25,9 @@ import type {
   ZapTransactionStep,
 } from '../../types/zap';
 import type { ZapEvmTxnDetails, ZapStep } from '../../types/zap/step';
-import { getPublicClient } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { ChainsService } from '../chains';
 import { TransactionsService } from '../transactions';
 
 /**
@@ -357,7 +357,7 @@ export class ZapService {
   public async approve({ chainId, data, signer }: { chainId: number; data: ZapEvmTxnDetails; signer: Signer | WalletClient }) {
     try {
       const { callData, callTo, value, estimatedGas } = data;
-      const publicClient = getPublicClient({ chainId, rpcUrls: undefined });
+      const publicClient = ChainsService.getPublicClient(chainId);
       const blockNumber = await publicClient.getBlockNumber();
       logger.debug('Zap approval block data', {
         service: 'ZapService',

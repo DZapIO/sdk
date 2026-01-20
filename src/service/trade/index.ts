@@ -14,7 +14,6 @@ import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
-  ChainData,
   ContractErrorResponse,
   DZapTransactionResponse,
   GaslessTradeBuildTxnResponse,
@@ -26,11 +25,13 @@ import type {
   TradeStatusResponse,
 } from '../../types';
 import type { CustomTypedDataParams } from '../../types/permit';
-import { getPublicClient, isEthersSigner } from '../../utils';
+import { isEthersSigner } from '../../utils';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
-import { ApprovalsService } from '../approvals';
+import type { ApprovalsService } from '../approvals';
+import { ChainsService } from '../chains';
+import type { ContractsService } from '../contracts';
 import { SwapDecoder } from '../decoder';
 import type { PriceService } from '../price';
 import { priceProviders } from '../price/types/IPriceProvider';
@@ -43,8 +44,9 @@ import { TransactionsService } from '../transactions';
 export class TradeService {
   constructor(
     private priceService: PriceService,
-    private getChainConfig: () => Promise<ChainData>,
-    private getDZapContractAddress: (params: { chainId: number; service: AvailableDZapServices }) => Promise<string>,
+    private chainsService: ChainsService,
+    private contractsService: ContractsService,
+    private approvalsService: ApprovalsService,
   ) {}
 
   /**
@@ -74,7 +76,7 @@ export class TradeService {
    */
   public async getQuotes(request: TradeQuotesRequest): Promise<TradeQuotesResponse> {
     const quotes: TradeQuotesResponse = await TradeApiClient.fetchTradeQuotes(request);
-    const chainConfig = await this.getChainConfig();
+    const chainConfig = await this.chainsService.getConfig();
     if (chainConfig === null) {
       return quotes;
     }
@@ -153,7 +155,7 @@ export class TradeService {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    const chainConfig = await this.getChainConfig();
+    const chainConfig = await this.chainsService.getConfig();
 
     return await this.buildAndSendTransaction({
       request,
@@ -207,7 +209,7 @@ export class TradeService {
     txnData?: GaslessTradeBuildTxnResponse;
     txnStatusCallback: (status: TxnStatus) => void;
   }) {
-    const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
+    const spender = (await this.contractsService.getAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await this.buildGaslessTxAndSignPermit({
       request,
       signer,
@@ -320,9 +322,9 @@ export class TradeService {
    * ```
    */
   public async decodeTxn({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
+    const publicClient = ChainsService.getPublicClient(chainId, config.getRpcUrlsByChainId(chainId));
     const [chainConfig, transactionData] = await Promise.all([
-      this.getChainConfig(),
+      this.chainsService.getConfig(),
       publicClient.getTransaction({
         hash: data.transactionHash,
       }),
@@ -376,7 +378,7 @@ export class TradeService {
     multicallAddress?: HexString,
     rpcUrls?: string[],
   ): Promise<DZapTransactionResponse> {
-    const approvalBatchCalls = await ApprovalsService.generateApprovalBatchCalls({
+    const approvalBatchCalls = await this.approvalsService.generateApprovalBatchCalls({
       tokens: request.data.map((token) => ({
         address: token.srcToken as HexString,
         amount: token.amount,
