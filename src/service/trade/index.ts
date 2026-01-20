@@ -14,6 +14,7 @@ import type {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
+  ChainData,
   ContractErrorResponse,
   DZapTransactionResponse,
   GaslessTradeBuildTxnResponse,
