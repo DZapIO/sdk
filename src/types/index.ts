@@ -1,6 +1,6 @@
 import { Signer } from 'ethers';
 import { Prettify, TypedDataDomain, WalletClient } from 'viem';
-import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './../constants';
+import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, STATUS, STATUS_RESPONSE, Services } from './../constants';
 import { ApprovalModes } from './../constants/approval';
 import { PermitTypes } from './../constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
@@ -414,7 +414,7 @@ export type TransactionInfo = {
   account: string;
 };
 
-export type SubTransaction = {
+export type TxStatusForPair = {
   source: TransactionInfo;
   destination: TransactionInfo & {
     timestamp?: number;
@@ -430,9 +430,10 @@ export type SubTransaction = {
 export type TradeStatusResponse = {
   status: StatusResponse;
   gasless: boolean;
-  timestamp: number;
   txHash: string;
-  transactions: SubTransaction[];
+  chainId: number;
+  timestamp: number;
+  transactions: TxStatusForPair[];
 };
 
 export type EIP2612GaslessExecuteTxParams = {
