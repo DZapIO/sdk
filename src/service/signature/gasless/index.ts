@@ -1,7 +1,7 @@
 import { getContract } from 'viem';
 
 import { GASLESS_TX_TYPE } from '../../../constants';
-import { EIP2612_GASLESS_DOMAIN } from '../../../constants/permit';
+import { EIP2612_GASLESS_DOMAIN, SIGNATURE_EXPIRY_IN_SECS } from '../../../constants/permit';
 import { DZapIntentPrimaryTypes } from '../../../constants/permit';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import type { HexString } from '../../../types';
@@ -13,8 +13,6 @@ import { logger } from '../../../utils/logger';
 import { signTypedData } from '../../../utils/signer';
 import { ChainsService } from '../../chains';
 import { ContractsService } from '../../contracts';
-
-const SIGNATURE_EXPIRY_IN_SECS = 1800; // 30 minutes
 
 /**
  * Gasless - Static class for handling gasless intent signature generation
@@ -103,7 +101,6 @@ export class Gasless {
   } {
     const { account, deadline, nonce, swapDataHash } = params;
 
-    // Swap transaction
     if (params.txType === GASLESS_TX_TYPE.swap) {
       return {
         domain: this.buildDomain(params.spender, params.chainId),
@@ -120,7 +117,6 @@ export class Gasless {
       };
     }
 
-    // Swap-Bridge transaction
     if (swapDataHash) {
       return {
         domain: this.buildDomain(params.spender, params.chainId),
@@ -138,7 +134,6 @@ export class Gasless {
       };
     }
 
-    // Bridge transaction
     return {
       domain: this.buildDomain(params.spender, params.chainId),
       message: {

@@ -27,10 +27,6 @@ type PermitDataParams = BasePermitDataParams & ({ gasless: false } | GaslessSwap
  * Supports both gas-paid and gasless transactions with EIP-2612 and Permit2 standards.
  */
 export class SignatureService {
-  // ============================================================================
-  // Public API - Main Entry Points
-  // ============================================================================
-
   /**
    * Sign permit for tokens (gas-paid transactions)
    * Main entry point for generating permit signatures for token approvals
@@ -110,11 +106,12 @@ export class SignatureService {
    * @private
    */
   private static signBatchPermit = async (signPermitReq: GasSignatureParams, tokens: TokenWithPermitData[]): Promise<SignPermitResponse> => {
+    const permitType = PermitTypes.PermitBatchWitnessTransferFrom;
     const resp = await Permit2.generateSignature({
       ...signPermitReq,
       tokens: tokens.map((token, index) => ({ ...token, index })),
       account: signPermitReq.sender,
-      permitType: PermitTypes.PermitBatchWitnessTransferFrom as any,
+      permitType,
     });
 
     if (resp.status !== TxnStatus.success) {
@@ -124,15 +121,18 @@ export class SignatureService {
         status: resp.status,
         code: resp.code,
         tokensCount: tokens.length,
+        tokenAddresses: tokens.map((t) => t.address),
+        permitType,
+        chainId: signPermitReq.chainId,
       });
-      return { status: resp.status, code: resp.code, permitType: PermitTypes.PermitBatchWitnessTransferFrom };
+      return { status: resp.status, code: resp.code, permitType };
     }
 
     if (signPermitReq.signatureCallback) {
       await signPermitReq.signatureCallback({
         batchPermitData: resp.permitData as HexString,
         tokens,
-        permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+        permitType,
       });
     }
 
@@ -140,7 +140,7 @@ export class SignatureService {
       status: TxnStatus.success,
       code: StatusCodes.Success,
       batchPermitData: resp.permitData as HexString,
-      permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+      permitType,
     };
   };
 
@@ -162,13 +162,15 @@ export class SignatureService {
       ? PermitTypes.PermitSingle
       : signPermitReq.permitType;
 
-    for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
-      const isFirstToken = dataIdx === 0;
+    for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+      const isFirstToken = tokenIndex === 0;
+      const currentToken = tokens[tokenIndex];
+
       const res = await this.signPermitForToken({
         ...signPermitReq,
         token: {
-          ...tokens[dataIdx],
-          index: dataIdx,
+          ...currentToken,
+          index: tokenIndex,
         },
         firstTokenNonce: firstTokenNonce ?? undefined,
         oneToMany,
@@ -182,26 +184,31 @@ export class SignatureService {
         logger.error('Token permit generation failed', {
           service: 'SignatureService',
           method: 'signIndividualPermits',
-          tokenAddress: tokens[dataIdx].address,
-          tokenIndex: dataIdx,
+          tokenAddress: currentToken.address,
           status: res.status,
           code: res.code,
+          permitType: res.permitType,
+          chainId: signPermitReq.chainId,
         });
         return { status: res.status, code: res.code, permitType: res.permitType };
       }
 
-      (tokens[dataIdx] as any).permitData = res.permitData;
+      // Update token with permit data (type-safe mutation)
+      const tokenWithPermitData = {
+        ...currentToken,
+        permitData: res.permitData,
+      } as TokenWithPermitData & { permitData?: HexString };
+      tokens[tokenIndex] = tokenWithPermitData;
 
-      // Store the nonce from the first token; required for PermitWitnessTransferFrom in one-to-many scenarios
-      if (isFirstToken && !isDZapNativeToken(tokens[dataIdx].address)) {
+      if (isFirstToken && !isDZapNativeToken(currentToken.address)) {
         firstTokenNonce = res.nonce ?? null;
       }
 
-      if (signPermitReq.signatureCallback && !isDZapNativeToken(tokens[dataIdx].address)) {
-        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(tokens[dataIdx].amount);
+      if (signPermitReq.signatureCallback && !isDZapNativeToken(currentToken.address)) {
+        const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(currentToken.amount);
         await signPermitReq.signatureCallback({
           permitData: res.permitData as HexString,
-          srcToken: tokens[dataIdx].address as HexString,
+          srcToken: currentToken.address as HexString,
           amount: amount.toString(),
           permitType: res.permitType,
         });
@@ -220,7 +227,6 @@ export class SignatureService {
     const { token, oneToMany, totalSrcAmount, chainId, rpcUrls, permitType, account } = params;
     const isFirstToken = token.index === 0;
 
-    // Handle native tokens (no permit needed)
     if (isDZapNativeToken(token.address)) {
       return {
         status: TxnStatus.success,
@@ -233,7 +239,6 @@ export class SignatureService {
 
     const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(token.amount);
 
-    // Check if token supports EIP-2612 permit
     const eip2612PermitData = await getEIP2612PermitData({
       address: token.address,
       chainId,
@@ -270,11 +275,15 @@ export class SignatureService {
         chainId: params.chainId,
         tokenAddress: token.address,
         permitType: params.permitType,
+        account: params.account,
       });
-      throw new Error('Token does not support EIP-2612 permits');
+      return {
+        status: TxnStatus.error,
+        code: StatusCodes.Error,
+        permitType: PermitTypes.EIP2612Permit,
+      };
     }
 
-    // For one-to-many non-first tokens, return default permit data
     if (oneToMany && !isFirstToken) {
       return {
         status: TxnStatus.success,
@@ -299,6 +308,24 @@ export class SignatureService {
       nonce: eip2612PermitData.data.nonce,
     });
 
+    if (status !== TxnStatus.success) {
+      logger.error('EIP-2612 signature generation failed', {
+        service: 'SignatureService',
+        method: 'signEIP2612Signature',
+        chainId: params.chainId,
+        tokenAddress: token.address,
+        permitType: PermitTypes.EIP2612Permit,
+        status,
+        code,
+        account: params.account,
+      });
+      return {
+        status,
+        code,
+        permitType: PermitTypes.EIP2612Permit,
+      };
+    }
+
     return {
       status,
       code,
@@ -321,7 +348,6 @@ export class SignatureService {
   ): Promise<PermitResponse> => {
     const normalizedPermitType = permitType === PermitTypes.AutoPermit ? PermitTypes.PermitWitnessTransferFrom : permitType;
 
-    // For one-to-many non-first tokens, return default permit data
     if (oneToMany && !isFirstToken) {
       return {
         status: TxnStatus.success,
@@ -335,8 +361,21 @@ export class SignatureService {
     const resp = await Permit2.generateSignature({
       ...params,
       tokens: [token],
-      permitType: normalizedPermitType as any,
+      permitType: normalizedPermitType as typeof PermitTypes.PermitWitnessTransferFrom | typeof PermitTypes.PermitSingle,
     });
+
+    if (resp.status !== TxnStatus.success) {
+      logger.error('Permit2 signature generation failed', {
+        service: 'SignatureService',
+        method: 'signPermit2Signature',
+        chainId: params.chainId,
+        tokenAddress: token.address,
+        permitType: normalizedPermitType,
+        status: resp.status,
+        code: resp.code,
+        account: params.account,
+      });
+    }
 
     return {
       ...resp,

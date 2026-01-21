@@ -73,6 +73,10 @@ export class EIP2612 {
         service: 'EIP2612Service',
         method: 'generateSignature',
         chainId: params.chainId,
+        tokenAddress: params.token.address,
+        spender: params.spender,
+        account: params.account,
+        permitType: 'EIP2612Permit',
         error,
       });
       if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
