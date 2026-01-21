@@ -41,7 +41,7 @@ class Config {
   private _tradeApi: ApiConfig = DEFAULT_CONFIG.tradeApi;
   private _zapApi: ApiConfig = DEFAULT_CONFIG.zapApi;
 
-  public constructor(options: DZapConfigOptions = {}) {
+  public constructor(options?: DZapConfigOptions) {
     const hasOptions = options && Object.keys(options).length > 0;
     if (hasOptions) {
       this.updateConfig(options);

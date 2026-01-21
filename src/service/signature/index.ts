@@ -27,12 +27,12 @@ import type {
   TokenWithPermitData,
 } from '../../types/permit';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
-import { getPublicClient } from '../../utils/client';
 import { generateDeadline } from '../../utils/date';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { handleStandardError, handleViemTransactionError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
+import { ChainsService } from '../chains';
 import { ContractsService } from '../contracts';
 import { Permit2 } from '../permit2';
 
@@ -138,7 +138,7 @@ export class SignatureService {
       const contract = getContract({
         abi: ContractsService.getDZapAbi('trade', params.contractVersion),
         address: spender,
-        client: getPublicClient({ chainId, rpcUrls }),
+        client: ChainsService.getPublicClient(chainId, rpcUrls),
       });
 
       const nonce = (await contract.read.getNonce([account])) as bigint;

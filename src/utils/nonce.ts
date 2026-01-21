@@ -2,8 +2,8 @@ import type { Address, PublicClient } from 'viem';
 import { getContract, maxUint256 } from 'viem';
 
 import * as ABI from '../artifacts';
+import { ChainsService } from '../service/chains';
 import type { HexString } from '../types';
-import { getPublicClient } from './client';
 
 export class NonceManager {
   private static readonly POSITION_BITS = BigInt(8);
@@ -67,7 +67,7 @@ export class NonceManager {
 }
 
 export const getNextPermit2Nonce = async (permitAddress: HexString, account: HexString, chainId: number, rpcUrls?: string[]): Promise<bigint> => {
-  const publicClient = getPublicClient({ chainId, rpcUrls });
+  const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
   const nonceManager = new NonceManager(publicClient, permitAddress);
   return nonceManager.nextNonce(account);
 };

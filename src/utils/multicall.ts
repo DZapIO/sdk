@@ -1,8 +1,8 @@
 import type { MulticallParameters } from 'viem';
 
 import { StatusCodes, TxnStatus } from '../enums';
+import { ChainsService } from '../service/chains';
 import type { HexString } from '../types';
-import { getPublicClient } from './client';
 import { handleStandardError } from './errors';
 import { logger } from './logger';
 
@@ -23,7 +23,7 @@ export const multicall = async ({
   allowFailure?: boolean;
 }): Promise<{ status: TxnStatus; code: StatusCodes; data: unknown[] }> => {
   try {
-    const publicClient = getPublicClient({ chainId, rpcUrls });
+    const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
     const results = await publicClient.multicall({
       contracts,
       ...(multicallAddress && { multicallAddress }),

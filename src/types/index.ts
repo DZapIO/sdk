@@ -402,43 +402,28 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type PartialStatusData = {
-  receiveToken?: string;
-  receiveAmount?: string;
-  receiveAmountUSD?: string;
+export type HistoryTokenData = {
+  asset: Omit<TokenInfo, 'price' | 'balance'>;
+  amount: string;
+  amountUSD: string;
+  status: keyof typeof STATUS_RESPONSE;
+  txHash: string;
+  account: string;
+  timestamp: number;
 };
 
-export type RefundStatusData = {
-  refundTxHash?: string;
-  refundToken?: string;
-  refundAmount?: string;
-  refundAmountUSD?: string;
-  refundTimeStamp?: string;
+export type TxPairData = {
+  input: HistoryTokenData;
+  output: Omit<HistoryTokenData, 'txHash' | 'status' | 'timestamp'>;
+  received: HistoryTokenData;
+  provider: ProviderDetails;
+  allowUserTxOnDestChain: boolean;
+  message?: string;
+  providerTxLink?: string;
 };
-
-export type TradeStatusResponseData = PartialStatusData &
-  RefundStatusData & {
-    srcChainId: number;
-    srcToken: string;
-    srcAmount: string;
-    srcAmountUSD: string;
-    srcTxHash: string;
-    destChainId: number;
-    destToken: string;
-    destAmount: string;
-    destAmountUSD: string;
-    destTxHash: string;
-    account: string;
-    recipient: string;
-    provider: string;
-    allowUserTxOnDestChain: boolean;
-    status: keyof typeof STATUS_RESPONSE;
-    outputToken?: string;
-    refundTxHash?: string;
-  };
 
 export type TradeStatusResponse = {
-  [pair: string]: TradeStatusResponseData;
+  [pair: string]: TxPairData;
 };
 
 export type EIP2612GaslessExecuteTxParams = {
