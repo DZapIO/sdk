@@ -25,7 +25,7 @@ import type {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from '../../types';
-import type { CustomTypedDataParams } from '../../types/permit';
+import type { CustomTypedDataParams } from '../../types/gasless';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
 import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
 import { logger } from '../../utils/logger';

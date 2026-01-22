@@ -2,21 +2,31 @@ import { ethers } from 'ethers';
 import type { TypedDataDomain } from 'viem';
 import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
 
+import { erc20PermitAbi } from '../../../artifacts';
+import { config } from '../../../config';
 import { Services } from '../../../constants';
-import { SIGNATURE_EXPIRY_IN_SECS } from '../../../constants/permit';
+import { ERC20_FUNCTIONS } from '../../../constants/erc20';
+import { DEFAULT_PERMIT_VERSION, SIGNATURE_EXPIRY_IN_SECS } from '../../../constants/permit';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../../enums';
-import type { AvailableDZapServices, HexString } from '../../../types';
-import { EIP2612DefaultTypes } from '../../../types/eip-2612';
-import type { DefaultPermit2612Params } from '../../../types/permit';
+import type { AvailableDZapServices, HexString, TokenPermitData } from '../../../types';
 import { generateDeadline } from '../../../utils/date';
 import { logger } from '../../../utils/logger';
+import { multicall } from '../../../utils/multicall';
 import { signTypedData } from '../../../utils/signer';
+import type { DefaultPermit2612Params } from './types';
+import { EIP2612DefaultTypes, type EIP2612Types } from './types';
 
 /**
  * EIP2612 - Static class for handling EIP-2612 permit signature generation
  * This service provides methods for generating and encoding EIP-2612 signatures used for token approvals
  */
 export class EIP2612 {
+  private static permitSupportCache = new Map<string, boolean>();
+
+  private static getEIP2612SupportCacheKey(chainId: number, address: HexString): string {
+    return `${chainId}-${address.toLowerCase()}`;
+  }
+
   /**
    * Generates a complete EIP-2612 permit signature with encoded data ready for transaction
    * @param params - EIP-2612 permit parameters including token, spender, and chain info
@@ -105,7 +115,7 @@ export class EIP2612 {
     domain: TypedDataDomain,
   ): {
     domain: TypedDataDomain;
-    types: typeof EIP2612DefaultTypes;
+    types: EIP2612Types;
     message: {
       owner: HexString;
       spender: HexString;
@@ -182,5 +192,158 @@ export class EIP2612 {
         : ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
 
     return encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData as HexString]);
+  }
+
+  /**
+   * Lightweight check if a token supports EIP-2612 permits
+   * Optimized for allowance checks - only returns support status, no nonce data
+   * Uses token.permit data if available, otherwise checks cache, then minimal RPC call
+   */
+  public static async checkEIP2612PermitSupport({
+    address,
+    chainId,
+    rpcUrls,
+    permit,
+  }: {
+    chainId: number;
+    address: HexString;
+    rpcUrls?: string[];
+    permit?: TokenPermitData;
+  }): Promise<{
+    supportsPermit: boolean;
+  }> {
+    if (config.eip2612DisabledChains.includes(chainId)) {
+      return { supportsPermit: false };
+    }
+
+    if (permit?.eip2612?.supported === false) {
+      return { supportsPermit: false };
+    }
+
+    if (permit?.eip2612?.supported === true) {
+      return { supportsPermit: true };
+    }
+
+    const cacheKey = this.getEIP2612SupportCacheKey(chainId, address);
+    const cachedSupport = this.permitSupportCache.get(cacheKey);
+    if (cachedSupport !== undefined) {
+      return { supportsPermit: cachedSupport };
+    }
+
+    const contracts = [
+      {
+        address: address as HexString,
+        abi: erc20PermitAbi,
+        functionName: ERC20_FUNCTIONS.domainSeparator,
+      },
+    ];
+
+    const multicallResult = await multicall({
+      chainId,
+      contracts,
+      rpcUrls,
+      allowFailure: true,
+    });
+
+    const results = multicallResult.data as Array<{ status: string; result: unknown }>;
+    const supportsPermit = multicallResult.status === TxnStatus.success && results.length > 0 && results[0]?.status === TxnStatus.success;
+
+    this.permitSupportCache.set(cacheKey, supportsPermit);
+
+    return { supportsPermit };
+  }
+
+  /**
+   * Get full EIP-2612 permit data including nonce, version, and name
+   * Optimized for signature service - always fetches nonce via RPC
+   * Uses caching to avoid redundant calls when called after allowance check
+   */
+  public static async getEIP2612PermitData({
+    address,
+    chainId,
+    rpcUrls,
+    owner,
+    permit,
+  }: {
+    chainId: number;
+    address: HexString;
+    rpcUrls?: string[];
+    owner: HexString;
+    permit?: TokenPermitData;
+  }): Promise<{
+    supportsPermit: boolean;
+    data?: {
+      version: string;
+      name: string;
+      nonce: bigint;
+    };
+  }> {
+    if (config.eip2612DisabledChains.includes(chainId)) {
+      return { supportsPermit: false };
+    }
+
+    if (permit?.eip2612?.supported === false) {
+      return { supportsPermit: false };
+    }
+
+    const contracts = [
+      {
+        address: address as HexString,
+        abi: erc20PermitAbi,
+        functionName: ERC20_FUNCTIONS.domainSeparator,
+      },
+      {
+        address: address as HexString,
+        abi: erc20PermitAbi,
+        functionName: ERC20_FUNCTIONS.nonces,
+        args: [owner],
+      },
+      {
+        address: address as HexString,
+        abi: erc20PermitAbi,
+        functionName: ERC20_FUNCTIONS.name,
+      },
+      {
+        address: address as HexString,
+        abi: erc20PermitAbi,
+        functionName: ERC20_FUNCTIONS.version,
+      },
+    ];
+
+    const multicallResult = await multicall({
+      chainId,
+      contracts,
+      rpcUrls,
+      allowFailure: true,
+    });
+
+    if (multicallResult.status !== TxnStatus.success) {
+      return { supportsPermit: false };
+    }
+
+    const results = multicallResult.data;
+    const [domainSeparatorResult, nonceResult, nameResult, versionResult] = results;
+
+    if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
+      return { supportsPermit: false };
+    }
+
+    const data: {
+      version: string;
+      name: string;
+      nonce: bigint;
+    } = {
+      version: versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION,
+      name: nameResult.result as string,
+      nonce: nonceResult.result as bigint,
+    };
+
+    const supportCacheKey = this.getEIP2612SupportCacheKey(chainId, address);
+    this.permitSupportCache.set(supportCacheKey, true);
+
+    return {
+      supportsPermit: true,
+      data,
+    };
   }
 }

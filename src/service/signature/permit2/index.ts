@@ -10,9 +10,13 @@ import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS }
 import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../../constants/permit2';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../../enums';
 import type { AvailableDZapServices, HexString } from '../../../types';
+import { generateDeadline } from '../../../utils';
+import { logger } from '../../../utils/logger';
+import { getNextPermit2Nonce } from '../../../utils/nonce';
+import { signTypedData } from '../../../utils/signer';
+import { ChainsService } from '../../chains';
+import type { BasePermitParams, BasePermitResponse } from '../types';
 import type {
-  BasePermitParams,
-  BasePermitResponse,
   Permit2Params,
   Permit2PrimaryType,
   PermitBatchTransferFromValues,
@@ -20,13 +24,8 @@ import type {
   PermitTransferFromValues,
   TokenWithIndex,
   WitnessData,
-} from '../../../types/permit';
-import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from '../../../types/permit';
-import { generateDeadline } from '../../../utils';
-import { logger } from '../../../utils/logger';
-import { getNextPermit2Nonce } from '../../../utils/nonce';
-import { signTypedData } from '../../../utils/signer';
-import { ChainsService } from '../../chains';
+} from './types';
+import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from './types';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -97,7 +96,7 @@ export class Permit2 {
       const expiration = params.expiration ?? maxUint48;
       const permit2Address = this.getAddress(chainId);
 
-      const normalizedTokens = tokens.map((token) => ({
+      const normalizedTokens: TokenWithIndex[] = tokens.map((token) => ({
         ...token,
         amount: BigInt(token.amount || maxUint256).toString(),
       }));

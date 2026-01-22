@@ -7,7 +7,7 @@ import type { STATUS_RESPONSE, TX_STATUS } from '../constants/status';
 import type { GASLESS_TX_TYPE, QUOTE_FILTERS, Services, STANDARD_ABIS } from './../constants';
 import type { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
 import type { PsbtInput, PsbtOutput } from './btc';
-import type { GaslessBridgeParams, GaslessSwapParams } from './permit';
+import type { GaslessBridgeParams, GaslessSwapParams } from './gasless';
 
 export type HexString = `0x${string}`;
 

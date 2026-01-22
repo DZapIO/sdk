@@ -2,13 +2,13 @@ import { Services } from '../../constants';
 import { DEFAULT_PERMIT_DATA, DEFAULT_PERMIT2_DATA, PermitTypes } from '../../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
 import type { AvailableDZapServices, GaslessSignatureParams, GasSignatureParams, HexString, PermitMode, SignPermitResponse } from '../../types';
-import type { GaslessBridgeParams, GaslessSwapParams, PermitParams, PermitResponse, TokenWithPermitData } from '../../types/permit';
+import type { GaslessBridgeParams, GaslessSwapParams } from '../../types/gasless';
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
-import { getEIP2612PermitData } from '../../utils/eip2612Permit';
 import { logger } from '../../utils/logger';
 import { EIP2612 } from './eip2612';
 import { Gasless } from './gasless';
 import { Permit2 } from './permit2';
+import type { PermitParams, PermitResponse, TokenWithPermitData } from './types';
 
 type BasePermitDataParams = {
   oneToMany: boolean;
@@ -239,7 +239,7 @@ export class SignatureService {
 
     const amount = oneToMany && isFirstToken ? totalSrcAmount : BigInt(token.amount);
 
-    const eip2612PermitData = await getEIP2612PermitData({
+    const eip2612PermitData = await EIP2612.getEIP2612PermitData({
       address: token.address,
       chainId,
       rpcUrls,
@@ -264,7 +264,7 @@ export class SignatureService {
     params: PermitDataParams,
     token: TokenWithPermitData,
     amount: bigint,
-    eip2612PermitData: Awaited<ReturnType<typeof getEIP2612PermitData>>,
+    eip2612PermitData: Awaited<ReturnType<typeof EIP2612.getEIP2612PermitData>>,
     oneToMany: boolean,
     isFirstToken: boolean,
   ): Promise<PermitResponse> => {

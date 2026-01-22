@@ -5,14 +5,21 @@ import { EIP2612_GASLESS_DOMAIN, SIGNATURE_EXPIRY_IN_SECS } from '../../../const
 import { DZapIntentPrimaryTypes } from '../../../constants/permit';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import type { HexString } from '../../../types';
-import { DzapUserIntentBridgeTypes, DzapUserIntentSwapBridgeTypes, DzapUserIntentSwapTypes } from '../../../types/eip-2612';
-import type { Gasless2612PermitParams } from '../../../types/permit';
 import { generateDeadline } from '../../../utils/date';
 import { handleViemTransactionError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { signTypedData } from '../../../utils/signer';
 import { ChainsService } from '../../chains';
 import { ContractsService } from '../../contracts';
+import type { Gasless2612PermitParams } from '../eip2612/types';
+import {
+  type DzapUserIntentBridgeType,
+  DzapUserIntentBridgeTypes,
+  type DzapUserIntentSwapBridgeType,
+  DzapUserIntentSwapBridgeTypes,
+  type DzapUserIntentSwapType,
+  DzapUserIntentSwapTypes,
+} from './types';
 
 /**
  * Gasless - Static class for handling gasless intent signature generation
@@ -95,7 +102,7 @@ export class Gasless {
       verifyingContract: HexString;
       salt: HexString;
     };
-    types: typeof DzapUserIntentSwapTypes | typeof DzapUserIntentSwapBridgeTypes | typeof DzapUserIntentBridgeTypes;
+    types: DzapUserIntentSwapType | DzapUserIntentSwapBridgeType | DzapUserIntentBridgeType;
     message: Record<string, any>;
     primaryType: string;
   } {

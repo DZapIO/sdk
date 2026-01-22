@@ -10,7 +10,6 @@ export {
 } from './amount';
 export { extendViemChain, isNonEVMChain } from './chain';
 export { generateDeadline } from './date';
-export { checkEIP2612PermitSupport, getEIP2612PermitData } from './eip2612Permit';
 export {
   BRIDGE_ERRORS,
   getErrorName,

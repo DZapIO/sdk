@@ -1,5 +1,5 @@
 import type { Signer } from 'ethers';
-import type { Address, MulticallParameters, Prettify, WalletClient } from 'viem';
+import type { Address, Prettify, WalletClient } from 'viem';
 import { encodeFunctionData, maxUint256 } from 'viem';
 
 import { erc20Abi } from '../../artifacts';
@@ -19,13 +19,13 @@ import type {
   TokenPermitData,
 } from '../../types';
 import { isDZapNativeToken } from '../../utils/address';
-import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
 import { logger } from '../../utils/logger';
 import { multicall } from '../../utils/multicall';
 import { isEthersSigner } from '../../utils/signer';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
 import { SignatureService } from '../signature';
+import { EIP2612 } from '../signature/eip2612';
 import { Permit2 } from '../signature/permit2';
 import { TransactionsService } from '../transactions';
 
@@ -49,12 +49,8 @@ export class ApprovalsService {
     spenderAddress: HexString;
     multicallAddress?: HexString;
   }> {
-    // Batch fetch chain config and contract address in parallel
-    const [chainConfig, contractAddress] = await Promise.all([
-      this.chainsService.getConfig(),
-      spender ? Promise.resolve(spender) : this.contractsService.getAddress({ chainId, service }),
-    ]);
-
+    const chainConfig = await this.chainsService.getConfig();
+    const contractAddress = spender ? spender : await this.contractsService.getAddress({ chainId, service });
     return {
       chainConfig,
       spenderAddress: contractAddress as HexString,
@@ -89,7 +85,7 @@ export class ApprovalsService {
     const approvalData = await Promise.all(
       erc20Tokens.map(async ({ address, amount, permit }) => {
         if (mode === ApprovalModes.AutoPermit) {
-          const eip2612PermitData = await checkEIP2612PermitSupport({
+          const eip2612PermitData = await EIP2612.checkEIP2612PermitSupport({
             address,
             chainId,
             rpcUrls,
@@ -171,7 +167,7 @@ export class ApprovalsService {
     multicallAddress?: HexString;
     rpcUrls?: string[];
   }): Promise<{ status: TxnStatus; code: StatusCodes; data: Record<string, bigint> }> {
-    const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
+    const contracts = data.map(({ token, spender }) => ({
       address: token,
       abi: erc20Abi,
       functionName: ERC20_FUNCTIONS.allowance,
@@ -204,7 +200,7 @@ export class ApprovalsService {
 
     const tokenAllowances: Record<string, bigint> = {};
     for (let i = 0; i < data.length; i++) {
-      tokenAllowances[data[i].token] = allowances[i] as bigint;
+      tokenAllowances[data[i].token] = allowances[i];
     }
 
     return { status, code, data: tokenAllowances };
@@ -351,16 +347,29 @@ export class ApprovalsService {
           functionName: ERC20_FUNCTIONS.approve,
           args: [finalSpender, BigInt(tokens[dataIdx].amount)],
         });
-        await signer.sendTransaction({
-          from,
-          chainId,
-          to: tokens[dataIdx].address,
-          data: callData,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-        };
+        try {
+          const txnResponse = await signer.sendTransaction({
+            from,
+            chainId,
+            to: tokens[dataIdx].address,
+            data: callData,
+          });
+          txnDetails = { txnHash: txnResponse.hash, status: TxnStatus.success, code: StatusCodes.Success };
+        } catch (e: unknown) {
+          const error = e as { code?: StatusCodes };
+          logger.error('Token approval transaction failed', {
+            service: 'ApprovalsService',
+            method: 'approve',
+            chainId,
+            tokenAddress: tokens[dataIdx].address,
+            error: e,
+          });
+          if (error?.code === StatusCodes.UserRejectedRequest) {
+            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
+          } else {
+            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
+          }
+        }
       } else {
         const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
         try {

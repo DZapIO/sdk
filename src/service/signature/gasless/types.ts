@@ -1,28 +1,3 @@
-export const EIP2612DefaultTypes = {
-  Permit: [
-    {
-      name: 'owner',
-      type: 'address',
-    },
-    {
-      name: 'spender',
-      type: 'address',
-    },
-    {
-      name: 'value',
-      type: 'uint256',
-    },
-    {
-      name: 'nonce',
-      type: 'uint256',
-    },
-    {
-      name: 'deadline',
-      type: 'uint256',
-    },
-  ],
-};
-
 export const DzapUserIntentSwapTypes = {
   SignedGasLessSwapData: [
     { name: 'txId', type: 'bytes32' },
@@ -56,3 +31,7 @@ export const DzapUserIntentSwapBridgeTypes = {
     { name: 'adapterDataHash', type: 'bytes32' },
   ],
 };
+
+export type DzapUserIntentSwapType = typeof DzapUserIntentSwapTypes;
+export type DzapUserIntentBridgeType = typeof DzapUserIntentBridgeTypes;
+export type DzapUserIntentSwapBridgeType = typeof DzapUserIntentSwapBridgeTypes;

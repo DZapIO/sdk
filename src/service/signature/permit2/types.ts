@@ -1,11 +1,9 @@
-import type { Signer, TypedDataField } from 'ethers';
-import type { Address, TypedDataDomain, WalletClient } from 'viem';
+import type { Address } from 'viem';
 
-import type { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
-import type { GASLESS_TX_TYPE } from '../constants';
-import type { Permit2PrimaryTypes } from '../constants/permit';
-import type { ContractVersion } from '../enums';
-import type { AvailableDZapServices, TokenPermitData } from '.';
+import type { Permit2PrimaryTypes } from '../../../constants/permit';
+import type { HexString } from '../../../types';
+import type { GaslessBridgeParams, GaslessSwapParams } from '../../../types/gasless';
+import type { BasePermitParams, BasePermitResponse, TokenWithPermitData } from '../types';
 
 export const defaultWitnessType = {
   typeName: 'DZapTransferWitness',
@@ -62,9 +60,6 @@ export const BatchPermitAbiParams = [
   { name: 'permitSignature', type: 'bytes' },
 ] as const;
 
-/**
- * Base token for permit, address and amount
- */
 type BaseToken = {
   address: HexString;
   amount: string;
@@ -79,91 +74,7 @@ type TokenPermissions = {
   amount: bigint;
 };
 
-export type TokenWithPermitData = {
-  index: number;
-  address: HexString;
-  amount: string;
-  permit?: TokenPermitData;
-};
-
 export type Permit2PrimaryType = (typeof Permit2PrimaryTypes)[keyof typeof Permit2PrimaryTypes];
-
-// Gasless common types
-type GaslessBaseParams = {
-  gasless: true;
-  txId: HexString;
-  executorFeesHash: HexString;
-};
-
-export type GaslessSwapParams = {
-  txType: typeof GASLESS_TX_TYPE.swap;
-  swapDataHash: HexString;
-} & GaslessBaseParams;
-
-export type GaslessBridgeParams = {
-  txType: typeof GASLESS_TX_TYPE.bridge;
-  adapterDataHash: HexString;
-  swapDataHash?: HexString;
-} & GaslessBaseParams;
-
-/**
- * Core parameters required for any permit operation
- * Foundation for both EIP-2612 and Permit2 signatures
- */
-export type BasePermitParams = {
-  chainId: number;
-  account: HexString;
-  spender: HexString;
-  rpcUrls?: string[];
-  deadline?: bigint;
-  signer: WalletClient | Signer;
-  contractVersion: ContractVersion;
-  service: AvailableDZapServices;
-};
-
-/**
- * Traditional EIP-2612 permit (user pays gas)
- */
-type Permit2612BaseParams = {
-  token: TokenWithPermitData;
-  version: string;
-  sigDeadline?: bigint;
-  name: string;
-  nonce: bigint;
-} & BasePermitParams;
-
-export type DefaultPermit2612Params = {
-  gasless: false;
-} & Permit2612BaseParams;
-
-/**
- * Custom DZAP(Eip-2612) gasless signature permit for swap operations
- */
-type GaslessSwapPermit2612Params = BasePermitParams & GaslessSwapParams;
-
-/**
- * Custom DZAP gasless signature permit for bridge operations
- */
-type GaslessBridgePermit2612Params = BasePermitParams & GaslessBridgeParams;
-
-/**
- * Union of all custom DZAP gasless permit configurations
- */
-export type Gasless2612PermitParams = GaslessSwapPermit2612Params | GaslessBridgePermit2612Params;
-
-export type CustomTypedDataParams = {
-  account: HexString;
-  signer: WalletClient | Signer;
-  domain: TypedDataDomain;
-  types: Record<string, Array<TypedDataField>>;
-  message: Record<string, any>;
-  primaryType: string;
-};
-/**
- * Union of all EIP-2612 permit configurations
- * Supports both gasless and traditional permit flows
- */
-export type Permit2612Params = DefaultPermit2612Params | Gasless2612PermitParams;
 
 export type BasePermit2Params = {
   tokens: TokenWithPermitData[];
@@ -175,40 +86,12 @@ export type BasePermit2Params = {
 type DefaultPermit2Params = {
   gasless: false;
 } & BasePermit2Params;
+
 type GaslessSwapPermit2Params = BasePermit2Params & GaslessSwapParams;
 
 type GaslessBridgePermit2Params = BasePermit2Params & GaslessBridgeParams;
 
 export type Permit2Params = DefaultPermit2Params | GaslessSwapPermit2Params | GaslessBridgePermit2Params;
-
-/**
- * Complete permit configuration union
- * Supports both EIP-2612 and Permit2 operations with all gasless variants
- *
- * Type Hierarchy:
- * PermitConfiguration
- * ├── Permit2612Params (EIP-2612 permits)
- * │   ├── StandardPermit2612 (gasless: false)
- * │   ├── GaslessSwapPermit2612 (gasless: true, txType: swap)
- * │   └── GaslessBridgePermit2612 (gasless: true, txType: bridge)
- * └── Permit2Params (Permit2 batch permits)
- *     ├── StandardPermit2 (gasless: false)
- *     ├── GaslessSwapPermit2 (gasless: true, txType: swap)
- *     └── GaslessBridgePermit2 (gasless: true, txType: bridge)
- */
-export type PermitParams = Permit2612Params | Permit2Params;
-
-//Core permit operation response data
-export type BasePermitResponse = {
-  status: TxnStatus;
-  code: StatusCodes;
-  permitData?: HexString;
-  nonce?: bigint;
-};
-
-export type PermitResponse = {
-  permitType: PermitMode;
-} & BasePermitResponse;
 
 export type BatchPermitResponse = {
   permitType: typeof Permit2PrimaryTypes.PermitBatchWitnessTransferFrom;
@@ -270,6 +153,7 @@ export type PermitSingleValues = {
   spender: Address;
   sigDeadline: bigint;
 };
+
 export type PermitTransferFromValues = {
   permitted: TokenPermissions;
   spender: Address;

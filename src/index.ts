@@ -6,6 +6,7 @@ import { ChainsService } from './service/chains';
 import { ContractsService } from './service/contracts';
 import { SwapDecoder } from './service/decoder';
 import { SignatureService } from './service/signature';
+import { EIP2612 } from './service/signature/eip2612';
 import { Permit2 } from './service/signature/permit2';
 import { TokenService } from './service/token';
 import { TradeService } from './service/trade';
@@ -53,7 +54,6 @@ import {
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { formatToken, getTokensPairKey, isBatchTxnSupportedByWallet } from './utils';
-import { checkEIP2612PermitSupport, getEIP2612PermitData } from './utils/eip2612Permit';
 
 export * from './constants';
 export * from './types/zap';
@@ -67,19 +67,18 @@ export {
   Chain,
   ChainData,
   ChainsService,
-  checkEIP2612PermitSupport,
   contractErrorActions,
   ContractErrorResponse,
   ContractsService,
   DZapClient,
   DZapPermitMode,
   DZapTransactionResponse,
+  EIP2612,
   EvmTxData,
   Fee,
   FeeDetails,
   formatToken,
   GaslessTradeBuildTxnResponse,
-  getEIP2612PermitData,
   getTokensPairKey,
   HexString,
   isBatchTxnSupportedByWallet,
