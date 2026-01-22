@@ -1,10 +1,16 @@
-import { DZapValidationError } from '../utils/errors';
 import { isValidUrl } from '../utils/url';
 
-export class ConfigValidationError extends DZapValidationError {
-  constructor(message: string, field: string) {
-    super(message, field);
+export class ConfigValidationError extends Error {
+  constructor(
+    message: string,
+    public field: string,
+    public originalError?: unknown,
+  ) {
+    super(message);
     this.name = 'ConfigValidationError';
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ConfigValidationError);
+    }
   }
 }
 

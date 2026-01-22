@@ -29,7 +29,7 @@ import type {
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
 import { generateDeadline } from '../../utils/date';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
-import { handleStandardError, handleViemTransactionError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
 import { ChainsService } from '../chains';
@@ -183,7 +183,7 @@ export class SignatureService {
         txType: params.txType,
         error,
       });
-      return handleViemTransactionError({ error });
+      return parseError(error);
     }
   }
 
@@ -226,7 +226,7 @@ export class SignatureService {
         method: 'signCustomTypedData',
         error,
       });
-      return handleViemTransactionError({ error });
+      return parseError(error);
     }
   }
 
@@ -317,7 +317,7 @@ export class SignatureService {
         method: 'generatePermit2Signature',
         error,
       });
-      return handleStandardError(error);
+      return parseError(error);
     }
   }
 
@@ -693,7 +693,7 @@ export class SignatureService {
         chainId: params.chainId,
         error,
       });
-      return handleStandardError(error);
+      return parseError(error);
     }
   }
 }

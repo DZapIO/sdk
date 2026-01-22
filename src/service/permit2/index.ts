@@ -23,7 +23,7 @@ import type {
 } from '../../types/permit';
 import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from '../../types/permit';
 import { generateDeadline } from '../../utils';
-import { handleStandardError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { getNextPermit2Nonce } from '../../utils/nonce';
 import { signTypedData } from '../../utils/signer';
@@ -165,7 +165,7 @@ export class Permit2 {
         method: 'generateSignature',
         error,
       });
-      return handleStandardError(error);
+      return parseError(error);
     }
   }
 
