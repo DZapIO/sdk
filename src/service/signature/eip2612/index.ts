@@ -308,7 +308,7 @@ export class EIP2612 {
         abi: erc20PermitAbi,
         functionName: ERC20_FUNCTIONS.version,
       },
-    ];
+    ] as const;
 
     const multicallResult = await multicall({
       chainId,
