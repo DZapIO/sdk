@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios';
 import Decimal from 'decimal.js';
 import type { Signer } from 'ethers';
 import type { TransactionReceipt, WalletClient } from 'viem';
@@ -559,11 +558,7 @@ export class TradeService {
         error,
       });
 
-      const errorResponse = parseError(error);
-      return {
-        ...errorResponse,
-        error: isAxiosError(error) && error.response?.data ? error.response?.data : error,
-      };
+      return parseError(error, true);
     }
   }
 
@@ -674,11 +669,7 @@ export class TradeService {
         error,
       });
 
-      const errorResponse = parseError(error);
-      return {
-        ...errorResponse,
-        error: isAxiosError(error) && error.response?.data ? error.response?.data : error,
-      };
+      return parseError(error, true);
     }
   }
 

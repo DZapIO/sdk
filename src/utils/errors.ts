@@ -17,17 +17,28 @@ class ErrorParser {
    */
   public parseError(
     error: unknown,
-    defaultErrorCode: StatusCodes | number = StatusCodes.Error,
-  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions } {
-    if (error instanceof BaseError) {
-      return this.parseViemError(error);
+    includeError?: boolean,
+  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions; error?: unknown } {
+    const parsedError = (() => {
+      if (error instanceof BaseError) {
+        return this.parseViemError(error);
+      }
+
+      if (isAxiosError(error)) {
+        return this.parseAxiosError(error);
+      }
+
+      return this.parseGenericError(error);
+    })();
+
+    if (includeError) {
+      return {
+        ...parsedError,
+        error: isAxiosError(error) && error.response?.data ? error.response?.data : error,
+      };
     }
 
-    if (isAxiosError(error)) {
-      return this.parseAxiosError(error);
-    }
-
-    return this.parseGenericError(error, defaultErrorCode);
+    return parsedError;
   }
 
   private getErrorName(errorString: string | undefined | null): string | null {
@@ -125,14 +136,6 @@ class ErrorParser {
     const errorCode = this.getErrorCode(error);
     const statusCode = error.response?.status;
 
-    if (errorCode === StatusCodes.UserRejectedRequest) {
-      return {
-        errorMsg: 'Rejected by User',
-        code: StatusCodes.UserRejectedRequest,
-        status: TxnStatus.rejected,
-      };
-    }
-
     // Handle simulation failure
     if (statusCode === StatusCodes.SimulationFailure) {
       const responseData = error.response?.data;
@@ -157,19 +160,8 @@ class ErrorParser {
     };
   }
 
-  private parseGenericError(
-    error: unknown,
-    defaultErrorCode: StatusCodes | number = StatusCodes.Error,
-  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
+  private parseGenericError(error: unknown): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
     const errorCode = this.getErrorCode(error);
-
-    if (errorCode === StatusCodes.UserRejectedRequest) {
-      return {
-        errorMsg: 'Rejected by User',
-        code: StatusCodes.UserRejectedRequest,
-        status: TxnStatus.rejected,
-      };
-    }
 
     let errorMsg = 'An error occurred';
     if (error instanceof Error) {
@@ -181,7 +173,7 @@ class ErrorParser {
     return {
       status: TxnStatus.error,
       errorMsg,
-      code: errorCode || defaultErrorCode,
+      code: errorCode || StatusCodes.Error,
     };
   }
 }
@@ -190,7 +182,7 @@ const errorParser = new ErrorParser();
 
 export function parseError(
   error: unknown,
-  defaultErrorCode: StatusCodes | number = StatusCodes.Error,
-): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions } {
-  return errorParser.parseError(error, defaultErrorCode);
+  includeError?: boolean,
+): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions; error?: unknown } {
+  return errorParser.parseError(error, includeError);
 }
