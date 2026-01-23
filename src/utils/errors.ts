@@ -19,44 +19,16 @@ class ErrorParser {
     error: unknown,
     includeError?: boolean,
   ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions; error?: unknown } {
-    const parsedError = (() => {
-      if (error instanceof BaseError) {
-        return this.parseViemError(error);
-      }
-
-      if (isAxiosError(error)) {
-        return this.parseAxiosError(error);
-      }
-
-      return this.parseGenericError(error);
-    })();
-
-    if (includeError) {
-      return {
-        ...parsedError,
-        error: isAxiosError(error) && error.response?.data ? error.response?.data : error,
-      };
+    if (error instanceof BaseError) {
+      return this.parseViemError(error, includeError);
     }
 
-    return parsedError;
+    if (isAxiosError(error)) {
+      return this.parseAxiosError(error, includeError);
+    }
+
+    return this.parseGenericError(error, includeError);
   }
-
-  private getErrorName(errorString: string | undefined | null): string | null {
-    if (!errorString || typeof errorString !== 'string') {
-      return null;
-    }
-    const match = errorString.match(/Error: (\w+)/);
-    return match ? match[1] : null;
-  }
-
-  private getRevertMsg = (res: string) => {
-    if (res.length < 68) {
-      return res;
-    }
-    const revertData = ('0x' + res.slice(10)) as HexString;
-    const msg = decodeAbiParameters(parseAbiParameters('string'), revertData)[0];
-    return msg;
-  };
 
   private getErrorCode(error: unknown): StatusCodes | number | undefined {
     if (typeof error === 'object' && error !== null && 'code' in error) {
@@ -77,7 +49,23 @@ class ErrorParser {
     return undefined;
   }
 
-  private parseViemError(error: BaseError): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
+  private parseViemError(error: BaseError, includeError?: boolean): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
+    const getErrorName = (errorString: string | undefined | null): string | null => {
+      if (!errorString || typeof errorString !== 'string') {
+        return null;
+      }
+      const match = errorString.match(/Error: (\w+)/);
+      return match ? match[1] : null;
+    };
+
+    const getRevertMsg = (res: string) => {
+      if (res.length < 68) {
+        return res;
+      }
+      const revertData = ('0x' + res.slice(10)) as HexString;
+      const msg = decodeAbiParameters(parseAbiParameters('string'), revertData)[0];
+      return msg;
+    };
     const errorCode = this.getErrorCode(error);
 
     if (errorCode === StatusCodes.WalletRPCFailure) {
@@ -102,13 +90,13 @@ class ErrorParser {
     }
 
     if (error.metaMessages && error.metaMessages.length > 0) {
-      const errName = this.getErrorName(error.metaMessages[0]);
+      const errName = getErrorName(error.metaMessages[0]);
       if (errName === BRIDGE_ERRORS.BridgeCallFailed && error.metaMessages[1]) {
         let msg = error.metaMessages[1];
         try {
           const match = error.metaMessages[1].match(/\((.*?)\)/);
           if (match && match[1]) {
-            msg = this.getRevertMsg(match[1]);
+            msg = getRevertMsg(match[1]);
           }
         } catch {
           // If revert message extraction fails, use original message
@@ -124,16 +112,20 @@ class ErrorParser {
       status: TxnStatus.error,
       errorMsg: errMsg,
       code: StatusCodes.ContractExecutionError,
+      ...(includeError && { error }),
     };
   }
 
-  private parseAxiosError(error: AxiosError): {
+  private parseAxiosError(
+    error: AxiosError,
+    includeError?: boolean,
+  ): {
     status: TxnStatus;
     code: StatusCodes | number;
     errorMsg: string;
     action?: keyof typeof contractErrorActions;
   } {
-    const errorCode = this.getErrorCode(error);
+    const errorCode = error.status;
     const statusCode = error.response?.status;
 
     // Handle simulation failure
@@ -157,10 +149,11 @@ class ErrorParser {
       status: TxnStatus.error,
       errorMsg: errorMessage,
       code: statusCode || errorCode || StatusCodes.Error,
+      ...(includeError && { error: responseData }),
     };
   }
 
-  private parseGenericError(error: unknown): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
+  private parseGenericError(error: unknown, includeError?: boolean): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
     const errorCode = this.getErrorCode(error);
 
     let errorMsg = 'An error occurred';
@@ -174,6 +167,7 @@ class ErrorParser {
       status: TxnStatus.error,
       errorMsg,
       code: errorCode || StatusCodes.Error,
+      ...(includeError && { error }),
     };
   }
 }
