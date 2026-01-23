@@ -15,7 +15,6 @@ import type {
   BroadcastTxResponse,
   CalculatePointsRequest,
   ChainData,
-  ContractErrorResponse,
   DZapTransactionResponse,
   GaslessTradeBuildTxnResponse,
   HexString,
@@ -28,7 +27,7 @@ import type {
 import type { CustomTypedDataParams } from '../../types/permit';
 import { isEthersSigner } from '../../utils';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
-import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import type { ApprovalsService } from '../approvals';
 import { ChainsService } from '../chains';
@@ -542,31 +541,24 @@ export class TradeService {
       if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
         return this.sendHyperLiquidTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
       }
-      // Handle ethers signer (no batching support)
       if (batchTransaction && !isEthersSigner(signer)) {
         return this.sendBatchTxn(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
       }
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
     } catch (error: unknown) {
-      logger.error('Trade execution failed', { service: 'TradeService', method: 'execute', chainId: request.fromChain, error });
-      if (isAxiosError(error)) {
-        if (error?.response?.status === StatusCodes.SimulationFailure) {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Simulation Failed',
-            error: (error.response?.data as ContractErrorResponse).message,
-            code: (error.response?.data as ContractErrorResponse).code,
-            action: (error.response?.data as ContractErrorResponse).action,
-          };
-        }
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
-          error: error?.response?.data ?? error,
-          code: error?.response?.status ?? StatusCodes.Error,
-        };
-      }
-      return handleViemTransactionError({ error });
+      logger.error('Trade operation failed', {
+        service: 'TradeService',
+        method: 'execute',
+        chainId: request.fromChain,
+        sender: request.sender,
+        refundee: request.refundee,
+        tradeCount: request.data?.length,
+        txnData: txnData,
+        request: request.data,
+        error,
+      });
+
+      return parseError(error, true);
     }
   }
 
@@ -666,25 +658,18 @@ export class TradeService {
       }
       throw new Error('Gasless Transaction Failed');
     } catch (error: unknown) {
-      logger.error('Gasless transaction failed', { service: 'TradeService', method: 'executeGasless', chainId: request.fromChain, error });
-      if (isAxiosError(error)) {
-        if (error?.response?.status === StatusCodes.SimulationFailure) {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Simulation Failed',
-            error: (error.response?.data as ContractErrorResponse).message,
-            code: (error.response?.data as ContractErrorResponse).code,
-            action: (error.response?.data as ContractErrorResponse).action,
-          };
-        }
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
-          error: error?.response?.data ?? error,
-          code: error?.response?.status ?? StatusCodes.Error,
-        };
-      }
-      return handleViemTransactionError({ error });
+      logger.error('Trade operation failed', {
+        service: 'TradeService',
+        method: 'executeGasless',
+        chainId: request.fromChain,
+        sender: request.sender,
+        refundee: request.refundee,
+        request: request.data,
+        txnData: txnData,
+        error,
+      });
+
+      return parseError(error, true);
     }
   }
 

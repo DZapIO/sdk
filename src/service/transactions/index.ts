@@ -9,7 +9,7 @@ import { StatusCodes, TxnStatus } from '../../enums';
 import type { BatchCallParams, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
 import type { WalletCallReceipt } from '../../types/wallet';
 import { isEthersSigner } from '../../utils';
-import { handleViemTransactionError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 
 /**
@@ -126,7 +126,10 @@ export class TransactionsService {
       }
     } catch (error: unknown) {
       logger.error('Transaction send failed', { service: 'TransactionsService', method: 'sendTransaction', chainId, error });
-      return handleViemTransactionError({ error });
+      return {
+        ...parseError(error),
+        error,
+      };
     }
   }
 

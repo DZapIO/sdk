@@ -29,7 +29,7 @@ import type {
 import { calcTotalSrcTokenAmount, isDZapNativeToken, isOneToMany } from '../../utils';
 import { generateDeadline } from '../../utils/date';
 import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
-import { handleViemTransactionError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
 import { ChainsService } from '../chains';
@@ -183,7 +183,7 @@ export class SignatureService {
         txType: params.txType,
         error,
       });
-      return handleViemTransactionError({ error });
+      return parseError(error);
     }
   }
 
@@ -226,7 +226,7 @@ export class SignatureService {
         method: 'signCustomTypedData',
         error,
       });
-      return handleViemTransactionError({ error });
+      return parseError(error);
     }
   }
 
@@ -311,16 +311,13 @@ export class SignatureService {
         permitData,
         nonce,
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error generating permit2 signature', {
         service: 'SignatureService',
         method: 'generatePermit2Signature',
         error,
       });
-      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return parseError(error);
     }
   }
 
@@ -689,18 +686,14 @@ export class SignatureService {
         code: StatusCodes.Success,
         permitData,
       };
-    } catch (error: unknown) {
-      const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
+    } catch (error) {
       logger.error('Error generating permit signature', {
         service: 'SignatureService',
         method: 'getEIP2612PermitSignature',
         chainId: params.chainId,
         error,
       });
-      if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return parseError(error);
     }
   }
 }

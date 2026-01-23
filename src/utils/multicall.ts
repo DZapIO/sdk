@@ -3,6 +3,7 @@ import type { MulticallParameters } from 'viem';
 import { StatusCodes, TxnStatus } from '../enums';
 import { ChainsService } from '../service/chains';
 import type { HexString } from '../types';
+import { parseError } from './errors';
 import { logger } from './logger';
 
 /**
@@ -35,11 +36,11 @@ export const multicall = async ({
       data: results,
     };
   } catch (error: unknown) {
-    const err = error as { code?: StatusCodes };
     logger.error('Multicall failed', { service: 'MulticallUtil', chainId, error });
+    const errorResponse = parseError(error);
     return {
-      status: TxnStatus.error,
-      code: err.code || StatusCodes.Error,
+      status: errorResponse.status,
+      code: errorResponse.code,
       data: [],
     };
   }

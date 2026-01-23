@@ -4,9 +4,13 @@ export class ConfigValidationError extends Error {
   constructor(
     message: string,
     public field: string,
+    public originalError?: unknown,
   ) {
     super(message);
     this.name = 'ConfigValidationError';
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ConfigValidationError);
+    }
   }
 }
 

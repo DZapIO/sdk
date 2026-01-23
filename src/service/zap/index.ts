@@ -25,7 +25,7 @@ import type {
   ZapTransactionStep,
 } from '../../types/zap';
 import type { ZapEvmTxnDetails, ZapStep } from '../../types/zap/step';
-import { handleViemTransactionError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { ChainsService } from '../chains';
 import { TransactionsService } from '../transactions';
@@ -347,7 +347,10 @@ export class ZapService {
       });
     } catch (error: unknown) {
       logger.error('Zap step execution failed', { service: 'ZapService', method: 'executeStep', chainId, error });
-      return handleViemTransactionError({ error });
+      return {
+        ...parseError(error),
+        error,
+      };
     }
   }
 
@@ -378,7 +381,10 @@ export class ZapService {
       });
     } catch (error: unknown) {
       logger.error('Zap approval failed', { service: 'ZapService', method: 'approve', chainId, error });
-      return handleViemTransactionError({ error });
+      return {
+        ...parseError(error),
+        error,
+      };
     }
   }
 
@@ -447,7 +453,10 @@ export class ZapService {
       };
     } catch (error: unknown) {
       logger.error('Zap execution failed', { service: 'ZapService', method: 'executeZap', chainId: request.srcChainId, error });
-      return handleViemTransactionError({ error });
+      return {
+        ...parseError(error),
+        error,
+      };
     }
   }
 }
