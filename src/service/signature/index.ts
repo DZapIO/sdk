@@ -197,7 +197,7 @@ export class SignatureService {
       const tokenWithPermitData = {
         ...currentToken,
         permitData: res.permitData,
-      } as TokenWithPermitData & { permitData?: HexString };
+      };
       tokens[tokenIndex] = tokenWithPermitData;
 
       if (isFirstToken && !isDZapNativeToken(currentToken.address)) {
