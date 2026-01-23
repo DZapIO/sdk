@@ -195,6 +195,33 @@ export class EIP2612 {
   }
 
   /**
+   * Checks common conditions for EIP-2612 permit support
+   * Returns early support determination or null if further checks are needed
+   * @param chainId - Chain ID
+   * @param address - Token address
+   * @param permit - Optional permit data
+   * @returns Object with supportsPermit (boolean if determined, null if continue)
+   */
+  private static isSupported(chainId: number, address: HexString, permit?: TokenPermitData): boolean | null {
+    if (config.eip2612DisabledChains.includes(chainId)) {
+      return false;
+    }
+
+    if (permit?.eip2612 !== undefined) {
+      return permit.eip2612.supported;
+    }
+
+    const cacheKey = this.getEIP2612SupportCacheKey(chainId, address);
+    const cachedSupport = this.permitSupportCache.get(cacheKey);
+
+    if (cachedSupport !== undefined) {
+      return cachedSupport;
+    }
+
+    return null;
+  }
+
+  /**
    * Lightweight check if a token supports EIP-2612 permits
    * Optimized for allowance checks - only returns support status, no nonce data
    * Uses token.permit data if available, otherwise checks cache, then minimal RPC call
@@ -212,22 +239,11 @@ export class EIP2612 {
   }): Promise<{
     supportsPermit: boolean;
   }> {
-    if (config.eip2612DisabledChains.includes(chainId)) {
-      return { supportsPermit: false };
-    }
+    const supportCheck = this.isSupported(chainId, address, permit);
 
-    if (permit?.eip2612?.supported === false) {
-      return { supportsPermit: false };
-    }
-
-    if (permit?.eip2612?.supported === true) {
-      return { supportsPermit: true };
-    }
-
-    const cacheKey = this.getEIP2612SupportCacheKey(chainId, address);
-    const cachedSupport = this.permitSupportCache.get(cacheKey);
-    if (cachedSupport !== undefined) {
-      return { supportsPermit: cachedSupport };
+    // If we have a definitive answer (from config, permit data, or cache), return it
+    if (supportCheck !== null) {
+      return { supportsPermit: supportCheck };
     }
 
     const contracts = [
@@ -236,7 +252,7 @@ export class EIP2612 {
         abi: erc20PermitAbi,
         functionName: ERC20_FUNCTIONS.domainSeparator,
       },
-    ];
+    ] as const;
 
     const multicallResult = await multicall({
       chainId,
@@ -245,10 +261,9 @@ export class EIP2612 {
       allowFailure: true,
     });
 
-    const results = multicallResult.data as Array<{ status: string; result: unknown }>;
+    const results = multicallResult.data;
     const supportsPermit = multicallResult.status === TxnStatus.success && results.length > 0 && results[0]?.status === TxnStatus.success;
-
-    this.permitSupportCache.set(cacheKey, supportsPermit);
+    this.permitSupportCache.set(this.getEIP2612SupportCacheKey(chainId, address), supportsPermit);
 
     return { supportsPermit };
   }
@@ -278,11 +293,9 @@ export class EIP2612 {
       nonce: bigint;
     };
   }> {
-    if (config.eip2612DisabledChains.includes(chainId)) {
-      return { supportsPermit: false };
-    }
+    const supportCheck = this.isSupported(chainId, address, permit);
 
-    if (permit?.eip2612?.supported === false) {
+    if (supportCheck === false) {
       return { supportsPermit: false };
     }
 
@@ -308,7 +321,7 @@ export class EIP2612 {
         abi: erc20PermitAbi,
         functionName: ERC20_FUNCTIONS.version,
       },
-    ];
+    ] as const;
 
     const multicallResult = await multicall({
       chainId,
@@ -321,8 +334,7 @@ export class EIP2612 {
       return { supportsPermit: false };
     }
 
-    const results = multicallResult.data;
-    const [domainSeparatorResult, nonceResult, nameResult, versionResult] = results;
+    const [domainSeparatorResult, nonceResult, nameResult, versionResult] = multicallResult.data;
 
     if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
       return { supportsPermit: false };
