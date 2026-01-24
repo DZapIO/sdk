@@ -26,7 +26,7 @@ class DZapClient {
     this.chains = new ChainsService();
     this.contracts = new ContractsService(this.chains);
     this.approvals = new ApprovalsService(this.chains, this.contracts);
-    this.trade = new TradeService(this.priceService, this.chains, this.contracts, this.approvals);
+    this.trade = new TradeService(this.priceService, this.chains, this.contracts);
     this.tokens = new TokenService(this.priceService, this.chains);
     this.zap = new ZapService();
     this.transactions = new TransactionsService();

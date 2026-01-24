@@ -35,7 +35,7 @@ export class ContractsService {
    */
   public async getAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
     const chainConfig = await this.chainsService.getConfig();
-    if (!chainConfig[chainId]?.isEnabled || !chainConfig) {
+    if (!chainConfig?.[chainId]?.isEnabled) {
       throw new Error('Chains config not found');
     }
 

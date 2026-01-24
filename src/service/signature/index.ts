@@ -329,7 +329,7 @@ export class SignatureService {
       status,
       code,
       permitData: permitData as HexString,
-      nonce: BigInt(0),
+      nonce: eip2612PermitData.data.nonce,
       permitType: PermitTypes.EIP2612Permit,
     };
   };

@@ -29,7 +29,6 @@ import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from
 import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
-import type { ApprovalsService } from '../approvals';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
 import { SwapDecoder } from '../decoder';
@@ -46,7 +45,6 @@ export class TradeService {
     private priceService: PriceService,
     private chainsService: ChainsService,
     private contractsService: ContractsService,
-    private approvalsService: ApprovalsService,
   ) {}
 
   /**

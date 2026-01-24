@@ -141,7 +141,7 @@ export class Permit2 {
         service,
       });
 
-      const permitMode = this.getPermitMode(service, contractVersion, permitType);
+      const permitMode = this.getPermitMode(service ?? Services.trade, contractVersion ?? ContractVersion.v1, permitType);
       const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitMode, encodedPermitData]);
 
       return {
@@ -348,11 +348,11 @@ export class Permit2 {
    * @param permitType - Permit2 primary type
    * @returns Permit mode value
    */
-  public static getPermitMode(service?: AvailableDZapServices, contractVersion?: ContractVersion, permitType?: Permit2PrimaryType): number {
+  public static getPermitMode(service: AvailableDZapServices, contractVersion: ContractVersion, permitType: Permit2PrimaryType): number {
     if (service !== Services.zap && contractVersion === ContractVersion.v1) {
       return DZapV1PermitMode.PERMIT2_APPROVE;
     }
-    return permitType ? PermitToDZapPermitMode[permitType] : 0;
+    return PermitToDZapPermitMode[permitType];
   }
 
   /**
