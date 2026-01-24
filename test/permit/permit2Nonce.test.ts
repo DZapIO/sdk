@@ -1,7 +1,7 @@
 import * as ABI from '../../src/artifacts';
 import { viemChainsById } from '../../src/chains';
 import { ChainsService } from '../../src/service/chains';
-import { Permit2 } from '../../src/service/permit2';
+import { Permit2 } from '../../src/service/signature/permit2';
 import type { HexString } from '../../src/types';
 import { getNextPermit2Nonce } from '../../src/utils/nonce';
 

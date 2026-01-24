@@ -2,17 +2,22 @@ import type { TypedDataField } from 'ethers';
 import type { Address, TypedDataDomain } from 'viem';
 import { encodeAbiParameters, maxUint48, maxUint256, parseAbiParameters } from 'viem';
 
-import * as ABI from '../../artifacts';
-import { GASLESS_TX_TYPE } from '../../constants';
-import { Services } from '../../constants';
-import { ERC20_FUNCTIONS } from '../../constants/erc20';
-import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../constants/permit';
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/permit2';
-import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
-import type { AvailableDZapServices, HexString } from '../../types';
+import * as ABI from '../../../artifacts';
+import { GASLESS_TX_TYPE } from '../../../constants';
+import { Services } from '../../../constants';
+import { ERC20_FUNCTIONS } from '../../../constants/erc20';
+import { Permit2PrimaryTypes, PermitToDZapPermitMode, SIGNATURE_EXPIRY_IN_SECS } from '../../../constants/permit';
+import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../../constants/permit2';
+import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../../enums';
+import type { AvailableDZapServices, HexString } from '../../../types';
+import { generateDeadline } from '../../../utils';
+import { parseError } from '../../../utils/errors';
+import { logger } from '../../../utils/logger';
+import { getNextPermit2Nonce } from '../../../utils/nonce';
+import { signTypedData } from '../../../utils/signer';
+import { ChainsService } from '../../chains';
+import type { BasePermitParams, BasePermitResponse } from '../types';
 import type {
-  BasePermitParams,
-  BasePermitResponse,
   Permit2Params,
   Permit2PrimaryType,
   PermitBatchTransferFromValues,
@@ -20,14 +25,8 @@ import type {
   PermitTransferFromValues,
   TokenWithIndex,
   WitnessData,
-} from '../../types/permit';
-import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from '../../types/permit';
-import { generateDeadline } from '../../utils';
-import { parseError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { getNextPermit2Nonce } from '../../utils/nonce';
-import { signTypedData } from '../../utils/signer';
-import { ChainsService } from '../chains';
+} from './types';
+import { BatchPermitAbiParams, bridgeGaslessWitnessType, defaultWitnessType, swapGaslessWitnessType } from './types';
 
 const PERMIT2_DOMAIN_NAME = 'Permit2';
 
@@ -94,21 +93,17 @@ export class Permit2 {
         service,
       } = params;
 
-      // Set default deadline and expiration
       const deadline = sigDeadline ?? generateDeadline(SIGNATURE_EXPIRY_IN_SECS);
       const expiration = params.expiration ?? maxUint48;
       const permit2Address = this.getAddress(chainId);
 
-      // Normalize token amounts
-      const normalizedTokens = tokens.map((token) => ({
+      const normalizedTokens: TokenWithIndex[] = tokens.map((token) => ({
         ...token,
         amount: BigInt(token.amount || maxUint256).toString(),
       }));
 
-      // Build witness data for signature
       const witnessData = this.buildWitnessData(params);
 
-      // Get permit2 values and nonce
       const { permit2Values, nonce } = await this.buildPermitValues({
         primaryType: permitType,
         spender,
@@ -124,10 +119,8 @@ export class Permit2 {
         contractVersion,
       });
 
-      // Build typed data for signature
       const typedData = this.buildTypedData(permit2Values, permit2Address, chainId, witnessData);
 
-      // Sign the permit2 data
       const signature = await signTypedData({
         signer,
         domain: typedData.domain,
@@ -137,8 +130,7 @@ export class Permit2 {
         primaryType: permitType,
       });
 
-      // Encode transfer data based on permit type
-      const encodedTransferData = this.encodeTransferData({
+      const encodedPermitData = this.encodePermitData({
         permitType,
         tokens: normalizedTokens,
         nonce,
@@ -149,9 +141,8 @@ export class Permit2 {
         service,
       });
 
-      // Encode final permit data with mode
-      const permitMode = this.getPermitMode(service, contractVersion, permitType);
-      const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitMode, encodedTransferData]);
+      const permitMode = this.getPermitMode(service ?? Services.trade, contractVersion ?? ContractVersion.v1, permitType);
+      const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [permitMode, encodedPermitData]);
 
       return {
         status: TxnStatus.success,
@@ -178,7 +169,6 @@ export class Permit2 {
   public static buildWitnessData(params: Permit2Params): WitnessData {
     const { gasless, account, spender } = params;
 
-    // Gasless swap witness
     if (gasless && params.swapDataHash && params.txType === GASLESS_TX_TYPE.swap) {
       return {
         witness: {
@@ -192,7 +182,6 @@ export class Permit2 {
       };
     }
 
-    // Gasless bridge witness
     if (gasless && params.swapDataHash) {
       return {
         witness: {
@@ -207,7 +196,6 @@ export class Permit2 {
       };
     }
 
-    // Default witness for standard transfers
     return {
       witness: {
         owner: account,
@@ -249,6 +237,122 @@ export class Permit2 {
         });
         throw new Error(`Invalid permit type: ${params.primaryType}`);
     }
+  }
+
+  /**
+   * Builds EIP-712 typed data for signing based on permit type
+   * @param permit - Permit values (single, transfer, or batch)
+   * @param permit2Address - Permit2 contract address
+   * @param chainId - Chain ID
+   * @param witness - Optional witness data
+   * @returns Typed data object ready for signing
+   */
+  public static buildTypedData(
+    permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues,
+    permit2Address: Address,
+    chainId: number,
+    witness?: WitnessData,
+  ): PermitTransferFromData | PermitBatchTransferFromData | PermitSingleData {
+    if (this.isPermitSingle(permit)) {
+      return this.buildSingleTypedData(permit, permit2Address, chainId);
+    }
+
+    if (!witness) {
+      logger.error('Witness is required for PermitTransferFrom', {
+        service: 'Permit2Service',
+        method: 'buildTypedData',
+        chainId,
+      });
+      throw new Error('Witness is required for PermitTransferFrom');
+    }
+
+    if (this.isPermitTransferFrom(permit)) {
+      return this.buildTransferTypedData(permit, permit2Address, chainId, witness);
+    }
+
+    return this.buildBatchTypedData(permit, permit2Address, chainId, witness);
+  }
+
+  /**
+   * Builds the EIP-712 domain for Permit2
+   * @param permit2Address - Permit2 contract address
+   * @param chainId - Chain ID
+   * @returns EIP-712 domain object
+   */
+  public static buildDomain(permit2Address: Address, chainId: number): TypedDataDomain {
+    return {
+      name: PERMIT2_DOMAIN_NAME,
+      chainId,
+      verifyingContract: permit2Address,
+    };
+  }
+
+  /**
+   * Encodes permit data based on permit type for contract execution
+   * @param params - Parameters including permit type, tokens, nonce, and signature
+   * @returns Encoded permit data as hex string
+   */
+  public static encodePermitData({
+    permitType,
+    tokens,
+    nonce,
+    deadline,
+    expiration,
+    signature,
+    contractVersion,
+    service,
+  }: {
+    permitType: Permit2PrimaryType;
+    tokens: TokenWithIndex[];
+    nonce: bigint;
+    deadline: bigint;
+    expiration: bigint;
+    signature: HexString;
+    contractVersion?: ContractVersion;
+    service?: AvailableDZapServices;
+  }): HexString {
+    if (permitType === Permit2PrimaryTypes.PermitBatchWitnessTransferFrom) {
+      return encodeAbiParameters(BatchPermitAbiParams, [
+        {
+          permitted: tokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
+          nonce,
+          deadline,
+        },
+        signature,
+      ]);
+    }
+
+    if (permitType === Permit2PrimaryTypes.PermitWitnessTransferFrom) {
+      return encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature]);
+    }
+
+    if (contractVersion === ContractVersion.v1 && service !== Services.zap) {
+      return encodeAbiParameters(
+        parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
+        [BigInt(tokens[0].amount), Number(nonce.toString()), Number(expiration.toString()), BigInt(deadline.toString()), signature],
+      );
+    }
+
+    return encodeAbiParameters(parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
+      Number(nonce.toString()),
+      Number(expiration.toString()),
+      BigInt(deadline.toString()),
+      signature,
+    ]);
+  }
+
+  /**
+   * Gets the appropriate permit mode for DZap contracts
+   * @param service - Service type (zap, trade, etc)
+   * @param contractVersion - Contract version
+   * @param permitType - Permit2 primary type
+   * @returns Permit mode value
+   */
+  public static getPermitMode(service: AvailableDZapServices, contractVersion: ContractVersion, permitType: Permit2PrimaryType): number {
+    if (service !== Services.zap && contractVersion === ContractVersion.v1) {
+      return DZapV1PermitMode.PERMIT2_APPROVE;
+    }
+    return PermitToDZapPermitMode[permitType];
   }
 
   /**
@@ -324,7 +428,6 @@ export class Permit2 {
   }): Promise<{ permit2Values: PermitTransferFromValues; nonce: bigint }> {
     let nonce: bigint;
 
-    // Get nonce for first token or calculate from first token nonce
     if (token.index === 0) {
       nonce = await getNextPermit2Nonce(permit2Address, account, chainId, rpcUrls);
     } else if (firstTokenNonce === null) {
@@ -393,44 +496,11 @@ export class Permit2 {
   }
 
   /**
-   * Builds EIP-712 typed data for signing based on permit type
-   * @param permit - Permit values (single, transfer, or batch)
-   * @param permit2Address - Permit2 contract address
-   * @param chainId - Chain ID
-   * @param witness - Optional witness data
-   * @returns Typed data object ready for signing
-   */
-  public static buildTypedData(
-    permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues,
-    permit2Address: Address,
-    chainId: number,
-    witness?: WitnessData,
-  ): PermitTransferFromData | PermitBatchTransferFromData | PermitSingleData {
-    if (this.isPermitSingle(permit)) {
-      return this.buildSingleTypedData(permit, permit2Address, chainId);
-    }
-
-    if (!witness) {
-      logger.error('Witness is required for PermitTransferFrom', {
-        service: 'Permit2Service',
-        method: 'buildTypedData',
-        chainId,
-      });
-      throw new Error('Witness is required for PermitTransferFrom');
-    }
-
-    if (this.isPermitTransferFrom(permit)) {
-      return this.buildTransferTypedData(permit, permit2Address, chainId, witness);
-    }
-
-    return this.buildBatchTypedData(permit, permit2Address, chainId, witness);
-  }
-
-  /**
-   * Builds typed data for single permit
+   * Builds EIP-712 typed data for single permit
+   * @private
    */
   private static buildSingleTypedData(permit: PermitSingleValues, permit2Address: Address, chainId: number): PermitSingleData {
-    const domain = this.createDomain(permit2Address, chainId);
+    const domain = this.buildDomain(permit2Address, chainId);
 
     const types = {
       PermitSingle: [
@@ -450,7 +520,8 @@ export class Permit2 {
   }
 
   /**
-   * Builds typed data for transfer permit with witness
+   * Builds EIP-712 typed data for transfer permit with witness
+   * @private
    */
   private static buildTransferTypedData(
     permit: PermitTransferFromValues,
@@ -458,7 +529,7 @@ export class Permit2 {
     chainId: number,
     witness: WitnessData,
   ): PermitTransferFromData {
-    const domain = this.createDomain(permit2Address, chainId);
+    const domain = this.buildDomain(permit2Address, chainId);
 
     const types = {
       ...witness.witnessType,
@@ -481,7 +552,8 @@ export class Permit2 {
   }
 
   /**
-   * Builds typed data for batch transfer permit with witness
+   * Builds EIP-712 typed data for batch transfer permit with witness
+   * @private
    */
   private static buildBatchTypedData(
     permit: PermitBatchTransferFromValues,
@@ -489,7 +561,7 @@ export class Permit2 {
     chainId: number,
     witness: WitnessData,
   ): PermitBatchTransferFromData {
-    const domain = this.createDomain(permit2Address, chainId);
+    const domain = this.buildDomain(permit2Address, chainId);
 
     const types = {
       ...witness.witnessType,
@@ -512,90 +584,8 @@ export class Permit2 {
   }
 
   /**
-   * Creates EIP-712 domain for Permit2
-   */
-  private static createDomain(permit2Address: Address, chainId: number): TypedDataDomain {
-    return {
-      name: PERMIT2_DOMAIN_NAME,
-      chainId,
-      verifyingContract: permit2Address,
-    };
-  }
-
-  /**
-   * Encodes transfer data based on permit type for contract execution
-   * @param params - Parameters including permit type, tokens, nonce, and signature
-   * @returns Encoded transfer data as hex string
-   */
-  public static encodeTransferData({
-    permitType,
-    tokens,
-    nonce,
-    deadline,
-    expiration,
-    signature,
-    contractVersion,
-    service,
-  }: {
-    permitType: Permit2PrimaryType;
-    tokens: TokenWithIndex[];
-    nonce: bigint;
-    deadline: bigint;
-    expiration: bigint;
-    signature: HexString;
-    contractVersion?: ContractVersion;
-    service?: AvailableDZapServices;
-  }): HexString {
-    // Batch witness transfer encoding
-    if (permitType === Permit2PrimaryTypes.PermitBatchWitnessTransferFrom) {
-      return encodeAbiParameters(BatchPermitAbiParams, [
-        {
-          permitted: tokens.map((token) => ({ token: token.address, amount: BigInt(token.amount) })),
-          nonce,
-          deadline,
-        },
-        signature,
-      ]);
-    }
-
-    // Single witness transfer encoding
-    if (permitType === Permit2PrimaryTypes.PermitWitnessTransferFrom) {
-      return encodeAbiParameters(parseAbiParameters('uint256, uint256, bytes'), [nonce, deadline, signature]);
-    }
-
-    // V1 contract support with allowance amount
-    if (contractVersion === ContractVersion.v1 && service !== Services.zap) {
-      return encodeAbiParameters(
-        parseAbiParameters('uint160 allowanceAmount, uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'),
-        [BigInt(tokens[0].amount), Number(nonce.toString()), Number(expiration.toString()), BigInt(deadline.toString()), signature],
-      );
-    }
-
-    // Default encoding for single permits
-    return encodeAbiParameters(parseAbiParameters('uint48 nonce, uint48 expiration, uint256 sigDeadline, bytes signature'), [
-      Number(nonce.toString()),
-      Number(expiration.toString()),
-      BigInt(deadline.toString()),
-      signature,
-    ]);
-  }
-
-  /**
-   * Gets the appropriate permit mode for DZap contracts
-   * @param service - Service type (zap, trade, etc)
-   * @param contractVersion - Contract version
-   * @param permitType - Permit2 primary type
-   * @returns Permit mode value
-   */
-  public static getPermitMode(service?: AvailableDZapServices, contractVersion?: ContractVersion, permitType?: Permit2PrimaryType): number {
-    if (service !== Services.zap && contractVersion === ContractVersion.v1) {
-      return DZapV1PermitMode.PERMIT2_APPROVE;
-    }
-    return permitType ? PermitToDZapPermitMode[permitType] : 0;
-  }
-
-  /**
    * Type guard to check if permit is PermitSingle
+   * @private
    */
   private static isPermitSingle(permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues): permit is PermitSingleValues {
     return 'details' in permit && permit.details !== undefined;
@@ -603,6 +593,7 @@ export class Permit2 {
 
   /**
    * Type guard to check if permit is PermitTransferFrom
+   * @private
    */
   private static isPermitTransferFrom(
     permit: PermitTransferFromValues | PermitBatchTransferFromValues | PermitSingleValues,

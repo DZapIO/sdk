@@ -1,5 +1,5 @@
 import type { Signer } from 'ethers';
-import type { Address, MulticallParameters, Prettify, WalletClient } from 'viem';
+import type { Address, Prettify, WalletClient } from 'viem';
 import { encodeFunctionData, maxUint256 } from 'viem';
 
 import { erc20Abi } from '../../artifacts';
@@ -11,6 +11,7 @@ import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
 import type {
   ApprovalMode,
   AvailableDZapServices,
+  ChainData,
   GasSignatureParams,
   HexString,
   PermitMode,
@@ -18,14 +19,16 @@ import type {
   TokenPermitData,
 } from '../../types';
 import { isDZapNativeToken } from '../../utils/address';
-import { checkEIP2612PermitSupport } from '../../utils/eip2612Permit';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { multicall } from '../../utils/multicall';
 import { isEthersSigner } from '../../utils/signer';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
-import { Permit2 } from '../permit2';
 import { SignatureService } from '../signature';
+import { EIP2612 } from '../signature/eip2612';
+import { Permit2 } from '../signature/permit2';
+import { TransactionsService } from '../transactions';
 
 /**
  * ApprovalsService handles all approval and permit operations for token spending.
@@ -35,6 +38,26 @@ export class ApprovalsService {
     private chainsService: ChainsService,
     private contractsService: ContractsService,
   ) {}
+
+  /**
+   * Gets approval context (chain config and spender address) in a single batch call
+   * This optimizes the common pattern of fetching both chainConfig and contract address
+   * @param params - Parameters for getting approval context
+   * @returns Promise resolving to approval context with chainConfig and spenderAddress
+   */
+  private async getApprovalContext({ chainId, service, spender }: { chainId: number; service: AvailableDZapServices; spender?: HexString }): Promise<{
+    chainConfig: ChainData;
+    spenderAddress: HexString;
+    multicallAddress?: HexString;
+  }> {
+    const chainConfig = await this.chainsService.getConfig();
+    const contractAddress = spender ? spender : await this.contractsService.getAddress({ chainId, service });
+    return {
+      chainConfig,
+      spenderAddress: contractAddress as HexString,
+      multicallAddress: chainConfig?.[chainId]?.multicallAddress,
+    };
+  }
 
   /**
    * Checks current token allowances for a sender address across multiple tokens
@@ -63,11 +86,10 @@ export class ApprovalsService {
     const approvalData = await Promise.all(
       erc20Tokens.map(async ({ address, amount, permit }) => {
         if (mode === ApprovalModes.AutoPermit) {
-          const eip2612PermitData = await checkEIP2612PermitSupport({
+          const eip2612PermitData = await EIP2612.checkEIP2612PermitSupport({
             address,
             chainId,
             rpcUrls,
-            owner: sender,
             permit,
           });
           return {
@@ -146,7 +168,7 @@ export class ApprovalsService {
     multicallAddress?: HexString;
     rpcUrls?: string[];
   }): Promise<{ status: TxnStatus; code: StatusCodes; data: Record<string, bigint> }> {
-    const contracts: MulticallParameters['contracts'] = data.map(({ token, spender }) => ({
+    const contracts = data.map(({ token, spender }) => ({
       address: token,
       abi: erc20Abi,
       functionName: ERC20_FUNCTIONS.allowance,
@@ -179,7 +201,7 @@ export class ApprovalsService {
 
     const tokenAllowances: Record<string, bigint> = {};
     for (let i = 0; i < data.length; i++) {
-      tokenAllowances[data[i].token] = allowances[i] as bigint;
+      tokenAllowances[data[i].token] = allowances[i];
     }
 
     return { status, code, data: tokenAllowances };
@@ -226,15 +248,17 @@ export class ApprovalsService {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: string }[];
+    tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString;
     mode?: ApprovalMode;
   }) {
-    const chainConfig = await this.chainsService.getConfig();
-    const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    const multicallAddress = chainConfig?.[chainId]?.multicallAddress;
+    const { spenderAddress, multicallAddress } = await this.getApprovalContext({
+      chainId,
+      service,
+      spender,
+    });
     return await this.getAllowanceData({
       chainId,
       sender,
@@ -261,6 +285,7 @@ export class ApprovalsService {
    * @param params.mode - Optional approval mode (defaults to AutoPermit for optimal UX)
    * @param params.spender - Optional custom spender address (if not using default DZap contract)
    * @param params.service - The DZap service that will spend the approved tokens
+   * @param params.batchTransaction - Optional flag to use batch transaction (EIP-5792) for multiple approvals
    * @returns Promise resolving to approval transaction results
    *
    * @example
@@ -305,8 +330,11 @@ export class ApprovalsService {
     rpcUrls?: string[];
     mode?: ApprovalMode;
   }) {
-    const spenderAddress = spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    const finalRpcUrls = rpcUrls || config.getRpcUrlsByChainId(chainId);
+    const { spenderAddress } = await this.getApprovalContext({
+      chainId,
+      service,
+      spender,
+    });
     let finalSpender = spenderAddress;
     if (mode !== ApprovalModes.Default) {
       finalSpender = Permit2.getAddress(chainId);
@@ -320,18 +348,27 @@ export class ApprovalsService {
           functionName: ERC20_FUNCTIONS.approve,
           args: [finalSpender, BigInt(tokens[dataIdx].amount)],
         });
-        await signer.sendTransaction({
-          from,
-          chainId,
-          to: tokens[dataIdx].address,
-          data: callData,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-        };
+        try {
+          const txnResponse = await signer.sendTransaction({
+            from,
+            chainId,
+            to: tokens[dataIdx].address,
+            data: callData,
+          });
+          txnDetails = { txnHash: txnResponse.hash, status: TxnStatus.success, code: StatusCodes.Success };
+        } catch (error: unknown) {
+          logger.error('Token approval transaction failed', {
+            service: 'ApprovalsService',
+            method: 'approve',
+            chainId,
+            tokenAddress: tokens[dataIdx].address,
+            error,
+          });
+          const errorResponse = parseError(error);
+          txnDetails = { status: errorResponse.status, code: errorResponse.code, txnHash: '' };
+        }
       } else {
-        const publicClient = ChainsService.getPublicClient(chainId, finalRpcUrls);
+        const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
         try {
           const { request } = await publicClient.simulateContract({
             address: tokens[dataIdx].address,
@@ -342,26 +379,15 @@ export class ApprovalsService {
           });
           const hash = await signer.writeContract(request);
           txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
-        } catch (e: unknown) {
-          const error = e as { code?: StatusCodes };
-          logger.error('Token approval transaction failed', {
-            service: 'ApprovalsService',
-            method: 'approve',
-            chainId,
-            tokenAddress: tokens[dataIdx].address,
-            error: e,
-          });
-          if (error?.code === StatusCodes.UserRejectedRequest) {
-            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
-          } else {
-            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
-          }
+        } catch (error: unknown) {
+          const errorResponse = parseError(error);
+          txnDetails = { status: errorResponse.status, code: errorResponse.code, txnHash: '' };
         }
       }
       if (txnDetails.code !== StatusCodes.Success) {
         return {
           status: txnDetails.status,
-          code: txnDetails?.code || StatusCodes.FunctionNotFound,
+          code: txnDetails.code,
         };
       }
       if (approvalTxnCallback) {
@@ -376,7 +402,7 @@ export class ApprovalsService {
           });
           return {
             status: txnDetails.status,
-            code: txnDetails?.code || StatusCodes.Error,
+            code: txnDetails.code,
           };
         }
       }
@@ -429,8 +455,11 @@ export class ApprovalsService {
     >,
   ): Promise<SignPermitResponse> {
     const { service, chainId } = params;
-    const spenderAddress = params?.spender || ((await this.contractsService.getAddress({ chainId, service })) as HexString);
-    const chainConfig = await this.chainsService.getConfig();
+    const { spenderAddress, chainConfig } = await this.getApprovalContext({
+      chainId,
+      service,
+      spender: params?.spender,
+    });
 
     const permitType = params?.permitType || PermitTypes.AutoPermit;
 
@@ -513,7 +542,6 @@ export class ApprovalsService {
     sender,
     multicallAddress,
     rpcUrls,
-    sendBatchCalls,
   }: {
     walletClient: WalletClient;
     tokens: Array<{
@@ -525,14 +553,6 @@ export class ApprovalsService {
     sender: HexString;
     multicallAddress?: HexString;
     rpcUrls?: string[];
-    sendBatchCalls: (
-      walletClient: WalletClient,
-      calls: Array<{
-        to: HexString;
-        data: HexString;
-        value?: bigint;
-      }>,
-    ) => Promise<{ id: string } | null>;
   }): Promise<{ success: boolean; batchId?: string }> {
     const approveCalls = await this.generateApprovalBatchCalls({
       tokens,
@@ -545,7 +565,7 @@ export class ApprovalsService {
     if (approveCalls.length === 0) {
       return { success: true };
     }
-    const batchResult = await sendBatchCalls(walletClient, approveCalls);
+    const batchResult = await TransactionsService.sendBatchCalls(walletClient, approveCalls);
     if (!batchResult) {
       logger.warn('Batch approval calls failed or not supported', {
         service: 'ApprovalsService',

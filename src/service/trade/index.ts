@@ -24,12 +24,11 @@ import type {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from '../../types';
-import type { CustomTypedDataParams } from '../../types/permit';
-import { isEthersSigner } from '../../utils';
+import type { CustomTypedDataParams } from '../../types/gasless';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
 import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
-import type { ApprovalsService } from '../approvals';
+import { signTypedData } from '../../utils/signer';
 import { ChainsService } from '../chains';
 import type { ContractsService } from '../contracts';
 import { SwapDecoder } from '../decoder';
@@ -46,7 +45,6 @@ export class TradeService {
     private priceService: PriceService,
     private chainsService: ChainsService,
     private contractsService: ContractsService,
-    private approvalsService: ApprovalsService,
   ) {}
 
   /**
@@ -146,8 +144,6 @@ export class TradeService {
     request,
     signer,
     txnData,
-    batchTransaction = false,
-    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
@@ -155,15 +151,10 @@ export class TradeService {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    const chainConfig = await this.chainsService.getConfig();
-
     return await this.buildAndSendTransaction({
       request,
       signer,
       txnData,
-      batchTransaction,
-      multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
-      rpcUrls,
     });
   }
 
@@ -365,75 +356,46 @@ export class TradeService {
   }
 
   /**
-   * Sends transaction with batch approvals.
-   * @private
+   * Sign custom typed data for transaction signing
+   *
+   * @param params - Parameters for custom typed data signing
+   * @returns Promise with signature and message
    */
-  private async sendBatchTxn(
-    request: TradeBuildTxnRequest,
-    signer: WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string },
-    chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-    multicallAddress?: HexString,
-    rpcUrls?: string[],
-  ): Promise<DZapTransactionResponse> {
-    const approvalBatchCalls = await this.approvalsService.generateApprovalBatchCalls({
-      tokens: request.data.map((token) => ({
-        address: token.srcToken as HexString,
-        amount: token.amount,
-      })),
-      chainId,
-      multicallAddress,
-      sender: txnParams.from as HexString,
-      spender: txnParams.to as HexString,
-      rpcUrls,
-    });
-
-    const batchCalls = [
-      ...approvalBatchCalls,
-      {
-        to: txnParams.to as HexString,
-        data: txnParams.data as HexString,
-        value: BigInt(txnParams.value),
-      },
-    ];
-
-    // If no approvals are needed, send regular transaction for efficiency
-    if (approvalBatchCalls.length === 0) {
-      return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-    }
-
-    const batchResult = await TransactionsService.sendBatchCalls(signer, batchCalls);
-    if (!batchResult) {
-      return {
-        status: TxnStatus.error,
-        errorMsg: 'Batch call failed',
-        code: StatusCodes.Error,
-      };
-    }
-
-    logger.info('Waiting for batch transaction completion', {
-      service: 'TradeService',
-      method: 'executeBatch',
-      batchId: batchResult.id,
-      chainId,
-    });
-    const receipt = await TransactionsService.waitForBatchTransactionReceipt(signer, batchResult.id as HexString);
-    logger.info('Batch transaction completed', {
-      service: 'TradeService',
-      method: 'executeBatch',
-      chainId,
-      txHash: receipt.transactionHash,
-      status: receipt.status,
-    });
-    return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      txnHash: receipt.transactionHash as HexString,
-      additionalInfo,
-      updatedQuotes,
+  private async signCustomTypedData(params: CustomTypedDataParams): Promise<{
+    status: TxnStatus;
+    code: StatusCodes;
+    data?: {
+      signature: HexString;
+      message: Record<string, any>;
     };
+  }> {
+    try {
+      const { account, signer, message, domain, primaryType, types } = params;
+
+      const signature = await signTypedData({
+        signer,
+        account,
+        domain,
+        message,
+        primaryType,
+        types,
+      });
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        data: {
+          signature,
+          message,
+        },
+      };
+    } catch (error: unknown) {
+      logger.error('Failed to sign custom typed data', {
+        service: 'TradeService',
+        method: 'signCustomTypedData',
+        error,
+      });
+      return parseError(error);
+    }
   }
 
   /**
@@ -465,7 +427,7 @@ export class TradeService {
         };
       }
 
-      const resp = await SignatureService.signCustomTypedData({
+      const resp = await this.signCustomTypedData({
         signer,
         account: txnParams.from as HexString,
         domain: typedData.domain,
@@ -513,16 +475,10 @@ export class TradeService {
     request,
     signer,
     txnData,
-    batchTransaction = false,
-    multicallAddress,
-    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: TradeBuildTxnResponse;
-    batchTransaction: boolean;
-    multicallAddress?: HexString;
-    rpcUrls?: string[];
   }): Promise<DZapTransactionResponse> {
     try {
       const chainId = request.fromChain;
@@ -540,9 +496,6 @@ export class TradeService {
 
       if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
         return this.sendHyperLiquidTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
-      }
-      if (batchTransaction && !isEthersSigner(signer)) {
-        return this.sendBatchTxn(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
       }
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
     } catch (error: unknown) {

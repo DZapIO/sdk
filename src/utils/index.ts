@@ -10,8 +10,8 @@ export {
 } from './amount';
 export { extendViemChain, isNonEVMChain } from './chain';
 export { generateDeadline } from './date';
-export { checkEIP2612PermitSupport } from './eip2612Permit';
 export { BRIDGE_ERRORS, parseError as handleError } from './errors';
+export { isBatchTxnSupportedByWallet } from './isBatchTxnSupportedByWallet';
 export { multicall } from './multicall';
 export { isEthersSigner } from './signer';
 export { getTokensPairKey } from './token';

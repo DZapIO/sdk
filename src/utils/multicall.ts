@@ -1,34 +1,35 @@
-import type { MulticallParameters } from 'viem';
+import type { MulticallParameters, MulticallReturnType } from 'viem';
 
 import { StatusCodes, TxnStatus } from '../enums';
 import { ChainsService } from '../service/chains';
 import type { HexString } from '../types';
 import { parseError } from './errors';
-import { logger } from './logger';
 
-/**
- * Batch multiple contract calls using multicall
- */
-export const multicall = async ({
+export const multicall = async <const TContracts extends readonly unknown[], TAllowFailure extends boolean = false>({
   chainId,
   contracts,
   rpcUrls,
   multicallAddress,
-  allowFailure = false,
+  allowFailure = false as TAllowFailure,
 }: {
   chainId: number;
-  contracts: MulticallParameters['contracts'];
+  contracts: TContracts;
   rpcUrls?: string[];
   multicallAddress?: HexString;
-  allowFailure?: boolean;
-}): Promise<{ status: TxnStatus; code: StatusCodes; data: unknown[] }> => {
+  allowFailure?: TAllowFailure;
+}): Promise<{
+  status: TxnStatus;
+  code: StatusCodes;
+  data: MulticallReturnType<TContracts, TAllowFailure>;
+}> => {
   try {
     const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
-    const results = await publicClient.multicall({
+    const multicallParams = {
       contracts,
       ...(multicallAddress && { multicallAddress }),
       allowFailure,
-    });
+    } as MulticallParameters<TContracts, TAllowFailure>;
+    const results = await publicClient.multicall(multicallParams);
 
     return {
       status: TxnStatus.success,
@@ -36,12 +37,11 @@ export const multicall = async ({
       data: results,
     };
   } catch (error: unknown) {
-    logger.error('Multicall failed', { service: 'MulticallUtil', chainId, error });
     const errorResponse = parseError(error);
     return {
       status: errorResponse.status,
       code: errorResponse.code,
-      data: [],
+      data: [] as unknown as MulticallReturnType<TContracts, TAllowFailure>,
     };
   }
 };
