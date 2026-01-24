@@ -11,6 +11,7 @@ import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../../con
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../../enums';
 import type { AvailableDZapServices, HexString } from '../../../types';
 import { generateDeadline } from '../../../utils';
+import { parseError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { getNextPermit2Nonce } from '../../../utils/nonce';
 import { signTypedData } from '../../../utils/signer';
@@ -149,16 +150,13 @@ export class Permit2 {
         permitData,
         nonce,
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error generating permit2 signature', {
         service: 'Permit2Service',
         method: 'generateSignature',
         error,
       });
-      if (error?.cause?.code === StatusCodes.UserRejectedRequest || error?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return parseError(error);
     }
   }
 

@@ -6,7 +6,7 @@ import { DZapIntentPrimaryTypes } from '../../../constants/permit';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import type { HexString } from '../../../types';
 import { generateDeadline } from '../../../utils/date';
-import { handleViemTransactionError } from '../../../utils/errors';
+import { parseError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { signTypedData } from '../../../utils/signer';
 import { ChainsService } from '../../chains';
@@ -84,7 +84,7 @@ export class Gasless {
         txType: params.txType,
         error,
       });
-      return handleViemTransactionError({ error });
+      return parseError(error);
     }
   }
 

@@ -10,6 +10,7 @@ import { DEFAULT_PERMIT_VERSION, SIGNATURE_EXPIRY_IN_SECS } from '../../../const
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../../enums';
 import type { AvailableDZapServices, HexString, TokenPermitData } from '../../../types';
 import { generateDeadline } from '../../../utils/date';
+import { parseError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { multicall } from '../../../utils/multicall';
 import { signTypedData } from '../../../utils/signer';
@@ -78,7 +79,6 @@ export class EIP2612 {
         permitData,
       };
     } catch (error: unknown) {
-      const err = error as { cause?: { code?: StatusCodes }; code?: StatusCodes };
       logger.error('Error generating EIP-2612 permit signature', {
         service: 'EIP2612Service',
         method: 'generateSignature',
@@ -89,10 +89,7 @@ export class EIP2612 {
         permitType: 'EIP2612Permit',
         error,
       });
-      if (err?.cause?.code === StatusCodes.UserRejectedRequest || err?.code === StatusCodes.UserRejectedRequest) {
-        return { status: TxnStatus.rejected, code: StatusCodes.UserRejectedRequest };
-      }
-      return { status: TxnStatus.error, code: StatusCodes.Error };
+      return parseError(error);
     }
   }
 

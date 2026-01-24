@@ -120,7 +120,6 @@ export class SignatureService {
         method: 'signBatchPermit',
         status: resp.status,
         code: resp.code,
-        tokensCount: tokens.length,
         tokenAddresses: tokens.map((t) => t.address),
         permitType,
         chainId: signPermitReq.chainId,

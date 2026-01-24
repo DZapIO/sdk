@@ -10,14 +10,7 @@ export {
 } from './amount';
 export { extendViemChain, isNonEVMChain } from './chain';
 export { generateDeadline } from './date';
-export {
-  BRIDGE_ERRORS,
-  getErrorName,
-  getRevertMsg,
-  handleViemTransactionError,
-  isAtomicReadyWalletRejectedUpgradeError,
-  isAxiosError,
-} from './errors';
+export { BRIDGE_ERRORS, parseError as handleError } from './errors';
 export { isBatchTxnSupportedByWallet } from './isBatchTxnSupportedByWallet';
 export { multicall } from './multicall';
 export { isEthersSigner } from './signer';

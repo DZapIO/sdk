@@ -15,7 +15,6 @@ import type {
   BroadcastTxResponse,
   CalculatePointsRequest,
   ChainData,
-  ContractErrorResponse,
   DZapTransactionResponse,
   GaslessTradeBuildTxnResponse,
   HexString,
@@ -27,7 +26,7 @@ import type {
 } from '../../types';
 import type { CustomTypedDataParams } from '../../types/gasless';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
-import { handleViemTransactionError, isAxiosError } from '../../utils/errors';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
 import type { ApprovalsService } from '../approvals';
@@ -397,7 +396,7 @@ export class TradeService {
         method: 'signCustomTypedData',
         error,
       });
-      return handleViemTransactionError({ error });
+      return parseError(error);
     }
   }
 
@@ -502,25 +501,19 @@ export class TradeService {
       }
       return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
     } catch (error: unknown) {
-      logger.error('Trade execution failed', { service: 'TradeService', method: 'execute', chainId: request.fromChain, error });
-      if (isAxiosError(error)) {
-        if (error?.response?.status === StatusCodes.SimulationFailure) {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Simulation Failed',
-            error: (error.response?.data as ContractErrorResponse).message,
-            code: (error.response?.data as ContractErrorResponse).code,
-            action: (error.response?.data as ContractErrorResponse).action,
-          };
-        }
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
-          error: error?.response?.data ?? error,
-          code: error?.response?.status ?? StatusCodes.Error,
-        };
-      }
-      return handleViemTransactionError({ error });
+      logger.error('Trade operation failed', {
+        service: 'TradeService',
+        method: 'execute',
+        chainId: request.fromChain,
+        sender: request.sender,
+        refundee: request.refundee,
+        tradeCount: request.data?.length,
+        txnData: txnData,
+        request: request.data,
+        error,
+      });
+
+      return parseError(error, true);
     }
   }
 
@@ -620,25 +613,18 @@ export class TradeService {
       }
       throw new Error('Gasless Transaction Failed');
     } catch (error: unknown) {
-      logger.error('Gasless transaction failed', { service: 'TradeService', method: 'executeGasless', chainId: request.fromChain, error });
-      if (isAxiosError(error)) {
-        if (error?.response?.status === StatusCodes.SimulationFailure) {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Simulation Failed',
-            error: (error.response?.data as ContractErrorResponse).message,
-            code: (error.response?.data as ContractErrorResponse).code,
-            action: (error.response?.data as ContractErrorResponse).action,
-          };
-        }
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
-          error: error?.response?.data ?? error,
-          code: error?.response?.status ?? StatusCodes.Error,
-        };
-      }
-      return handleViemTransactionError({ error });
+      logger.error('Trade operation failed', {
+        service: 'TradeService',
+        method: 'executeGasless',
+        chainId: request.fromChain,
+        sender: request.sender,
+        refundee: request.refundee,
+        request: request.data,
+        txnData: txnData,
+        error,
+      });
+
+      return parseError(error, true);
     }
   }
 

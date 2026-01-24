@@ -5,6 +5,7 @@ import { SwapAbisByFunctionName } from '../../artifacts';
 import { ContractVersion } from '../../enums';
 import type { AvailableDZapServices, Chain, HexString, SwapInfo } from '../../types';
 import { formatToken } from '../../utils/address';
+import { logger } from '../../utils/logger';
 import { getTokensPairKey } from '../../utils/token';
 import { ContractsService } from '../contracts';
 
@@ -138,7 +139,12 @@ export class SwapDecoder {
           fromAmount: inputAmount,
         };
       }
-    } catch {
+    } catch (error) {
+      logger.error('Failed to decode swap info', {
+        service: 'SwapDecoder',
+        method: 'updateSwapInfo',
+        error,
+      });
       return eventSwapInfo;
     }
   };
@@ -164,7 +170,14 @@ export class SwapDecoder {
         abi: dZapAbi,
         logs: receipt.logs,
       });
-    } catch {
+    } catch (error: unknown) {
+      logger.error('Failed to parse event logs', {
+        service: 'SwapDecoder',
+        method: 'decodeTransactionData',
+        chainId: chain.chainId,
+        serviceName: service,
+        error,
+      });
       events = [];
     }
 

@@ -19,6 +19,7 @@ import type {
   TokenPermitData,
 } from '../../types';
 import { isDZapNativeToken } from '../../utils/address';
+import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { multicall } from '../../utils/multicall';
 import { isEthersSigner } from '../../utils/signer';
@@ -355,20 +356,16 @@ export class ApprovalsService {
             data: callData,
           });
           txnDetails = { txnHash: txnResponse.hash, status: TxnStatus.success, code: StatusCodes.Success };
-        } catch (e: unknown) {
-          const error = e as { code?: StatusCodes };
+        } catch (error: unknown) {
           logger.error('Token approval transaction failed', {
             service: 'ApprovalsService',
             method: 'approve',
             chainId,
             tokenAddress: tokens[dataIdx].address,
-            error: e,
+            error,
           });
-          if (error?.code === StatusCodes.UserRejectedRequest) {
-            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
-          } else {
-            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
-          }
+          const errorResponse = parseError(error);
+          txnDetails = { status: errorResponse.status, code: errorResponse.code, txnHash: '' };
         }
       } else {
         const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
@@ -382,26 +379,15 @@ export class ApprovalsService {
           });
           const hash = await signer.writeContract(request);
           txnDetails = { txnHash: hash, status: TxnStatus.success, code: StatusCodes.Success };
-        } catch (e: unknown) {
-          const error = e as { code?: StatusCodes };
-          logger.error('Token approval transaction failed', {
-            service: 'ApprovalsService',
-            method: 'approve',
-            chainId,
-            tokenAddress: tokens[dataIdx].address,
-            error: e,
-          });
-          if (error?.code === StatusCodes.UserRejectedRequest) {
-            txnDetails = { status: TxnStatus.rejected, code: error.code, txnHash: '' };
-          } else {
-            txnDetails = { status: TxnStatus.error, code: error?.code || StatusCodes.Error, txnHash: '' };
-          }
+        } catch (error: unknown) {
+          const errorResponse = parseError(error);
+          txnDetails = { status: errorResponse.status, code: errorResponse.code, txnHash: '' };
         }
       }
       if (txnDetails.code !== StatusCodes.Success) {
         return {
           status: txnDetails.status,
-          code: txnDetails?.code || StatusCodes.FunctionNotFound,
+          code: txnDetails.code,
         };
       }
       if (approvalTxnCallback) {
@@ -416,7 +402,7 @@ export class ApprovalsService {
           });
           return {
             status: txnDetails.status,
-            code: txnDetails?.code || StatusCodes.Error,
+            code: txnDetails.code,
           };
         }
       }
