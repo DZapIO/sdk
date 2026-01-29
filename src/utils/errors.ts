@@ -1,3 +1,10 @@
+import {
+  SendTransactionError,
+  SolanaJSONRPCError,
+  TransactionExpiredBlockheightExceededError,
+  TransactionExpiredNonceInvalidError,
+  TransactionExpiredTimeoutError,
+} from '@solana/web3.js';
 import { type AxiosError, isAxiosError } from 'axios';
 import { BaseError, decodeAbiParameters, parseAbiParameters } from 'viem';
 
@@ -25,6 +32,11 @@ class ErrorParser {
 
     if (isAxiosError(error)) {
       return this.parseAxiosError(error, includeError);
+    }
+
+    const solanaError = this.parseSolanaError(error, includeError);
+    if (solanaError) {
+      return solanaError;
     }
 
     return this.parseGenericError(error, includeError);
@@ -151,6 +163,93 @@ class ErrorParser {
       code: statusCode || errorCode || StatusCodes.Error,
       ...(includeError && { error: responseData }),
     };
+  }
+
+  /**
+   * Parses Solana-specific transaction errors
+   * @private
+   */
+  private parseSolanaError(
+    error: unknown,
+    includeError?: boolean,
+  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; error?: unknown } | null {
+    if (!(error instanceof Error)) {
+      return null;
+    }
+
+    // Check for user rejection errors
+    if (error.message.includes('User rejected') || error.name === 'WalletSignTransactionError') {
+      return {
+        code: StatusCodes.UserRejectedRequest,
+        status: TxnStatus.rejected,
+        errorMsg: 'Transaction rejected by user',
+        ...(includeError && { error }),
+      };
+    }
+
+    // Handle SendTransactionError - contains transaction error details and logs
+    if (error instanceof SendTransactionError) {
+      const transactionError = error.transactionError;
+      const logs = error.logs;
+      let errorMsg = transactionError.message || error.message || 'Transaction failed';
+
+      // Append logs if available for better debugging
+      if (logs && logs.length > 0) {
+        errorMsg += `\nLogs: ${logs.join('\n')}`;
+      }
+
+      return {
+        code: StatusCodes.ContractExecutionError,
+        status: TxnStatus.error,
+        errorMsg,
+        ...(includeError && { error }),
+      };
+    }
+
+    // Handle SolanaJSONRPCError - contains RPC error code and message
+    if (error instanceof SolanaJSONRPCError) {
+      const errorCode = typeof error.code === 'number' ? error.code : StatusCodes.Error;
+      const errorMsg = error.message || 'RPC error occurred';
+
+      return {
+        code: errorCode,
+        status: TxnStatus.error,
+        errorMsg,
+        ...(includeError && { error }),
+      };
+    }
+
+    // Handle TransactionExpiredBlockheightExceededError
+    if (error instanceof TransactionExpiredBlockheightExceededError) {
+      return {
+        code: StatusCodes.Error,
+        status: TxnStatus.error,
+        errorMsg: `Transaction expired: blockheight exceeded. Signature: ${error.signature}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    // Handle TransactionExpiredTimeoutError
+    if (error instanceof TransactionExpiredTimeoutError) {
+      return {
+        code: StatusCodes.Error,
+        status: TxnStatus.error,
+        errorMsg: error.message || `Transaction expired: timeout exceeded. Signature: ${error.signature}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    // Handle TransactionExpiredNonceInvalidError
+    if (error instanceof TransactionExpiredNonceInvalidError) {
+      return {
+        code: StatusCodes.Error,
+        status: TxnStatus.error,
+        errorMsg: `Transaction expired: nonce invalid. Signature: ${error.signature}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    return null;
   }
 
   private parseGenericError(error: unknown, includeError?: boolean): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {

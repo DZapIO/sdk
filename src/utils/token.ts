@@ -31,3 +31,27 @@ export function getTokensPairKey({
   const destFormattedAddress = formatToken(destToken, destChainNativeAddress);
   return `${srcChainId}_${srcFormattedAddress}-${destChainId}_${destFormattedAddress}`;
 }
+
+/**
+ * Validates if an object is a valid token structure
+ * @param token - Token object to validate
+ * @returns True if the token has all required fields with valid types
+ */
+export function isValidToken(token: unknown): boolean {
+  if (!token || typeof token !== 'object' || token === null) {
+    return false;
+  }
+
+  const tokenObj = token as Record<string, unknown>;
+  const address = (tokenObj.address || tokenObj.contract) as string | undefined;
+
+  return (
+    typeof address === 'string' &&
+    address.length > 0 &&
+    typeof tokenObj.symbol === 'string' &&
+    tokenObj.symbol.length > 0 &&
+    typeof tokenObj.decimals === 'number' &&
+    tokenObj.decimals > 0 &&
+    (typeof tokenObj.name === 'string' ? tokenObj.name.length > 0 : true)
+  );
+}

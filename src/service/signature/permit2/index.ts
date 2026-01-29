@@ -379,7 +379,7 @@ export class Permit2 {
     permit2Address: HexString;
     rpcUrls?: string[];
   }): Promise<{ permit2Values: PermitSingleValues; nonce: bigint }> {
-    const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
+    const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls });
     const allowanceResult = await publicClient.readContract({
       address: permit2Address,
       abi: ABI.permit.permit2Abi,

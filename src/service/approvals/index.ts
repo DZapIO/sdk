@@ -28,7 +28,7 @@ import type { ContractsService } from '../contracts';
 import { SignatureService } from '../signature';
 import { EIP2612 } from '../signature/eip2612';
 import { Permit2 } from '../signature/permit2';
-import { TransactionsService } from '../transactions';
+import type { TransactionsService } from '../transactions';
 
 /**
  * ApprovalsService handles all approval and permit operations for token spending.
@@ -37,6 +37,7 @@ export class ApprovalsService {
   constructor(
     private chainsService: ChainsService,
     private contractsService: ContractsService,
+    private transactionsService: TransactionsService,
   ) {}
 
   /**
@@ -368,7 +369,7 @@ export class ApprovalsService {
           txnDetails = { status: errorResponse.status, code: errorResponse.code, txnHash: '' };
         }
       } else {
-        const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
+        const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls });
         try {
           const { request } = await publicClient.simulateContract({
             address: tokens[dataIdx].address,
@@ -565,7 +566,7 @@ export class ApprovalsService {
     if (approveCalls.length === 0) {
       return { success: true };
     }
-    const batchResult = await TransactionsService.sendBatchCalls(walletClient, approveCalls);
+    const batchResult = await this.transactionsService.sendBatchCalls(walletClient, approveCalls);
     if (!batchResult) {
       logger.warn('Batch approval calls failed or not supported', {
         service: 'ApprovalsService',

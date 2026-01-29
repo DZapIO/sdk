@@ -4,9 +4,9 @@ import type { Signer } from 'ethers';
 import type { WalletClient } from 'viem';
 
 import { ZapApiClient } from '../../api';
-import { ZAP_STEP_ACTIONS } from '../../constants';
+import { Services, ZAP_STEP_ACTIONS } from '../../constants';
 import { StatusCodes, TxnStatus } from '../../enums';
-import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, HexString } from '../../types';
+import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
 import type {
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
@@ -27,8 +27,7 @@ import type {
 import type { ZapEvmTxnDetails, ZapStep } from '../../types/zap/step';
 import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
-import { ChainsService } from '../chains';
-import { TransactionsService } from '../transactions';
+import type { TransactionsService } from '../transactions';
 
 /**
  * ZapService handles all zap-related operations including quotes, transaction building, execution, and pool management.
@@ -36,7 +35,7 @@ import { TransactionsService } from '../transactions';
 export class ZapService {
   private cancelTokenSource: CancelTokenSource | null = null;
 
-  constructor() {}
+  constructor(private transactionsService: TransactionsService) {}
 
   /**
    * Fetches pricing and routing information for zap operations without building full transactions.
@@ -290,6 +289,39 @@ export class ZapService {
   }
 
   /**
+   * Fetches transaction history for zap operations.
+   *
+   * @param params - Transaction history request parameters
+   * @returns Promise resolving to transaction history data
+   *
+   * @example
+   * ```typescript
+   * const history = await client.zap.getTransactionHistory({
+   *   offset: 0,
+   *   limit: 10,
+   *   account: '0x...',
+   *   chainId: 1,
+   *   status: 'completed'
+   * });
+   * ```
+   */
+  public async getTransactionHistory(
+    params: {
+      offset: number;
+      limit: number;
+      account: string;
+      chainId?: number;
+      status?: string;
+      chainType?: string;
+      page?: number;
+      service?: string;
+    },
+    signal?: AbortSignal,
+  ) {
+    return (await ZapApiClient.fetchZapTransactionHistory(params, signal)).data;
+  }
+
+  /**
    * Broadcasts a zap transaction to the blockchain.
    *
    * @param request - The zap transaction request containing source chainId, txnData and txId
@@ -337,50 +369,20 @@ export class ZapService {
   }): Promise<DZapTransactionResponse> {
     try {
       const { callData, callTo, value, estimatedGas } = txnData;
-      return await TransactionsService.sendTransaction({
+      return await this.transactionsService.send({
         chainId,
         signer,
-        to: callTo,
-        data: callData,
-        value: BigInt(value),
-        gasLimit: estimatedGas ? BigInt(estimatedGas) : undefined,
+        txnData: {
+          from: '0x' as HexString,
+          to: callTo as HexString,
+          data: callData as HexString,
+          value: value,
+          gasLimit: estimatedGas,
+        } as EvmTxData,
+        service: Services.zap,
       });
     } catch (error: unknown) {
       logger.error('Zap step execution failed', { service: 'ZapService', method: 'executeStep', chainId, error });
-      return {
-        ...parseError(error),
-        error,
-      };
-    }
-  }
-
-  /**
-   * Approves tokens for zap operations.
-   */
-  public async approve({ chainId, data, signer }: { chainId: number; data: ZapEvmTxnDetails; signer: Signer | WalletClient }) {
-    try {
-      const { callData, callTo, value, estimatedGas } = data;
-      const publicClient = ChainsService.getPublicClient(chainId);
-      const blockNumber = await publicClient.getBlockNumber();
-      logger.debug('Zap approval block data', {
-        service: 'ZapService',
-        method: 'approve',
-        chainId,
-        blockNumber: blockNumber.toString(),
-        callTo,
-        value,
-        estimatedGas,
-      });
-      return await TransactionsService.sendTransaction({
-        chainId,
-        signer,
-        to: callTo,
-        data: callData,
-        value: BigInt(value),
-        gasLimit: estimatedGas ? BigInt(estimatedGas) : undefined,
-      });
-    } catch (error: unknown) {
-      logger.error('Zap approval failed', { service: 'ZapService', method: 'approve', chainId, error });
       return {
         ...parseError(error),
         error,

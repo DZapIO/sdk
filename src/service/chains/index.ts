@@ -1,12 +1,34 @@
+import type { Client } from '@bigmi/core';
+import type { UTXOSchema } from '@bigmi/core';
+import {
+  blockchair,
+  blockcypher,
+  createClient,
+  fallback as btcTransportFallback,
+  mempool,
+  publicActions,
+  rpcSchema,
+  walletActions,
+} from '@bigmi/core';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import type { Commitment } from '@solana/web3.js';
+import { clusterApiUrl, Connection } from '@solana/web3.js';
 import { createPublicClient, fallback, http, type PublicClient } from 'viem';
 
 import { TradeApiClient } from '../../api';
-import { viemChainsById } from '../../chains';
+import { bigmiChainsById, viemChainsById } from '../../chains';
 import { config } from '../../config';
-import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../constants/rpc';
+import { chainIds } from '../../constants/chains';
+import { MULTI_CALL_BATCH_SIZE, RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../constants/rpc';
 import type { Chain, ChainData } from '../../types';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
+
+/** Options for chain client methods: rpcUrls (EVM), commitment (Solana) */
+export type GetPublicClientOptions = {
+  rpcUrls?: string[];
+  commitment?: Commitment;
+};
 
 /**
  * ChainsService handles all chain configuration, chain-related operations, and blockchain client creation.
@@ -65,34 +87,19 @@ export class ChainsService {
   }
 
   /**
-   * Creates a public client for blockchain interactions using viem.
-   * Automatically uses configured RPC URLs from config if available, otherwise falls back to default.
+   * Returns a viem PublicClient for EVM chains only.
+   * Use getSolanaClient / getSuiClient for Solana and Sui.
    *
-   * @param chainId - The chain ID to connect to
-   * @param rpcUrls - Optional array of RPC URLs to use (overrides config if provided)
-   * @returns A configured viem public client
-   *
-   * @example
-   * ```typescript
-   * // Use configured RPC URLs from config
-   * const client = ChainsService.getPublicClient(1);
-   *
-   * // Override with custom RPC URLs
-   * const customClient = ChainsService.getPublicClient(1, ['https://custom-rpc.com']);
-   *
-   * // Or via client instance
-   * const client = client.chains.getPublicClient(1);
-   * ```
+   * @param chainId - EVM chain ID (e.g. 1, 42161)
+   * @param options - Optional rpcUrls
    */
-  public static getPublicClient(chainId: number, rpcUrls?: string[]): PublicClient {
-    const configuredRpcUrls = rpcUrls ?? config.getRpcUrlsByChainId(chainId);
+  public static getPublicClient(chainId: number, options?: GetPublicClientOptions): PublicClient {
+    const configuredRpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
     const hasRpcUrls = configuredRpcUrls && Array.isArray(configuredRpcUrls) && configuredRpcUrls.length > 0;
     const chain = viemChainsById[chainId];
-
     if (!chain) {
       throw new Error(`Unsupported chain ID: ${chainId}`);
     }
-
     return createPublicClient({
       chain,
       transport: fallback(hasRpcUrls ? configuredRpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
@@ -105,13 +112,76 @@ export class ChainsService {
   }
 
   /**
-   * Instance method that delegates to static method for convenience.
-   * @param chainId - The chain ID to connect to
-   * @param rpcUrls - Optional array of RPC URLs to use (overrides config if provided)
-   * @returns A configured viem public client
+   * Returns a Solana Connection for the SVM chain.
+   *
+   * @param chainId - Solana chain ID (default: 7565164)
+   * @param options - Optional commitment, rpcUrls
    */
-  public getPublicClient(chainId: number, rpcUrls?: string[]): PublicClient {
-    return ChainsService.getPublicClient(chainId, rpcUrls);
+  public static getPublicSolanaClient(chainId: number = chainIds.solana, options?: GetPublicClientOptions): Connection {
+    const rpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
+    const rpc = rpcUrls?.[0] ?? clusterApiUrl('mainnet-beta');
+    const commitment = options?.commitment ?? 'confirmed';
+    return new Connection(rpc, commitment);
+  }
+
+  /**
+   * Returns a SuiClient for the Sui chain.
+   *
+   * @param chainId - Sui chain ID (default: 19219)
+   * @param options - Optional rpcUrls
+   */
+  public static getPublicSuiClient(chainId: number = chainIds.sui, options?: GetPublicClientOptions): SuiClient {
+    const rpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
+    const rpc = rpcUrls?.[0];
+    return new SuiClient({ url: rpc ?? getFullnodeUrl('mainnet') });
+  }
+
+  /**
+   * Returns a Bitcoin (UTXO) client for the BVM chain.
+   *
+   * @param chainId - Bitcoin chain ID (default: 1000 for mainnet, 1001 for testnet)
+   * @param options - Optional rpcUrls
+   */
+  public static getPublicBitcoinClient(chainId: number = chainIds.bitcoin, _options?: GetPublicClientOptions): Client {
+    const chain = bigmiChainsById[chainId];
+    if (!chain) {
+      throw new Error(`Unsupported chainId: ${chainId}. Supported chains: ${Object.keys(bigmiChainsById).join(', ')}`);
+    }
+    const baseUrl = `https://mempool.space${chain.testnet ? '/testnet4' : ''}/api`;
+    return createClient({
+      chain,
+      rpcSchema: rpcSchema<UTXOSchema>(),
+      transport: btcTransportFallback([mempool({ baseUrl }), blockchair(), blockcypher()]),
+      batch: {
+        multicall: {
+          wait: RPC_BATCHING_WAIT_TIME,
+          batchSize: MULTI_CALL_BATCH_SIZE,
+        },
+      },
+      pollingInterval: 10_000,
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+  }
+
+  /** Instance method: EVM PublicClient */
+  public getPublicClient(chainId: number, options?: GetPublicClientOptions): PublicClient {
+    return ChainsService.getPublicClient(chainId, options);
+  }
+
+  /** Instance method: Solana Connection */
+  public getSolanaClient(chainId?: number, options?: GetPublicClientOptions): Connection {
+    return ChainsService.getPublicSolanaClient(chainId ?? chainIds.solana, options);
+  }
+
+  /** Instance method: Sui SuiClient */
+  public getSuiClient(chainId?: number, options?: GetPublicClientOptions): SuiClient {
+    return ChainsService.getPublicSuiClient(chainId ?? chainIds.sui, options);
+  }
+
+  /** Instance method: Bitcoin (UTXO) Client */
+  public getBTCClient(chainId?: number, options?: GetPublicClientOptions): Client {
+    return ChainsService.getPublicBitcoinClient(chainId ?? chainIds.bitcoin, options);
   }
 
   /**

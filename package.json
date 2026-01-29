@@ -15,7 +15,7 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public"
@@ -102,10 +102,19 @@
     "typescript-eslint": "^8.0.0"
   },
   "dependencies": {
+    "@bigmi/client": "^0.6.5",
+    "@bigmi/core": "^0.6.5",
+    "@bitcoinerlab/secp256k1": "^1.2.0",
+    "@mempool/mempool.js": "^3.0.0",
+    "@mysten/sui": "1.29.1",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
     "axios": "^1.2.1",
+    "bitcoinjs-lib": "^7.0.1",
+    "bs58": "^6.0.0",
     "decimal.js": "^10.4.3",
-    "node-cache": "^5.1.2",
     "ethers": "5.7.2",
+    "node-cache": "^5.1.2",
     "viem": "^2.17.0"
   },
   "repository": {

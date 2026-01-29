@@ -3,6 +3,10 @@ import type { Signer } from 'ethers';
 import type { TransactionReceipt, WalletClient } from 'viem';
 
 import { TradeApiClient } from '../../api';
+import type { DZapSigner } from '../../chains/clients';
+
+/** EVM-only signer type used for gasless and HyperLiquid flows */
+type EvmSigner = Signer | WalletClient;
 import { config } from '../../config';
 import { Services } from '../../constants';
 import { exclusiveChainIds } from '../../constants/chains';
@@ -35,7 +39,7 @@ import { SwapDecoder } from '../decoder';
 import type { PriceService } from '../price';
 import { priceProviders } from '../price/types/IPriceProvider';
 import { SignatureService } from '../signature';
-import { TransactionsService } from '../transactions';
+import type { TransactionsService } from '../transactions';
 
 /**
  * TradeService handles all trade-related operations including swaps, bridges, quotes, and transaction execution.
@@ -45,6 +49,7 @@ export class TradeService {
     private priceService: PriceService,
     private chainsService: ChainsService,
     private contractsService: ContractsService,
+    private transactionsService: TransactionsService,
   ) {}
 
   /**
@@ -118,7 +123,7 @@ export class TradeService {
    *
    * @param params - Configuration object for the trade operation
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
-   * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
+   * @param params.signer - The wallet signer (EVM: ethers Signer / viem WalletClient; Solana: SolanaSigner; Sui: SuiWallet; Bitcoin: BitcoinSigner)
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
    * @param params.batchTransaction - Optional flag to enable batch transaction. If true, the transaction will be sent as a batch transaction with EIP-5792.
    * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
@@ -146,7 +151,7 @@ export class TradeService {
     txnData,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: DZapSigner;
     txnData?: TradeBuildTxnResponse;
     batchTransaction?: boolean;
     rpcUrls?: string[];
@@ -166,7 +171,7 @@ export class TradeService {
    *
    * @param params - Configuration object for the trade operation
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
-   * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
+   * @param params.signer - The wallet signer (EVM: ethers Signer / viem WalletClient; Solana: SolanaSigner; Sui: SuiWallet; Bitcoin: BitcoinSigner). Gasless is EVM-only.
    * @param params.txnData - Optional pre-built gasless transaction data. If provided, skips the build step
    * @returns Promise resolving to the transaction execution result
    *
@@ -196,7 +201,7 @@ export class TradeService {
     txnStatusCallback,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: DZapSigner;
     txnData?: GaslessTradeBuildTxnResponse;
     txnStatusCallback: (status: TxnStatus) => void;
   }) {
@@ -246,6 +251,59 @@ export class TradeService {
     chainId?: number;
   }): Promise<TradeStatusResponse | Record<string, TradeStatusResponse>> {
     return TradeApiClient.fetchStatus({ txHash, txIds, chainId });
+  }
+
+  /**
+   * Fetches providers for swap or bridge services.
+   *
+   * @param service - Optional service type ('swap' or 'bridge')
+   * @returns Promise resolving to array of providers
+   *
+   * @example
+   * ```typescript
+   * // Get all providers
+   * const allProviders = await client.trade.getProviders();
+   *
+   * // Get swap providers only
+   * const swapProviders = await client.trade.getProviders('swap');
+   *
+   * // Get bridge providers only
+   * const bridgeProviders = await client.trade.getProviders('bridge');
+   * ```
+   */
+  public async getProviders(service?: 'swap' | 'bridge'): Promise<Array<{ id: string; name: string; icon: string }>> {
+    return (await TradeApiClient.fetchProviders(service)).data;
+  }
+
+  /**
+   * Fetches transaction history for a user account.
+   *
+   * @param params - Transaction history request parameters
+   * @returns Promise resolving to transaction history data
+   *
+   * @example
+   * ```typescript
+   * const history = await client.trade.getTransactionHistory({
+   *   offset: 0,
+   *   limit: 10,
+   *   account: '0x...',
+   *   service: 'swap',
+   *   chainId: 1
+   * });
+   * ```
+   */
+  public async getTransactionHistory(params: {
+    offset?: number;
+    limit?: number;
+    account: string;
+    service?: string;
+    chainId?: number;
+    status?: string;
+    chainType?: string;
+    page?: number;
+    fetchAllTxs?: boolean;
+  }) {
+    return (await TradeApiClient.fetchTransactionHistory(params)).data;
   }
 
   /**
@@ -313,7 +371,7 @@ export class TradeService {
    * ```
    */
   public async decodeTxn({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const publicClient = ChainsService.getPublicClient(chainId, config.getRpcUrlsByChainId(chainId));
+    const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls: config.getRpcUrlsByChainId(chainId) });
     const [chainConfig, transactionData] = await Promise.all([
       this.chainsService.getConfig(),
       publicClient.getTransaction({
@@ -325,34 +383,6 @@ export class TradeService {
     }
     const decoder = new SwapDecoder();
     return decoder.decodeTransactionData(transactionData, data, service, chainConfig[chainId]);
-  }
-
-  /**
-   * Sends a transaction using either ethers or viem signer.
-   * @private
-   */
-  private async sendTransaction(
-    signer: Signer | WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
-    chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-  ): Promise<DZapTransactionResponse> {
-    const result = await TransactionsService.sendTransaction({
-      chainId,
-      signer,
-      from: txnParams.from as HexString,
-      to: txnParams.to as HexString,
-      data: txnParams.data as HexString,
-      value: txnParams.value,
-      gasLimit: txnParams.gasLimit,
-    });
-
-    return {
-      ...result,
-      additionalInfo,
-      updatedQuotes,
-    };
   }
 
   /**
@@ -403,8 +433,7 @@ export class TradeService {
    * @private
    */
   private async sendHyperLiquidTransaction(
-    signer: Signer | WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
+    signer: DZapSigner,
     txnData: TradeBuildTxnResponse,
     chainId: number,
     additionalInfo: AdditionalInfo | undefined,
@@ -428,8 +457,8 @@ export class TradeService {
       }
 
       const resp = await this.signCustomTypedData({
-        signer,
-        account: txnParams.from as HexString,
+        signer: signer as EvmSigner,
+        account: txnData.from as HexString,
         domain: typedData.domain,
         types: typedData.types,
         message: typedData.message,
@@ -441,7 +470,12 @@ export class TradeService {
       }
       txnDetails = resp.data?.signature;
     } else {
-      const resp = await this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+      const resp = await this.transactionsService.send({
+        chainId,
+        signer,
+        txnData,
+        service: Services.trade,
+      });
       if (resp.status !== TxnStatus.success) {
         throw new Error('Failed to sign transaction');
       }
@@ -477,27 +511,31 @@ export class TradeService {
     txnData,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: DZapSigner;
     txnData?: TradeBuildTxnResponse;
   }): Promise<DZapTransactionResponse> {
     try {
       const chainId = request.fromChain;
       let buildTxnResponseData: TradeBuildTxnResponse;
 
-      // Build transaction data if not provided
       if (txnData) {
         buildTxnResponseData = txnData;
       } else {
         buildTxnResponseData = await TradeApiClient.fetchTradeBuildTxnData(request);
       }
 
-      const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
-      const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
+      const { additionalInfo, updatedQuotes } = buildTxnResponseData;
 
       if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
-        return this.sendHyperLiquidTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
+        return await this.sendHyperLiquidTransaction(signer, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
       }
-      return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
+      return await this.transactionsService.send({
+        chainId,
+        signer,
+        txnData: buildTxnResponseData,
+        paramsReq: request,
+        service: Services.trade,
+      });
     } catch (error: unknown) {
       logger.error('Trade operation failed', {
         service: 'TradeService',
@@ -528,7 +566,7 @@ export class TradeService {
     txnStatusCallback,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: DZapSigner;
     rpcUrls: string[];
     spender: HexString;
     txnData?: GaslessTradeBuildTxnResponse;
@@ -563,7 +601,7 @@ export class TradeService {
         sender: request.sender,
         spender,
         permitType,
-        signer,
+        signer: signer as EvmSigner,
         gasless: true,
         txId,
         service: 'trade',

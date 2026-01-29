@@ -1,4 +1,6 @@
-import { viemChainsList } from './chains';
+import { viemChainsById, viemChainsList } from './chains';
+import type { DZapSigner } from './chains/clients';
+import { CHAIN_NATIVE_TOKENS, DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKEN_FORMATS, NATIVE_TOKENS } from './constants/tokens';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import { ApprovalsService } from './service/approvals';
@@ -53,8 +55,9 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { formatToken, getTokensPairKey, isBatchTxnSupportedByWallet } from './utils';
+import { CLPoolUtils, extendViemChain, formatToken, getTokensPairKey, isBatchTxnSupportedByWallet, isNativeCurrency, isValidToken } from './utils';
 
+export * from './chains/clients';
 export * from './constants';
 export * from './types/zap';
 
@@ -65,16 +68,21 @@ export {
   BatchPermitCallbackParams,
   BtcTxData,
   Chain,
+  CHAIN_NATIVE_TOKENS,
   ChainData,
   ChainsService,
+  CLPoolUtils,
   contractErrorActions,
   ContractErrorResponse,
   ContractsService,
+  DZAP_NATIVE_TOKEN_FORMAT,
   DZapClient,
   DZapPermitMode,
+  DZapSigner,
   DZapTransactionResponse,
   EIP2612,
   EvmTxData,
+  extendViemChain,
   Fee,
   FeeDetails,
   formatToken,
@@ -82,6 +90,10 @@ export {
   getTokensPairKey,
   HexString,
   isBatchTxnSupportedByWallet,
+  isNativeCurrency,
+  isValidToken,
+  NATIVE_TOKEN_FORMATS,
+  NATIVE_TOKENS,
   ParamQuotes,
   Permit2,
   PermitMode,
@@ -115,6 +127,7 @@ export {
   TradeStep,
   TransactionsService,
   TxnStatus,
+  viemChainsById,
   viemChainsList,
   ZapIntegratorConfig,
   ZapService,

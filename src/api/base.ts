@@ -24,12 +24,14 @@ export class ApiClient {
     data,
     method = GET,
     cancelToken,
+    signal,
     shouldRetry = false,
   }: {
     endpoint: string;
     data?: unknown;
     method?: Method;
     cancelToken?: CancelToken;
+    signal?: AbortSignal;
     shouldRetry?: boolean;
   }) {
     const axiosConfig: ExtendedAxiosRequestConfig = {
@@ -39,6 +41,7 @@ export class ApiClient {
       params: method === GET ? data : undefined,
       headers: this.getHeaders(),
       cancelToken,
+      signal,
       shouldRetry,
     };
     return this.getInstance()(axiosConfig)

@@ -30,3 +30,17 @@ export const chainTypes = {
   tonvm: 'tonvm',
   tronvm: 'tronvm',
 } as const;
+
+export const chainIds = {
+  bitcoin: 1000,
+  bitcoinTestnet: 1001,
+  solana: 7565164,
+  sui: 19219,
+  tron: 728126428,
+  ton: 607,
+  aptos: 116201519,
+  ethereum: 1,
+  bitcointestnet: 1001,
+  hyperLiquid: 998,
+  polygon: 137,
+} as const;

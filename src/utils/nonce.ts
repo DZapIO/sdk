@@ -67,7 +67,7 @@ export class NonceManager {
 }
 
 export const getNextPermit2Nonce = async (permitAddress: HexString, account: HexString, chainId: number, rpcUrls?: string[]): Promise<bigint> => {
-  const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
+  const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls });
   const nonceManager = new NonceManager(publicClient, permitAddress);
   return nonceManager.nextNonce(account);
 };
