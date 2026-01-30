@@ -3,7 +3,7 @@ import { type Client } from 'viem';
 
 import type { DZapSigner, TransactionReceipt } from '../../chains/clients';
 import { getChainClient, getEvmChain } from '../../chains/clients';
-import { StatusCodes, TxnStatus } from '../../enums';
+import { TxnStatus } from '../../enums';
 import type {
   AvailableDZapServices,
   DZapTransactionResponse,
@@ -16,6 +16,7 @@ import type {
 import type { WalletCallReceipt } from '../../types/wallet';
 import type { ZapBuildTxnResponse } from '../../types/zap/build';
 import type { ZapBuildTxnPayload } from '../../types/zap/step';
+import { NotFoundError, parseError } from '../../utils/errors';
 
 /**
  * TransactionsService handles generic transaction operations including sending, decoding, and batch transactions.
@@ -86,7 +87,7 @@ export class TransactionsService {
         service,
       });
     }
-    return { code: StatusCodes.Error, status: TxnStatus.error, errorMsg: `Unsupported chain: ${chainId}` };
+    return { ...parseError(new NotFoundError(`Unsupported chain: ${chainId}`)) };
   }
 
   /**
@@ -120,7 +121,7 @@ export class TransactionsService {
     return {
       status: TxnStatus.error,
       txHash,
-      error: new Error(`Unsupported chain: ${chainId}`),
+      error: new NotFoundError(`Unsupported chain: ${chainId}`),
     };
   }
 

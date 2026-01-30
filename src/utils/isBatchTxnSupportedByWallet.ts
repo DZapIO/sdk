@@ -3,6 +3,9 @@ import { withTimeout } from 'viem';
 import { getCapabilities } from 'viem/actions';
 import { getAction } from 'viem/utils';
 
+import { StatusCodes } from '../enums';
+import { TransactionError } from './errors';
+
 /**
  * Check if wallet supports EIP-5792 batch transactions with enhanced checking
  * @param client - The wallet client
@@ -22,7 +25,7 @@ export async function isBatchTxnSupportedByWallet({
   try {
     const capabilities = await withTimeout(async () => await getAction(client, getCapabilities, 'getCapabilities')({ chainId }), {
       timeout: 2000,
-      errorInstance: new Error('Timeout'),
+      errorInstance: new TransactionError(StatusCodes.Timeout, 'Timeout'),
     });
     return (
       capabilities?.atomicBatch?.supported ||

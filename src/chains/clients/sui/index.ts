@@ -6,7 +6,7 @@ import { chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString } from '../../../types';
-import { parseError, ValidationError } from '../../../utils/errors';
+import { parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
@@ -133,7 +133,7 @@ export class SuiChain extends BaseChainClient {
         }
 
         if (Date.now() - startTime > timeout) {
-          return { status: TxnStatus.error, txHash, error: new Error('Transaction confirmation timeout') };
+          return { status: TxnStatus.error, txHash, error: new TransactionError(StatusCodes.Timeout, 'Transaction confirmation timeout') };
         }
 
         await new Promise((resolve) => setTimeout(resolve, pollingInterval));

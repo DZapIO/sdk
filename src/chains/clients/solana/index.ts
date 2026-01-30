@@ -9,7 +9,7 @@ import { CHAIN_NATIVE_TOKENS } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
-import { NotFoundError, parseError, ValidationError } from '../../../utils/errors';
+import { NotFoundError, parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
@@ -123,7 +123,7 @@ export class SolanaChain extends BaseChainClient {
 
       const signedTx = await withTimeout<VersionedTransaction>(() => signer.signTransaction(versionedTransaction), {
         timeout: 60_000,
-        errorInstance: new Error('Transaction signing expired'),
+        errorInstance: new TransactionError(StatusCodes.Timeout, 'Transaction signing expired'),
       });
 
       const txnHash = bs58.encode(signedTx.signatures[0]);
@@ -150,8 +150,7 @@ export class SolanaChain extends BaseChainClient {
     try {
       const data = additionalData as SolanaTransactionResponse | undefined;
       if (!data?.signedTx || !data?.latestBlockhash) {
-        logger.error('Missing Solana transaction data', { service: 'SolanaChain', method: 'waitForTransactionReceipt' });
-        return { status: TxnStatus.error };
+        throw new ValidationError('Missing Solana transaction data for receipt');
       }
 
       const confirmedTx = await this.executeTransactionWithRetry(params.chainId, data.signedTx, data.latestBlockhash);

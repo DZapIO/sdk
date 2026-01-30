@@ -18,7 +18,7 @@ import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '
 import type { ZapBuildTxnResponse } from '../../../types/zap/build';
 import type { ZapBuildTxnPayload, ZapBvmTxnDetails } from '../../../types/zap/step';
 import { generateRedeemScript, isPsbtFinalized, toXOnly } from '../../../utils/bitcoin';
-import { NotFoundError, parseError, ServerError, ValidationError } from '../../../utils/errors';
+import { NotFoundError, parseError, ServerError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
@@ -164,7 +164,7 @@ export class BitcoinChain extends BaseChainClient {
         }),
       {
         timeout: 600_000, // 10 min signing window
-        errorInstance: new Error('Transaction signing expired'),
+        errorInstance: new TransactionError(StatusCodes.Timeout, 'Transaction signing expired'),
       },
     );
 
@@ -278,7 +278,7 @@ export class BitcoinChain extends BaseChainClient {
       const timeoutId = timeout
         ? setTimeout(() => {
             clearInterval(intervalId);
-            reject(new Error(`Transaction confirmation timeout: ${timeout}ms for txid ${txid}`));
+            reject(new TransactionError(StatusCodes.Timeout, `Transaction confirmation timeout: ${timeout}ms for txid ${txid}`));
           }, timeout)
         : undefined;
 
