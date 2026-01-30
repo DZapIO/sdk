@@ -21,6 +21,11 @@ export enum SolanaCommitment {
   processed = 'processed',
   confirmed = 'confirmed',
   finalized = 'finalized',
+  recent = 'recent',
+  single = 'single',
+  singleGossip = 'singleGossip',
+  root = 'root',
+  max = 'max',
 }
 
 /**
@@ -123,19 +128,13 @@ export class SolanaChain extends BaseChainClient {
     const { chainId, txnData, signer } = params;
 
     try {
-      if (!txnData || !('data' in txnData)) {
-        throw new Error('Gasless transactions not supported on Solana');
+      if (!txnData || !txnData.data) {
+        throw new Error('Unsupported transaction data');
       }
-
-      const data = txnData.data;
       const svmTxData = (txnData as TradeBuildTxnResponse).svmTxData;
       const connection = ChainsService.getPublicSolanaClient(chainId);
 
-      if (!signer || !data) {
-        return { code: StatusCodes.Error, status: TxnStatus.error };
-      }
-
-      const serializedData = new Uint8Array(Buffer.from(data, 'base64'));
+      const serializedData = new Uint8Array(Buffer.from(txnData.data, 'base64'));
       const versionedTransaction = VersionedTransaction.deserialize(serializedData);
 
       // If svmTxData exists, use it; otherwise fetch latest blockhash

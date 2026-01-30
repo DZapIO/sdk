@@ -11,9 +11,12 @@ import { address, initEccLib, networks, Psbt } from 'bitcoinjs-lib';
 import { TradeApiClient } from '../../../api/trade';
 import { ZapApiClient } from '../../../api/zap';
 import { chainIds, chainTypes, DZAP_NATIVE_TOKEN_FORMAT, Services } from '../../../constants';
+import { ZAP_STEP_ACTIONS } from '../../../constants/zap';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import { ChainsService } from '../../../service/chains';
-import type { AvailableDZapServices, DZapTransactionResponse, HexString } from '../../../types';
+import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
+import type { ZapBuildTxnResponse } from '../../../types/zap/build';
+import type { ZapBuildTxnPayload, ZapBvmTxnDetails } from '../../../types/zap/step';
 import { generateRedeemScript, isPsbtFinalized, toXOnly } from '../../../utils/bitcoin';
 import { parseError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
@@ -203,36 +206,52 @@ export class BitcoinChain extends BaseChainClient {
   }
 
   /**
-   * Broadcasts a transaction to the mempool via the appropriate service API.
+   * Extracts psbtHex and txId from trade or zap build response.
    * @private
    */
-  private async broadcastMempoolTx(params: { txHex: string; txId: string; chainId: number }, service: AvailableDZapServices): Promise<string> {
-    return service === Services.zap ? this.broadcastZapMempoolTx(params) : this.broadcastTradeMempoolTx(params);
+  private getPsbtHexAndTxId(
+    txnData: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload,
+    service: typeof Services.trade | typeof Services.zap,
+  ): { psbtHex: string; txId: string } {
+    if (service === Services.trade) {
+      const tradeData = txnData as TradeBuildTxnResponse;
+      const psbtHex = tradeData?.data;
+      const txId = tradeData?.txId;
+      if (!psbtHex || !txId) throw new Error('Invalid Transaction Data');
+      return { psbtHex, txId };
+    }
+    const zapData = txnData as ZapBuildTxnResponse;
+    const executeStep = zapData.steps?.find((step) => step.action === ZAP_STEP_ACTIONS.execute && step.data?.type === chainTypes.bvm);
+    if (!executeStep?.data || !('data' in executeStep.data) || !('txnId' in executeStep.data)) {
+      throw new Error('Execute step with BVM data not found in zap route');
+    }
+    const bvmTxnData = executeStep.data as ZapBvmTxnDetails;
+    return { psbtHex: bvmTxnData.data, txId: bvmTxnData.txnId };
   }
 
   /**
-   * Sends a Bitcoin transaction
+   * Sends a Bitcoin transaction. Expects txnData to contain psbtHex and txId (extracted by caller for trade/zap).
+   * Signs PSBT once and broadcasts via trade or zap API based on service.
    */
   async sendTransaction(params: SendTransactionParams<typeof chainIds.bitcoin | typeof chainIds.bitcoinTestnet>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer, service } = params;
 
     try {
-      const psbtHex = txnData?.data;
-
-      if (!txnData || !('data' in txnData) || !psbtHex) {
+      if (!txnData) {
         throw new Error('Invalid Transaction Data');
-      }
-
-      if (!signer || typeof signer !== 'object' || !('account' in signer)) {
-        return { code: StatusCodes.Error, status: TxnStatus.error, errorMsg: 'Signer not provided' };
       }
       if (!service || (service !== Services.zap && service !== Services.trade)) {
         throw new Error(`Bitcoin broadcast requires service: "${Services.zap}" or "${Services.trade}"`);
       }
-      const client = signer as Client;
-      const signedPsbt = await this.signPsbtTx(chainId, psbtHex, client);
+
+      const { psbtHex, txId } = this.getPsbtHexAndTxId(txnData, service);
+
+      const signedPsbt = await this.signPsbtTx(chainId, psbtHex, signer);
       const txHex = signedPsbt.extractTransaction().toHex();
-      const txHash = await this.broadcastMempoolTx({ txHex, chainId, txId: txnData.txId }, service);
+      const txHash =
+        service === Services.trade
+          ? await this.broadcastTradeMempoolTx({ txHex, chainId, txId })
+          : await this.broadcastZapMempoolTx({ txHex, chainId, txId });
 
       return {
         code: StatusCodes.Success,

@@ -5,6 +5,7 @@ import type { WalletClient } from 'viem';
 
 import { ZapApiClient } from '../../api';
 import { Services, ZAP_STEP_ACTIONS } from '../../constants';
+import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
 import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
 import type {
@@ -24,7 +25,7 @@ import type {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../../types/zap';
-import type { ZapEvmTxnDetails, ZapStep } from '../../types/zap/step';
+import type { ZapEvmTxnDetails, ZapStep, ZapTxnDetails } from '../../types/zap/step';
 import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import type { TransactionsService } from '../transactions';
@@ -404,8 +405,10 @@ export class ZapService {
   > {
     try {
       const { srcChainId: chainId } = request;
+      let buildResponse: ZapBuildTxnResponse | undefined;
       if (!steps || steps.length === 0) {
         const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request)).data;
+        buildResponse = route;
         steps = route.steps;
         if (!steps || steps.length === 0) {
           logger.error('No steps found in zap route', {
@@ -425,13 +428,37 @@ export class ZapService {
       let txnHash: HexString | undefined;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        if (step.action === ZAP_STEP_ACTIONS.execute) {
-          const result = await this.executeStep({ chainId, txnData: step.data as ZapEvmTxnDetails, signer });
-          if (result.status !== TxnStatus.success) {
-            return result;
-          }
-          txnHash = result.txnHash as HexString;
+        if (step.action !== ZAP_STEP_ACTIONS.execute) continue;
+
+        const stepData = step.data as ZapTxnDetails;
+        let result: DZapTransactionResponse;
+
+        if (stepData.type === chainTypes.bvm) {
+          // Non-EVM (e.g. Bitcoin/BVM): pass full build when available so chain client can sign & broadcast
+          result = await this.transactionsService.send({
+            chainId,
+            signer,
+            txnData: buildResponse ?? { steps },
+            service: Services.zap,
+          });
+        } else {
+          const { callData, callTo, value, estimatedGas } = stepData;
+          result = await this.transactionsService.send({
+            chainId,
+            signer,
+            txnData: {
+              from: '0x' as HexString,
+              to: callTo as HexString,
+              data: callData as HexString,
+              value: value,
+              gasLimit: estimatedGas,
+            } as EvmTxData,
+            service: Services.zap,
+          });
         }
+
+        if (result.status !== TxnStatus.success) return result;
+        txnHash = result.txnHash as HexString;
       }
 
       if (!txnHash) {

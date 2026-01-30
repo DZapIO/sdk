@@ -4,6 +4,8 @@ import type { WalletClient } from 'viem';
 import type { TxnStatus } from '../../enums';
 import type { AvailableDZapServices, HexString } from '../../types';
 import type { DZapTransactionResponse, EvmTxData, GaslessTradeBuildTxnResponse, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../../types';
+import type { ZapBuildTxnResponse } from '../../types/zap/build';
+import type { ZapBuildTxnPayload } from '../../types/zap/step';
 import type { BitcoinSigner } from './bitcoin';
 import type { SolanaSigner } from './solana';
 import type { SuiWallet } from './sui';
@@ -62,8 +64,8 @@ type SignerForChainId<TChainId extends number> = TChainId extends keyof ChainIdT
 type ChainIdToTxnDataMap = {
   7565164: TradeBuildTxnResponse; // Solana
   19219: TradeBuildTxnResponse; // Sui
-  1000: TradeBuildTxnResponse; // Bitcoin
-  1001: TradeBuildTxnResponse; // Bitcoin Testnet
+  1000: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload; // Bitcoin (trade or zap)
+  1001: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload; // Bitcoin Testnet
   728126428: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // Tron
   607: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // TON
   116201519: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // Aptos
@@ -74,7 +76,7 @@ type ChainIdToTxnDataMap = {
  */
 type TxnDataForChainId<TChainId extends number> = TChainId extends keyof ChainIdToTxnDataMap
   ? ChainIdToTxnDataMap[TChainId]
-  : EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // Default to EVM-compatible for unknown chains
+  : EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload; // Default for unknown chains
 
 /**
  * Parameters for sending transactions
@@ -84,7 +86,7 @@ export type SendTransactionParams<TChainId extends number = number> = {
   chainId: TChainId;
   txnData: TxnDataForChainId<TChainId> | undefined;
   paramsReq?: TradeBuildTxnRequest;
-  signer?: SignerForChainId<TChainId>;
+  signer: SignerForChainId<TChainId>;
   service?: AvailableDZapServices;
 };
 

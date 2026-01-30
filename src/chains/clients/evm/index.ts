@@ -103,10 +103,6 @@ export class EvmChain extends BaseChainClient {
   async sendTransaction(params: SendTransactionParams): Promise<DZapTransactionResponse> {
     const { chainId, signer, txnData } = params;
 
-    if (!signer || (!isEthersSigner(signer) && typeof signer !== 'object')) {
-      return { code: StatusCodes.Error, status: TxnStatus.error, errorMsg: 'Invalid signer provided' };
-    }
-
     const evmTxData = this.extractEvmTransactionData(txnData);
     if (!evmTxData) {
       return { code: StatusCodes.Error, status: TxnStatus.error, errorMsg: 'Invalid EVM transaction data' };

@@ -78,17 +78,11 @@ export class SuiChain extends BaseChainClient {
     const suiClient = ChainsService.getPublicSuiClient(chainId);
 
     try {
-      if (!txnData || !('data' in txnData)) {
+      if (!txnData || !txnData.data) {
         throw new Error('Unsupported transaction data');
       }
 
-      const data = txnData.data;
-
-      if (!signer || !data) {
-        return { code: StatusCodes.Error, status: TxnStatus.error };
-      }
-
-      const serializedData = fromBase64(data);
+      const serializedData = fromBase64(txnData.data);
       const tx = Transaction.from(serializedData);
 
       const resData = await signer.signAndExecuteTransaction(

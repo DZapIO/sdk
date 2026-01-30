@@ -1,5 +1,6 @@
 import { viemChainsById, viemChainsList } from './chains';
 import type { DZapSigner } from './chains/clients';
+import { hyperLiquidSpender } from './constants/chains';
 import { CHAIN_NATIVE_TOKENS, DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKEN_FORMATS, NATIVE_TOKENS } from './constants/tokens';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
@@ -38,6 +39,7 @@ import {
   SinglePermitCallbackParams,
   SvmTxData,
   SwapInfo,
+  Tag,
   Token,
   TokenInfo,
   TokenPermitData,
@@ -55,7 +57,21 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { CLPoolUtils, extendViemChain, formatToken, getTokensPairKey, isBatchTxnSupportedByWallet, isNativeCurrency, isValidToken } from './utils';
+import {
+  bigmiToDzapChainId,
+  CLPoolUtils,
+  extendViemChain,
+  formatToken,
+  generateRedeemScript,
+  getScriptPubKey,
+  getTokensPairKey,
+  isBatchTxnSupportedByWallet,
+  isNativeCurrency,
+  isPsbtFinalized,
+  isValidToken,
+  toBigmiChainId,
+  toXOnly,
+} from './utils';
 
 export * from './chains/clients';
 export * from './constants';
@@ -66,6 +82,7 @@ export {
   ApprovalMode,
   ApprovalsService,
   BatchPermitCallbackParams,
+  bigmiToDzapChainId,
   BtcTxData,
   Chain,
   CHAIN_NATIVE_TOKENS,
@@ -87,10 +104,14 @@ export {
   FeeDetails,
   formatToken,
   GaslessTradeBuildTxnResponse,
+  generateRedeemScript,
+  getScriptPubKey,
   getTokensPairKey,
   HexString,
+  hyperLiquidSpender,
   isBatchTxnSupportedByWallet,
   isNativeCurrency,
+  isPsbtFinalized,
   isValidToken,
   NATIVE_TOKEN_FORMATS,
   NATIVE_TOKENS,
@@ -109,11 +130,14 @@ export {
   SvmTxData,
   SwapDecoder,
   SwapInfo,
+  Tag,
+  toBigmiChainId,
   Token,
   TokenInfo,
   TokenPermitData,
   TokenResponse,
   TokenService,
+  toXOnly,
   TradeBuildTxnRequest,
   TradeBuildTxnRequestData,
   TradeBuildTxnResponse,

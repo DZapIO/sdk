@@ -44,3 +44,6 @@ export const chainIds = {
   hyperLiquid: 998,
   polygon: 137,
 } as const;
+
+/** Spender address for HyperLiquid (chainId 998) used for token approvals. Use chain config router when available. */
+export const hyperLiquidSpender = '0x0000000000000000000000000000000000000000' as `0x${string}`;

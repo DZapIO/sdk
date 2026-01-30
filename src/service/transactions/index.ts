@@ -14,6 +14,8 @@ import type {
   TradeBuildTxnResponse,
 } from '../../types';
 import type { WalletCallReceipt } from '../../types/wallet';
+import type { ZapBuildTxnResponse } from '../../types/zap/build';
+import type { ZapBuildTxnPayload } from '../../types/zap/step';
 
 /**
  * TransactionsService handles generic transaction operations including sending, decoding, and batch transactions.
@@ -70,7 +72,7 @@ export class TransactionsService {
   }: {
     chainId: number;
     signer: DZapSigner;
-    txnData: EvmTxData | TradeBuildTxnResponse | GaslessTradeBuildTxnResponse | undefined;
+    txnData: EvmTxData | TradeBuildTxnResponse | GaslessTradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload | undefined;
     paramsReq?: TradeBuildTxnRequest;
     service?: AvailableDZapServices;
   }): Promise<DZapTransactionResponse> {

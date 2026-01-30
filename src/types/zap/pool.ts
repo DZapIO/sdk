@@ -41,4 +41,12 @@ export type ZapPoolDetails = {
     tick: number;
     tickSpacing: number;
   };
+  chainId?: number;
+  symbol?: string;
+  name?: string;
+  provider?: string;
+  underlyingAssets?: ZapUnderlyingToken[];
+  underlyingTokens?: ZapUnderlyingToken[];
+  decimals?: number;
+  metadata?: unknown;
 };
