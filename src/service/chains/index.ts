@@ -21,6 +21,7 @@ import { config } from '../../config';
 import { chainIds } from '../../constants/chains';
 import { MULTI_CALL_BATCH_SIZE, RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../constants/rpc';
 import type { Chain, ChainData } from '../../types';
+import { ValidationError } from '../../utils/errors';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
@@ -98,7 +99,7 @@ export class ChainsService {
     const hasRpcUrls = configuredRpcUrls && Array.isArray(configuredRpcUrls) && configuredRpcUrls.length > 0;
     const chain = viemChainsById[chainId];
     if (!chain) {
-      throw new Error(`Unsupported chain ID: ${chainId}`);
+      throw new ValidationError(`Unsupported chain ID: ${chainId}`);
     }
     return createPublicClient({
       chain,
@@ -145,7 +146,7 @@ export class ChainsService {
   public static getPublicBitcoinClient(chainId: number = chainIds.bitcoin, _options?: GetPublicClientOptions): Client {
     const chain = bigmiChainsById[chainId];
     if (!chain) {
-      throw new Error(`Unsupported chainId: ${chainId}. Supported chains: ${Object.keys(bigmiChainsById).join(', ')}`);
+      throw new ValidationError(`Unsupported chainId: ${chainId}. Supported chains: ${Object.keys(bigmiChainsById).join(', ')}`);
     }
     const baseUrl = `https://mempool.space${chain.testnet ? '/testnet4' : ''}/api`;
     return createClient({

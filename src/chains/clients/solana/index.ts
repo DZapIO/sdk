@@ -9,14 +9,11 @@ import { CHAIN_NATIVE_TOKENS } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
-import { parseError } from '../../../utils/errors';
+import { NotFoundError, parseError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
-/**
- * Commitment level for Solana transactions
- */
 export enum SolanaCommitment {
   processed = 'processed',
   confirmed = 'confirmed',
@@ -28,9 +25,6 @@ export enum SolanaCommitment {
   max = 'max',
 }
 
-/**
- * Solana transaction response with additional metadata
- */
 export type SolanaTransactionResponse = {
   signedTx: VersionedTransaction;
   latestBlockhash: {
@@ -39,34 +33,23 @@ export type SolanaTransactionResponse = {
   };
 };
 
-/**
- * Confirmed transaction result
- */
 export type ConfirmedTransactionResult = {
   signatureResult: SignatureResult | null;
   txnHash: string;
 };
 
-/**
- * Solana wallet adapter interface for signing transactions
- */
 export type SolanaSigner = {
   signTransaction(transaction: VersionedTransaction): Promise<VersionedTransaction>;
 };
 
 /**
- * Solana ecosystem chain implementation
- * Handles Solana (SVM) transaction operations and balance fetching.
- * Uses ChainsService.getSolanaClient(chainId) for RPC connection.
+ * Solana (SVM) chain implementation. RPC via ChainsService.getPublicSolanaClient(chainId).
  */
 export class SolanaChain extends BaseChainClient {
   constructor() {
-    super(chainTypes.svm, [chainIds.solana]); // Solana chain ID
+    super(chainTypes.svm, [chainIds.solana]);
   }
 
-  /**
-   * Fetches token balances for a Solana account
-   */
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { chainId, account, tokenAddresses = [] } = params;
     const connection = ChainsService.getPublicSolanaClient(chainId);
@@ -119,9 +102,6 @@ export class SolanaChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Sends a Solana transaction
-   */
   async sendTransaction(
     params: SendTransactionParams<typeof chainIds.solana>,
   ): Promise<DZapTransactionResponse & { svmTxnData?: SolanaTransactionResponse }> {
@@ -129,7 +109,7 @@ export class SolanaChain extends BaseChainClient {
 
     try {
       if (!txnData || !txnData.data) {
-        throw new Error('Unsupported transaction data');
+        throw new ValidationError('Unsupported transaction data');
       }
       const svmTxData = (txnData as TradeBuildTxnResponse).svmTxData;
       const connection = ChainsService.getPublicSolanaClient(chainId);
@@ -137,14 +117,12 @@ export class SolanaChain extends BaseChainClient {
       const serializedData = new Uint8Array(Buffer.from(txnData.data, 'base64'));
       const versionedTransaction = VersionedTransaction.deserialize(serializedData);
 
-      // If svmTxData exists, use it; otherwise fetch latest blockhash
-      const latestBlockhash = svmTxData ? svmTxData : await connection.getLatestBlockhash(SolanaCommitment.confirmed);
+      const latestBlockhash = svmTxData ?? (await connection.getLatestBlockhash(SolanaCommitment.confirmed));
 
       versionedTransaction.message.recentBlockhash = latestBlockhash.blockhash;
 
-      // Sign transaction with timeout (60 seconds)
       const signedTx = await withTimeout<VersionedTransaction>(() => signer.signTransaction(versionedTransaction), {
-        timeout: 60000,
+        timeout: 60_000,
         errorInstance: new Error('Transaction signing expired'),
       });
 
@@ -166,9 +144,6 @@ export class SolanaChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Waits for Solana transaction confirmation
-   */
   async waitForTransactionReceipt(params: WaitForReceiptParams): Promise<TransactionReceipt> {
     const { txHash, additionalData } = params;
 
@@ -195,10 +170,6 @@ export class SolanaChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Executes transaction with retry logic
-   * @private
-   */
   private async executeTransactionWithRetry(
     chainId: number,
     signedTx: VersionedTransaction,
@@ -208,7 +179,7 @@ export class SolanaChain extends BaseChainClient {
     const signedTxSerialized = signedTx.serialize();
     const txnHash = bs58.encode(signedTx.signatures[0]);
     if (!txnHash) {
-      throw new Error('Transaction hash not found');
+      throw new NotFoundError('Transaction hash not found');
     }
 
     const rawTransactionOptions: SendOptions = {

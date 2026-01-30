@@ -6,14 +6,11 @@ import { chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString } from '../../../types';
-import { parseError } from '../../../utils/errors';
+import { parseError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
-/**
- * Sui wallet interface for signing and executing transactions
- */
 export type SuiWallet = {
   signAndExecuteTransaction(
     params: { transaction: Transaction },
@@ -24,18 +21,13 @@ export type SuiWallet = {
 };
 
 /**
- * Sui ecosystem chain implementation
- * Handles Sui transaction operations and balance fetching.
- * Uses ChainsService.getSuiClient(chainId) for RPC client.
+ * Sui chain implementation. RPC via ChainsService.getPublicSuiClient(chainId).
  */
 export class SuiChain extends BaseChainClient {
   constructor() {
-    super(chainTypes.suivm, [chainIds.sui]); // Sui chain ID
+    super(chainTypes.suivm, [chainIds.sui]);
   }
 
-  /**
-   * Fetches token balances for a Sui account
-   */
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { chainId, account, tokenAddresses = [] } = params;
     const suiClient = ChainsService.getPublicSuiClient(chainId);
@@ -57,7 +49,6 @@ export class SuiChain extends BaseChainClient {
         }));
       }
 
-      // Filter and aggregate balances for requested tokens
       const balances: TokenBalance[] = tokenAddresses.map((tokenAddress) => {
         const filteredCoins = coinBalances.filter((coin: CoinBalance) => coin.coinType === tokenAddress);
         const totalBalance = filteredCoins.reduce((acc: bigint, coin: CoinBalance) => acc + BigInt(coin.totalBalance), BigInt(0));
@@ -70,16 +61,13 @@ export class SuiChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Sends a Sui transaction
-   */
   async sendTransaction(params: SendTransactionParams<typeof chainIds.sui>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer } = params;
     const suiClient = ChainsService.getPublicSuiClient(chainId);
 
     try {
       if (!txnData || !txnData.data) {
-        throw new Error('Unsupported transaction data');
+        throw new ValidationError('Unsupported transaction data');
       }
 
       const serializedData = fromBase64(txnData.data);
@@ -117,17 +105,14 @@ export class SuiChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Waits for Sui transaction confirmation
-   */
   async waitForTransactionReceipt(params: WaitForReceiptParams): Promise<TransactionReceipt> {
     const { chainId, txHash } = params;
     const suiClient = ChainsService.getPublicSuiClient(chainId);
 
     try {
       const startTime = Date.now();
-      const timeout = 30000; // 30 seconds
-      const pollingInterval = 1000; // 1 second
+      const timeout = 30_000;
+      const pollingInterval = 1000;
 
       while (true) {
         try {
@@ -144,7 +129,6 @@ export class SuiChain extends BaseChainClient {
             return { status: TxnStatus.error, txHash };
           }
         } catch (error) {
-          // Transaction may not be available yet; continue polling
           logger.debug('Sui transaction not yet available, continuing to poll', { txHash, error });
         }
 

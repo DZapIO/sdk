@@ -11,7 +11,7 @@ import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../../con
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../../enums';
 import type { AvailableDZapServices, HexString } from '../../../types';
 import { generateDeadline } from '../../../utils';
-import { parseError } from '../../../utils/errors';
+import { NotFoundError, parseError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { getNextPermit2Nonce } from '../../../utils/nonce';
 import { signTypedData } from '../../../utils/signer';
@@ -218,7 +218,7 @@ export class Permit2 {
     switch (params.primaryType) {
       case Permit2PrimaryTypes.PermitSingle:
         if (params.expiration === undefined || params.expiration === null) {
-          throw new Error('Expiration is required for PermitSingle');
+          throw new ValidationError('Expiration is required for PermitSingle');
         }
         return this.buildSinglePermitValues({ ...params, token: params.tokens[0], expiration: params.expiration });
 
@@ -235,7 +235,7 @@ export class Permit2 {
           permitType: params.primaryType,
           chainId: params.chainId,
         });
-        throw new Error(`Invalid permit type: ${params.primaryType}`);
+        throw new ValidationError(`Invalid permit type: ${params.primaryType}`);
     }
   }
 
@@ -263,7 +263,7 @@ export class Permit2 {
         method: 'buildTypedData',
         chainId,
       });
-      throw new Error('Witness is required for PermitTransferFrom');
+      throw new ValidationError('Witness is required for PermitTransferFrom');
     }
 
     if (this.isPermitTransferFrom(permit)) {
@@ -438,7 +438,7 @@ export class Permit2 {
         tokenIndex: token.index,
         chainId,
       });
-      throw new Error(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
+      throw new NotFoundError(`Unable to find nonce for token:${token.address} for PermitTransferFrom`);
     } else {
       nonce = BigInt(firstTokenNonce) + BigInt(token.index);
     }

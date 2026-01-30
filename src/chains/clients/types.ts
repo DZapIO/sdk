@@ -11,77 +11,48 @@ import type { SolanaSigner } from './solana';
 import type { SuiWallet } from './sui';
 
 /**
- * Union type of all supported signers across ecosystems.
- * Use this when a method can accept a signer for any chain (e.g. trade.execute).
- * - EVM: ethers Signer | viem WalletClient
- * - Solana: SolanaSigner
- * - Sui: SuiWallet
- * - Bitcoin: BitcoinSigner
+ * Union of all supported signers. Use when a method accepts any chain signer (e.g. trade.execute).
+ * EVM: Signer | WalletClient; Solana: SolanaSigner; Sui: SuiWallet; Bitcoin: BitcoinSigner.
  */
 export type DZapSigner = Signer | WalletClient | SolanaSigner | SuiWallet | BitcoinSigner;
 
-/**
- * Balance information for a token
- */
 export type TokenBalance = {
   contract: string;
   balance: bigint;
 };
 
-/**
- * Parameters for fetching balances
- */
 export type GetBalanceParams = {
   chainId: number;
   account: string;
   tokenAddresses?: string[];
 };
 
-/**
- * Maps chain IDs to their corresponding signer types
- * Chain IDs: Solana=7565164, Sui=19219, Bitcoin=1000, BitcoinTestnet=1001
- */
 type ChainIdToSignerMap = {
-  7565164: SolanaSigner; // Solana
-  19219: SuiWallet; // Sui
-  1000: BitcoinSigner; // Bitcoin
-  1001: BitcoinSigner; // Bitcoin Testnet
-  728126428: Signer | WalletClient; // Tron (EVM-compatible)
-  607: Signer | WalletClient; // TON (EVM-compatible)
-  116201519: Signer | WalletClient; // Aptos (EVM-compatible)
+  7565164: SolanaSigner;
+  19219: SuiWallet;
+  1000: BitcoinSigner;
+  1001: BitcoinSigner;
+  728126428: Signer | WalletClient;
+  607: Signer | WalletClient;
+  116201519: Signer | WalletClient;
 };
 
-/**
- * Gets the signer type for a given chain ID.
- * For known chain IDs, uses the chain-specific signer; for generic/unknown chains, accepts DZapSigner.
- */
 type SignerForChainId<TChainId extends number> = TChainId extends keyof ChainIdToSignerMap ? ChainIdToSignerMap[TChainId] : DZapSigner;
 
-/**
- * Maps chain IDs to their corresponding transaction data types
- * Non-EVM chains use TradeBuildTxnResponse only; EVM chains accept all forms
- */
 type ChainIdToTxnDataMap = {
-  7565164: TradeBuildTxnResponse; // Solana
-  19219: TradeBuildTxnResponse; // Sui
-  1000: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload; // Bitcoin (trade or zap)
-  1001: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload; // Bitcoin Testnet
-  728126428: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // Tron
-  607: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // TON
-  116201519: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse; // Aptos
+  7565164: TradeBuildTxnResponse;
+  19219: TradeBuildTxnResponse;
+  1000: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload;
+  1001: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload;
+  728126428: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse;
+  607: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse;
+  116201519: EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse;
 };
 
-/**
- * Gets the transaction data type for a given chain ID
- */
 type TxnDataForChainId<TChainId extends number> = TChainId extends keyof ChainIdToTxnDataMap
   ? ChainIdToTxnDataMap[TChainId]
-  : EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload; // Default for unknown chains
+  : EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload;
 
-/**
- * Parameters for sending transactions
- * The signer and txnData types are inferred based on the chainId
- */
 export type SendTransactionParams<TChainId extends number = number> = {
   chainId: TChainId;
   txnData: TxnDataForChainId<TChainId> | undefined;
@@ -90,28 +61,18 @@ export type SendTransactionParams<TChainId extends number = number> = {
   service?: AvailableDZapServices;
 };
 
-/**
- * Parameters for waiting for transaction receipt
- */
 export type WaitForReceiptParams = {
   txHash: HexString;
   chainId: number;
-  additionalData?: unknown; // Chain-specific data (e.g., signedTx, blockhash for Solana)
+  additionalData?: unknown; // e.g. signedTx, blockhash for Solana
 };
 
-/**
- * Transaction receipt result
- */
 export type TransactionReceipt = {
   status: TxnStatus;
   txHash?: HexString;
   error?: unknown;
 };
 
-/**
- * Client for talking to a chain (EVM, Solana, Sui, Bitcoin, etc.).
- * Provides unified interface for balance fetching and transaction operations across different blockchain ecosystems.
- */
 export type IChainClient = {
   /**
    * Fetches token balances for an account

@@ -12,7 +12,7 @@ import type { DZapTransactionResponse, HexString } from '../../../types';
 import type { EvmTxData, TradeBuildTxnResponse } from '../../../types';
 import type { WalletCallReceipt } from '../../../types/wallet';
 import { isEthersSigner } from '../../../utils';
-import { parseError } from '../../../utils/errors';
+import { parseError, TransactionError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { multicall } from '../../../utils/multicall';
 import { viemChainsById } from '../..';
@@ -20,27 +20,17 @@ import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
 /**
- * EVM ecosystem chain implementation
- * Handles EVM-compatible chain transaction operations
- * Note: EVM chains are identified by having chainType === 'evm' in chain config
+ * EVM chain implementation. Chain support is determined dynamically via viemChainsById (chainType === 'evm' in config).
  */
 export class EvmChain extends BaseChainClient {
   constructor() {
     super(chainTypes.evm, []); // Empty array - we check dynamically via chain config
   }
 
-  /**
-   * Checks if a chain ID is EVM by checking if it exists in viemChainsById
-   * This is a dynamic check since EVM chains are too numerous to list
-   */
   isChainSupported(chainId: number): boolean {
     return viemChainsById[chainId] !== undefined;
   }
 
-  /**
-   * Type guard to check if data is EvmTxData
-   * @private
-   */
   private isEvmTxData(txnData: unknown): txnData is EvmTxData {
     return (
       !!txnData &&
@@ -53,10 +43,6 @@ export class EvmChain extends BaseChainClient {
     );
   }
 
-  /**
-   * Type guard to check if data is TradeBuildTxnResponse
-   * @private
-   */
   private isTradeBuildTxnResponse(txnData: unknown): txnData is TradeBuildTxnResponse {
     return (
       !!txnData &&
@@ -69,10 +55,6 @@ export class EvmChain extends BaseChainClient {
     );
   }
 
-  /**
-   * Extracts EvmTxData from TradeBuildTxnResponse
-   * @private
-   */
   private extractEvmTxData(txnData: TradeBuildTxnResponse): EvmTxData {
     return {
       from: txnData.from as HexString,
@@ -83,10 +65,6 @@ export class EvmChain extends BaseChainClient {
     };
   }
 
-  /**
-   * Extracts EVM transaction data from various input formats
-   * @private
-   */
   private extractEvmTransactionData(txnData: SendTransactionParams['txnData']): EvmTxData | null {
     if (this.isEvmTxData(txnData)) {
       return txnData;
@@ -97,9 +75,6 @@ export class EvmChain extends BaseChainClient {
     return null;
   }
 
-  /**
-   * Sends a transaction using either ethers or viem signer
-   */
   async sendTransaction(params: SendTransactionParams): Promise<DZapTransactionResponse> {
     const { chainId, signer, txnData } = params;
 
@@ -149,9 +124,7 @@ export class EvmChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Send batch transactions using EIP-5792 via Viem experimental sendCalls
-   */
+  /** Sends batch transactions via EIP-5792 (Viem sendCalls). */
   async sendBatchCalls(
     walletClient: WalletClient,
     calls: Array<{
@@ -180,9 +153,6 @@ export class EvmChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Wait for batch transaction receipt using EIP-5792
-   */
   async waitForBatchTransactionReceipt(client: Client, batchHash: HexString): Promise<WalletCallReceipt> {
     const { receipts, status, statusCode } = await getAction(
       client,
@@ -199,21 +169,17 @@ export class EvmChain extends BaseChainClient {
         !receipts.every((receipt) => receipt.transactionHash) ||
         receipts.some((receipt) => receipt.status === TxnStatus.reverted)
       ) {
-        throw new Error('Transaction was reverted.');
+        throw new TransactionError(StatusCodes.ContractExecutionError, 'Transaction was reverted.');
       }
       const transactionReceipt = receipts[receipts.length - 1]!;
       return transactionReceipt;
     }
     if (statusCode >= 400 && statusCode < 500) {
-      throw new Error('Transaction was canceled.');
+      throw new TransactionError(StatusCodes.UserRejectedRequest, 'Transaction was canceled.');
     }
-    throw new Error('Transaction failed.');
+    throw new TransactionError(StatusCodes.Error, 'Transaction failed.');
   }
 
-  /**
-   * Fetches token balances for an EVM account
-   * Uses viem public client for native token and multicall for ERC20 balances.
-   */
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { chainId, account, tokenAddresses } = params;
 
@@ -226,13 +192,11 @@ export class EvmChain extends BaseChainClient {
       const isEvmNativeToken = (contract: string) =>
         contract.startsWith('0x') && contract.length === 42 && nativeTokensLower.has(contract.toLowerCase());
 
-      // Native balance (only fetched if needed)
       let nativeBalance: bigint | null = null;
       if (tokens.some((t) => isEvmNativeToken(t))) {
         nativeBalance = await publicClient.getBalance({ address: account as HexString });
       }
 
-      // ERC20 balances via multicall
       const erc20Tokens = tokens.filter((t) => !isEvmNativeToken(t));
       const erc20Contracts = erc20Tokens.map((token) => ({
         address: token as HexString,
@@ -269,9 +233,6 @@ export class EvmChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Waits for EVM transaction confirmation
-   */
   async waitForTransactionReceipt(params: WaitForReceiptParams): Promise<TransactionReceipt> {
     const { chainId, txHash } = params;
 

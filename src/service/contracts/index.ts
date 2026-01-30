@@ -2,6 +2,7 @@ import * as ABI from '../../artifacts';
 import { Services, STANDARD_ABIS } from '../../constants';
 import { ContractVersion } from '../../enums';
 import type { AvailableDZapServices, StandardAbis } from '../../types';
+import { NotFoundError, ValidationError } from '../../utils/errors';
 import type { ChainsService } from '../chains';
 
 /**
@@ -36,12 +37,12 @@ export class ContractsService {
   public async getAddress({ chainId, service }: { chainId: number; service: AvailableDZapServices }): Promise<string> {
     const chainConfig = await this.chainsService.getConfig();
     if (!chainConfig?.[chainId]?.isEnabled) {
-      throw new Error('Chains config not found');
+      throw new ValidationError('Chains config not found');
     }
 
     const chainData = chainConfig[chainId];
     if (!chainData?.contracts) {
-      throw new Error(`No contracts found for chain: ${chainId}`);
+      throw new NotFoundError(`No contracts found for chain: ${chainId}`);
     }
 
     const contractMap: Record<string, string | undefined> = {
@@ -53,7 +54,7 @@ export class ContractsService {
     const contractAddress = contractMap[service];
 
     if (!contractAddress) {
-      throw new Error(`Contract not found for service "${service}" on chain: ${chainId}`);
+      throw new NotFoundError(`Contract not found for service "${service}" on chain: ${chainId}`);
     }
 
     return contractAddress;
@@ -82,13 +83,13 @@ export class ContractsService {
           case ContractVersion.v2:
             return ABI.core.dZapCoreV2Abi;
           default:
-            throw new Error('Invalid Version for Trade');
+            throw new ValidationError('Invalid Version for Trade');
         }
       case Services.dca:
         return ABI.dca.dZapDcaAbi;
       case Services.zap:
       default:
-        throw new Error('Invalid Service');
+        throw new ValidationError('Invalid Service');
     }
   }
 
@@ -112,7 +113,7 @@ export class ContractsService {
       case STANDARD_ABIS.erc20:
         return ABI.erc20Abi;
       default:
-        throw new Error('Invalid Abi');
+        throw new ValidationError('Invalid Abi');
     }
   }
 }

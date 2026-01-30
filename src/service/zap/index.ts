@@ -26,7 +26,7 @@ import type {
   ZapTransactionStep,
 } from '../../types/zap';
 import type { ZapEvmTxnDetails, ZapStep, ZapTxnDetails } from '../../types/zap/step';
-import { parseError } from '../../utils/errors';
+import { DZapError, parseError, ServerError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import type { TransactionsService } from '../transactions';
 
@@ -64,12 +64,18 @@ export class ZapService {
    * ```
    */
   public async getQuote(request: ZapQuoteRequest): Promise<ZapQuoteResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
+    try {
+      if (this.cancelTokenSource) {
+        this.cancelTokenSource.cancel('Cancelled due to new request');
+      }
+      this.cancelTokenSource = Axios.CancelToken.source();
+      const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, this.cancelTokenSource.token)).data;
+      return route;
+    } catch (error: unknown) {
+      const parsed = parseError(error);
+      const cause = new ServerError(parsed.errorMsg, error instanceof Error ? error : undefined);
+      throw new DZapError(cause);
     }
-    this.cancelTokenSource = Axios.CancelToken.source();
-    const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, this.cancelTokenSource.token)).data;
-    return route;
   }
 
   /**
@@ -98,12 +104,18 @@ export class ZapService {
    * ```
    */
   public async buildTxn(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
+    try {
+      if (this.cancelTokenSource) {
+        this.cancelTokenSource.cancel('Cancelled due to new request');
+      }
+      this.cancelTokenSource = Axios.CancelToken.source();
+      const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
+      return route;
+    } catch (error: unknown) {
+      const parsed = parseError(error);
+      const cause = new ServerError(parsed.errorMsg, error instanceof Error ? error : undefined);
+      throw new DZapError(cause);
     }
-    this.cancelTokenSource = Axios.CancelToken.source();
-    const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
-    return route;
   }
 
   /**
@@ -346,7 +358,7 @@ export class ZapService {
           txnHash: response.data.txnHash,
         };
       }
-      throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
+      throw new ServerError(response.data?.message || 'Failed to broadcast zap transaction');
     } catch {
       return {
         status: TxnStatus.error,

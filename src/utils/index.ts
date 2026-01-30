@@ -8,6 +8,20 @@ export {
   updateFee,
   updatePath,
 } from './amount';
+export {
+  BalanceError,
+  BaseError,
+  DZapError,
+  getRootCause,
+  NotFoundError,
+  ProviderError,
+  RPCError,
+  ServerError,
+  SlippageError,
+  TransactionError,
+  UnknownError,
+  ValidationError,
+} from './baseError';
 export { bigmiToDzapChainId, generateRedeemScript, getScriptPubKey, isPsbtFinalized, toBigmiChainId, toXOnly } from './bitcoin';
 export { extendViemChain, isNonEVMChain } from './chain';
 export { generateDeadline } from './date';

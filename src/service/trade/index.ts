@@ -30,7 +30,7 @@ import type {
 } from '../../types';
 import type { CustomTypedDataParams } from '../../types/gasless';
 import { calculateAmountUSD, calculateNetAmountUsd, updateFee, updatePath } from '../../utils/amount';
-import { parseError } from '../../utils/errors';
+import { parseError, TransactionError, ValidationError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { signTypedData } from '../../utils/signer';
 import { ChainsService } from '../chains';
@@ -379,7 +379,7 @@ export class TradeService {
       }),
     ]);
     if (chainConfig === null || chainConfig?.[chainId] == null) {
-      throw new Error('Chains config not found');
+      throw new ValidationError('Chains config not found');
     }
     const decoder = new SwapDecoder();
     return decoder.decodeTransactionData(transactionData, data, service, chainConfig[chainId]);
@@ -466,7 +466,7 @@ export class TradeService {
       });
 
       if (resp.status !== TxnStatus.success) {
-        throw new Error('Failed to sign transaction');
+        throw new TransactionError(StatusCodes.Error, 'Failed to sign transaction');
       }
       txnDetails = resp.data?.signature;
     } else {
@@ -477,7 +477,7 @@ export class TradeService {
         service: Services.trade,
       });
       if (resp.status !== TxnStatus.success) {
-        throw new Error('Failed to sign transaction');
+        throw new TransactionError(StatusCodes.Error, 'Failed to sign transaction');
       }
       txnDetails = resp.txnHash;
     }
@@ -489,7 +489,7 @@ export class TradeService {
     });
 
     if (txResp.status !== TxnStatus.success) {
-      throw new Error('Failed to broadcast or save transaction');
+      throw new TransactionError(StatusCodes.Error, 'Failed to broadcast or save transaction');
     }
 
     return {
@@ -639,7 +639,7 @@ export class TradeService {
           permit,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
-          throw new Error('Failed to execute gasless transaction');
+          throw new TransactionError(StatusCodes.Error, 'Failed to execute gasless transaction');
         }
         return {
           status: TxnStatus.success,
@@ -647,7 +647,7 @@ export class TradeService {
           txnHash: gaslessTxResp.txnHash as HexString,
         };
       }
-      throw new Error('Gasless Transaction Failed');
+      throw new TransactionError(StatusCodes.Error, 'Gasless Transaction Failed');
     } catch (error: unknown) {
       logger.error('Trade operation failed', {
         service: 'TradeService',

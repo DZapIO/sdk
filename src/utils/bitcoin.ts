@@ -3,19 +3,14 @@ import { ChainId as BigmiChainId } from '@bigmi/core';
 import { payments, type Psbt } from 'bitcoinjs-lib';
 
 import { chainIds } from '../constants';
+import { ValidationError } from './baseError.js';
 
 /**
- * Helper function to convert full public key (33 bytes) to x-only compressed format (32 bytes) required after taproot update
- * @param pubKey - full public key (33 bytes)
- * @returns x-only compressed public key (32 bytes)
+ * Converts 33-byte compressed public key to 32-byte x-only format (required for Taproot P2TR).
  */
 export const toXOnly = (pubKey: Uint8Array) => (pubKey.length === 32 ? pubKey : pubKey.subarray(1, 33));
 
-/**
- * Checks if a PSBT is finalized and ready to extract
- * @param psbt - PSBT to check
- * @returns true if PSBT is finalized
- */
+/** Returns true if the PSBT is finalized and can be extracted to a transaction. */
 export function isPsbtFinalized(psbt: Psbt): boolean {
   try {
     psbt.extractTransaction();
@@ -25,14 +20,8 @@ export function isPsbtFinalized(psbt: Psbt): boolean {
   }
 }
 
-/**
- * Generate redeem script for P2SH addresses
- * @param publicKey - Public key bytes
- * @returns redeem script
- */
-export const generateRedeemScript = (publicKey: Uint8Array) =>
-  // P2SH addresses are created by hashing the public key and using the result as the script
-  payments.p2wpkh({ pubkey: publicKey }).output;
+/** Redeem script for P2SH-P2WPKH (P2WPKH output used as the redeem script). */
+export const generateRedeemScript = (publicKey: Uint8Array) => payments.p2wpkh({ pubkey: publicKey }).output;
 
 export const getScriptPubKey = (pubKeyHex: string, scriptType: string) => {
   const pubKey = new Uint8Array(Buffer.from(pubKeyHex, 'hex'));
@@ -53,7 +42,7 @@ export const getScriptPubKey = (pubKeyHex: string, scriptType: string) => {
         internalPubkey: toXOnly(pubKey),
       }).output;
     default:
-      throw new Error(`Unsupported script type: ${scriptType}`);
+      throw new ValidationError(`Unsupported script type: ${scriptType}`);
   }
 };
 

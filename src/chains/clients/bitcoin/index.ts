@@ -18,24 +18,16 @@ import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '
 import type { ZapBuildTxnResponse } from '../../../types/zap/build';
 import type { ZapBuildTxnPayload, ZapBvmTxnDetails } from '../../../types/zap/step';
 import { generateRedeemScript, isPsbtFinalized, toXOnly } from '../../../utils/bitcoin';
-import { parseError } from '../../../utils/errors';
+import { NotFoundError, parseError, ServerError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
-/**
- * Bitcoin network type
- */
 export type BitcoinNetwork = typeof networks.bitcoin | typeof networks.testnet;
 
-/**
- * Bitcoin client interface for signing PSBTs
- */
+/** Bitcoin client interface for signing PSBTs. */
 export type BitcoinSigner = GetConnectorClientReturnType<Config, ChainId>;
 
-/**
- * Parameters for waiting for mempool transaction
- */
 export type WaitForMempoolTransactionParameters = {
   txid: string;
   pollingInterval?: number;
@@ -43,59 +35,43 @@ export type WaitForMempoolTransactionParameters = {
   confirmations?: number;
 };
 
-/**
- * Bitcoin ecosystem chain implementation
- * Handles Bitcoin (BVM) transaction operations and balance fetching
- */
+/** Bitcoin (BVM) chain implementation. Handles PSBT signing and mempool broadcast. */
 export class BitcoinChain extends BaseChainClient {
   constructor() {
     super(chainTypes.bvm, [chainIds.bitcoin, chainIds.bitcoinTestnet]);
     initEccLib(ecc);
   }
 
-  /**
-   * Broadcasts a signed mempool transaction via the Zap API.
-   */
   private async broadcastZapMempoolTx({ txId, txHex, chainId }: { txHex: string; txId: string; chainId: number }): Promise<string> {
     try {
       const txData = await ZapApiClient.broadcastZapTx({ txId, chainId, txData: txHex });
       if (txData.status === TxnStatus.success) {
         return txData.data.txnHash;
       }
-      throw new Error((txData as { data?: { message?: string } }).data?.message || 'Transaction broadcast failed');
+      throw new ServerError((txData as { data?: { message?: string } }).data?.message || 'Transaction broadcast failed');
     } catch (error) {
       logger.error('Zap mempool broadcast failed', { txId, chainId, error });
       throw error;
     }
   }
 
-  /**
-   * Broadcasts a signed mempool transaction via the Trade API.
-   */
   private async broadcastTradeMempoolTx({ txId, txHex, chainId }: { txHex: string; txId: string; chainId: number }): Promise<string> {
     try {
       const txData = await TradeApiClient.broadcastTradeTx({ txId, chainId, txData: txHex });
       if (txData.status === TxnStatus.success) {
         return txData.txnHash;
       }
-      throw new Error((txData as { message?: string }).message || 'Transaction broadcast failed');
+      throw new ServerError((txData as { message?: string }).message || 'Transaction broadcast failed');
     } catch (error) {
       logger.error('Trade mempool broadcast failed', { txId, chainId, error });
       throw error;
     }
   }
 
-  /**
-   * Gets the Bitcoin network based on chain ID
-   */
   private getNetwork(chainId: number): BitcoinNetwork {
     return chainId === chainIds.bitcoinTestnet ? networks.testnet : networks.bitcoin;
   }
 
-  /**
-   * Fetches Bitcoin balance for an account
-   * Note: Bitcoin only supports native BTC balance
-   */
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { account, chainId, tokenAddresses = [] } = params;
     const zeroAddress = DZAP_NATIVE_TOKEN_FORMAT;
@@ -120,10 +96,7 @@ export class BitcoinChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Signs a PSBT transaction
-   * @private
-   */
+  /** Signs a PSBT and finalizes inputs. */
   private async signPsbtTx(chainId: number, psbtTx: string, client: Client): Promise<Psbt> {
     const network = this.getNetwork(chainId);
     const psbt = Psbt.fromBase64(psbtTx, { network });
@@ -150,7 +123,6 @@ export class BitcoinChain extends BaseChainClient {
         }
       }
 
-      // redeemScript: Required by Pay-to-Script-Hash (P2SH) addresses for proper spending
       if (addressInfo.type === AddressType.p2sh) {
         if (!input.redeemScript) {
           const pubKey = client.account?.publicKey;
@@ -174,7 +146,7 @@ export class BitcoinChain extends BaseChainClient {
           } else {
             map.set(accountAddress, {
               address: accountAddress,
-              sigHash: 1, // Default to Transaction.SIGHASH_ALL - 1
+              sigHash: 1, // SIGHASH_ALL
               signingIndexes: [index],
             });
           }
@@ -183,7 +155,6 @@ export class BitcoinChain extends BaseChainClient {
         .values(),
     );
 
-    // We give users 10 minutes to sign the transaction or it should be considered expired
     const signedPsbtHex = await withTimeout(
       () =>
         signPsbt(client, {
@@ -192,7 +163,7 @@ export class BitcoinChain extends BaseChainClient {
           finalize: false,
         }),
       {
-        timeout: 600000, // 10 minutes
+        timeout: 600_000, // 10 min signing window
         errorInstance: new Error('Transaction signing expired'),
       },
     );
@@ -205,10 +176,6 @@ export class BitcoinChain extends BaseChainClient {
     return signedPsbt;
   }
 
-  /**
-   * Extracts psbtHex and txId from trade or zap build response.
-   * @private
-   */
   private getPsbtHexAndTxId(
     txnData: TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload,
     service: typeof Services.trade | typeof Services.zap,
@@ -217,31 +184,28 @@ export class BitcoinChain extends BaseChainClient {
       const tradeData = txnData as TradeBuildTxnResponse;
       const psbtHex = tradeData?.data;
       const txId = tradeData?.txId;
-      if (!psbtHex || !txId) throw new Error('Invalid Transaction Data');
+      if (!psbtHex || !txId) throw new ValidationError('Invalid Transaction Data');
       return { psbtHex, txId };
     }
     const zapData = txnData as ZapBuildTxnResponse;
     const executeStep = zapData.steps?.find((step) => step.action === ZAP_STEP_ACTIONS.execute && step.data?.type === chainTypes.bvm);
     if (!executeStep?.data || !('data' in executeStep.data) || !('txnId' in executeStep.data)) {
-      throw new Error('Execute step with BVM data not found in zap route');
+      throw new NotFoundError('Execute step with BVM data not found in zap route');
     }
     const bvmTxnData = executeStep.data as ZapBvmTxnDetails;
     return { psbtHex: bvmTxnData.data, txId: bvmTxnData.txnId };
   }
 
-  /**
-   * Sends a Bitcoin transaction. Expects txnData to contain psbtHex and txId (extracted by caller for trade/zap).
-   * Signs PSBT once and broadcasts via trade or zap API based on service.
-   */
+  /** Signs PSBT from txnData (psbtHex + txId) and broadcasts via trade or zap API. */
   async sendTransaction(params: SendTransactionParams<typeof chainIds.bitcoin | typeof chainIds.bitcoinTestnet>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer, service } = params;
 
     try {
       if (!txnData) {
-        throw new Error('Invalid Transaction Data');
+        throw new ValidationError('Invalid Transaction Data');
       }
       if (!service || (service !== Services.zap && service !== Services.trade)) {
-        throw new Error(`Bitcoin broadcast requires service: "${Services.zap}" or "${Services.trade}"`);
+        throw new ValidationError(`Bitcoin broadcast requires service: "${Services.zap}" or "${Services.trade}"`);
       }
 
       const { psbtHex, txId } = this.getPsbtHexAndTxId(txnData, service);
@@ -266,9 +230,6 @@ export class BitcoinChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Waits for Bitcoin transaction confirmation in mempool
-   */
   async waitForTransactionReceipt(params: WaitForReceiptParams): Promise<TransactionReceipt> {
     const { txHash, additionalData } = params;
 
@@ -293,10 +254,6 @@ export class BitcoinChain extends BaseChainClient {
     }
   }
 
-  /**
-   * Waits for transaction to appear in mempool
-   * @private
-   */
   private async waitForMempoolTransaction({ txid, pollingInterval = 10000, timeout = 3600000 }: WaitForMempoolTransactionParameters): Promise<Tx> {
     return new Promise((resolve, reject) => {
       const {
