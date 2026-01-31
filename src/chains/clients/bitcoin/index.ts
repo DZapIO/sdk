@@ -223,6 +223,7 @@ export class BitcoinChain extends BaseChainClient {
         txnHash: txHash as HexString,
       };
     } catch (error) {
+      logger.error('Bitcoin sendTransaction failed', { error });
       return {
         ...parseError(error),
         error,

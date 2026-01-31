@@ -272,7 +272,7 @@ export class TradeService {
    * ```
    */
   public async getProviders(service?: 'swap' | 'bridge'): Promise<Array<{ id: string; name: string; icon: string }>> {
-    return (await TradeApiClient.fetchProviders(service)).data;
+    return TradeApiClient.fetchProviders(service);
   }
 
   /**

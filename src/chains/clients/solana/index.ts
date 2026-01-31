@@ -4,11 +4,10 @@ import { PublicKey, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { withTimeout } from 'viem';
 
-import { chainIds, chainTypes } from '../../../constants';
-import { CHAIN_NATIVE_TOKENS } from '../../../constants';
+import { CHAIN_NATIVE_TOKENS, chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import { ChainsService } from '../../../service/chains';
-import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
+import type { DZapTransactionResponse, HexString } from '../../../types';
 import { NotFoundError, parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
@@ -106,18 +105,16 @@ export class SolanaChain extends BaseChainClient {
     params: SendTransactionParams<typeof chainIds.solana>,
   ): Promise<DZapTransactionResponse & { svmTxnData?: SolanaTransactionResponse }> {
     const { chainId, txnData, signer } = params;
-
     try {
       if (!txnData || !txnData.data) {
         throw new ValidationError('Unsupported transaction data');
       }
-      const svmTxData = (txnData as TradeBuildTxnResponse).svmTxData;
+      const svmTxData = txnData.svmTxData;
       const connection = ChainsService.getPublicSolanaClient(chainId);
 
       const serializedData = new Uint8Array(Buffer.from(txnData.data, 'base64'));
       const versionedTransaction = VersionedTransaction.deserialize(serializedData);
-
-      const latestBlockhash = svmTxData ?? (await connection.getLatestBlockhash(SolanaCommitment.confirmed));
+      const latestBlockhash = svmTxData ? svmTxData : await connection.getLatestBlockhash(SolanaCommitment.confirmed);
 
       versionedTransaction.message.recentBlockhash = latestBlockhash.blockhash;
 
@@ -137,7 +134,7 @@ export class SolanaChain extends BaseChainClient {
         },
       };
     } catch (error) {
-      logger.error('Solana transaction failed', { service: 'SolanaChain', method: 'sendTransaction', error });
+      logger.error('Solana transaction failed', { method: 'sendTransaction', error, txnData });
       return {
         ...parseError(error, true),
       };
