@@ -30,7 +30,7 @@ async function runPermitExamples() {
       chainId,
       sender: senderAddress,
       service: Services.trade,
-      tokens: [{ address: tokenToApprove, amount: amountToTrade }],
+      tokens: [{ address: tokenToApprove }],
       rpcUrls,
       mode: ApprovalModes.PermitWitnessTransferFrom,
     });
