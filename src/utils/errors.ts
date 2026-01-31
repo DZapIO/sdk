@@ -1,25 +1,47 @@
+import { JsonRpcError, SuiHTTPStatusError, SuiHTTPTransportError } from '@mysten/sui/client';
+import {
+  SendTransactionError,
+  SolanaJSONRPCError,
+  TransactionExpiredBlockheightExceededError,
+  TransactionExpiredNonceInvalidError,
+  TransactionExpiredTimeoutError,
+} from '@solana/web3.js';
 import { type AxiosError, isAxiosError } from 'axios';
-import { BaseError, decodeAbiParameters, parseAbiParameters } from 'viem';
+import { BaseError as ViemBaseError, decodeAbiParameters, parseAbiParameters } from 'viem';
 
 import { StatusCodes, TxnStatus } from '../enums';
 import type { contractErrorActions, ContractErrorResponse, HexString } from '../types';
+import { BaseError as DZapBaseError } from './baseError.js';
+
+export {
+  BalanceError,
+  BaseError,
+  DZapError,
+  getRootCause,
+  NotFoundError,
+  ProviderError,
+  RPCError,
+  ServerError,
+  SlippageError,
+  TransactionError,
+  UnknownError,
+  ValidationError,
+} from './baseError.js';
 
 export const BRIDGE_ERRORS = {
   BridgeCallFailed: 'BridgeCallFailed',
 };
 
-/**
- * Error parser class that handles parsing different types of errors
- */
 class ErrorParser {
-  /**
-   * Main parse method that routes to appropriate parser based on error type
-   */
   public parseError(
     error: unknown,
     includeError?: boolean,
   ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions; error?: unknown } {
-    if (error instanceof BaseError) {
+    if (error instanceof DZapBaseError) {
+      return this.parseDZapBaseError(error, includeError);
+    }
+
+    if (error instanceof ViemBaseError) {
       return this.parseViemError(error, includeError);
     }
 
@@ -27,7 +49,30 @@ class ErrorParser {
       return this.parseAxiosError(error, includeError);
     }
 
+    const solanaError = this.parseSolanaError(error, includeError);
+    if (solanaError) {
+      return solanaError;
+    }
+
+    const suiError = this.parseSuiError(error, includeError);
+    if (suiError) {
+      return suiError;
+    }
+
     return this.parseGenericError(error, includeError);
+  }
+
+  private parseDZapBaseError(
+    error: DZapBaseError,
+    includeError?: boolean,
+  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions; error?: unknown } {
+    const status = error.code === StatusCodes.UserRejectedRequest ? TxnStatus.rejected : TxnStatus.error;
+    return {
+      status,
+      code: error.code,
+      errorMsg: error.message,
+      ...(includeError && { error }),
+    };
   }
 
   private getErrorCode(error: unknown): StatusCodes | number | undefined {
@@ -49,7 +94,7 @@ class ErrorParser {
     return undefined;
   }
 
-  private parseViemError(error: BaseError, includeError?: boolean): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
+  private parseViemError(error: ViemBaseError, includeError?: boolean): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {
     const getErrorName = (errorString: string | undefined | null): string | null => {
       if (!errorString || typeof errorString !== 'string') {
         return null;
@@ -99,8 +144,7 @@ class ErrorParser {
             msg = getRevertMsg(match[1]);
           }
         } catch {
-          // If revert message extraction fails, use original message
-          // Error is already logged by caller
+          /* keep original metaMessages[1] on decode failure */
         }
         errMsg = `${BRIDGE_ERRORS.BridgeCallFailed} : ${msg}`;
       } else if (errName) {
@@ -128,7 +172,6 @@ class ErrorParser {
     const errorCode = error.status;
     const statusCode = error.response?.status;
 
-    // Handle simulation failure
     if (statusCode === StatusCodes.SimulationFailure) {
       const responseData = error.response?.data;
       return {
@@ -151,6 +194,132 @@ class ErrorParser {
       code: statusCode || errorCode || StatusCodes.Error,
       ...(includeError && { error: responseData }),
     };
+  }
+
+  private parseSolanaError(
+    error: unknown,
+    includeError?: boolean,
+  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; error?: unknown } | null {
+    if (!(error instanceof Error)) {
+      return null;
+    }
+
+    if (error.message.includes('User rejected') || error.name === 'WalletSignTransactionError') {
+      return {
+        code: StatusCodes.UserRejectedRequest,
+        status: TxnStatus.rejected,
+        errorMsg: 'Transaction rejected by user',
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof SendTransactionError) {
+      const transactionError = error.transactionError;
+      const logs = error.logs;
+      let errorMsg = transactionError.message || error.message || 'Transaction failed';
+
+      if (logs && logs.length > 0) {
+        errorMsg += `\nLogs: ${logs.join('\n')}`;
+      }
+
+      return {
+        code: StatusCodes.ContractExecutionError,
+        status: TxnStatus.error,
+        errorMsg,
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof SolanaJSONRPCError) {
+      const errorCode = typeof error.code === 'number' ? error.code : StatusCodes.Error;
+      const errorMsg = error.message || 'RPC error occurred';
+
+      return {
+        code: errorCode,
+        status: TxnStatus.error,
+        errorMsg,
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof TransactionExpiredBlockheightExceededError) {
+      return {
+        code: StatusCodes.TransactionExpired,
+        status: TxnStatus.error,
+        errorMsg: `Transaction expired: blockheight exceeded. Signature: ${error.signature}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof TransactionExpiredTimeoutError) {
+      return {
+        code: StatusCodes.TransactionExpired,
+        status: TxnStatus.error,
+        errorMsg: error.message || `Transaction expired: timeout exceeded. Signature: ${error.signature}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof TransactionExpiredNonceInvalidError) {
+      return {
+        code: StatusCodes.TransactionExpired,
+        status: TxnStatus.error,
+        errorMsg: `Transaction expired: nonce invalid. Signature: ${error.signature}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    return null;
+  }
+
+  private parseSuiError(
+    error: unknown,
+    includeError?: boolean,
+  ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; error?: unknown } | null {
+    if (!(error instanceof Error)) {
+      return null;
+    }
+
+    const msg = error.message?.toLowerCase() ?? '';
+    if (msg.includes('rejected from user') || msg.includes('user rejected') || msg.includes('rejected by user')) {
+      return {
+        code: StatusCodes.UserRejectedRequest,
+        status: TxnStatus.rejected,
+        errorMsg: 'Transaction rejected by user',
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof JsonRpcError) {
+      const code =
+        error.type === 'TransactionExecutionClientError' || error.type === 'CallExecutionFailed' ? StatusCodes.ContractExecutionError : error.code;
+      return {
+        code,
+        status: TxnStatus.error,
+        errorMsg: error.message || 'Sui RPC error',
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof SuiHTTPStatusError) {
+      return {
+        code: error.status,
+        status: TxnStatus.error,
+        errorMsg: error.message || `Sui request failed: ${error.status} ${error.statusText}`,
+        ...(includeError && { error }),
+      };
+    }
+
+    if (error instanceof SuiHTTPTransportError) {
+      return {
+        code: StatusCodes.Error,
+        status: TxnStatus.error,
+        errorMsg: error.message || 'Sui request failed',
+        ...(includeError && { error }),
+      };
+    }
+
+    return null;
   }
 
   private parseGenericError(error: unknown, includeError?: boolean): { status: TxnStatus; code: StatusCodes | number; errorMsg: string } {

@@ -30,13 +30,14 @@ async function runPermitExamples() {
       chainId,
       sender: senderAddress,
       service: Services.trade,
-      tokens: [{ address: tokenToApprove, amount: amountToTrade }],
+      tokens: [{ address: tokenToApprove }],
       rpcUrls,
       mode: ApprovalModes.PermitWitnessTransferFrom,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
-    const { approvalNeeded } = allowanceResponse.data[tokenToApprove];
+    const { allowance, permitType } = allowanceResponse.data[tokenToApprove] ?? {};
+    const approvalNeeded = permitType !== 'permitEIP2612' && allowance !== undefined && allowance < BigInt(amountToTrade);
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 

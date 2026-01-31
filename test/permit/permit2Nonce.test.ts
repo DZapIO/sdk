@@ -19,7 +19,7 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
     if (!address) {
       throw new Error(`No permit2 proxy address for chainId ${chainId}`);
     }
-    const nonce = await ChainsService.getPublicClient(chainId, rpcUrls).readContract({
+    const nonce = await ChainsService.getPublicClient(chainId, { rpcUrls }).readContract({
       address: permitProxy[chainId],
       abi: ABI.permit.permit2ProxyAbi,
       functionName: 'nextNonce',

@@ -25,11 +25,11 @@ class DZapClient {
     this.priceService = new PriceService();
     this.chains = new ChainsService();
     this.contracts = new ContractsService(this.chains);
-    this.approvals = new ApprovalsService(this.chains, this.contracts);
-    this.trade = new TradeService(this.priceService, this.chains, this.contracts);
-    this.tokens = new TokenService(this.priceService, this.chains);
-    this.zap = new ZapService();
     this.transactions = new TransactionsService();
+    this.approvals = new ApprovalsService(this.chains, this.contracts, this.transactions);
+    this.trade = new TradeService(this.priceService, this.chains, this.contracts, this.transactions);
+    this.tokens = new TokenService(this.priceService, this.chains);
+    this.zap = new ZapService(this.transactions);
   }
 
   /**
@@ -55,6 +55,15 @@ class DZapClient {
    *     1: ['https://eth.llamarpc.com'],
    *     42161: ['https://arbitrum.llamarpc.com']
    *   }
+   * });
+   *
+   * // With custom ecosystem chain instances (e.g. BitcoinChain, SolanaChain, SuiChain)
+   * const clientWithChains = DZapClient.getInstance({
+   *   ecosystemChains: [
+   *     new SolanaChain(),
+   *     new SuiChain(),
+   *     new BitcoinChain(),
+   *   ],
    * });
    * ```
    */

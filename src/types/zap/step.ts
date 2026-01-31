@@ -27,3 +27,6 @@ export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> = {
 };
 
 export type ZapStep = ZapTransactionStep;
+
+/** Minimal payload for sending zap build to chain client (e.g. BVM); full response may not be available when steps are provided by caller. */
+export type ZapBuildTxnPayload = { steps: ZapStep[] };

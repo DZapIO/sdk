@@ -23,7 +23,7 @@ export const multicall = async <const TContracts extends readonly unknown[], TAl
   data: MulticallReturnType<TContracts, TAllowFailure>;
 }> => {
   try {
-    const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
+    const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls });
     const multicallParams = {
       contracts,
       ...(multicallAddress && { multicallAddress }),

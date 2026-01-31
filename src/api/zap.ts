@@ -26,6 +26,7 @@ export class ZapApiClient extends ApiClient {
     pools: 'pools',
     poolDetails: 'pool/details',
     positions: 'user/positions',
+    history: 'user/transactions',
     buildTx: 'buildTx',
     quote: 'quote',
     broadcast: 'broadcast',
@@ -118,6 +119,27 @@ export class ZapApiClient extends ApiClient {
     return this.invoke({
       endpoint: this.endpoints.config.providers,
       method: GET,
+    });
+  }
+
+  public static fetchZapTransactionHistory(
+    params: {
+      offset: number;
+      limit: number;
+      account: string;
+      chainId?: number;
+      status?: string;
+      chainType?: string;
+      page?: number;
+      service?: string;
+    },
+    signal?: AbortSignal,
+  ) {
+    return this.invoke({
+      endpoint: this.endpoints.history,
+      data: params,
+      method: GET,
+      signal,
     });
   }
 }
