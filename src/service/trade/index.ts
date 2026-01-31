@@ -265,15 +265,7 @@ export class TradeService {
    * });
    * ```
    */
-  public getStatus({
-    txHash,
-    txIds,
-    chainId,
-  }: {
-    txHash?: string;
-    txIds?: string;
-    chainId?: number;
-  }): Promise<TradeStatusResponse | Record<string, TradeStatusResponse>> {
+  public getStatus({ txHash, txIds, chainId }: { txHash?: string; txIds?: string; chainId?: number }): Promise<TradeStatusResponse> {
     return TradeApiClient.fetchStatus({ txHash, txIds, chainId });
   }
 
