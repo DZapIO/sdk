@@ -455,11 +455,19 @@ export type EIP2612GaslessExecuteTxParams = {
 export type BatchGaslessExecuteTxParams = {
   batchPermitData: HexString;
 };
+export const AllowancePermitTypes = {
+  permitEIP2612: 'permitEIP2612',
+  permit2: 'permit2',
+  default: 'default',
+} as const;
 
 export type GaslessExecuteTxParams = { chainId: number; txId: HexString; permit: EIP2612GaslessExecuteTxParams | BatchGaslessExecuteTxParams };
 
 export type PermitMode = keyof typeof PermitTypes;
 export type ApprovalMode = Exclude<keyof typeof ApprovalModes, 'EIP2612Permit'>;
+
+/** Permit type used for the allowance - indicates which approval mechanism applies */
+export type AllowancePermitType = (typeof AllowancePermitTypes)[keyof typeof AllowancePermitTypes];
 
 export type SinglePermitCallbackParams = {
   permitData: HexString;

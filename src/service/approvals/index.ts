@@ -9,6 +9,7 @@ import { ERC20_FUNCTIONS } from '../../constants/erc20';
 import { PermitTypes } from '../../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
 import type {
+  AllowancePermitType,
   ApprovalMode,
   AvailableDZapServices,
   ChainData,
@@ -18,6 +19,7 @@ import type {
   SignPermitResponse,
   TokenPermitData,
 } from '../../types';
+import { AllowancePermitTypes } from '../../types';
 import { isDZapNativeToken } from '../../utils/address';
 import { parseError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
@@ -68,7 +70,7 @@ export class ApprovalsService {
   private async getAllowanceData(params: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
+    tokens: { address: HexString; permit?: TokenPermitData }[];
     spender: HexString;
     rpcUrls?: string[];
     mode?: ApprovalMode;
@@ -76,16 +78,16 @@ export class ApprovalsService {
   }): Promise<{
     status: TxnStatus;
     code: StatusCodes;
-    data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } };
+    data: { [key: string]: { allowance: bigint; permitType: AllowancePermitType } };
   }> {
     const { chainId, sender, tokens, rpcUrls, multicallAddress, mode, spender } = params;
-    const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
+    const data: { [key: string]: { allowance: bigint; permitType: AllowancePermitType } } = {};
 
     const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
     const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
     const approvalData = await Promise.all(
-      erc20Tokens.map(async ({ address, amount, permit }) => {
+      erc20Tokens.map(async ({ address, permit }) => {
         if (mode === ApprovalModes.AutoPermit) {
           const eip2612PermitData = await EIP2612.checkEIP2612PermitSupport({
             address,
@@ -93,29 +95,29 @@ export class ApprovalsService {
             rpcUrls,
             permit,
           });
+          const permitType: AllowancePermitType = eip2612PermitData.supportsPermit
+            ? AllowancePermitTypes.permitEIP2612
+            : AllowancePermitTypes.permit2;
           return {
             token: address,
             spender: eip2612PermitData.supportsPermit ? spender : Permit2.getAddress(chainId),
-            amount,
-            isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
-            isDefaultApprovalMode: false,
+            permitType,
           };
         } else if (mode === ApprovalModes.Default) {
           return {
             token: address,
             spender,
-            amount,
-            isDefaultApprovalMode: true,
+            permitType: AllowancePermitTypes.default,
           };
         } else {
           const permit2Address = Permit2.getAddress(chainId);
-          return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
+          return { token: address, spender: permit2Address, permitType: AllowancePermitTypes.permit2 };
         }
       }),
     );
 
     for (const { address } of nativeTokens) {
-      data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false };
+      data[address] = { allowance: maxUint256, permitType: AllowancePermitTypes.default };
     }
 
     if (erc20Tokens.length === 0) {
@@ -131,15 +133,12 @@ export class ApprovalsService {
       });
 
       for (let i = 0; i < approvalData.length; i++) {
-        const { token, amount, isEIP2612PermitSupported, isDefaultApprovalMode } = approvalData[i];
-        const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
-        const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
-        const signatureNeeded = isDefaultApprovalMode ? false : true;
-        data[token] = { allowance, approvalNeeded, signatureNeeded };
+        const { token, permitType } = approvalData[i];
+        const allowance = permitType === AllowancePermitTypes.permitEIP2612 ? maxUint256 : allowances[token];
+        data[token] = { allowance, permitType };
       }
-
       return { status: TxnStatus.success, code: StatusCodes.Success, data };
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Multicall allowance check failed', {
         service: 'ApprovalsService',
         method: 'getAllowanceData',
@@ -249,7 +248,7 @@ export class ApprovalsService {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
+    tokens: { address: HexString; permit?: TokenPermitData }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString;
@@ -517,7 +516,11 @@ export class ApprovalsService {
       rpcUrls,
     });
 
-    const tokensNeedingApproval = tokensToCheck.filter((token) => allowanceData[token.address]?.approvalNeeded);
+    const tokensNeedingApproval = tokensToCheck.filter((token) => {
+      const { allowance, permitType } = allowanceData[token.address] ?? {};
+      const approvalNeeded = permitType !== 'permitEIP2612' && allowance !== undefined && allowance < BigInt(token.amount);
+      return approvalNeeded;
+    });
 
     return tokensNeedingApproval.map((token) => ({
       to: token.address,

@@ -16,6 +16,8 @@ import { TradeService } from './service/trade';
 import { TransactionsService } from './service/transactions';
 import { ZapService } from './service/zap';
 import {
+  AllowancePermitType,
+  AllowancePermitTypes,
   ApiRpcResponse,
   ApprovalMode,
   BatchPermitCallbackParams,
@@ -79,6 +81,8 @@ export * from './constants';
 export * from './types/zap';
 
 export {
+  AllowancePermitType,
+  AllowancePermitTypes,
   ApiRpcResponse,
   ApprovalMode,
   ApprovalsService,
