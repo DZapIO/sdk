@@ -222,6 +222,30 @@ export class TradeService {
    * For cross-chain transactions, this tracks the complete bridge process across both chains.
    *
    * @param params - Configuration object for status checking
+   * @param params.txHashes - Transaction hash for single transaction status (requires chainId)
+   * @param params.chainIds - Chain ID for single transaction status (requires txHash)
+   * @returns Promise resolving to status response(s) with transaction state and details
+   *
+   * @example
+   * ```typescript
+   *
+   * // Multiple transactions status
+   * const multiStatus = await client.getMultiTxnStatus({
+   *   txHashes: '0x123...,0x456...',
+   *   chainIds: '1,42161'
+   * });
+   * ```
+   */
+  public getMultiTxnStatus({ txHashes, chainIds }: { txHashes: string; chainIds: string }): Promise<TradeStatusResponse[]> {
+    return TradeApiClient.fetchMultiTxStatus({ txHashes, chainIds });
+  }
+
+  /**
+   * Fetches the current status of trade transactions including swaps and bridges.
+   * Can check single or multiple transactions and provides detailed execution status.
+   * For cross-chain transactions, this tracks the complete bridge process across both chains.
+   *
+   * @param params - Configuration object for status checking
    * @param params.txHash - Transaction hash for single transaction status (requires chainId)
    * @param params.txIds - Comma-separated list of transaction IDs in format "chainId-txHash" for multiple transactions
    * @param params.chainId - Chain ID for single transaction status (requires txHash)

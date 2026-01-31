@@ -17,6 +17,7 @@ export type BatchCallParams = {
   value?: bigint;
 };
 
+export type StatusResponse = keyof typeof STATUS_RESPONSE;
 export type ChainData = {
   [key in number]: Chain;
 };
@@ -402,28 +403,43 @@ export type SwapInfo = {
   returnToAmount: bigint;
 };
 
-export type HistoryTokenData = {
-  asset: Omit<TokenInfo, 'price' | 'balance'>;
-  amount: string;
-  amountUSD: string;
-  status: keyof typeof STATUS_RESPONSE;
-  txHash: string;
-  account: string;
-  timestamp: number;
+type StatusAsset = {
+  contract: string;
+  chainId: number;
+  name?: string;
+  symbol?: string;
+  decimals?: number;
+  logo?: string | undefined;
 };
 
-export type TxPairData = {
-  input: HistoryTokenData;
-  output: Omit<HistoryTokenData, 'txHash' | 'status' | 'timestamp'>;
-  received: HistoryTokenData;
+export type TransactionInfo = {
+  asset: StatusAsset;
+  amount: string;
+  amountUSD: number;
+  txHash: string;
+  account: string;
+};
+
+export type TxStatusForPair = {
+  source: TransactionInfo;
+  destination: TransactionInfo & {
+    timestamp?: number;
+  };
+  expected?: Omit<TransactionInfo, 'txHash' | 'status'>;
+  status: StatusResponse;
   provider: ProviderDetails;
   allowUserTxOnDestChain: boolean;
   message?: string;
-  providerTxLink?: string;
+  protocolExplorerLink?: string;
 };
 
 export type TradeStatusResponse = {
-  [pair: string]: TxPairData;
+  status: StatusResponse;
+  gasless: boolean;
+  txHash: string;
+  chainId: number;
+  timestamp: number;
+  transactions: TxStatusForPair[];
 };
 
 export type EIP2612GaslessExecuteTxParams = {
