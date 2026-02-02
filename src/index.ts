@@ -1,6 +1,5 @@
 import { viemChainsById, viemChainsList } from './chains';
 import type { DZapSigner } from './chains/clients';
-import { hyperLiquidSpender } from './constants/chains';
 import { CHAIN_NATIVE_TOKENS, DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKEN_FORMATS, NATIVE_TOKENS } from './constants/tokens';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
@@ -61,7 +60,6 @@ import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import {
   bigmiToDzapChainId,
-  CLPoolUtils,
   extendViemChain,
   formatToken,
   generateRedeemScript,
@@ -71,7 +69,6 @@ import {
   isDZapNativeToken,
   isNativeCurrency,
   isPsbtFinalized,
-  isValidToken,
   toBigmiChainId,
   toXOnly,
 } from './utils';
@@ -93,7 +90,6 @@ export {
   CHAIN_NATIVE_TOKENS,
   ChainData,
   ChainsService,
-  CLPoolUtils,
   contractErrorActions,
   ContractErrorResponse,
   ContractsService,
@@ -113,12 +109,10 @@ export {
   getScriptPubKey,
   getTokensPairKey,
   HexString,
-  hyperLiquidSpender,
   isBatchTxnSupportedByWallet,
   isDZapNativeToken,
   isNativeCurrency,
   isPsbtFinalized,
-  isValidToken,
   NATIVE_TOKEN_FORMATS,
   NATIVE_TOKENS,
   ParamQuotes,

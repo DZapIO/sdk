@@ -8,7 +8,11 @@ import { ValidationError } from './baseError.js';
 /**
  * Converts 33-byte compressed public key to 32-byte x-only format (required for Taproot P2TR).
  */
-export const toXOnly = (pubKey: Uint8Array) => (pubKey.length === 32 ? pubKey : pubKey.subarray(1, 33));
+export const toXOnly = (pubKey: Uint8Array) => {
+  if (pubKey.length === 32) return pubKey;
+  if (pubKey.length === 33) return pubKey.subarray(1, 33);
+  throw new ValidationError('Invalid public key length; expected 32 or 33 bytes');
+};
 
 /** Returns true if the PSBT is finalized and can be extracted to a transaction. */
 export function isPsbtFinalized(psbt: Psbt): boolean {
@@ -48,18 +52,24 @@ export const getScriptPubKey = (pubKeyHex: string, scriptType: string) => {
 
 export const toBigmiChainId = (chainId: number): BigmiChainId => {
   switch (chainId) {
+    case chainIds.bitcoin:
+      return BigmiChainId.BITCOIN_MAINNET;
     case chainIds.bitcointestnet:
       return BigmiChainId.BITCOIN_TESTNET4;
     default:
-      return BigmiChainId.BITCOIN_MAINNET;
+      throw new ValidationError(
+        `Unsupported Bitcoin chain ID: ${chainId}. Supported: ${chainIds.bitcoin} (mainnet), ${chainIds.bitcointestnet} (testnet).`,
+      );
   }
 };
 
 export const bigmiToDzapChainId = (chainId: ChainId): number => {
   switch (chainId) {
+    case BigmiChainId.BITCOIN_MAINNET:
+      return chainIds.bitcoin;
     case BigmiChainId.BITCOIN_TESTNET4:
       return chainIds.bitcointestnet;
     default:
-      return chainIds.bitcoin;
+      throw new ValidationError(`Unsupported Bigmi chain ID: ${chainId}. Supported: BITCOIN_MAINNET, BITCOIN_TESTNET4.`);
   }
 };

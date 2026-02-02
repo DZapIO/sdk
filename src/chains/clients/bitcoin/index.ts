@@ -1,7 +1,18 @@
 import type { Config } from '@bigmi/client';
 import type { GetConnectorClientReturnType } from '@bigmi/client/dist/esm/actions/getConnectorClient';
 import type { ChainId } from '@bigmi/core';
-import { getBalance } from '@bigmi/core';
+import type { UTXOSchema } from '@bigmi/core';
+import {
+  blockchair,
+  blockcypher,
+  createClient,
+  fallback as btcTransportFallback,
+  getBalance,
+  mempool,
+  publicActions,
+  rpcSchema,
+  walletActions,
+} from '@bigmi/core';
 import { AddressType, type Client, getAddressInfo, hexToUnit8Array, signPsbt, withTimeout } from '@bigmi/core';
 import * as ecc from '@bitcoinerlab/secp256k1';
 import mempoolJS from '@mempool/mempool.js';
@@ -11,17 +22,20 @@ import { address, initEccLib, networks, Psbt } from 'bitcoinjs-lib';
 import { TradeApiClient } from '../../../api/trade';
 import { ZapApiClient } from '../../../api/zap';
 import { chainIds, chainTypes, DZAP_NATIVE_TOKEN_FORMAT, Services } from '../../../constants';
+import { MULTI_CALL_BATCH_SIZE, RPC_BATCHING_WAIT_TIME } from '../../../constants/rpc';
 import { ZAP_STEP_ACTIONS } from '../../../constants/zap';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
 import type { ZapBuildTxnResponse } from '../../../types/zap/build';
 import type { ZapBuildTxnPayload, ZapBvmTxnDetails } from '../../../types/zap/step';
 import { generateRedeemScript, isPsbtFinalized, toXOnly } from '../../../utils/bitcoin';
 import { NotFoundError, parseError, ServerError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
+import { bigmiChainsById } from '../..';
 import { BaseChainClient } from '../base';
-import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
+import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
+
+export type BitcoinTxnData = TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload;
 
 export type BitcoinNetwork = typeof networks.bitcoin | typeof networks.testnet;
 
@@ -30,13 +44,14 @@ export type BitcoinSigner = GetConnectorClientReturnType<Config, ChainId>;
 
 export type WaitForMempoolTransactionParameters = {
   txid: string;
+  chainId: number;
   pollingInterval?: number;
   timeout?: number;
   confirmations?: number;
 };
 
-/** Bitcoin (BVM) chain implementation. Handles PSBT signing and mempool broadcast. */
-export class BitcoinChain extends BaseChainClient {
+/** Bitcoin (BVM) chain implementation. Handles PSBT signing and mempool broadcast. getPublicClient returns bigmi Client. */
+export class BitcoinChain extends BaseChainClient<Client, BitcoinSigner, BitcoinTxnData> {
   constructor() {
     super(chainTypes.bvm, [chainIds.bitcoin, chainIds.bitcoinTestnet]);
     initEccLib(ecc);
@@ -72,12 +87,34 @@ export class BitcoinChain extends BaseChainClient {
     return chainId === chainIds.bitcoinTestnet ? networks.testnet : networks.bitcoin;
   }
 
+  getPublicClient(chainId: number, _options?: PublicClientOptions): Client {
+    const chain = bigmiChainsById[chainId];
+    if (!chain) {
+      throw new ValidationError(`Unsupported chainId: ${chainId}. Supported chains: ${Object.keys(bigmiChainsById).join(', ')}`);
+    }
+    const baseUrl = `https://mempool.space${chain.testnet ? '/testnet4' : ''}/api`;
+    return createClient({
+      chain,
+      rpcSchema: rpcSchema<UTXOSchema>(),
+      transport: btcTransportFallback([mempool({ baseUrl }), blockchair(), blockcypher()]),
+      batch: {
+        multicall: {
+          wait: RPC_BATCHING_WAIT_TIME,
+          batchSize: MULTI_CALL_BATCH_SIZE,
+        },
+      },
+      pollingInterval: 10_000,
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+  }
+
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { account, chainId, tokenAddresses = [] } = params;
     const zeroAddress = DZAP_NATIVE_TOKEN_FORMAT;
 
     try {
-      const btcClient = ChainsService.getPublicBitcoinClient(chainId);
+      const btcClient = this.getPublicClient(chainId);
       const balance = await getBalance(btcClient, { address: account });
 
       if (tokenAddresses.length === 0 || tokenAddresses.includes(zeroAddress)) {
@@ -197,7 +234,7 @@ export class BitcoinChain extends BaseChainClient {
   }
 
   /** Signs PSBT from txnData (psbtHex + txId) and broadcasts via trade or zap API. */
-  async sendTransaction(params: SendTransactionParams<typeof chainIds.bitcoin | typeof chainIds.bitcoinTestnet>): Promise<DZapTransactionResponse> {
+  async sendTransaction(params: SendTransactionParams<BitcoinSigner, BitcoinTxnData>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer, service } = params;
 
     try {
@@ -232,14 +269,15 @@ export class BitcoinChain extends BaseChainClient {
   }
 
   async waitForTransactionReceipt(params: WaitForReceiptParams): Promise<TransactionReceipt> {
-    const { txHash, additionalData } = params;
+    const { txHash, chainId, additionalData } = params;
 
     try {
-      const waitParams = (additionalData as WaitForMempoolTransactionParameters) || {};
+      const waitParams = (additionalData as Partial<WaitForMempoolTransactionParameters>) || {};
       const transaction = await this.waitForMempoolTransaction({
         txid: txHash,
-        pollingInterval: waitParams.pollingInterval || 10000, // 10 seconds
-        timeout: waitParams.timeout || 3600000, // 1 hour
+        chainId,
+        pollingInterval: waitParams.pollingInterval ?? 10000, // 10 seconds
+        timeout: waitParams.timeout ?? 3600000, // 1 hour
       });
 
       if (!transaction.status.confirmed) {
@@ -255,12 +293,26 @@ export class BitcoinChain extends BaseChainClient {
     }
   }
 
-  private async waitForMempoolTransaction({ txid, pollingInterval = 10000, timeout = 3600000 }: WaitForMempoolTransactionParameters): Promise<Tx> {
-    return new Promise((resolve, reject) => {
-      const {
-        bitcoin: { transactions },
-      } = mempoolJS();
+  private getMempoolNetwork(chainId: number): 'mainnet' | 'testnet' {
+    return chainId === chainIds.bitcoinTestnet ? 'testnet' : 'mainnet';
+  }
 
+  private async waitForMempoolTransaction({
+    txid,
+    chainId,
+    pollingInterval = 10000,
+    timeout = 3600000,
+  }: WaitForMempoolTransactionParameters): Promise<Tx> {
+    const network = this.getMempoolNetwork(chainId);
+    const {
+      bitcoin: { transactions },
+    } = mempoolJS({
+      hostname: 'mempool.space',
+      protocol: 'https',
+      network,
+    });
+
+    return new Promise((resolve, reject) => {
       async function checkTransaction() {
         try {
           const txStatus: TxStatus = await transactions.getTxStatus({ txid });

@@ -1,5 +1,3 @@
-import type { CancelTokenSource } from 'axios';
-import Axios from 'axios';
 import type { Signer } from 'ethers';
 import type { WalletClient } from 'viem';
 
@@ -25,8 +23,9 @@ import type {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../../types/zap';
-import type { ZapEvmTxnDetails, ZapStep, ZapTxnDetails } from '../../types/zap/step';
-import { DZapError, parseError, ServerError } from '../../utils/errors';
+import type { ZapStep, ZapTxnDetails } from '../../types/zap/step';
+import { isEthersSigner } from '../../utils';
+import { DZapError, parseError, ServerError, ValidationError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import type { TransactionsService } from '../transactions';
 
@@ -34,8 +33,6 @@ import type { TransactionsService } from '../transactions';
  * ZapService handles all zap-related operations including quotes, transaction building, execution, and pool management.
  */
 export class ZapService {
-  private cancelTokenSource: CancelTokenSource | null = null;
-
   constructor(private transactionsService: TransactionsService) {}
 
   /**
@@ -65,11 +62,7 @@ export class ZapService {
    */
   public async getQuote(request: ZapQuoteRequest): Promise<ZapQuoteResponse> {
     try {
-      if (this.cancelTokenSource) {
-        this.cancelTokenSource.cancel('Cancelled due to new request');
-      }
-      this.cancelTokenSource = Axios.CancelToken.source();
-      const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, this.cancelTokenSource.token)).data;
+      const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request)).data;
       return route;
     } catch (error: unknown) {
       const parsed = parseError(error);
@@ -105,11 +98,7 @@ export class ZapService {
    */
   public async buildTxn(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse> {
     try {
-      if (this.cancelTokenSource) {
-        this.cancelTokenSource.cancel('Cancelled due to new request');
-      }
-      this.cancelTokenSource = Axios.CancelToken.source();
-      const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
+      const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request)).data;
       return route;
     } catch (error: unknown) {
       const parsed = parseError(error);
@@ -368,42 +357,6 @@ export class ZapService {
   }
 
   /**
-   * Executes a single zap transaction step.
-   * @private
-   */
-  private async executeStep({
-    chainId,
-    txnData,
-    signer,
-  }: {
-    chainId: number;
-    txnData: ZapEvmTxnDetails;
-    signer: Signer | WalletClient;
-  }): Promise<DZapTransactionResponse> {
-    try {
-      const { callData, callTo, value, estimatedGas } = txnData;
-      return await this.transactionsService.send({
-        chainId,
-        signer,
-        txnData: {
-          from: '0x' as HexString,
-          to: callTo as HexString,
-          data: callData as HexString,
-          value: value,
-          gasLimit: estimatedGas,
-        } as EvmTxData,
-        service: Services.zap,
-      });
-    } catch (error: unknown) {
-      logger.error('Zap step execution failed', { service: 'ZapService', method: 'executeStep', chainId, error });
-      return {
-        ...parseError(error),
-        error,
-      };
-    }
-  }
-
-  /**
    * Executes the complete zap operation with all steps.
    * @private
    */
@@ -455,11 +408,13 @@ export class ZapService {
           });
         } else {
           const { callData, callTo, value, estimatedGas } = stepData;
+          const fromAddress = isEthersSigner(signer) ? await signer.getAddress() : signer.account?.address;
+          if (!fromAddress) throw new ValidationError('Invalid signer address');
           result = await this.transactionsService.send({
             chainId,
             signer,
             txnData: {
-              from: '0x' as HexString,
+              from: fromAddress as HexString,
               to: callTo as HexString,
               data: callData as HexString,
               value: value,

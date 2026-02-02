@@ -1,5 +1,6 @@
 import { chainTypes } from '../../constants/chains';
 import { getChainType } from '../../utils/chainType';
+import { ValidationError } from '../../utils/errors';
 import { BitcoinChain } from './bitcoin';
 import { EvmChain } from './evm';
 import { SolanaChain } from './solana';
@@ -7,19 +8,12 @@ import { SuiChain } from './sui';
 import type { IChainClient } from './types';
 
 /**
- * Returns an EvmChain instance. Used for EVM-only operations (e.g. sendBatchCalls, waitForBatchTransactionReceipt).
- */
-export function getEvmChain(): EvmChain {
-  return new EvmChain();
-}
-
-/**
- * Returns a chain client for the given chain ID, or undefined if unsupported.
+ * Returns a chain client for the given chain ID.
  * Client for talking to a chain (EVM, Solana, Sui, Bitcoin, etc.).
+ * @throws Error if the chain is not supported
  */
-export function getChainClient(chainId: number): IChainClient | undefined {
+export function getChainClient(chainId: number): IChainClient {
   const chainType = getChainType(chainId);
-
   switch (chainType) {
     case chainTypes.svm:
       return new SolanaChain();
@@ -28,11 +22,14 @@ export function getChainClient(chainId: number): IChainClient | undefined {
     case chainTypes.bvm:
       return new BitcoinChain();
     case chainTypes.evm: {
-      const evmChain = getEvmChain();
-      return evmChain.isChainSupported(chainId) ? evmChain : undefined;
+      const evmChain = new EvmChain();
+      if (!evmChain.isChainSupported(chainId)) {
+        throw new ValidationError(`Unsupported chain ID: ${chainId}`);
+      }
+      return evmChain;
     }
     default:
-      return undefined;
+      throw new ValidationError(`Unsupported chain ID: ${chainId}`);
   }
 }
 

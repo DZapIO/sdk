@@ -1,18 +1,22 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import type { Blockhash, BlockhashWithExpiryBlockHeight, SendOptions, SignatureResult } from '@solana/web3.js';
-import { PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { clusterApiUrl, Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { withTimeout } from 'viem';
 
+import { config } from '../../../config';
 import { CHAIN_NATIVE_TOKENS, chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import { ChainsService } from '../../../service/chains';
-import type { DZapTransactionResponse, HexString } from '../../../types';
+import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
 import { NotFoundError, parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
-import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
+import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
+/**
+ * Solana (SVM) chain implementation.
+ * getPublicClient returns Solana Connection.
+ */
 export enum SolanaCommitment {
   processed = 'processed',
   confirmed = 'confirmed',
@@ -41,17 +45,21 @@ export type SolanaSigner = {
   signTransaction(transaction: VersionedTransaction): Promise<VersionedTransaction>;
 };
 
-/**
- * Solana (SVM) chain implementation. RPC via ChainsService.getPublicSolanaClient(chainId).
- */
-export class SolanaChain extends BaseChainClient {
+export class SolanaChain extends BaseChainClient<Connection, SolanaSigner, TradeBuildTxnResponse> {
   constructor() {
     super(chainTypes.svm, [chainIds.solana]);
   }
 
+  getPublicClient(chainId: number, options?: PublicClientOptions): Connection {
+    const rpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
+    const rpc = rpcUrls?.[0] ?? clusterApiUrl('mainnet-beta');
+    const commitment = options?.commitment ?? 'confirmed';
+    return new Connection(rpc, commitment);
+  }
+
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { chainId, account, tokenAddresses = [] } = params;
-    const connection = ChainsService.getPublicSolanaClient(chainId);
+    const connection = this.getPublicClient(chainId);
     const userAccount = new PublicKey(account);
 
     try {
@@ -102,7 +110,7 @@ export class SolanaChain extends BaseChainClient {
   }
 
   async sendTransaction(
-    params: SendTransactionParams<typeof chainIds.solana>,
+    params: SendTransactionParams<SolanaSigner, TradeBuildTxnResponse>,
   ): Promise<DZapTransactionResponse & { svmTxnData?: SolanaTransactionResponse }> {
     const { chainId, txnData, signer } = params;
     try {
@@ -110,7 +118,7 @@ export class SolanaChain extends BaseChainClient {
         throw new ValidationError('Unsupported transaction data');
       }
       const svmTxData = txnData.svmTxData;
-      const connection = ChainsService.getPublicSolanaClient(chainId);
+      const connection = this.getPublicClient(chainId);
 
       const serializedData = new Uint8Array(Buffer.from(txnData.data, 'base64'));
       const versionedTransaction = VersionedTransaction.deserialize(serializedData);
@@ -123,7 +131,12 @@ export class SolanaChain extends BaseChainClient {
         errorInstance: new TransactionError(StatusCodes.Timeout, 'Transaction signing expired'),
       });
 
-      const txnHash = bs58.encode(signedTx.signatures[0]);
+      const signature = signedTx.signatures?.[0];
+      if (signature === undefined) {
+        throw new ValidationError('Signed transaction has no signatures');
+      }
+
+      const txnHash = bs58.encode(signature);
       return {
         code: StatusCodes.Success,
         status: TxnStatus.success,
@@ -171,7 +184,7 @@ export class SolanaChain extends BaseChainClient {
     signedTx: VersionedTransaction,
     blockhashResult: BlockhashWithExpiryBlockHeight,
   ): Promise<ConfirmedTransactionResult> {
-    const connection = ChainsService.getPublicSolanaClient(chainId);
+    const connection = this.getPublicClient(chainId);
     const signedTxSerialized = signedTx.serialize();
     const txnHash = bs58.encode(signedTx.signatures[0]);
     if (!txnHash) {
@@ -188,7 +201,15 @@ export class SolanaChain extends BaseChainClient {
     let blockHeight = await connection.getBlockHeight(SolanaCommitment.confirmed);
 
     while (!signatureResult && blockHeight < blockhashResult.lastValidBlockHeight) {
-      await connection.sendRawTransaction(signedTxSerialized, rawTransactionOptions);
+      try {
+        await connection.sendRawTransaction(signedTxSerialized, rawTransactionOptions);
+      } catch (error) {
+        // Log transient RPC errors but continue retry loop until blockheight expiration
+        logger.warn('sendRawTransaction failed, retrying', {
+          txnHash,
+          error,
+        });
+      }
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       signatureResult = await Promise.race([

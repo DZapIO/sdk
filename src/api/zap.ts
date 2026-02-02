@@ -1,4 +1,5 @@
-import type { AxiosInstance, CancelToken } from 'axios';
+import type { AxiosInstance, CancelToken, CancelTokenSource } from 'axios';
+import Axios from 'axios';
 
 import { config } from '../config';
 import { GET, POST } from '../constants/httpMethods';
@@ -16,6 +17,7 @@ import { ApiClient } from './base';
 
 export class ZapApiClient extends ApiClient {
   private static zapInstance: AxiosInstance;
+  private static cancelTokenSource: CancelTokenSource | null = null;
 
   private static readonly endpoints = {
     status: 'status',
@@ -43,6 +45,18 @@ export class ZapApiClient extends ApiClient {
     return this.zapInstance;
   }
 
+  /**
+   * Returns a cancel token for the current request and cancels any previous in-flight request.
+   * Used by quote and buildTx to ensure only the latest request is active.
+   */
+  private static getCancelToken(): CancelToken {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    return this.cancelTokenSource.token;
+  }
+
   protected static getHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',
@@ -58,21 +72,21 @@ export class ZapApiClient extends ApiClient {
     });
   }
 
-  public static fetchZapBuildTxnData(request: ZapBuildTxnRequest, cancelToken?: CancelToken) {
+  public static fetchZapBuildTxnData(request: ZapBuildTxnRequest) {
     return this.invoke({
       endpoint: this.endpoints.buildTx,
       data: request,
       method: POST,
-      cancelToken,
+      cancelToken: this.getCancelToken(),
     });
   }
 
-  public static fetchZapQuote(request: ZapQuoteRequest, cancelToken?: CancelToken) {
+  public static fetchZapQuote(request: ZapQuoteRequest) {
     return this.invoke({
       endpoint: this.endpoints.quote,
       data: request,
       method: POST,
-      cancelToken,
+      cancelToken: this.getCancelToken(),
     });
   }
 

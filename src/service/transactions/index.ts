@@ -2,7 +2,7 @@ import type { WalletClient } from 'viem';
 import { type Client } from 'viem';
 
 import type { DZapSigner, TransactionReceipt } from '../../chains/clients';
-import { getChainClient, getEvmChain } from '../../chains/clients';
+import { EvmChain, getChainClient } from '../../chains/clients';
 import { TxnStatus } from '../../enums';
 import type {
   AvailableDZapServices,
@@ -16,7 +16,7 @@ import type {
 import type { WalletCallReceipt } from '../../types/wallet';
 import type { ZapBuildTxnResponse } from '../../types/zap/build';
 import type { ZapBuildTxnPayload } from '../../types/zap/step';
-import { NotFoundError, parseError } from '../../utils/errors';
+import { NotFoundError } from '../../utils/errors';
 
 /**
  * TransactionsService handles generic transaction operations including sending, decoding, and batch transactions.
@@ -78,23 +78,20 @@ export class TransactionsService {
     service?: AvailableDZapServices;
   }): Promise<DZapTransactionResponse> {
     const chainClient = getChainClient(chainId);
-    if (chainClient) {
-      return await chainClient.sendTransaction({
-        chainId,
-        txnData,
-        paramsReq,
-        signer,
-        service,
-      });
-    }
-    return { ...parseError(new NotFoundError(`Unsupported chain: ${chainId}`)) };
+    return await chainClient.sendTransaction({
+      chainId,
+      txnData,
+      paramsReq,
+      signer,
+      service,
+    });
   }
 
   /**
    * Wait for batch transaction receipt using EIP-5792 (instance method)
    */
   public async waitForBatchTransactionReceipt(client: Client, batchHash: HexString): Promise<WalletCallReceipt> {
-    return await getEvmChain().waitForBatchTransactionReceipt(client, batchHash);
+    return await new EvmChain().waitForBatchTransactionReceipt(client, batchHash);
   }
 
   /**
@@ -153,6 +150,6 @@ export class TransactionsService {
       value?: bigint;
     }>,
   ): Promise<{ id: string } | null> {
-    return await getEvmChain().sendBatchCalls(walletClient, calls);
+    return await new EvmChain().sendBatchCalls(walletClient, calls);
   }
 }

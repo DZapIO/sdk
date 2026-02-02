@@ -1,8 +1,9 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
+
 import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
-import { StatusCodes, TxnStatus } from '../src/enums';
-import { HexString, SignatureCallbackParams } from '../src/types';
+import type { StatusCodes, TxnStatus } from '../src/enums';
+import type { HexString, SignatureCallbackParams } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
 // Setup a signer. This is a placeholder.

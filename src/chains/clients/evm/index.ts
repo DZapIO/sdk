@@ -1,34 +1,60 @@
+import type { Signer } from 'ethers';
 import type { Client, WalletClient } from 'viem';
+import { createPublicClient, fallback, http, type PublicClient } from 'viem';
 import { sendCalls, waitForCallsStatus } from 'viem/actions';
 import { getAction } from 'viem/utils';
 
 import { erc20Abi } from '../../../artifacts';
+import { config } from '../../../config';
 import { chainTypes, exclusiveChainIds } from '../../../constants/chains';
 import { ERC20_FUNCTIONS } from '../../../constants/erc20';
+import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../../constants/rpc';
 import { DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKENS } from '../../../constants/tokens';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString } from '../../../types';
-import type { EvmTxData, TradeBuildTxnResponse } from '../../../types';
+import type { EvmTxData, GaslessTradeBuildTxnResponse, TradeBuildTxnResponse } from '../../../types';
 import type { WalletCallReceipt } from '../../../types/wallet';
-import { isEthersSigner } from '../../../utils';
-import { parseError, TransactionError } from '../../../utils/errors';
+import { parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
-import { multicall } from '../../../utils/multicall';
+import { isEthersSigner } from '../../../utils/signer';
 import { viemChainsById } from '../..';
 import { BaseChainClient } from '../base';
-import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
+import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
+
+const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
+
+/** EVM txnData union for sendTransaction */
+type EvmTxnData = EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse;
 
 /**
  * EVM chain implementation. Chain support is determined dynamically via viemChainsById (chainType === 'evm' in config).
+ * getPublicClient returns viem PublicClient.
  */
-export class EvmChain extends BaseChainClient {
+export class EvmChain extends BaseChainClient<PublicClient, Signer | WalletClient, EvmTxnData> {
   constructor() {
-    super(chainTypes.evm, []); // Empty array - we check dynamically via chain config
+    super(chainTypes.evm, Object.keys(viemChainsById).map(Number));
   }
 
   isChainSupported(chainId: number): boolean {
     return viemChainsById[chainId] !== undefined;
+  }
+
+  getPublicClient(chainId: number, options?: PublicClientOptions): PublicClient {
+    const chain = viemChainsById[chainId];
+    if (!chain) {
+      throw new ValidationError(`Unsupported chain ID: ${chainId}`);
+    }
+    const configuredRpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
+    const hasRpcUrls = configuredRpcUrls && Array.isArray(configuredRpcUrls) && configuredRpcUrls.length > 0;
+    return createPublicClient({
+      chain,
+      transport: fallback(hasRpcUrls ? configuredRpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+      batch: {
+        multicall: {
+          wait: RPC_BATCHING_WAIT_TIME,
+        },
+      },
+    });
   }
 
   private isEvmTxData(txnData: unknown): txnData is EvmTxData {
@@ -54,28 +80,23 @@ export class EvmChain extends BaseChainClient {
       'from' in txnData
     );
   }
-
-  private extractEvmTxData(txnData: TradeBuildTxnResponse): EvmTxData {
-    return {
-      from: txnData.from as HexString,
-      to: (txnData.to || '0x') as HexString,
-      data: txnData.data as HexString,
-      value: txnData.value || '0',
-      gasLimit: txnData.gasLimit || '0',
-    };
-  }
-
-  private extractEvmTransactionData(txnData: SendTransactionParams['txnData']): EvmTxData | null {
+  private extractEvmTransactionData(txnData: SendTransactionParams<Signer | WalletClient, EvmTxnData>['txnData']): EvmTxData | null {
     if (this.isEvmTxData(txnData)) {
       return txnData;
     }
     if (this.isTradeBuildTxnResponse(txnData)) {
-      return this.extractEvmTxData(txnData);
+      return {
+        from: txnData.from as HexString,
+        to: (txnData.to || '0x') as HexString,
+        data: txnData.data as HexString,
+        value: txnData.value || '0',
+        gasLimit: txnData.gasLimit || '0',
+      };
     }
     return null;
   }
 
-  async sendTransaction(params: SendTransactionParams): Promise<DZapTransactionResponse> {
+  async sendTransaction(params: SendTransactionParams<Signer | WalletClient, EvmTxnData>): Promise<DZapTransactionResponse> {
     const { chainId, signer, txnData } = params;
 
     const evmTxData = this.extractEvmTransactionData(txnData);
@@ -101,6 +122,11 @@ export class EvmChain extends BaseChainClient {
       } else {
         const walletClient = signer as WalletClient;
         const fromAddress = (evmTxData.from !== '0x' ? evmTxData.from : walletClient.account?.address) as HexString;
+        if (!fromAddress || fromAddress === '0x') {
+          throw new ValidationError(
+            'Cannot send transaction: no sender address. Ensure evmTxData.from is set or the WalletClient has a connected account.',
+          );
+        }
         const txnHash = await walletClient.sendTransaction({
           chain: viemChainsById[chainId],
           account: fromAddress,
@@ -133,6 +159,11 @@ export class EvmChain extends BaseChainClient {
       value?: bigint;
     }>,
   ): Promise<{ id: string } | null> {
+    if (!walletClient.account) {
+      throw new ValidationError(
+        'Cannot send batch calls: WalletClient has no connected account. Ensure the wallet is connected before calling sendBatchCalls.',
+      );
+    }
     try {
       const result = await getAction(
         walletClient,
@@ -184,7 +215,7 @@ export class EvmChain extends BaseChainClient {
     const { chainId, account, tokenAddresses } = params;
 
     try {
-      const publicClient = ChainsService.getPublicClient(chainId);
+      const publicClient = this.getPublicClient(chainId);
 
       const tokens = tokenAddresses && tokenAddresses.length > 0 ? tokenAddresses : [DZAP_NATIVE_TOKEN_FORMAT];
       const nativeTokensLower = new Set(NATIVE_TOKENS.map((t) => t.toLowerCase()));
@@ -207,19 +238,12 @@ export class EvmChain extends BaseChainClient {
 
       const erc20BalancesByAddress = new Map<string, bigint>();
       if (erc20Contracts.length > 0) {
-        const erc20Results = await multicall({
-          chainId,
+        const erc20Results = await publicClient.multicall({
           contracts: erc20Contracts,
+          allowFailure: false,
         });
-
         for (let i = 0; i < erc20Tokens.length; i++) {
-          const token = erc20Tokens[i]!;
-          const res = erc20Results.data[i];
-          if (erc20Results.status === TxnStatus.success && res) {
-            erc20BalancesByAddress.set(token, res);
-          } else {
-            erc20BalancesByAddress.set(token, BigInt(0));
-          }
+          erc20BalancesByAddress.set(erc20Tokens[i]!, erc20Results[i] ?? BigInt(0));
         }
       }
 
@@ -242,7 +266,7 @@ export class EvmChain extends BaseChainClient {
         return { status: TxnStatus.success, txHash };
       }
 
-      const publicClient = ChainsService.getPublicClient(chainId);
+      const publicClient = this.getPublicClient(chainId);
       await publicClient.waitForTransactionReceipt({ hash: txHash });
       return { status: TxnStatus.success, txHash };
     } catch (error) {

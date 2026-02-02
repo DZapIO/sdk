@@ -1,10 +1,17 @@
-import type { IChainClient } from './types';
+import type { ChainPublicClient, DZapSigner, DZapTxnData, IChainClient } from './types';
 
 /**
- * Base abstract class for ecosystem chain implementations
- * Provides common functionality and enforces interface contract
+ * Base abstract class for ecosystem chain implementations.
+ * TPublicClient: public client type (PublicClient | Connection | SuiClient | Client).
+ * TSigner: signer type for sendTransaction (Signer | WalletClient | SolanaSigner | SuiWallet | BitcoinSigner).
+ * TTxnData: txnData type for sendTransaction (chain-specific build response / tx data).
  */
-export abstract class BaseChainClient implements IChainClient {
+export abstract class BaseChainClient<
+  TPublicClient extends ChainPublicClient = ChainPublicClient,
+  TSigner extends DZapSigner = DZapSigner,
+  TTxnData extends DZapTxnData = DZapTxnData,
+> implements IChainClient<TPublicClient, TSigner, TTxnData>
+{
   protected chainType: string;
   protected supportedChainIds: number[];
 
@@ -14,10 +21,13 @@ export abstract class BaseChainClient implements IChainClient {
   }
 
   abstract getBalance(params: Parameters<IChainClient['getBalance']>[0]): ReturnType<IChainClient['getBalance']>;
-  abstract sendTransaction(params: Parameters<IChainClient['sendTransaction']>[0]): ReturnType<IChainClient['sendTransaction']>;
+  abstract sendTransaction(
+    params: Parameters<IChainClient<TPublicClient, TSigner, TTxnData>['sendTransaction']>[0],
+  ): ReturnType<IChainClient['sendTransaction']>;
   abstract waitForTransactionReceipt(
     params: Parameters<IChainClient['waitForTransactionReceipt']>[0],
   ): ReturnType<IChainClient['waitForTransactionReceipt']>;
+  abstract getPublicClient(chainId: number, options?: Parameters<IChainClient<TPublicClient>['getPublicClient']>[1]): TPublicClient;
 
   getChainType(): string {
     return this.chainType;

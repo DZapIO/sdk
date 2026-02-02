@@ -518,7 +518,9 @@ export class ApprovalsService {
 
     const tokensNeedingApproval = tokensToCheck.filter((token) => {
       const { allowance, permitType } = allowanceData[token.address] ?? {};
-      const approvalNeeded = permitType !== 'permitEIP2612' && allowance !== undefined && allowance < BigInt(token.amount);
+      if (permitType === 'permitEIP2612') return false;
+      const amount = BigInt(token.amount);
+      const approvalNeeded = allowance === undefined || allowance < amount;
       return approvalNeeded;
     });
 

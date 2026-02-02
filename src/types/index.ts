@@ -425,7 +425,7 @@ export type TxStatusForPair = {
   destination: TransactionInfo & {
     timestamp?: number;
   };
-  expected?: Omit<TransactionInfo, 'txHash' | 'status'>;
+  expected?: Omit<TransactionInfo, 'txHash'>;
   status: StatusResponse;
   provider: ProviderDetails;
   allowUserTxOnDestChain: boolean;

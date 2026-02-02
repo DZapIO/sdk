@@ -1,15 +1,16 @@
-import type { CoinBalance } from '@mysten/sui/client';
+import { type CoinBalance, getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { fromBase64 } from '@mysten/sui/utils';
 
+import { config } from '../../../config';
 import { chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import { ChainsService } from '../../../service/chains';
 import type { DZapTransactionResponse, HexString } from '../../../types';
+import type { TradeBuildTxnResponse } from '../../../types';
 import { parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
-import type { GetBalanceParams, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
+import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
 export type SuiWallet = {
   signAndExecuteTransaction(
@@ -21,16 +22,22 @@ export type SuiWallet = {
 };
 
 /**
- * Sui chain implementation. RPC via ChainsService.getPublicSuiClient(chainId).
+ * Sui chain implementation. getPublicClient returns SuiClient.
  */
-export class SuiChain extends BaseChainClient {
+export class SuiChain extends BaseChainClient<SuiClient, SuiWallet, TradeBuildTxnResponse> {
   constructor() {
     super(chainTypes.suivm, [chainIds.sui]);
   }
 
+  getPublicClient(chainId: number, options?: PublicClientOptions): SuiClient {
+    const rpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
+    const rpc = rpcUrls?.[0];
+    return new SuiClient({ url: rpc ?? getFullnodeUrl('mainnet') });
+  }
+
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { chainId, account, tokenAddresses = [] } = params;
-    const suiClient = ChainsService.getPublicSuiClient(chainId);
+    const suiClient = this.getPublicClient(chainId);
 
     try {
       const coinBalances = await suiClient.getAllBalances({
@@ -61,9 +68,9 @@ export class SuiChain extends BaseChainClient {
     }
   }
 
-  async sendTransaction(params: SendTransactionParams<typeof chainIds.sui>): Promise<DZapTransactionResponse> {
+  async sendTransaction(params: SendTransactionParams<SuiWallet, TradeBuildTxnResponse>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer } = params;
-    const suiClient = ChainsService.getPublicSuiClient(chainId);
+    const suiClient = this.getPublicClient(chainId);
 
     try {
       if (!txnData || !txnData.data) {
@@ -107,7 +114,7 @@ export class SuiChain extends BaseChainClient {
 
   async waitForTransactionReceipt(params: WaitForReceiptParams): Promise<TransactionReceipt> {
     const { chainId, txHash } = params;
-    const suiClient = ChainsService.getPublicSuiClient(chainId);
+    const suiClient = this.getPublicClient(chainId);
 
     try {
       const startTime = Date.now();

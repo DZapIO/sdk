@@ -31,7 +31,7 @@ export const chainTypes = {
   tronvm: 'tronvm',
 } as const;
 
-export const chainIds = {
+export const nonEvmChainids = {
   bitcoin: 1000,
   bitcoinTestnet: 1001,
   solana: 7565164,
@@ -39,11 +39,12 @@ export const chainIds = {
   tron: 728126428,
   ton: 607,
   aptos: 116201519,
-  ethereum: 1,
   bitcointestnet: 1001,
+};
+
+export const chainIds = {
+  ...nonEvmChainids,
+  ethereum: 1,
   hyperLiquid: 998,
   polygon: 137,
 } as const;
-
-/** Spender address for HyperLiquid (chainId 998) used for token approvals. Use chain config router when available. */
-export const hyperLiquidSpender = '0x0000000000000000000000000000000000000000' as `0x${string}`;

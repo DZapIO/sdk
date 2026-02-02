@@ -11,7 +11,7 @@ import { BaseError as ViemBaseError, decodeAbiParameters, parseAbiParameters } f
 
 import { StatusCodes, TxnStatus } from '../enums';
 import type { contractErrorActions, ContractErrorResponse, HexString } from '../types';
-import { BaseError as DZapBaseError } from './baseError.js';
+import { BaseError as DZapBaseError, DZapError } from './baseError.js';
 
 export {
   BalanceError,
@@ -37,6 +37,10 @@ class ErrorParser {
     error: unknown,
     includeError?: boolean,
   ): { status: TxnStatus; code: StatusCodes | number; errorMsg: string; action?: keyof typeof contractErrorActions; error?: unknown } {
+    if (error instanceof DZapError) {
+      return this.parseError(error.cause, includeError);
+    }
+
     if (error instanceof DZapBaseError) {
       return this.parseDZapBaseError(error, includeError);
     }
