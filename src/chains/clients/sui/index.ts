@@ -129,7 +129,7 @@ export class SuiClient extends BaseChainClient {
           });
 
           const status = txnDetails?.effects?.status?.status;
-          if (status === TxnStatus.success) {
+          if (status === 'success') {
             return { status: TxnStatus.success, txHash };
           }
           if (status === 'failure') {

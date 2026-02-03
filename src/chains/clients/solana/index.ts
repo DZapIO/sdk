@@ -60,9 +60,9 @@ export class SolanaClient extends BaseChainClient {
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
     const { chainId, account, tokenAddresses = [] } = params;
     const connection = this.getPublicClient(chainId);
-    const userAccount = new PublicKey(account);
 
     try {
+      const userAccount = new PublicKey(account);
       const tokenAccountsPromise = connection.getParsedTokenAccountsByOwner(userAccount, {
         programId: TOKEN_PROGRAM_ID,
       });
