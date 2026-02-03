@@ -9,8 +9,7 @@ import type { WalletClient } from 'viem';
 import type { TxnStatus } from '../../enums';
 import type { AvailableDZapServices, HexString } from '../../types';
 import type { DZapTransactionResponse, EvmTxData, GaslessTradeBuildTxnResponse, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../../types';
-import type { ZapBuildTxnResponse } from '../../types/zap/build';
-import type { ZapBuildTxnPayload } from '../../types/zap/step';
+import type { ZapBuildSteps, ZapBuildTxnResponse } from '../../types/zap/build';
 import type { BitcoinSigner } from './bitcoin';
 import type { SolanaSigner } from './solana';
 import type { SuiWallet } from './sui';
@@ -36,7 +35,7 @@ export type GetBalanceParams = {
  * Union of all transaction data types accepted by sendTransaction across chains.
  * Used as default TTxnData when IChainClient is used without generic params.
  */
-export type DZapTxnData = EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload;
+export type DZapTxnData = EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildSteps;
 
 /**
  * Params for sendTransaction. Generic TSigner and TTxnData make param types deterministic per chain implementation:

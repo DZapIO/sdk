@@ -1,4 +1,4 @@
-import { type CoinBalance, getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { type CoinBalance, getFullnodeUrl, SuiClient as MystenSuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { fromBase64 } from '@mysten/sui/utils';
 
@@ -24,15 +24,15 @@ export type SuiWallet = {
 /**
  * Sui chain implementation. getPublicClient returns SuiClient.
  */
-export class SuiChain extends BaseChainClient<SuiClient, SuiWallet, TradeBuildTxnResponse> {
+export class SuiClient extends BaseChainClient {
   constructor() {
     super(chainTypes.suivm, [chainIds.sui]);
   }
 
-  getPublicClient(chainId: number, options?: PublicClientOptions): SuiClient {
+  getPublicClient(chainId: number, options?: PublicClientOptions): MystenSuiClient {
     const rpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
     const rpc = rpcUrls?.[0];
-    return new SuiClient({ url: rpc ?? getFullnodeUrl('mainnet') });
+    return new MystenSuiClient({ url: rpc ?? getFullnodeUrl('mainnet') });
   }
 
   async getBalance(params: GetBalanceParams): Promise<TokenBalance[]> {
@@ -73,11 +73,11 @@ export class SuiChain extends BaseChainClient<SuiClient, SuiWallet, TradeBuildTx
     const suiClient = this.getPublicClient(chainId);
 
     try {
-      if (!txnData || !txnData.data) {
+      if (!txnData || !txnData.transaction.data) {
         throw new ValidationError('Unsupported transaction data');
       }
 
-      const serializedData = fromBase64(txnData.data);
+      const serializedData = fromBase64(txnData.transaction.data);
       const tx = Transaction.from(serializedData);
 
       const resData = await signer.signAndExecuteTransaction(

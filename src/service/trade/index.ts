@@ -474,7 +474,7 @@ export class TradeService {
 
       const resp = await this.signCustomTypedData({
         signer: signer as EvmSigner,
-        account: txnData.from as HexString,
+        account: txnData.transaction.from as HexString,
         domain: typedData.domain,
         types: typedData.types,
         message: typedData.message,

@@ -332,25 +332,18 @@ export type TradeGasBuildTxnResponse<T = TxData> = TxRequestData<T> & {
   gasless: false;
 };
 
-export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
-  //@deprecated
-  data: string;
-  from: string;
-  to?: string;
-  value?: string;
-  gasLimit?: string;
-  svmTxData?: {
-    blockhash: string;
-    lastValidBlockHeight: number;
-  };
-  btcTxData?: {
-    inputs: PsbtInput[];
-    outputs: PsbtOutput[];
-    feeRate: number;
-  };
+type BaseBuildTxnResponse<T = TxData> = TradeGasBuildTxnResponse<T> & {
   additionalInfo: Record<string, Record<string, unknown>>;
   updatedQuotes: Record<string, string>;
 };
+
+export type EvmBuildTxnResponse = BaseBuildTxnResponse<EvmTxData>;
+
+export type SvmBuildTxnResponse = BaseBuildTxnResponse<SvmTxData>;
+
+export type BvmBuildTxnResponse = BaseBuildTxnResponse<BtcTxData>;
+
+export type TradeBuildTxnResponse = EvmBuildTxnResponse | SvmBuildTxnResponse | BvmBuildTxnResponse;
 
 export type GaslessTxTypes = keyof typeof GASLESS_TX_TYPE;
 

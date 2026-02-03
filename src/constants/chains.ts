@@ -44,7 +44,5 @@ export const nonEvmChainids = {
 
 export const chainIds = {
   ...nonEvmChainids,
-  ethereum: 1,
-  hyperLiquid: 998,
-  polygon: 137,
+  ...exclusiveChainIds,
 } as const;
