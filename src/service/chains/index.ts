@@ -1,12 +1,15 @@
-import { createPublicClient, fallback, http, type PublicClient } from 'viem';
+import type { Client } from '@bigmi/core';
+import type { SuiClient } from '@mysten/sui/dist/cjs/client';
+import type { Connection } from '@solana/web3.js';
+import type { PublicClient } from 'viem';
 
 import { TradeApiClient } from '../../api';
 import { viemChainsById } from '../../chains';
+import type { ChainPublicClient, PublicClientOptions } from '../../chains/clients';
+import { getChainClient } from '../../chains/clients';
 import { config } from '../../config';
-import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../constants/rpc';
+import type { chainIds } from '../../constants';
 import type { Chain, ChainData } from '../../types';
-
-const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
 /**
  * ChainsService handles all chain configuration, chain-related operations, and blockchain client creation.
@@ -63,55 +66,12 @@ export class ChainsService {
     }
     return ChainsService.chainConfig;
   }
-
-  /**
-   * Creates a public client for blockchain interactions using viem.
-   * Automatically uses configured RPC URLs from config if available, otherwise falls back to default.
-   *
-   * @param chainId - The chain ID to connect to
-   * @param rpcUrls - Optional array of RPC URLs to use (overrides config if provided)
-   * @returns A configured viem public client
-   *
-   * @example
-   * ```typescript
-   * // Use configured RPC URLs from config
-   * const client = ChainsService.getPublicClient(1);
-   *
-   * // Override with custom RPC URLs
-   * const customClient = ChainsService.getPublicClient(1, ['https://custom-rpc.com']);
-   *
-   * // Or via client instance
-   * const client = client.chains.getPublicClient(1);
-   * ```
-   */
-  public static getPublicClient(chainId: number, rpcUrls?: string[]): PublicClient {
-    const configuredRpcUrls = rpcUrls ?? config.getRpcUrlsByChainId(chainId);
-    const hasRpcUrls = configuredRpcUrls && Array.isArray(configuredRpcUrls) && configuredRpcUrls.length > 0;
-    const chain = viemChainsById[chainId];
-
-    if (!chain) {
-      throw new Error(`Unsupported chain ID: ${chainId}`);
-    }
-
-    return createPublicClient({
-      chain,
-      transport: fallback(hasRpcUrls ? configuredRpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
-      batch: {
-        multicall: {
-          wait: RPC_BATCHING_WAIT_TIME,
-        },
-      },
-    });
-  }
-
-  /**
-   * Instance method that delegates to static method for convenience.
-   * @param chainId - The chain ID to connect to
-   * @param rpcUrls - Optional array of RPC URLs to use (overrides config if provided)
-   * @returns A configured viem public client
-   */
-  public getPublicClient(chainId: number, rpcUrls?: string[]): PublicClient {
-    return ChainsService.getPublicClient(chainId, rpcUrls);
+  public static getPublicClient(chainId: number, options?: PublicClientOptions): PublicClient;
+  public static getPublicClient(chainId: typeof chainIds.solana, options?: PublicClientOptions): Connection;
+  public static getPublicClient(chainId: typeof chainIds.sui, options?: PublicClientOptions): SuiClient;
+  public static getPublicClient(chainId: typeof chainIds.bitcoin | typeof chainIds.bitcoinTestnet, options?: PublicClientOptions): Client;
+  public static getPublicClient(chainId: number, options?: PublicClientOptions): ChainPublicClient {
+    return getChainClient(chainId).getPublicClient(chainId, options);
   }
 
   /**

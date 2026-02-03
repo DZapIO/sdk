@@ -4,6 +4,7 @@ import { getContract, maxUint256 } from 'viem';
 import * as ABI from '../artifacts';
 import { ChainsService } from '../service/chains';
 import type { HexString } from '../types';
+import { UnknownError } from './baseError.js';
 
 export class NonceManager {
   private static readonly POSITION_BITS = BigInt(8);
@@ -46,7 +47,7 @@ export class NonceManager {
 
       return this.nonceFromWordAndPos(word, pos);
     }
-    throw new Error('Max iterations reached');
+    throw new UnknownError('Max iterations reached');
   }
 
   private nonceFromWordAndPos(word: bigint, pos: number): bigint {
@@ -67,7 +68,7 @@ export class NonceManager {
 }
 
 export const getNextPermit2Nonce = async (permitAddress: HexString, account: HexString, chainId: number, rpcUrls?: string[]): Promise<bigint> => {
-  const publicClient = ChainsService.getPublicClient(chainId, rpcUrls);
+  const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls });
   const nonceManager = new NonceManager(publicClient, permitAddress);
   return nonceManager.nextNonce(account);
 };

@@ -21,7 +21,7 @@ export class DefiLlamaPriceProvider implements IPriceProvider {
 
     return tokenAddresses.map((address) => {
       if (defiLlama?.chainKey) {
-        if (isNativeCurrency(address, chainConfig)) {
+        if (isNativeCurrency(address, chainInfo)) {
           return `${defiLlama.chainKey}:${defiLlama.nativeTokenKey}`;
         }
         return `${defiLlama.chainKey}:${address}`;

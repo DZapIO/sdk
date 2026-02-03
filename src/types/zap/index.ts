@@ -19,6 +19,7 @@ export type ZapUnderlyingToken = {
   symbol: string;
   decimals: number;
   logo?: string | null;
+  price?: string;
 };
 
 export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {

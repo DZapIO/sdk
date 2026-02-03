@@ -56,7 +56,7 @@ export class CoingeckoPriceProvider implements IPriceProvider {
 
   public fetchPrices = async (chainId: number, tokenAddresses: string[], chainConfig: ChainData) => {
     try {
-      const addressesWithoutNativeToken = tokenAddresses.filter((address) => !isNativeCurrency(address, chainConfig));
+      const addressesWithoutNativeToken = tokenAddresses.filter((address) => !isNativeCurrency(address, chainConfig[chainId]));
       const [erc20Prices, nativePrice] = await Promise.all([
         this.fetchERC20Prices(chainId, addressesWithoutNativeToken, chainConfig),
         addressesWithoutNativeToken.length !== tokenAddresses.length ? this.fetchNativePrice(chainId, chainConfig) : undefined,

@@ -29,11 +29,11 @@ class Logger {
   private isProd: boolean;
 
   private constructor() {
-    const nodeEnv = typeof process !== 'undefined' ? process.env.NODE_ENV : 'development';
+    const nodeEnv = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_APP_ENV : 'staging';
     this.isProd = nodeEnv === 'production';
 
-    if (nodeEnv === 'test') {
-      this.logLevel = LogLevel.WARN;
+    if (nodeEnv === 'staging') {
+      this.logLevel = LogLevel.DEBUG;
     } else if (this.isProd) {
       this.logLevel = LogLevel.ERROR;
     } else {
@@ -129,7 +129,7 @@ class Logger {
     }
 
     const logEntry: LogEntry = { level: levelName, message, ...sanitizedContext };
-    const formattedLog = JSON.stringify(logEntry, null, this.isProd ? 0 : 2);
+    const formattedLog = JSON.stringify(logEntry);
 
     switch (level) {
       case LogLevel.ERROR:

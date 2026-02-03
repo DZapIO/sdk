@@ -1,12 +1,12 @@
-import type { CancelTokenSource } from 'axios';
-import Axios from 'axios';
 import type { Signer } from 'ethers';
 import type { WalletClient } from 'viem';
 
 import { ZapApiClient } from '../../api';
-import { ZAP_STEP_ACTIONS } from '../../constants';
+import type { BitcoinSigner, DZapSigner } from '../../chains/clients';
+import { Services, ZAP_STEP_ACTIONS } from '../../constants';
+import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
-import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, HexString } from '../../types';
+import type { BroadcastTxParams, BroadcastTxResponse, BtcTxData, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
 import type {
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
@@ -22,21 +22,18 @@ import type {
   ZapQuoteResponse,
   ZapStatusRequest,
   ZapStatusResponse,
-  ZapTransactionStep,
 } from '../../types/zap';
-import type { ZapEvmTxnDetails, ZapStep } from '../../types/zap/step';
-import { parseError } from '../../utils/errors';
+import type { ZapStep, ZapTxnDetails } from '../../types/zap/step';
+import { isEthersSigner } from '../../utils';
+import { DZapError, parseError, ServerError, ValidationError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
-import { ChainsService } from '../chains';
-import { TransactionsService } from '../transactions';
+import type { TransactionsService } from '../transactions';
 
 /**
  * ZapService handles all zap-related operations including quotes, transaction building, execution, and pool management.
  */
 export class ZapService {
-  private cancelTokenSource: CancelTokenSource | null = null;
-
-  constructor() {}
+  constructor(private transactionsService: TransactionsService) {}
 
   /**
    * Fetches pricing and routing information for zap operations without building full transactions.
@@ -64,12 +61,14 @@ export class ZapService {
    * ```
    */
   public async getQuote(request: ZapQuoteRequest): Promise<ZapQuoteResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
+    try {
+      const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request)).data;
+      return route;
+    } catch (error: unknown) {
+      const parsed = parseError(error);
+      const cause = new ServerError(parsed.errorMsg, error instanceof Error ? error : undefined);
+      throw new DZapError(cause);
     }
-    this.cancelTokenSource = Axios.CancelToken.source();
-    const route: ZapQuoteResponse = (await ZapApiClient.fetchZapQuote(request, this.cancelTokenSource.token)).data;
-    return route;
   }
 
   /**
@@ -98,12 +97,14 @@ export class ZapService {
    * ```
    */
   public async buildTxn(request: ZapBuildTxnRequest): Promise<ZapBuildTxnResponse> {
-    if (this.cancelTokenSource) {
-      this.cancelTokenSource.cancel('Cancelled due to new request');
+    try {
+      const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request)).data;
+      return route;
+    } catch (error: unknown) {
+      const parsed = parseError(error);
+      const cause = new ServerError(parsed.errorMsg, error instanceof Error ? error : undefined);
+      throw new DZapError(cause);
     }
-    this.cancelTokenSource = Axios.CancelToken.source();
-    const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request, this.cancelTokenSource.token)).data;
-    return route;
   }
 
   /**
@@ -140,7 +141,7 @@ export class ZapService {
    * });
    * ```
    */
-  public async execute({ request, steps, signer }: { request: ZapBuildTxnRequest; signer: WalletClient | Signer; steps?: ZapTransactionStep[] }) {
+  public async execute({ request, steps, signer }: { request: ZapBuildTxnRequest; signer: WalletClient | Signer; steps?: ZapStep[] }) {
     return await this.executeZap({
       request,
       steps,
@@ -290,6 +291,39 @@ export class ZapService {
   }
 
   /**
+   * Fetches transaction history for zap operations.
+   *
+   * @param params - Transaction history request parameters
+   * @returns Promise resolving to transaction history data
+   *
+   * @example
+   * ```typescript
+   * const history = await client.zap.getTransactionHistory({
+   *   offset: 0,
+   *   limit: 10,
+   *   account: '0x...',
+   *   chainId: 1,
+   *   status: 'completed'
+   * });
+   * ```
+   */
+  public async getTransactionHistory(
+    params: {
+      offset: number;
+      limit: number;
+      account: string;
+      chainId?: number;
+      status?: string;
+      chainType?: string;
+      page?: number;
+      service?: string;
+    },
+    signal?: AbortSignal,
+  ) {
+    return (await ZapApiClient.fetchZapTransactionHistory(params, signal)).data;
+  }
+
+  /**
    * Broadcasts a zap transaction to the blockchain.
    *
    * @param request - The zap transaction request containing source chainId, txnData and txId
@@ -313,7 +347,7 @@ export class ZapService {
           txnHash: response.data.txnHash,
         };
       }
-      throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
+      throw new ServerError(response.data?.message || 'Failed to broadcast zap transaction');
     } catch {
       return {
         status: TxnStatus.error,
@@ -323,76 +357,62 @@ export class ZapService {
   }
 
   /**
-   * Executes a single zap transaction step.
+   * Sends a single zap step transaction (BVM or EVM).
    * @private
    */
-  private async executeStep({
-    chainId,
-    txnData,
+  private async executeZapStep({
+    stepData,
     signer,
+    chainId,
   }: {
+    stepData: ZapTxnDetails;
+    signer: DZapSigner;
     chainId: number;
-    txnData: ZapEvmTxnDetails;
-    signer: Signer | WalletClient;
   }): Promise<DZapTransactionResponse> {
-    try {
-      const { callData, callTo, value, estimatedGas } = txnData;
-      return await TransactionsService.sendTransaction({
+    const chainType = stepData.type;
+    if (chainType === chainTypes.bvm) {
+      const fromAddress = (signer as BitcoinSigner).account.address;
+      const btcTxData: BtcTxData = {
+        from: fromAddress,
+        data: stepData.data,
+        inputs: [],
+        outputs: [],
+        feeRate: 0,
+        txId: stepData.txnId,
+      };
+      return this.transactionsService.send({
         chainId,
         signer,
+        txnData: btcTxData,
+        service: Services.zap,
+      });
+    }
+    if (chainType === chainTypes.evm) {
+      const { callData, callTo, value, estimatedGas } = stepData;
+      const fromAddress = isEthersSigner(signer) ? await signer.getAddress() : (signer as WalletClient).account?.address;
+      if (!fromAddress) throw new ValidationError('Invalid signer address');
+      const evmTxData: EvmTxData = {
+        from: fromAddress as HexString,
         to: callTo,
         data: callData,
-        value: BigInt(value),
-        gasLimit: estimatedGas ? BigInt(estimatedGas) : undefined,
-      });
-    } catch (error: unknown) {
-      logger.error('Zap step execution failed', { service: 'ZapService', method: 'executeStep', chainId, error });
-      return {
-        ...parseError(error),
-        error,
+        value: value,
+        gasLimit: estimatedGas,
       };
-    }
-  }
-
-  /**
-   * Approves tokens for zap operations.
-   */
-  public async approve({ chainId, data, signer }: { chainId: number; data: ZapEvmTxnDetails; signer: Signer | WalletClient }) {
-    try {
-      const { callData, callTo, value, estimatedGas } = data;
-      const publicClient = ChainsService.getPublicClient(chainId);
-      const blockNumber = await publicClient.getBlockNumber();
-      logger.debug('Zap approval block data', {
-        service: 'ZapService',
-        method: 'approve',
-        chainId,
-        blockNumber: blockNumber.toString(),
-        callTo,
-        value,
-        estimatedGas,
-      });
-      return await TransactionsService.sendTransaction({
+      return this.transactionsService.send({
         chainId,
         signer,
-        to: callTo,
-        data: callData,
-        value: BigInt(value),
-        gasLimit: estimatedGas ? BigInt(estimatedGas) : undefined,
+        txnData: evmTxData,
+        service: Services.zap,
       });
-    } catch (error: unknown) {
-      logger.error('Zap approval failed', { service: 'ZapService', method: 'approve', chainId, error });
-      return {
-        ...parseError(error),
-        error,
-      };
     }
+    throw new ValidationError(`Unsupported chain type: ${chainType}`);
   }
 
   /**
    * Executes the complete zap operation with all steps.
    * @private
    */
-  private async executeZap({ request, steps, signer }: { request: ZapBuildTxnRequest; steps?: ZapStep[]; signer: Signer | WalletClient }): Promise<
+  private async executeZap({ request, steps, signer }: { request: ZapBuildTxnRequest; steps?: ZapStep[]; signer: DZapSigner }): Promise<
     | {
         status: TxnStatus.success;
         code: StatusCodes | number;
@@ -423,13 +443,13 @@ export class ZapService {
       let txnHash: HexString | undefined;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        if (step.action === ZAP_STEP_ACTIONS.execute) {
-          const result = await this.executeStep({ chainId, txnData: step.data as ZapEvmTxnDetails, signer });
-          if (result.status !== TxnStatus.success) {
-            return result;
-          }
-          txnHash = result.txnHash as HexString;
-        }
+        if (step.action !== ZAP_STEP_ACTIONS.execute) continue;
+
+        const stepData = step.data as ZapTxnDetails;
+        const result = await this.executeZapStep({ stepData, signer, chainId });
+
+        if (result.status !== TxnStatus.success) return result;
+        txnHash = result.txnHash as HexString;
       }
 
       if (!txnHash) {
@@ -437,7 +457,6 @@ export class ZapService {
           service: 'ZapService',
           method: 'executeZap',
           chainId,
-          stepsCount: steps.length,
         });
         return {
           status: TxnStatus.error,

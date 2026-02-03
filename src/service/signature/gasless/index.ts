@@ -47,7 +47,7 @@ export class Gasless {
       const contract = getContract({
         abi: ContractsService.getDZapAbi('trade', contractVersion),
         address: spender,
-        client: ChainsService.getPublicClient(chainId, rpcUrls),
+        client: ChainsService.getPublicClient(chainId, { rpcUrls }),
       });
 
       const nonce = (await contract.read.getNonce([account])) as bigint;

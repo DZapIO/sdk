@@ -21,9 +21,7 @@ export type ZapBvmTxnDetails = {
 
 export type ZapTxnDetails = ZapEvmTxnDetails | ZapBvmTxnDetails;
 
-export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> = {
+export type ZapStep<T extends ZapTxnDetails = ZapTxnDetails> = {
   action: StepAction;
   data: T;
 };
-
-export type ZapStep = ZapTransactionStep;

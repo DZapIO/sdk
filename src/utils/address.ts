@@ -2,12 +2,11 @@ import { getAddress, isAddress, zeroAddress } from 'viem';
 
 import { DZAP_NATIVE_TOKEN_FORMAT } from '../constants';
 import { NATIVE_TOKENS } from '../constants/tokens';
-import type { ChainData, HexString } from '../types';
+import type { Chain, HexString } from '../types';
 
-export const isNativeCurrency = (address: string, chainConfig: ChainData) => {
-  if (!chainConfig) return false;
-  return Object.values(chainConfig).some((chain) => chain.isEnabled && chain.nativeToken.contract === address);
-};
+export function isNativeCurrency(contract: string, chain: Chain): boolean {
+  return chain.nativeToken.contract === contract;
+}
 
 const isNativeAddress = (contract: string) => NATIVE_TOKENS.includes(contract);
 

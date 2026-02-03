@@ -1,8 +1,9 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
+
 import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
-import { StatusCodes, TxnStatus } from '../src/enums';
-import { HexString, SignatureCallbackParams } from '../src/types';
+import type { StatusCodes, TxnStatus } from '../src/enums';
+import type { HexString, SignatureCallbackParams } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
 // Setup a signer. This is a placeholder.
@@ -30,13 +31,14 @@ async function runPermitExamples() {
       chainId,
       sender: senderAddress,
       service: Services.trade,
-      tokens: [{ address: tokenToApprove, amount: amountToTrade }],
+      tokens: [{ address: tokenToApprove }],
       rpcUrls,
       mode: ApprovalModes.PermitWitnessTransferFrom,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
-    const { approvalNeeded } = allowanceResponse.data[tokenToApprove];
+    const { allowance, permitType } = allowanceResponse.data[tokenToApprove];
+    const approvalNeeded = permitType !== 'permitEIP2612' && allowance < BigInt(amountToTrade);
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 

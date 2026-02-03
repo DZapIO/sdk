@@ -38,6 +38,9 @@ export class TradeApiClient extends ApiClient {
       balanceOf: 'token/balance-of',
     },
     status: 'status',
+    multiStatus: 'status/multi',
+    providers: 'config/providers',
+    history: 'user/history',
     user: {
       calculatePoints: 'user/calculatePoints',
     },
@@ -154,6 +157,17 @@ export class TradeApiClient extends ApiClient {
     });
   }
 
+  public static fetchMultiTxStatus = ({ txHashes, chainIds }: { txHashes: string; chainIds: string }) => {
+    return this.invoke({
+      endpoint: this.endpoints.multiStatus,
+      data: {
+        txHashes,
+        chainIds,
+      },
+      method: GET,
+    });
+  };
+
   public static fetchCalculatedPoints(request: CalculatePointsRequest) {
     return this.invoke({
       endpoint: this.endpoints.user.calculatePoints,
@@ -166,6 +180,32 @@ export class TradeApiClient extends ApiClient {
     return this.invoke({
       endpoint: this.endpoints.token.balanceOf,
       data: { chainId, account },
+      method: GET,
+    });
+  }
+
+  public static fetchProviders(service?: string) {
+    return this.invoke({
+      endpoint: this.endpoints.providers,
+      data: service ? { service } : {},
+      method: GET,
+    });
+  }
+
+  public static fetchTransactionHistory(params: {
+    offset?: number;
+    limit?: number;
+    account: string;
+    service?: string;
+    chainId?: number;
+    status?: string;
+    chainType?: string;
+    page?: number;
+    fetchAllTxs?: boolean;
+  }) {
+    return this.invoke({
+      endpoint: this.endpoints.history,
+      data: params,
       method: GET,
     });
   }
