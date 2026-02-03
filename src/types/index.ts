@@ -310,15 +310,21 @@ export type SvmTxData = {
   lastValidBlockHeight?: number;
 };
 
+export type SuiTxData = {
+  from: string;
+  data: string;
+};
+
 export type BtcTxData = {
   from: string;
   data: string;
   inputs: PsbtInput[];
   outputs: PsbtOutput[];
   feeRate: number;
+  txId?: string;
 };
 
-export type TxData = EvmTxData | SvmTxData | BtcTxData;
+export type TxData = EvmTxData | SvmTxData | SuiTxData | BtcTxData;
 
 export type TxRequestData<T> = {
   status: typeof TX_STATUS.success;
@@ -343,7 +349,9 @@ export type SvmBuildTxnResponse = BaseBuildTxnResponse<SvmTxData>;
 
 export type BvmBuildTxnResponse = BaseBuildTxnResponse<BtcTxData>;
 
-export type TradeBuildTxnResponse = EvmBuildTxnResponse | SvmBuildTxnResponse | BvmBuildTxnResponse;
+export type SuivmBuildTxnResponse = BaseBuildTxnResponse<SuiTxData>;
+
+export type TradeBuildTxnResponse = EvmBuildTxnResponse | SvmBuildTxnResponse | BvmBuildTxnResponse | SuivmBuildTxnResponse;
 
 export type GaslessTxTypes = keyof typeof GASLESS_TX_TYPE;
 

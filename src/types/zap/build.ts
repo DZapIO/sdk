@@ -29,8 +29,6 @@ export type ZapBuildTxnResponse = {
   path: ZapPath[];
 };
 
-export type ZapBuildSteps = ZapStep[];
-
 export type ZapBuildTxnRequest = {
   srcToken: string;
   srcChainId: number;

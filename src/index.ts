@@ -75,6 +75,7 @@ import {
 
 export * from './chains/clients';
 export * from './constants';
+export * from './types';
 export * from './types/zap';
 
 export {

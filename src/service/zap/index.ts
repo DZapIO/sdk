@@ -2,10 +2,11 @@ import type { Signer } from 'ethers';
 import type { WalletClient } from 'viem';
 
 import { ZapApiClient } from '../../api';
+import type { BitcoinSigner, DZapSigner } from '../../chains/clients';
 import { Services, ZAP_STEP_ACTIONS } from '../../constants';
 import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
-import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, HexString } from '../../types';
+import type { BroadcastTxParams, BroadcastTxResponse, BtcTxData, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
 import type {
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
@@ -356,10 +357,62 @@ export class ZapService {
   }
 
   /**
+   * Sends a single zap step transaction (BVM or EVM).
+   * @private
+   */
+  private async executeZapStep({
+    stepData,
+    signer,
+    chainId,
+  }: {
+    stepData: ZapTxnDetails;
+    signer: DZapSigner;
+    chainId: number;
+  }): Promise<DZapTransactionResponse> {
+    const chainType = stepData.type;
+    if (chainType === chainTypes.bvm) {
+      const fromAddress = (signer as BitcoinSigner).account.address;
+      const btcTxData: BtcTxData = {
+        from: fromAddress,
+        data: stepData.data,
+        inputs: [],
+        outputs: [],
+        feeRate: 0,
+        txId: stepData.txnId,
+      };
+      return this.transactionsService.send({
+        chainId,
+        signer,
+        txnData: btcTxData,
+        service: Services.zap,
+      });
+    }
+    if (chainType === chainTypes.evm) {
+      const { callData, callTo, value, estimatedGas } = stepData;
+      const fromAddress = isEthersSigner(signer) ? await signer.getAddress() : (signer as WalletClient).account?.address;
+      if (!fromAddress) throw new ValidationError('Invalid signer address');
+      const evmTxData: EvmTxData = {
+        from: fromAddress as HexString,
+        to: callTo,
+        data: callData,
+        value: value,
+        gasLimit: estimatedGas,
+      };
+      return this.transactionsService.send({
+        chainId,
+        signer,
+        txnData: evmTxData,
+        service: Services.zap,
+      });
+    }
+    throw new ValidationError(`Unsupported chain type: ${chainType}`);
+  }
+
+  /**
    * Executes the complete zap operation with all steps.
    * @private
    */
-  private async executeZap({ request, steps, signer }: { request: ZapBuildTxnRequest; steps?: ZapStep[]; signer: Signer | WalletClient }): Promise<
+  private async executeZap({ request, steps, signer }: { request: ZapBuildTxnRequest; steps?: ZapStep[]; signer: DZapSigner }): Promise<
     | {
         status: TxnStatus.success;
         code: StatusCodes | number;
@@ -393,33 +446,7 @@ export class ZapService {
         if (step.action !== ZAP_STEP_ACTIONS.execute) continue;
 
         const stepData = step.data as ZapTxnDetails;
-        let result: DZapTransactionResponse;
-
-        if (stepData.type === chainTypes.bvm) {
-          // Non-EVM (e.g. Bitcoin/BVM): pass full build when available so chain client can sign & broadcast
-          result = await this.transactionsService.send({
-            chainId,
-            signer,
-            txnData: steps,
-            service: Services.zap,
-          });
-        } else {
-          const { callData, callTo, value, estimatedGas } = stepData;
-          const fromAddress = isEthersSigner(signer) ? await signer.getAddress() : signer.account?.address;
-          if (!fromAddress) throw new ValidationError('Invalid signer address');
-          result = await this.transactionsService.send({
-            chainId,
-            signer,
-            txnData: {
-              from: fromAddress as HexString,
-              to: callTo as HexString,
-              data: callData as HexString,
-              value: value,
-              gasLimit: estimatedGas,
-            },
-            service: Services.zap,
-          });
-        }
+        const result = await this.executeZapStep({ stepData, signer, chainId });
 
         if (result.status !== TxnStatus.success) return result;
         txnHash = result.txnHash as HexString;
@@ -430,7 +457,6 @@ export class ZapService {
           service: 'ZapService',
           method: 'executeZap',
           chainId,
-          stepsCount: steps.length,
         });
         return {
           status: TxnStatus.error,

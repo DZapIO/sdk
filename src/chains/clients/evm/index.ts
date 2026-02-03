@@ -11,8 +11,8 @@ import { ERC20_FUNCTIONS } from '../../../constants/erc20';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../../constants/rpc';
 import { DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKENS } from '../../../constants/tokens';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import type { DZapTransactionResponse, EvmBuildTxnResponse, HexString } from '../../../types';
-import type { EvmTxData, GaslessTradeBuildTxnResponse } from '../../../types';
+import type { DZapTransactionResponse, HexString } from '../../../types';
+import type { EvmTxData } from '../../../types';
 import type { WalletCallReceipt } from '../../../types/wallet';
 import { parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
@@ -22,9 +22,6 @@ import { BaseChainClient } from '../base';
 import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
-
-/** EVM txnData union for sendTransaction */
-type BuildTxnResponse = EvmTxData | GaslessTradeBuildTxnResponse | EvmBuildTxnResponse;
 
 /**
  * EVM chain implementation. Chain support is determined dynamically via viemChainsById (chainType === 'evm' in config).
@@ -57,47 +54,13 @@ export class EvmClient extends BaseChainClient {
     });
   }
 
-  private isEvmTxData(txnData: unknown): txnData is EvmTxData {
-    return (
-      !!txnData &&
-      typeof txnData === 'object' &&
-      'from' in txnData &&
-      'to' in txnData &&
-      'data' in txnData &&
-      'value' in txnData &&
-      'gasLimit' in txnData
-    );
-  }
-
-  private isTradeBuildTxnResponse(txnData: unknown): txnData is EvmBuildTxnResponse {
-    if (!(!!txnData && typeof txnData === 'object')) return false;
-    if ('txId' in txnData && 'transaction' in txnData && 'chainId' in txnData && 'status' in txnData && 'quotes' in txnData && 'gasless' in txnData)
-      return true;
-    return false;
-  }
-  private extractEvmTransactionData(txnData: SendTransactionParams<Signer | WalletClient, BuildTxnResponse>['txnData']): EvmTxData | null {
-    if (this.isEvmTxData(txnData)) {
-      return txnData;
-    }
-    if (this.isTradeBuildTxnResponse(txnData)) {
-      return {
-        from: txnData.transaction.from,
-        to: txnData.transaction.to,
-        data: txnData.transaction.data,
-        value: txnData.transaction.value,
-        gasLimit: txnData.transaction.gasLimit,
-      };
-    }
-    return null;
-  }
-
-  async sendTransaction(params: SendTransactionParams<Signer | WalletClient, BuildTxnResponse>): Promise<DZapTransactionResponse> {
+  async sendTransaction(params: SendTransactionParams<Signer | WalletClient, EvmTxData>): Promise<DZapTransactionResponse> {
     const { chainId, signer, txnData } = params;
 
-    const evmTxData = this.extractEvmTransactionData(txnData);
-    if (!evmTxData) {
+    if (!txnData) {
       return { code: StatusCodes.Error, status: TxnStatus.error, errorMsg: 'Invalid EVM transaction data' };
     }
+    const evmTxData = txnData;
 
     try {
       if (isEthersSigner(signer)) {

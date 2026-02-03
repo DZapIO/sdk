@@ -3,13 +3,13 @@ import type { Signer } from 'ethers';
 import type { TransactionReceipt, WalletClient } from 'viem';
 
 import { TradeApiClient } from '../../api';
-import type { DZapSigner } from '../../chains/clients';
+import type { DZapSigner, DZapTxnData } from '../../chains/clients';
 
 /** EVM-only signer type used for gasless and HyperLiquid flows */
 type EvmSigner = Signer | WalletClient;
 import { config } from '../../config';
 import { Services } from '../../constants';
-import { exclusiveChainIds } from '../../constants/chains';
+import { chainIds, exclusiveChainIds } from '../../constants/chains';
 import { PermitTypes } from '../../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../../enums';
 import type {
@@ -17,6 +17,7 @@ import type {
   AvailableDZapServices,
   BroadcastTxParams,
   BroadcastTxResponse,
+  BtcTxData,
   CalculatePointsRequest,
   ChainData,
   DZapTransactionResponse,
@@ -489,7 +490,7 @@ export class TradeService {
       const resp = await this.transactionsService.send({
         chainId,
         signer,
-        txnData,
+        txnData: this.getChainTxnDataFromTradeBuildTxnResponse(txnData, chainId),
         service: Services.trade,
       });
       if (resp.status !== TxnStatus.success) {
@@ -548,7 +549,7 @@ export class TradeService {
       return await this.transactionsService.send({
         chainId,
         signer,
-        txnData: buildTxnResponseData,
+        txnData: this.getChainTxnDataFromTradeBuildTxnResponse(buildTxnResponseData, chainId),
         paramsReq: request,
         service: Services.trade,
       });
@@ -753,5 +754,13 @@ export class TradeService {
     }
 
     return quotes;
+  }
+  private getChainTxnDataFromTradeBuildTxnResponse(response: TradeBuildTxnResponse, chainId: number): DZapTxnData {
+    const tx = response.transaction;
+    if (chainId === chainIds.bitcoin || chainId === chainIds.bitcoinTestnet) {
+      const btc = tx as BtcTxData;
+      return { ...btc, txId: response.txId };
+    }
+    return tx as DZapTxnData;
   }
 }

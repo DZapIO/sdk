@@ -7,7 +7,7 @@ import { withTimeout } from 'viem';
 import { config } from '../../../config';
 import { CHAIN_NATIVE_TOKENS, chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import type { DZapTransactionResponse, HexString, SvmBuildTxnResponse } from '../../../types';
+import type { DZapTransactionResponse, HexString, SvmTxData } from '../../../types';
 import { NotFoundError, parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
@@ -110,24 +110,23 @@ export class SolanaClient extends BaseChainClient {
   }
 
   async sendTransaction(
-    params: SendTransactionParams<SolanaSigner, SvmBuildTxnResponse>,
+    params: SendTransactionParams<SolanaSigner, SvmTxData>,
   ): Promise<DZapTransactionResponse & { svmTxnData?: SolanaTransactionResponse }> {
     const { chainId, txnData, signer } = params;
     try {
-      if (!txnData || !txnData.transaction.data) {
+      if (!txnData || !txnData.data) {
         throw new ValidationError('Unsupported transaction data');
       }
-      const svmTxData = txnData.transaction;
       const connection = this.getPublicClient(chainId);
 
-      const serializedData = new Uint8Array(Buffer.from(svmTxData.data, 'base64'));
+      const serializedData = new Uint8Array(Buffer.from(txnData.data, 'base64'));
       const versionedTransaction = VersionedTransaction.deserialize(serializedData);
 
       let latestBlockhash: BlockhashWithExpiryBlockHeight;
-      if (svmTxData.blockhash && svmTxData.lastValidBlockHeight) {
+      if (txnData.blockhash && txnData.lastValidBlockHeight) {
         latestBlockhash = {
-          blockhash: svmTxData.blockhash,
-          lastValidBlockHeight: svmTxData.lastValidBlockHeight,
+          blockhash: txnData.blockhash,
+          lastValidBlockHeight: txnData.lastValidBlockHeight,
         };
       } else {
         latestBlockhash = await connection.getLatestBlockhash(SolanaCommitment.confirmed);

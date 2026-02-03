@@ -23,19 +23,14 @@ import { TradeApiClient } from '../../../api/trade';
 import { ZapApiClient } from '../../../api/zap';
 import { chainIds, chainTypes, DZAP_NATIVE_TOKEN_FORMAT, Services } from '../../../constants';
 import { MULTI_CALL_BATCH_SIZE, RPC_BATCHING_WAIT_TIME } from '../../../constants/rpc';
-import { ZAP_STEP_ACTIONS } from '../../../constants/zap';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import type { BvmBuildTxnResponse, DZapTransactionResponse, HexString } from '../../../types';
-import type { ZapBuildSteps, ZapBuildTxnResponse } from '../../../types/zap/build';
-import type { ZapBvmTxnDetails } from '../../../types/zap/step';
+import type { BtcTxData, DZapTransactionResponse, HexString } from '../../../types';
 import { generateRedeemScript, isPsbtFinalized, toXOnly } from '../../../utils/bitcoin';
-import { NotFoundError, parseError, ServerError, TransactionError, ValidationError } from '../../../utils/errors';
+import { parseError, ServerError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { bigmiChainsById } from '../..';
 import { BaseChainClient } from '../base';
 import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, TokenBalance, TransactionReceipt, WaitForReceiptParams } from '../types';
-
-export type BitcoinTxnData = BvmBuildTxnResponse | ZapBuildTxnResponse | ZapBuildSteps;
 
 export type BitcoinNetwork = typeof networks.bitcoin | typeof networks.testnet;
 
@@ -213,28 +208,8 @@ export class BitcoinClient extends BaseChainClient {
     return signedPsbt;
   }
 
-  private getPsbtHexAndTxId(
-    txnData: BvmBuildTxnResponse | ZapBuildTxnResponse | ZapBuildSteps,
-    service: typeof Services.trade | typeof Services.zap,
-  ): { psbtHex: string; txId: string } {
-    if (service === Services.trade) {
-      const tradeData = txnData as BvmBuildTxnResponse;
-      const psbtHex = tradeData?.transaction.data;
-      const txId = tradeData?.txId;
-      if (!psbtHex || !txId) throw new ValidationError('Invalid Transaction Data');
-      return { psbtHex, txId };
-    }
-    const zapData = txnData as ZapBuildTxnResponse;
-    const executeStep = zapData.steps?.find((step) => step.action === ZAP_STEP_ACTIONS.execute && step.data?.type === chainTypes.bvm);
-    if (!executeStep?.data || !('data' in executeStep.data) || !('txnId' in executeStep.data)) {
-      throw new NotFoundError('Execute step with BVM data not found in zap route');
-    }
-    const bvmTxnData = executeStep.data as ZapBvmTxnDetails;
-    return { psbtHex: bvmTxnData.data, txId: bvmTxnData.txnId };
-  }
-
-  /** Signs PSBT from txnData (psbtHex + txId) and broadcasts via trade or zap API. */
-  async sendTransaction(params: SendTransactionParams<BitcoinSigner, BitcoinTxnData>): Promise<DZapTransactionResponse> {
+  /** Signs PSBT from txnData (data = psbt hex, txId for API broadcast) and broadcasts via trade or zap API. */
+  async sendTransaction(params: SendTransactionParams<BitcoinSigner, BtcTxData>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer, service } = params;
 
     try {
@@ -244,8 +219,11 @@ export class BitcoinClient extends BaseChainClient {
       if (!service || (service !== Services.zap && service !== Services.trade)) {
         throw new ValidationError(`Bitcoin broadcast requires service: "${Services.zap}" or "${Services.trade}"`);
       }
-
-      const { psbtHex, txId } = this.getPsbtHexAndTxId(txnData, service);
+      const psbtHex = txnData.data;
+      const txId = txnData.txId;
+      if (!psbtHex || !txId) {
+        throw new ValidationError('BtcTxData must include data (PSBT hex) and txId for DZap API broadcast');
+      }
 
       const signedPsbt = await this.signPsbtTx(chainId, psbtHex, signer);
       const txHex = signedPsbt.extractTransaction().toHex();

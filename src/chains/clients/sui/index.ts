@@ -6,7 +6,7 @@ import { config } from '../../../config';
 import { chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
 import type { DZapTransactionResponse, HexString } from '../../../types';
-import type { TradeBuildTxnResponse } from '../../../types';
+import type { SuiTxData } from '../../../types';
 import { parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
@@ -68,16 +68,16 @@ export class SuiClient extends BaseChainClient {
     }
   }
 
-  async sendTransaction(params: SendTransactionParams<SuiWallet, TradeBuildTxnResponse>): Promise<DZapTransactionResponse> {
+  async sendTransaction(params: SendTransactionParams<SuiWallet, SuiTxData>): Promise<DZapTransactionResponse> {
     const { chainId, txnData, signer } = params;
     const suiClient = this.getPublicClient(chainId);
 
     try {
-      if (!txnData || !txnData.transaction.data) {
+      if (!txnData || !txnData.data) {
         throw new ValidationError('Unsupported transaction data');
       }
 
-      const serializedData = fromBase64(txnData.transaction.data);
+      const serializedData = fromBase64(txnData.data);
       const tx = Transaction.from(serializedData);
 
       const resData = await signer.signAndExecuteTransaction(

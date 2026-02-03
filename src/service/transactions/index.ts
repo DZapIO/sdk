@@ -2,19 +2,11 @@ import type { WalletClient } from 'viem';
 import { type Client } from 'viem';
 
 import type { DZapSigner, TransactionReceipt } from '../../chains/clients';
+import type { DZapTxnData } from '../../chains/clients';
 import { EvmClient, getChainClient } from '../../chains/clients';
 import { TxnStatus } from '../../enums';
-import type {
-  AvailableDZapServices,
-  DZapTransactionResponse,
-  EvmTxData,
-  GaslessTradeBuildTxnResponse,
-  HexString,
-  TradeBuildTxnRequest,
-  TradeBuildTxnResponse,
-} from '../../types';
+import type { AvailableDZapServices, DZapTransactionResponse, HexString, TradeBuildTxnRequest } from '../../types';
 import type { WalletCallReceipt } from '../../types/wallet';
-import type { ZapBuildSteps, ZapBuildTxnResponse } from '../../types/zap/build';
 import { NotFoundError } from '../../utils/errors';
 
 /**
@@ -28,7 +20,7 @@ export class TransactionsService {
    * @param params - Configuration object for transaction sending
    * @param params.chainId - The blockchain network ID where the transaction will be executed
    * @param params.signer - The wallet signer (ethers Signer, viem WalletClient, or ecosystem-specific signer)
-   * @param params.txnData - Transaction data (EvmTxData for EVM, TradeBuildTxnResponse for non-EVM)
+   * @param params.txnData - Chain-specific transaction data (EvmTxData, SvmTxData, SuiTxData, or BtcTxData)
    * @param params.paramsReq - Optional TradeBuildTxnRequest (required for some non-EVM chains like Bitcoin)
    * @returns Promise resolving to the transaction execution result
    *
@@ -46,18 +38,18 @@ export class TransactionsService {
    *   }
    * });
    *
-   * // Non-EVM transaction (Solana, Sui, Bitcoin)
+   * // Non-EVM: pass chain-specific tx data (e.g. from trade.buildTxn response .transaction)
    * const result = await client.transactions.send({
    *   chainId: 7565164, // Solana
    *   signer: solanaWallet,
-   *   txnData: tradeBuildTxnResponse
+   *   txnData: svmTxData, // SvmTxData
    * });
    *
-   * // Bitcoin requires service ('zap' | 'trade') for mempool broadcast routing
+   * // Bitcoin requires service ('zap' | 'trade') and BtcTxData with data + txId
    * const btcResult = await client.transactions.send({
    *   chainId: 1000,
    *   signer: btcSigner,
-   *   txnData: buildTxnResponse,
+   *   txnData: { ...btcTxData, txId: buildResponse.txId },
    *   paramsReq: request,
    *   service: 'trade',
    * });
@@ -72,7 +64,7 @@ export class TransactionsService {
   }: {
     chainId: number;
     signer: DZapSigner;
-    txnData: EvmTxData | TradeBuildTxnResponse | GaslessTradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildSteps | undefined;
+    txnData: DZapTxnData | undefined;
     paramsReq?: TradeBuildTxnRequest;
     service?: AvailableDZapServices;
   }): Promise<DZapTransactionResponse> {

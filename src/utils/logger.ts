@@ -129,7 +129,7 @@ class Logger {
     }
 
     const logEntry: LogEntry = { level: levelName, message, ...sanitizedContext };
-    const formattedLog = JSON.stringify(logEntry, null, this.isProd ? 0 : 2);
+    const formattedLog = JSON.stringify(logEntry);
 
     switch (level) {
       case LogLevel.ERROR:

@@ -8,8 +8,7 @@ import type { WalletClient } from 'viem';
 
 import type { TxnStatus } from '../../enums';
 import type { AvailableDZapServices, HexString } from '../../types';
-import type { DZapTransactionResponse, EvmTxData, GaslessTradeBuildTxnResponse, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../../types';
-import type { ZapBuildSteps, ZapBuildTxnResponse } from '../../types/zap/build';
+import type { BtcTxData, DZapTransactionResponse, EvmTxData, SuiTxData, SvmTxData, TradeBuildTxnRequest } from '../../types';
 import type { BitcoinSigner } from './bitcoin';
 import type { SolanaSigner } from './solana';
 import type { SuiWallet } from './sui';
@@ -32,14 +31,12 @@ export type GetBalanceParams = {
 };
 
 /**
- * Union of all transaction data types accepted by sendTransaction across chains.
- * Used as default TTxnData when IChainClient is used without generic params.
+ * Union of chain-specific transaction data types accepted by sendTransaction.
  */
-export type DZapTxnData = EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildSteps;
+export type DZapTxnData = EvmTxData | SvmTxData | SuiTxData | BtcTxData;
 
 /**
  * Params for sendTransaction. Generic TSigner and TTxnData make param types deterministic per chain implementation:
- * EvmChain → Signer | WalletClient + EvmTxData | ..., SolanaChain → SolanaSigner + TradeBuildTxnResponse, etc.
  */
 export type SendTransactionParams<TSigner extends DZapSigner = DZapSigner, TTxnData extends DZapTxnData = DZapTxnData> = {
   chainId: number;
@@ -74,7 +71,7 @@ export type ChainPublicClient = PublicClient | Connection | SuiClient | Client;
  * Chain client interface. Generics make return/param types deterministic per chain implementation:
  * TPublicClient: getPublicClient return (Evm → PublicClient, Solana → Connection, etc.)
  * TSigner: sendTransaction signer (Evm → Signer | WalletClient, Solana → SolanaSigner, etc.)
- * TTxnData: sendTransaction txnData (Evm → EvmTxData | ..., Solana → TradeBuildTxnResponse, etc.)
+ * TTxnData: sendTransaction txnData (Evm → EvmTxData, Solana → SvmTxData, etc.)
  */
 export type IChainClient<
   TPublicClient extends ChainPublicClient = ChainPublicClient,
