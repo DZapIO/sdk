@@ -490,7 +490,7 @@ export class TradeService {
       const resp = await this.transactionsService.send({
         chainId,
         signer,
-        txnData: this.getChainTxnDataFromTradeBuildTxnResponse(txnData, chainId),
+        txnData: this.parseTxnData(txnData, chainId),
         service: Services.trade,
       });
       if (resp.status !== TxnStatus.success) {
@@ -549,7 +549,7 @@ export class TradeService {
       return await this.transactionsService.send({
         chainId,
         signer,
-        txnData: this.getChainTxnDataFromTradeBuildTxnResponse(buildTxnResponseData, chainId),
+        txnData: this.parseTxnData(buildTxnResponseData, chainId),
         paramsReq: request,
         service: Services.trade,
       });
@@ -755,7 +755,7 @@ export class TradeService {
 
     return quotes;
   }
-  private getChainTxnDataFromTradeBuildTxnResponse(response: TradeBuildTxnResponse, chainId: number): DZapTxnData {
+  private parseTxnData(response: TradeBuildTxnResponse, chainId: number): DZapTxnData {
     const tx = response.transaction;
     if (chainId === chainIds.bitcoin || chainId === chainIds.bitcoinTestnet) {
       const btc = tx as BtcTxData;
