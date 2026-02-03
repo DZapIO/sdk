@@ -5,7 +5,7 @@ import { ZapApiClient } from '../../api';
 import { Services, ZAP_STEP_ACTIONS } from '../../constants';
 import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
-import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, EvmTxData, HexString } from '../../types';
+import type { BroadcastTxParams, BroadcastTxResponse, DZapTransactionResponse, HexString } from '../../types';
 import type {
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
@@ -21,7 +21,6 @@ import type {
   ZapQuoteResponse,
   ZapStatusRequest,
   ZapStatusResponse,
-  ZapTransactionStep,
 } from '../../types/zap';
 import type { ZapStep, ZapTxnDetails } from '../../types/zap/step';
 import { isEthersSigner } from '../../utils';
@@ -141,7 +140,7 @@ export class ZapService {
    * });
    * ```
    */
-  public async execute({ request, steps, signer }: { request: ZapBuildTxnRequest; signer: WalletClient | Signer; steps?: ZapTransactionStep[] }) {
+  public async execute({ request, steps, signer }: { request: ZapBuildTxnRequest; signer: WalletClient | Signer; steps?: ZapStep[] }) {
     return await this.executeZap({
       request,
       steps,
@@ -370,10 +369,8 @@ export class ZapService {
   > {
     try {
       const { srcChainId: chainId } = request;
-      let buildResponse: ZapBuildTxnResponse | undefined;
       if (!steps || steps.length === 0) {
         const route: ZapBuildTxnResponse = (await ZapApiClient.fetchZapBuildTxnData(request)).data;
-        buildResponse = route;
         steps = route.steps;
         if (!steps || steps.length === 0) {
           logger.error('No steps found in zap route', {
@@ -403,7 +400,7 @@ export class ZapService {
           result = await this.transactionsService.send({
             chainId,
             signer,
-            txnData: buildResponse ?? { steps },
+            txnData: steps,
             service: Services.zap,
           });
         } else {
@@ -419,7 +416,7 @@ export class ZapService {
               data: callData as HexString,
               value: value,
               gasLimit: estimatedGas,
-            } as EvmTxData,
+            },
             service: Services.zap,
           });
         }

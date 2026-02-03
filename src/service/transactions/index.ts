@@ -2,7 +2,7 @@ import type { WalletClient } from 'viem';
 import { type Client } from 'viem';
 
 import type { DZapSigner, TransactionReceipt } from '../../chains/clients';
-import { EvmChain, getChainClient } from '../../chains/clients';
+import { EvmClient, getChainClient } from '../../chains/clients';
 import { TxnStatus } from '../../enums';
 import type {
   AvailableDZapServices,
@@ -14,8 +14,7 @@ import type {
   TradeBuildTxnResponse,
 } from '../../types';
 import type { WalletCallReceipt } from '../../types/wallet';
-import type { ZapBuildTxnResponse } from '../../types/zap/build';
-import type { ZapBuildTxnPayload } from '../../types/zap/step';
+import type { ZapBuildSteps, ZapBuildTxnResponse } from '../../types/zap/build';
 import { NotFoundError } from '../../utils/errors';
 
 /**
@@ -73,7 +72,7 @@ export class TransactionsService {
   }: {
     chainId: number;
     signer: DZapSigner;
-    txnData: EvmTxData | TradeBuildTxnResponse | GaslessTradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildTxnPayload | undefined;
+    txnData: EvmTxData | TradeBuildTxnResponse | GaslessTradeBuildTxnResponse | ZapBuildTxnResponse | ZapBuildSteps | undefined;
     paramsReq?: TradeBuildTxnRequest;
     service?: AvailableDZapServices;
   }): Promise<DZapTransactionResponse> {
@@ -91,7 +90,7 @@ export class TransactionsService {
    * Wait for batch transaction receipt using EIP-5792 (instance method)
    */
   public async waitForBatchTransactionReceipt(client: Client, batchHash: HexString): Promise<WalletCallReceipt> {
-    return await new EvmChain().waitForBatchTransactionReceipt(client, batchHash);
+    return await new EvmClient().waitForBatchTransactionReceipt(client, batchHash);
   }
 
   /**
@@ -150,6 +149,6 @@ export class TransactionsService {
       value?: bigint;
     }>,
   ): Promise<{ id: string } | null> {
-    return await new EvmChain().sendBatchCalls(walletClient, calls);
+    return await new EvmClient().sendBatchCalls(walletClient, calls);
   }
 }

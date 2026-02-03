@@ -1,5 +1,5 @@
 import DZapClient from '../src/dZapClient';
-import { TradeBuildTxnRequest } from '../src/types';
+import type { EvmBuildTxnResponse, TradeBuildTxnRequest } from '../src/types';
 
 describe('DZapClient - buildTxn', () => {
   let client: DZapClient;
@@ -30,11 +30,11 @@ describe('DZapClient - buildTxn', () => {
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
     };
 
-    const result = await client.trade.buildTxn(request);
+    const result = (await client.trade.buildTxn(request)) as EvmBuildTxnResponse;
     expect(result).toBeDefined();
-    expect(result.data).toBeDefined();
-    expect(result.to).toBeDefined();
-    expect(result.from).toBeDefined();
+    expect(result.transaction.data).toBeDefined();
+    expect(result.transaction.to).toBeDefined();
+    expect(result.transaction.from).toBeDefined();
     expect(result.chainId).toBeDefined();
   });
 
@@ -60,11 +60,11 @@ describe('DZapClient - buildTxn', () => {
       publicKey: '0x99BCEBf44433E901597D9fCb16E799a4847519f6',
     };
 
-    const result = await client.trade.buildTxn(request);
+    const result = (await client.trade.buildTxn(request)) as EvmBuildTxnResponse;
     expect(result).toBeDefined();
-    expect(result.data).toBeDefined();
-    expect(result.to).toBeDefined();
-    expect(result.from).toBeDefined();
+    expect(result.transaction.data).toBeDefined();
+    expect(result.transaction.to).toBeDefined();
+    expect(result.transaction.from).toBeDefined();
     expect(result.chainId).toBeDefined();
   });
 });

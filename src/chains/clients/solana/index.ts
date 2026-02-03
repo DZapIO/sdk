@@ -7,7 +7,7 @@ import { withTimeout } from 'viem';
 import { config } from '../../../config';
 import { CHAIN_NATIVE_TOKENS, chainIds, chainTypes } from '../../../constants';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import type { DZapTransactionResponse, HexString, TradeBuildTxnResponse } from '../../../types';
+import type { DZapTransactionResponse, HexString, SvmBuildTxnResponse } from '../../../types';
 import { NotFoundError, parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { BaseChainClient } from '../base';
@@ -45,7 +45,7 @@ export type SolanaSigner = {
   signTransaction(transaction: VersionedTransaction): Promise<VersionedTransaction>;
 };
 
-export class SolanaChain extends BaseChainClient<Connection, SolanaSigner, TradeBuildTxnResponse> {
+export class SolanaClient extends BaseChainClient {
   constructor() {
     super(chainTypes.svm, [chainIds.solana]);
   }
@@ -110,19 +110,28 @@ export class SolanaChain extends BaseChainClient<Connection, SolanaSigner, Trade
   }
 
   async sendTransaction(
-    params: SendTransactionParams<SolanaSigner, TradeBuildTxnResponse>,
+    params: SendTransactionParams<SolanaSigner, SvmBuildTxnResponse>,
   ): Promise<DZapTransactionResponse & { svmTxnData?: SolanaTransactionResponse }> {
     const { chainId, txnData, signer } = params;
     try {
-      if (!txnData || !txnData.data) {
+      if (!txnData || !txnData.transaction.data) {
         throw new ValidationError('Unsupported transaction data');
       }
-      const svmTxData = txnData.svmTxData;
+      const svmTxData = txnData.transaction;
       const connection = this.getPublicClient(chainId);
 
-      const serializedData = new Uint8Array(Buffer.from(txnData.data, 'base64'));
+      const serializedData = new Uint8Array(Buffer.from(svmTxData.data, 'base64'));
       const versionedTransaction = VersionedTransaction.deserialize(serializedData);
-      const latestBlockhash = svmTxData ? svmTxData : await connection.getLatestBlockhash(SolanaCommitment.confirmed);
+
+      let latestBlockhash: BlockhashWithExpiryBlockHeight;
+      if (svmTxData.blockhash && svmTxData.lastValidBlockHeight) {
+        latestBlockhash = {
+          blockhash: svmTxData.blockhash,
+          lastValidBlockHeight: svmTxData.lastValidBlockHeight,
+        };
+      } else {
+        latestBlockhash = await connection.getLatestBlockhash(SolanaCommitment.confirmed);
+      }
 
       versionedTransaction.message.recentBlockhash = latestBlockhash.blockhash;
 

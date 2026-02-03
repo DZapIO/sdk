@@ -11,8 +11,8 @@ import { ERC20_FUNCTIONS } from '../../../constants/erc20';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../../../constants/rpc';
 import { DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKENS } from '../../../constants/tokens';
 import { StatusCodes, TxnStatus } from '../../../enums';
-import type { DZapTransactionResponse, HexString } from '../../../types';
-import type { EvmTxData, GaslessTradeBuildTxnResponse, TradeBuildTxnResponse } from '../../../types';
+import type { DZapTransactionResponse, EvmBuildTxnResponse, HexString } from '../../../types';
+import type { EvmTxData, GaslessTradeBuildTxnResponse } from '../../../types';
 import type { WalletCallReceipt } from '../../../types/wallet';
 import { parseError, TransactionError, ValidationError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
@@ -24,13 +24,13 @@ import type { GetBalanceParams, PublicClientOptions, SendTransactionParams, Toke
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
 /** EVM txnData union for sendTransaction */
-type EvmTxnData = EvmTxData | GaslessTradeBuildTxnResponse | TradeBuildTxnResponse;
+type BuildTxnResponse = EvmTxData | GaslessTradeBuildTxnResponse | EvmBuildTxnResponse;
 
 /**
  * EVM chain implementation. Chain support is determined dynamically via viemChainsById (chainType === 'evm' in config).
  * getPublicClient returns viem PublicClient.
  */
-export class EvmChain extends BaseChainClient<PublicClient, Signer | WalletClient, EvmTxnData> {
+export class EvmClient extends BaseChainClient {
   constructor() {
     super(chainTypes.evm, Object.keys(viemChainsById).map(Number));
   }
@@ -69,34 +69,29 @@ export class EvmChain extends BaseChainClient<PublicClient, Signer | WalletClien
     );
   }
 
-  private isTradeBuildTxnResponse(txnData: unknown): txnData is TradeBuildTxnResponse {
-    return (
-      !!txnData &&
-      typeof txnData === 'object' &&
-      'txId' in txnData &&
-      'status' in txnData &&
-      'quotes' in txnData &&
-      'data' in txnData &&
-      'from' in txnData
-    );
+  private isTradeBuildTxnResponse(txnData: unknown): txnData is EvmBuildTxnResponse {
+    if (!(!!txnData && typeof txnData === 'object')) return false;
+    if ('txId' in txnData && 'transaction' in txnData && 'chainId' in txnData && 'status' in txnData && 'quotes' in txnData && 'gasless' in txnData)
+      return true;
+    return false;
   }
-  private extractEvmTransactionData(txnData: SendTransactionParams<Signer | WalletClient, EvmTxnData>['txnData']): EvmTxData | null {
+  private extractEvmTransactionData(txnData: SendTransactionParams<Signer | WalletClient, BuildTxnResponse>['txnData']): EvmTxData | null {
     if (this.isEvmTxData(txnData)) {
       return txnData;
     }
     if (this.isTradeBuildTxnResponse(txnData)) {
       return {
-        from: txnData.from as HexString,
-        to: (txnData.to || '0x') as HexString,
-        data: txnData.data as HexString,
-        value: txnData.value || '0',
-        gasLimit: txnData.gasLimit || '0',
+        from: txnData.transaction.from,
+        to: txnData.transaction.to,
+        data: txnData.transaction.data,
+        value: txnData.transaction.value,
+        gasLimit: txnData.transaction.gasLimit,
       };
     }
     return null;
   }
 
-  async sendTransaction(params: SendTransactionParams<Signer | WalletClient, EvmTxnData>): Promise<DZapTransactionResponse> {
+  async sendTransaction(params: SendTransactionParams<Signer | WalletClient, BuildTxnResponse>): Promise<DZapTransactionResponse> {
     const { chainId, signer, txnData } = params;
 
     const evmTxData = this.extractEvmTransactionData(txnData);
