@@ -37,8 +37,8 @@ async function runPermitExamples() {
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
-    const { allowance, permitType } = allowanceResponse.data[tokenToApprove] ?? {};
-    const approvalNeeded = permitType !== 'permitEIP2612' && allowance !== undefined && allowance < BigInt(amountToTrade);
+    const { allowance, permitType } = allowanceResponse.data[tokenToApprove];
+    const approvalNeeded = permitType !== 'permitEIP2612' && allowance < BigInt(amountToTrade);
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 
