@@ -121,19 +121,23 @@ export type Fee = {
 
 export type QuoteFilter = keyof typeof QuoteFilters;
 
+export type ProtocolFilter = { allow?: string[]; deny?: string[] };
+
 export type TradeQuotesRequest = {
   fromChain: number;
   gasless?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
-  allowedProtocols?: string[];
+  bridges?: ProtocolFilter;
+  dexes?: ProtocolFilter;
   filter?: QuoteFilter;
   timingStrategy?: Partial<{
     minWaitTimeMs: number;
     maxWaitTimeMs: number;
     subsequentDelayMs: number;
     preferredResultCount: number;
+    relaxMinSuccessOnDelay: boolean;
   }>;
 };
 
