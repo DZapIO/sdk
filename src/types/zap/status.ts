@@ -1,7 +1,7 @@
 import { ProviderDetails } from '..';
 import { ZapPathAsset } from './path';
 
-export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 
 export type ZapStatusAsset = {
   asset: ZapPathAsset;
