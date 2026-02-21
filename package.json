@@ -33,7 +33,7 @@
     "lint": "eslint --cache src/**/*.ts",
     "lint:fix": "eslint --cache --fix src/**/*.ts",
     "pretty": "prettier --write --ignore-unknown src/**/*.ts",
-    "prepush": "tsc --build",
+    "prepush": "npm run build",
     "prepare": "husky install && yarn run fix-permissions",
     "fix-permissions": "node ./scripts/fixPermissions.js"
   },
