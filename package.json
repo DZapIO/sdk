@@ -1,6 +1,6 @@
 {
   "name": "@dzapio/sdk",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations including Swaps, Bridges, and Zaps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
@@ -33,7 +33,7 @@
     "lint": "eslint --cache src/**/*.ts",
     "lint:fix": "eslint --cache --fix src/**/*.ts",
     "pretty": "prettier --write --ignore-unknown src/**/*.ts",
-    "prepush": "tsc --build",
+    "prepush": "npm run build",
     "prepare": "husky install && yarn run fix-permissions",
     "fix-permissions": "node ./scripts/fixPermissions.js"
   },
