@@ -26,13 +26,8 @@ const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDe
 
 export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | undefined; chainId: number }) => {
   const chain = viemChainsById[chainId];
-  const customUrls = rpcUrls && Array.isArray(rpcUrls) && rpcUrls.length > 0;
-  const defaultUrls = chain?.rpcUrls?.default?.http;
-  const transports = customUrls
-    ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig))
-    : defaultUrls?.length
-      ? defaultUrls.map((url: string) => http(url, publicClientRpcConfig))
-      : [http()];
+  const urls = (rpcUrls?.length ? rpcUrls : chain?.rpcUrls?.default?.http) ?? [];
+  const transports = urls.length ? urls.map((url: string) => http(url, publicClientRpcConfig)) : [http()];
   return createPublicClient({
     chain,
     transport: fallback(transports),
