@@ -12,6 +12,7 @@ import { hyperEvm } from './definitions/hyperEvm';
 import { hyperliquid } from './definitions/hyperliquid';
 import { katana } from './definitions/katana';
 import { merlin } from './definitions/merlin';
+import { pushTestnet } from './definitions/pushTestnet';
 import { stableChain } from './definitions/stable';
 
 export { arthera } from './definitions/arthera';
@@ -23,9 +24,10 @@ export { hyperEvm } from './definitions/hyperEvm';
 export { hyperliquid } from './definitions/hyperliquid';
 export { katana } from './definitions/katana';
 export { merlin } from './definitions/merlin';
+export { pushTestnet } from './definitions/pushTestnet';
 export { stableChain } from './definitions/stable';
 
-export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain, bitlayer, hemi, merlin, katana];
+export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain, pushTestnet, bitlayer, hemi, merlin, katana];
 
 export const viemChainsList: viemChains.Chain[] = [...Object.values(viemChains), ...customViemChains];
 

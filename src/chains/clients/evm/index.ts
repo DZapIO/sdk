@@ -43,9 +43,11 @@ export class EvmClient extends BaseChainClient {
     }
     const configuredRpcUrls = options?.rpcUrls ?? config.getRpcUrlsByChainId(chainId);
     const hasRpcUrls = configuredRpcUrls && Array.isArray(configuredRpcUrls) && configuredRpcUrls.length > 0;
+    const urls = (hasRpcUrls ? configuredRpcUrls : chain?.rpcUrls?.default?.http) ?? [];
+    const transports = urls.length ? urls.map((url: string) => http(url, publicClientRpcConfig)) : [http()];
     return createPublicClient({
       chain,
-      transport: fallback(hasRpcUrls ? configuredRpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+      transport: fallback(transports),
       batch: {
         multicall: {
           wait: RPC_BATCHING_WAIT_TIME,

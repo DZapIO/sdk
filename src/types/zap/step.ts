@@ -19,7 +19,15 @@ export type ZapBvmTxnDetails = {
   data: string;
 };
 
-export type ZapTxnDetails = ZapEvmTxnDetails | ZapBvmTxnDetails;
+export type SVMTxnDetails = {
+  type: typeof chainTypes.svm;
+  txnId: HexString;
+  data: string[];
+  estimatedGas: string;
+  isJitoTx?: boolean;
+};
+
+export type ZapTxnDetails = ZapEvmTxnDetails | ZapBvmTxnDetails | SVMTxnDetails;
 
 export type ZapStep<T extends ZapTxnDetails = ZapTxnDetails> = {
   action: StepAction;
