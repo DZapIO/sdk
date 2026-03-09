@@ -1,43 +1,47 @@
-import { MulticallParameters } from 'viem';
-import { StatusCodes, TxnStatus } from '../enums';
-import { HexString } from '../types';
-import { getPublicClient } from './index';
+import type { MulticallParameters, MulticallReturnType } from 'viem';
 
-/**
- * Batch multiple contract calls using multicall
- */
-export const multicall = async ({
+import { StatusCodes, TxnStatus } from '../enums';
+import { ChainsService } from '../service/chains';
+import type { HexString } from '../types';
+import { parseError } from './errors';
+
+export const multicall = async <const TContracts extends readonly unknown[], TAllowFailure extends boolean = false>({
   chainId,
   contracts,
   rpcUrls,
   multicallAddress,
-  allowFailure = false,
+  allowFailure = false as TAllowFailure,
 }: {
   chainId: number;
-  contracts: MulticallParameters['contracts'];
+  contracts: TContracts;
   rpcUrls?: string[];
   multicallAddress?: HexString;
-  allowFailure?: boolean;
-}): Promise<{ status: TxnStatus; code: StatusCodes; data: unknown[] }> => {
+  allowFailure?: TAllowFailure;
+}): Promise<{
+  status: TxnStatus;
+  code: StatusCodes;
+  data: MulticallReturnType<TContracts, TAllowFailure>;
+}> => {
   try {
-    const publicClient = getPublicClient({ chainId, rpcUrls });
-    const results = await publicClient.multicall({
+    const publicClient = ChainsService.getPublicClient(chainId, { rpcUrls });
+    const multicallParams = {
       contracts,
       ...(multicallAddress && { multicallAddress }),
       allowFailure,
-    });
+    } as MulticallParameters<TContracts, TAllowFailure>;
+    const results = await publicClient.multicall(multicallParams);
 
     return {
       status: TxnStatus.success,
       code: StatusCodes.Success,
       data: results,
     };
-  } catch (error: any) {
-    console.error('Multicall failed:', error);
+  } catch (error: unknown) {
+    const errorResponse = parseError(error);
     return {
-      status: TxnStatus.error,
-      code: error.code || StatusCodes.Error,
-      data: [],
+      status: errorResponse.status,
+      code: errorResponse.code,
+      data: [] as unknown as MulticallReturnType<TContracts, TAllowFailure>,
     };
   }
 };

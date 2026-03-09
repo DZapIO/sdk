@@ -51,4 +51,10 @@ export enum StatusCodes {
   WalletRPCFailure = 429,
   SimulationFailure = 417,
   ContractExecutionError = -500,
+  Timeout = 408,
+  NotFound = 404,
+  SlippageError = 1011,
+  BalanceError = 1013,
+  ValidationError = 1001,
+  TransactionExpired = 1018,
 }

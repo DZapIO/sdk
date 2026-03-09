@@ -1,7 +1,8 @@
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
-import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../constants/axios';
-import { ExtendedAxiosRequestConfig } from '../types/axiosClient';
+
+import { MAX_RETRY_ATTEMPTS, RETRY_DELAY_MS } from '../constants/api/axios';
+import type { ExtendedAxiosRequestConfig } from '../types/axiosClient';
 
 class AxiosClient {
   private static instances: Map<string, AxiosClient> = new Map();

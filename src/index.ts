@@ -1,11 +1,22 @@
-import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
-import { ApprovalModes } from './constants/approval';
-import { erc20Functions } from './constants/erc20';
-import { PermitTypes } from './constants/permit';
-import { SignatureExpiryInSecs } from './constants/permit2';
+import { viemChainsById, viemChainsList } from './chains';
+import type { DZapSigner } from './chains/clients';
+import { CHAIN_NATIVE_TOKENS, DZAP_NATIVE_TOKEN_FORMAT, NATIVE_TOKEN_FORMATS, NATIVE_TOKENS } from './constants/tokens';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
+import { ApprovalsService } from './service/approvals';
+import { ChainsService } from './service/chains';
+import { ContractsService } from './service/contracts';
+import { SwapDecoder } from './service/decoder';
+import { SignatureService } from './service/signature';
+import { EIP2612 } from './service/signature/eip2612';
+import { Permit2 } from './service/signature/permit2';
+import { TokenService } from './service/token';
+import { TradeService } from './service/trade';
+import { TransactionsService } from './service/transactions';
+import { ZapService } from './service/zap';
 import {
+  AllowancePermitType,
+  AllowancePermitTypes,
   ApiRpcResponse,
   ApprovalMode,
   BatchPermitCallbackParams,
@@ -29,6 +40,7 @@ import {
   SinglePermitCallbackParams,
   SvmTxData,
   SwapInfo,
+  Tag,
   Token,
   TokenInfo,
   TokenPermitData,
@@ -46,59 +58,87 @@ import {
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
-import { getTokensPairKey } from './utils';
-import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
-import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
-import { formatToken } from './utils/tokens';
+import {
+  bigmiToDzapChainId,
+  extendViemChain,
+  formatToken,
+  generateRedeemScript,
+  getScriptPubKey,
+  getTokensPairKey,
+  isBatchTxnSupportedByWallet,
+  isDZapNativeToken,
+  isNativeCurrency,
+  isPsbtFinalized,
+  toBigmiChainId,
+  toXOnly,
+} from './utils';
 
+export * from './chains/clients';
+export * from './constants';
+export * from './types';
 export * from './types/zap';
-export * from './zap/constants';
 
 export {
+  AllowancePermitType,
+  AllowancePermitTypes,
   ApiRpcResponse,
   ApprovalMode,
-  ApprovalModes,
+  ApprovalsService,
   BatchPermitCallbackParams,
+  bigmiToDzapChainId,
   BtcTxData,
   Chain,
+  CHAIN_NATIVE_TOKENS,
   ChainData,
-  checkEIP2612PermitSupport,
+  ChainsService,
   contractErrorActions,
   ContractErrorResponse,
+  ContractsService,
+  DZAP_NATIVE_TOKEN_FORMAT,
   DZapClient,
   DZapPermitMode,
+  DZapSigner,
   DZapTransactionResponse,
-  erc20Functions,
+  EIP2612,
   EvmTxData,
+  extendViemChain,
   Fee,
   FeeDetails,
   formatToken,
   GaslessTradeBuildTxnResponse,
+  generateRedeemScript,
+  getScriptPubKey,
   getTokensPairKey,
   HexString,
-  OtherAbis,
+  isBatchTxnSupportedByWallet,
+  isDZapNativeToken,
+  isNativeCurrency,
+  isPsbtFinalized,
+  NATIVE_TOKEN_FORMATS,
+  NATIVE_TOKENS,
   ParamQuotes,
+  Permit2,
   PermitMode,
-  PermitTypes,
   ProviderDetails,
   PsbtInput,
   PsbtOutput,
   QuoteFilter,
-  QuoteFilters,
-  Services,
   SignatureCallbackParams,
-  SignatureExpiryInSecs,
+  SignatureService,
   SignPermitResponse,
   SinglePermitCallbackParams,
-  STATUS,
   StatusCodes,
   SvmTxData,
+  SwapDecoder,
   SwapInfo,
-  SwapInputDataDecoder,
+  Tag,
+  toBigmiChainId,
   Token,
   TokenInfo,
   TokenPermitData,
   TokenResponse,
+  TokenService,
+  toXOnly,
   TradeBuildTxnRequest,
   TradeBuildTxnRequestData,
   TradeBuildTxnResponse,
@@ -107,9 +147,14 @@ export {
   TradeQuotesRequest,
   TradeQuotesRequestData,
   TradeQuotesResponse,
+  TradeService,
   TradeStatusResponse,
   TradeStep,
+  TransactionsService,
   TxnStatus,
+  viemChainsById,
+  viemChainsList,
   ZapIntegratorConfig,
+  ZapService,
   ZapStatusResponse,
 };

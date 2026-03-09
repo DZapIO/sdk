@@ -1,6 +1,6 @@
 import { PermitTypes } from './permit';
 
-const { EIP2612Permit, ...permitModeWithoutKey } = PermitTypes;
+const { EIP2612Permit: _, ...permitModeWithoutKey } = PermitTypes;
 
 export const ApprovalModes = {
   ...permitModeWithoutKey,

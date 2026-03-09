@@ -1,4 +1,4 @@
-import { ZapBuildTxnResponse, ZapBuildTxnRequest } from './build';
+import type { ZapBuildTxnRequest, ZapBuildTxnResponse } from './build';
 
 export type ZapQuoteResponse = Omit<ZapBuildTxnResponse, 'steps'>;
 

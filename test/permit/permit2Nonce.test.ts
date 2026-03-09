@@ -1,9 +1,9 @@
-import { permit2ProxyAbi } from '../../src/artifacts/Permit2Proxy';
-import { getPublicClient } from '../../src/utils';
+import * as ABI from '../../src/artifacts';
 import { viemChainsById } from '../../src/chains';
-import { getPermit2Address } from '../../src/utils/permit2';
-import { getNextPermit2Nonce } from '../../src/utils/permit2/nonce';
-import { HexString } from '../../src/types';
+import { ChainsService } from '../../src/service/chains';
+import { Permit2 } from '../../src/service/signature/permit2';
+import type { HexString } from '../../src/types';
+import { getNextPermit2Nonce } from '../../src/utils/nonce';
 
 const permitProxy: Record<number, HexString> = {
   42161: '0x89c6340B1a1f4b25D36cd8B063D49045caF3f818',
@@ -19,9 +19,9 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
     if (!address) {
       throw new Error(`No permit2 proxy address for chainId ${chainId}`);
     }
-    const nonce = await getPublicClient({ chainId, rpcUrls }).readContract({
+    const nonce = await ChainsService.getPublicClient(chainId, { rpcUrls }).readContract({
       address: permitProxy[chainId],
-      abi: permit2ProxyAbi,
+      abi: ABI.permit.permit2ProxyAbi,
       functionName: 'nextNonce',
       args: [account],
     });
@@ -35,7 +35,7 @@ export const getNextPermit2NonceFromProxy = async (permitAddress: HexString, acc
 describe('Permit2 Nonce Tests', () => {
   const account = '0x4ab9F97585B0161f1aDa8484B209C44be54dad73';
 
-  Object.entries(permitProxy).forEach(([chainIdStr, proxyAddress]) => {
+  Object.entries(permitProxy).forEach(([chainIdStr]) => {
     const chainId = parseInt(chainIdStr);
     const chainName = viemChainsById[chainId]?.name || `Chain ${chainId}`;
 
@@ -54,7 +54,7 @@ describe('Permit2 Nonce Tests', () => {
 
         try {
           const urls = [...rpcUrls];
-          const permitAddress = getPermit2Address(chainId);
+          const permitAddress = Permit2.getAddress(chainId);
 
           if (!permitAddress) {
             throw new Error(`No Permit2 address found for chain ${chainId}`);
@@ -85,7 +85,7 @@ describe('Permit2 Nonce Tests', () => {
         return;
       }
 
-      const permitAddress = getPermit2Address(testChainId);
+      const permitAddress = Permit2.getAddress(testChainId);
       const urls = [...rpcUrls];
 
       const results = await Promise.all([

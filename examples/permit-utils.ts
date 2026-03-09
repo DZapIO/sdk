@@ -1,8 +1,9 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
+
 import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
-import { StatusCodes, TxnStatus } from '../src/enums';
-import { HexString, SignatureCallbackParams } from '../src/types';
+import type { StatusCodes, TxnStatus } from '../src/enums';
+import type { HexString, SignatureCallbackParams } from '../src/types';
 
 const dZapClient = DZapClient.getInstance();
 // Setup a signer. This is a placeholder.
@@ -26,24 +27,25 @@ async function runPermitExamples() {
 
   console.log('\nChecking allowance...');
   try {
-    const allowanceResponse = await dZapClient.getAllowance({
+    const allowanceResponse = await dZapClient.approvals.getAllowance({
       chainId,
       sender: senderAddress,
       service: Services.trade,
-      tokens: [{ address: tokenToApprove, amount: amountToTrade }],
+      tokens: [{ address: tokenToApprove }],
       rpcUrls,
       mode: ApprovalModes.PermitWitnessTransferFrom,
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
-    const { approvalNeeded } = allowanceResponse.data[tokenToApprove];
+    const { allowance, permitType } = allowanceResponse.data[tokenToApprove];
+    const approvalNeeded = permitType !== 'permitEIP2612' && allowance < BigInt(amountToTrade);
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 
     if (walletClient.account && approvalNeeded) {
       console.log('\nAllowance is insufficient. Requesting approval...');
       try {
-        await dZapClient.approve({
+        await dZapClient.approvals.approve({
           chainId,
           signer: walletClient,
           service: Services.trade,
@@ -80,7 +82,7 @@ async function runPermitExamples() {
   console.log('\nSigning permit...');
   if (walletClient.account) {
     try {
-      const signResponse = await dZapClient.sign({
+      const signResponse = await dZapClient.approvals.sign({
         chainId,
         signer: walletClient,
         sender: senderAddress,

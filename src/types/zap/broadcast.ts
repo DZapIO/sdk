@@ -1,4 +1,4 @@
-import { TxnStatus } from '../..';
+import type { TxnStatus } from '../..';
 
 export type BroadcastZapTxSuccessResponse = {
   status: TxnStatus.success;

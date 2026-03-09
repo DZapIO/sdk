@@ -1,11 +1,4 @@
-export const erc20PermitFunctions = {
-  nonces: 'nonces',
-  version: 'version',
-  PERMIT_TYPEHASH: 'PERMIT_TYPEHASH',
-  allowance: 'allowance',
-} as const;
-
-export const erc20Functions = {
+export const ERC20_FUNCTIONS = {
   name: 'name',
   allowance: 'allowance',
   approve: 'approve',
@@ -17,11 +10,4 @@ export const erc20Functions = {
   version: 'version',
   nonces: 'nonces',
   domainSeparator: 'DOMAIN_SEPARATOR',
-} as const;
-
-export const eip2612PermitFunctions = {
-  permit: 'permit',
-  nonces: 'nonces',
-  DOMAIN_SEPARATOR: 'DOMAIN_SEPARATOR',
-  version: 'version',
 } as const;

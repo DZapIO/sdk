@@ -1,8 +1,8 @@
-import { HexString } from '..';
-import { chainTypes } from '../../constants/chains';
-import { zapStepAction } from '../../zap/constants/step';
+import type { ZAP_STEP_ACTIONS } from '../../constants';
+import type { chainTypes } from '../../constants/chains';
+import type { HexString } from '..';
 
-export type StepAction = keyof typeof zapStepAction;
+export type StepAction = keyof typeof ZAP_STEP_ACTIONS;
 
 export type ZapEvmTxnDetails = {
   type: typeof chainTypes.evm;
@@ -29,9 +29,7 @@ export type SVMTxnDetails = {
 
 export type ZapTxnDetails = ZapEvmTxnDetails | ZapBvmTxnDetails | SVMTxnDetails;
 
-export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> = {
+export type ZapStep<T extends ZapTxnDetails = ZapTxnDetails> = {
   action: StepAction;
   data: T;
 };
-
-export type ZapStep = ZapTransactionStep;

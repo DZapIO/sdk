@@ -25,7 +25,7 @@ describe('DZapClient - getQuotes', () => {
       ],
     };
 
-    const quotes = await client.getTradeQuotes(request);
+    const quotes = await client.trade.getQuotes(request);
     const quoteKeys = Object.keys(quotes);
     expect(quoteKeys.length).toBeGreaterThan(0);
     const firstQuote = quotes[quoteKeys[0]];
@@ -52,7 +52,7 @@ describe('DZapClient - getQuotes', () => {
       ],
     };
 
-    const quotes = await client.getTradeQuotes(request);
+    const quotes = await client.trade.getQuotes(request);
     const quoteKeys = Object.keys(quotes);
     expect(quoteKeys.length).toBeGreaterThan(0);
     const firstQuote = quotes[quoteKeys[0]];

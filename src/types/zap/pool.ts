@@ -1,5 +1,5 @@
-import { ZapUnderlyingToken } from '.';
-import { HexString } from '..';
+import type { HexString } from '..';
+import type { ZapUnderlyingToken } from '.';
 
 export type ZapPoolDetailsRequest = {
   address: HexString;
@@ -41,4 +41,12 @@ export type ZapPoolDetails = {
     tick: number;
     tickSpacing: number;
   };
+  chainId?: number;
+  symbol?: string;
+  name?: string;
+  provider?: string;
+  underlyingAssets?: ZapUnderlyingToken[];
+  underlyingTokens?: ZapUnderlyingToken[];
+  decimals?: number;
+  metadata?: unknown;
 };

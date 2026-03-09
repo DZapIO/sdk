@@ -1,5 +1,5 @@
-import { HexString, ProviderDetails } from '../';
-import { ZapPathAsset } from './path';
+import type { HexString, ProviderDetails } from '../';
+import type { ZapPathAsset } from './path';
 
 export type ZapProviders = Record<string, ProviderDetails>;
 
@@ -19,6 +19,7 @@ export type ZapUnderlyingToken = {
   symbol: string;
   decimals: number;
   logo?: string | null;
+  price?: string;
 };
 
 export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {

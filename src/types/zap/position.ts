@@ -1,5 +1,5 @@
-import { ZapUnderlyingTokenWithAmount } from '.';
-import { HexString } from '..';
+import type { HexString } from '..';
+import type { ZapUnderlyingTokenWithAmount } from '.';
 
 export type ZapPositionsRequest = {
   account: HexString;

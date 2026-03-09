@@ -7,13 +7,13 @@ async function runChainUtilsExamples() {
 
   console.log('\nFetching all supported chains...');
   try {
-    const allChains = await dZapClient.getAllSupportedChains();
+    const allChains = await dZapClient.chains.getSupportedChains();
     console.log(`Found ${Object.keys(allChains).length} supported chains.`);
     // Log a few chain details for brevity
     const chainSubset = Object.fromEntries(
       Object.entries(allChains)
         .slice(0, 3)
-        .map(([key, value]) => [key, { name: value.name, chainId: value.chainId, coin: value.coin }]),
+        .map(([key, chain]) => [key, { name: chain.name, chainId: chain.chainId, coin: chain.coin }]),
     );
     console.log('Chain subset:', JSON.stringify(chainSubset, null, 2));
   } catch (error) {
