@@ -120,7 +120,6 @@
     "decimal.js": "^10.4.3",
     "ethers": "5.7.2",
     "node-cache": "^5.1.2",
-    "ethers": "5.7.2",
     "viem": "2.45.1"
   },
   "repository": {
