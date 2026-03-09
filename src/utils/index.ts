@@ -25,10 +25,12 @@ import { formatToken } from './tokens';
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
 
 export const getPublicClient = ({ rpcUrls, chainId }: { rpcUrls: string[] | undefined; chainId: number }) => {
-  const rpcs = rpcUrls && Array.isArray(rpcUrls) && rpcUrls.length > 0;
+  const chain = viemChainsById[chainId];
+  const urls = (rpcUrls?.length ? rpcUrls : chain?.rpcUrls?.default?.http) ?? [];
+  const transports = urls.length ? urls.map((url: string) => http(url, publicClientRpcConfig)) : [http()];
   return createPublicClient({
-    chain: viemChainsById[chainId],
-    transport: fallback(rpcs ? rpcUrls.map((rpc: string) => http(rpc, publicClientRpcConfig)) : [http()]),
+    chain,
+    transport: fallback(transports),
     batch: {
       multicall: {
         wait: RPC_BATCHING_WAIT_TIME,
@@ -140,10 +142,10 @@ export const generateUUID = () => {
   const uuid = 'xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx'.replace(/[xy]/g, (c) => {
     let r = Math.random() * 16;
     if (d > 0) {
-      r = (d + r) % 16 | 0;
+      r = ((d + r) % 16) | 0;
       d = Math.floor(d / 16);
     } else {
-      r = (d2 + r) % 16 | 0;
+      r = ((d2 + r) % 16) | 0;
       d2 = Math.floor(d2 / 16);
     }
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);

@@ -1,17 +1,21 @@
 {
   "name": "@dzapio/sdk",
-  "version": "2.0.12",
+  "version": "2.0.16",
   "description": "A TypeScript/JavaScript SDK for interacting with the DZap protocol, providing utilities for DeFi operations including Swaps, Bridges, and Zaps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
-  "module": "dist/index.m.js",
-  "unpkg": "dist/index.umd.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.m.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "engines": {
@@ -27,13 +31,13 @@
     "pack": "yarn build && npm pack",
     "githubPublish": "npm run build && npm publish",
     "npmPublish": "npm run build && npm publish --access public",
-    "build": "rm -rf dist && microbundle --tsconfig tsconfig.build.json",
+    "build": "tsup",
     "dev": "nodemon",
     "test": "jest",
     "lint": "eslint --cache src/**/*.ts",
     "lint:fix": "eslint --cache --fix src/**/*.ts",
     "pretty": "prettier --write --ignore-unknown src/**/*.ts",
-    "prepush": "tsc --build",
+    "prepush": "npm run build",
     "prepare": "husky install && yarn run fix-permissions",
     "fix-permissions": "node ./scripts/fixPermissions.js"
   },
@@ -93,7 +97,7 @@
     "husky": "^9.0.10",
     "jest": "^29.7.0",
     "lint-staged": "^15.2.2",
-    "microbundle": "^0.15.1",
+    "tsup": "^8.3.5",
     "nodemon": "^2.0.16",
     "prettier": "^3.1.0",
     "ts-jest": "^29.4.0",
@@ -113,27 +117,5 @@
   "bugs": {
     "url": "https://github.com/dzapio/sdk/issues"
   },
-  "homepage": "https://github.com/dzapio/sdk#readme",
-  "microbundle": {
-    "entry": "src/index.ts",
-    "output": "dist",
-    "format": "esm,cjs",
-    "target": "node",
-    "sourcemap": false,
-    "generateTypes": true,
-    "external": [
-      "ethers",
-      "viem",
-      "axios",
-      "decimal.js",
-      "node-cache"
-    ],
-    "globals": {
-      "ethers": "ethers",
-      "viem": "viem",
-      "axios": "axios",
-      "decimal.js": "decimal.js",
-      "node-cache": "node-cache"
-    }
-  }
+  "homepage": "https://github.com/dzapio/sdk#readme"
 }
