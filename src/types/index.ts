@@ -307,12 +307,23 @@ export type EvmTxData = {
   gasLimit: string;
 };
 
-export type SvmTxData = {
+type SvmTxDataBase = {
   from: string;
-  data: string;
   blockhash?: string;
   lastValidBlockHeight?: number;
 };
+
+export type SvmSingleTxData = SvmTxDataBase & {
+  data: string;
+  type?: 'single';
+};
+
+export type SvmJitoBundleTxData = SvmTxDataBase & {
+  data: string[];
+  type: 'jito';
+};
+
+export type SvmTxData = SvmSingleTxData | SvmJitoBundleTxData;
 
 export type SuiTxData = {
   from: string;

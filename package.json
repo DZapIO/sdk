@@ -120,7 +120,8 @@
     "decimal.js": "^10.4.3",
     "ethers": "5.7.2",
     "node-cache": "^5.1.2",
-    "viem": "2.45.1"
+    "viem": "2.45.1",
+    "base64-js": "^1.5.1"
   },
   "repository": {
     "type": "git",
