@@ -15,6 +15,7 @@ export const exclusivePermit2Addresses: { [key: ExclusiveChainIds]: HexString } 
   [exclusiveChainIds.pushTestnet]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
   [exclusiveChainIds.abstract]: '0x0000000000225e31D15943971F47aD3022F714Fa',
   [exclusiveChainIds.lens]: '0x0000000000225e31D15943971F47aD3022F714Fa',
+  [exclusiveChainIds.astralisTestnet]: '0x08208a5f56696E7AA3eAF7a307fa63B37bd8e8A5',
 };
 
 export const DEFAULT_PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
