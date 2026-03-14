@@ -1,5 +1,5 @@
 import { DZapPermitMode } from '../enums';
-import { encodePacked, keccak256 } from 'viem';
+import { encodePacked, keccak256, stringToHex } from 'viem';
 
 export const eip2612GaslessDomain = {
   name: 'DZapVerifier',
@@ -33,3 +33,5 @@ export const PermitToDZapPermitMode = {
   [PermitTypes.PermitWitnessTransferFrom]: DZapPermitMode.PERMIT2_WITNESS_TRANSFER,
   [PermitTypes.PermitBatchWitnessTransferFrom]: DZapPermitMode.BATCH_PERMIT2_WITNESS_TRANSFER,
 } as const;
+
+export const EIP2612_PERMIT_TYPEHASH = keccak256(stringToHex('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'));
