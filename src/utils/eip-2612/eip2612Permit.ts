@@ -3,7 +3,8 @@ import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
 import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
 import { config } from '../../config';
 import { Services } from '../../constants';
-import { erc20Functions } from '../../constants/erc20';
+import { erc20Functions, erc20PermitFunctions } from '../../constants/erc20';
+import { EIP2612_PERMIT_TYPEHASH } from '../../constants/permit';
 import { DEFAULT_PERMIT_VERSION, SignatureExpiryInSecs } from '../../constants/permit2';
 import { ContractVersion, DZapPermitMode, StatusCodes, TxnStatus } from '../../enums';
 import { HexString, TokenPermitData } from '../../types';
@@ -14,6 +15,7 @@ import { multicall } from '../multicall';
 import { signTypedData } from '../signTypedData';
 
 export const eip2612DisabledChains = config.getEip2612DisabledChains();
+
 /**
  * Check if a token supports EIP-2612 permits by checking for required functions
  */
@@ -62,6 +64,11 @@ export const checkEIP2612PermitSupport = async ({
       abi: erc20PermitAbi,
       functionName: erc20Functions.name,
     },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20PermitFunctions.PERMIT_TYPEHASH,
+    },
   ];
 
   const multicallResult = await multicall({
@@ -76,15 +83,25 @@ export const checkEIP2612PermitSupport = async ({
   }
 
   const results = multicallResult.data as Array<{ status: string; result: unknown }>;
-  const [domainSeparatorResult, nonceResult, versionResult, nameResult] = results;
+  const [domainSeparatorResult, nonceResult, versionResult, nameResult, permitTypeHashResult] = results;
 
-  if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
+  if (
+    domainSeparatorResult.status !== TxnStatus.success ||
+    nonceResult.status !== TxnStatus.success ||
+    nameResult.status !== TxnStatus.success ||
+    permitTypeHashResult.status !== TxnStatus.success
+  ) {
     return { supportsPermit: false };
   }
 
   const name = nameResult.result as string;
   const nonce = nonceResult.result as bigint;
   const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION;
+
+  const permitTypeHash = permitTypeHashResult.result as HexString;
+  if (permitTypeHash.toLowerCase() !== EIP2612_PERMIT_TYPEHASH.toLowerCase()) {
+    return { supportsPermit: false };
+  }
 
   return {
     supportsPermit: true,

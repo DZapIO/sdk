@@ -49,6 +49,7 @@ import {
   PermitMode,
   SignPermitResponse,
   TokenInfo,
+  TokenPermitData,
   TokenResponse,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
@@ -778,7 +779,7 @@ class DZapClient {
   }: {
     chainId: number;
     sender: HexString;
-    tokens: { address: HexString; amount: string }[];
+    tokens: { address: HexString; amount: string; permit?: TokenPermitData }[];
     service: AvailableDZapServices;
     rpcUrls?: string[];
     spender?: HexString; // Optional custom spender address

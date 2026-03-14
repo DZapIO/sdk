@@ -173,11 +173,12 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
           token: address,
           spender,
           amount,
+          isEIP2612PermitSupported: false,
           isDefaultApprovalMode: true,
         };
       } else {
         const permit2Address = getPermit2Address(chainId);
-        return { token: address, spender: permit2Address, amount, isDefaultApprovalMode: false };
+        return { token: address, spender: permit2Address, amount, isEIP2612PermitSupported: false, isDefaultApprovalMode: false };
       }
     }),
   );
