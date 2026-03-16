@@ -16,6 +16,7 @@ export const exclusiveChainIds = {
   citreaTestnet: 5115,
   hyperLiquid: 998,
   pushTestnet: 42101,
+  astralisTestnet: 71261,
 };
 
 export const chainTypes = {
