@@ -1,6 +1,6 @@
-import { tempoModerato } from 'viem/chains';
+import { tempo as tempoViem } from 'viem/chains';
 import { tempoNativeToken } from '../../constants/address';
 
-export const tempo = tempoModerato.extend({
+export const tempo = tempoViem.extend({
   feeToken: tempoNativeToken,
 });
