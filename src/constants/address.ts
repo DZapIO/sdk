@@ -11,7 +11,7 @@ export const artheraNativeToken = '0x000000000000000000000000000000000000aA09';
 export const suiNativeToken = '0x2::sui::SUI';
 export const aptosNativeToken = '0x1::aptos_coin::AptosCoin';
 export const stableChainNativeToken = '0x0000000000000000000000000000000000001000';
-export const tempoNativeToken = '0x20c0000000000000000000000000000000000000';
+export const tempoNativeToken = '0x20C0000000000000000000000000000000000000';
 
 export const nativeTokens: string[] = [
   '0x0000000000000000000000000000000000001010',
