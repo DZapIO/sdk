@@ -1,4 +1,4 @@
-import { DEFAULT_PERMIT2_ADDRESS, exclusivePermit2Addresses } from '../../constants/contract';
+import { DEFAULT_PERMIT2_ADDRESS } from '../../constants/contract';
 import { permit2PrimaryType, PermitToDZapPermitMode } from '../../constants/permit';
 import { SignatureExpiryInSecs } from '../../constants/permit2';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
@@ -11,9 +11,14 @@ import { getPermit2Data } from './permitData';
 import { getPermit2Values } from './values';
 import { getPermit2WitnessData } from './witnessData';
 import { Services } from '../../constants';
+import { DZapClient } from '../..';
 
-export function getPermit2Address(chainId: number): HexString {
-  return exclusivePermit2Addresses[chainId] ?? DEFAULT_PERMIT2_ADDRESS;
+export async function getPermit2Address(chainId: number): Promise<HexString> {
+  const chainConfig = await DZapClient.getChainConfig();
+  const permit2Address = chainConfig[chainId].contracts?.permit2 ?? DEFAULT_PERMIT2_ADDRESS;
+  console.log('permit2Address', permit2Address);
+  console.log('chainId, config', chainId, chainConfig[chainId]);
+  return permit2Address;
 }
 
 export const getPermit2Signature = async (params: Permit2Params): Promise<BasePermitResponse> => {
@@ -34,7 +39,7 @@ export const getPermit2Signature = async (params: Permit2Params): Promise<BasePe
     const deadline = sigDeadline ?? generateDeadline(SignatureExpiryInSecs);
     const expiration = params.expiration ?? maxUint48;
 
-    const permit2Address = getPermit2Address(chainId);
+    const permit2Address = await getPermit2Address(chainId);
     const updatedTokens = tokens.map((token) => {
       return {
         ...token,

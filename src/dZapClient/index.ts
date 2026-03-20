@@ -141,6 +141,7 @@ class DZapClient {
   public static async getChainConfig(): Promise<ChainData> {
     if (!DZapClient.chainConfig) {
       const data = await fetchAllSupportedChains();
+      console.log('data', data);
       const chains: ChainData = {};
       data.forEach((chain: Chain) => {
         if (!chains[chain.chainId]) {

@@ -77,6 +77,7 @@ export type Chain = {
     router: string;
     dca: string;
     zap: string;
+    permit2: HexString;
   }>;
   coingecko?: {
     chainKey: string;

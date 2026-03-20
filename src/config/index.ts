@@ -30,7 +30,7 @@ export function createConfig() {
     rpcUrlsByChainId: {},
     eip2612DisabledChains: [747474], // Katana chain ID
     appEnv: APP_ENV || AppEnv.development,
-    baseApiUrl: BASE_API_URL || 'https://api.dzap.io',
+    baseApiUrl: BASE_API_URL || 'http://localhost:8080',
     zapApiUrl: ZAP_API_URL || 'https://zap.dzap.io',
     versionPostfix: 'v1/',
   };

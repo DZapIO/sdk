@@ -28,6 +28,7 @@ export const invoke = async ({ endpoint, data, method = POST, cancelToken, shoul
     cancelToken,
     shouldRetry,
   };
+  console.log('axiosConfig', axiosConfig);
   return baseApiClient(axiosConfig)
     .then((res) => res.data)
     .catch((error) => {

@@ -54,7 +54,7 @@ describe('Permit2 Nonce Tests', () => {
 
         try {
           const urls = [...rpcUrls];
-          const permitAddress = getPermit2Address(chainId);
+          const permitAddress = await getPermit2Address(chainId);
 
           if (!permitAddress) {
             throw new Error(`No Permit2 address found for chain ${chainId}`);
@@ -85,7 +85,7 @@ describe('Permit2 Nonce Tests', () => {
         return;
       }
 
-      const permitAddress = getPermit2Address(testChainId);
+      const permitAddress = await getPermit2Address(testChainId);
       const urls = [...rpcUrls];
 
       const results = await Promise.all([
