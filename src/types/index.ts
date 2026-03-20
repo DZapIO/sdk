@@ -22,6 +22,7 @@ export type NativeTokenInfo = {
   balance: string;
   price?: string;
   logo: string;
+  isErc20?: boolean;
 };
 
 export const contractErrorActions = {
@@ -238,7 +239,7 @@ export type TokenPermitData = {
 };
 
 export type TokenInfo = Prettify<
-  NativeTokenInfo & {
+  Omit<NativeTokenInfo, 'isErc20'> & {
     chainId: number;
     balanceInUsd?: number | null;
     isDisabledOnSwapBridge?: {
