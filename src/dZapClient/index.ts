@@ -968,40 +968,16 @@ class DZapClient {
    * });
    * ```
    */
-  public async zap({ request, steps, signer }: { request: ZapBuildTxnRequest; signer: WalletClient | Signer; steps?: ZapTransactionStep[] }) {
+  public async zap({
+    request,
+    steps,
+    signer,
+  }: {
+    request: ZapBuildTxnRequest | ZapBundleRequest;
+    signer: WalletClient | Signer;
+    steps?: ZapTransactionStep[];
+  }) {
     return await ZapTxnHandler.zap({
-      request,
-      steps,
-      signer,
-    });
-  }
-
-  /**
-   * Executes a bundle of zap actions (multiple protocol interactions in sequence) as a single transaction.
-   * Use this for complex flows such as harvest → deposit, or multiple zap actions in one call.
-   *
-   * @param params - Configuration object for zap bundle execution
-   * @param params.request - The zap bundle request containing actions, account, recipient, and slippage
-   * @param params.signer - The wallet signer to sign and execute the transaction
-   * @param params.steps - Optional array of pre-built transaction steps (if not provided, will build from request)
-   * @returns Promise resolving to zap bundle transaction execution result
-   *
-   * @example
-   * ```typescript
-   * const result = await client.zapBundle({
-   *   request: {
-   *     actions: [{ action: 'swap', srcToken: { address: '0x...' }, srcChainId: 1, destToken: '0x...', destChainId: 1 }, ...],
-   *     account: '0x...',
-   *     recipient: '0x...',
-   *     refundee: '0x...',
-   *     slippage: 1
-   *   },
-   *   signer: walletClient
-   * });
-   * ```
-   */
-  public async zapBundle({ request, steps, signer }: { request: ZapBundleRequest; signer: WalletClient | Signer; steps?: ZapTransactionStep[] }) {
-    return await ZapTxnHandler.zapBundle({
       request,
       steps,
       signer,
