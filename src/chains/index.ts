@@ -17,7 +17,7 @@ export { pushTestnet } from './definitions/pushTestnet';
 export { stableChain } from './definitions/stable';
 export { tempo } from './definitions/tempo';
 
-export const customViemChains = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain, pushTestnet, astralisTestnet, tempo];
+export const customViemChains: viemChains.Chain[] = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain, pushTestnet, astralisTestnet, tempo];
 
 export const viemChainsById: Record<number, viemChains.Chain> = [...Object.values(viemChains), ...customViemChains].reduce((acc, chainData) => {
   return chainData.id
