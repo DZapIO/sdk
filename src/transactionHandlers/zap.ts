@@ -1,9 +1,9 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
-import { fetchZapBuildTxnData } from '../api';
+import { fetchZapBuildTxnData, fetchZapBundleBuildTx } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
 import { DZapTransactionResponse, HexString } from '../types';
-import { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
+import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapBundleRequest } from '../types/zap';
 import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
 import { getPublicClient, isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
@@ -136,26 +136,77 @@ class ZapTxnHandler {
           };
         }
       }
-      let txnHash: HexString | undefined;
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        if (step.action === zapStepAction.execute) {
-          const result = await ZapTxnHandler.execute({ chainId, txnData: step.data as ZapEvmTxnDetails, signer });
-          if (result.status !== TxnStatus.success) {
-            return result;
-          }
-          txnHash = result.txnHash as HexString;
-        }
-      }
-      return {
-        status: TxnStatus.success,
-        code: StatusCodes.Success,
-        txnHash,
-      };
+      const result = this.executeZap(steps, chainId, signer);
+      return result;
     } catch (error: any) {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
+  };
+
+  public static zapBundle = async ({
+    request,
+    steps,
+    signer,
+  }: {
+    request: ZapBundleRequest;
+    steps?: ZapStep[];
+    signer: Signer | WalletClient;
+  }): Promise<
+    | {
+        status: TxnStatus.success;
+        code: StatusCodes | number;
+        txnHash: HexString;
+      }
+    | DZapTransactionResponse
+  > => {
+    try {
+      const chainId = request.actions[0].srcChainId;
+
+      if (!chainId) {
+        return {
+          status: TxnStatus.error,
+          code: StatusCodes.Error,
+          errorMsg: 'Source chain ID is required.',
+        };
+      }
+      if (!steps || steps.length === 0) {
+        const route: ZapBuildTxnResponse = (await fetchZapBundleBuildTx(request)).data;
+        steps = route.steps;
+        if (!steps || steps.length === 0) {
+          return {
+            status: TxnStatus.error,
+            code: StatusCodes.FunctionNotFound,
+            errorMsg: 'No steps found in the zap route.',
+          };
+        }
+      }
+
+      const result = this.executeZap(steps, chainId, signer);
+      return result;
+    } catch (error: any) {
+      console.log({ error });
+      return handleViemTransactionError({ error });
+    }
+  };
+
+  public static executeZap = async (steps: ZapStep[], chainId: number, signer: Signer | WalletClient): Promise<DZapTransactionResponse> => {
+    let txnHash: HexString | undefined;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (step.action === zapStepAction.execute) {
+        const result = await ZapTxnHandler.execute({ chainId, txnData: step.data as ZapEvmTxnDetails, signer });
+        if (result.status !== TxnStatus.success) {
+          return result;
+        }
+        txnHash = result.txnHash as HexString;
+      }
+    }
+    return {
+      status: TxnStatus.success,
+      code: StatusCodes.Success,
+      txnHash,
+    };
   };
 }
 

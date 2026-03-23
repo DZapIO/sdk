@@ -14,6 +14,8 @@ import {
   fetchTokenDetails,
   fetchTradeBuildTxnData,
   fetchTradeQuotes,
+  fetchZapBundleBuildTx,
+  fetchZapBundleQuote,
   fetchZapBuildTxnData,
   fetchZapChains,
   fetchZapPoolDetails,
@@ -58,6 +60,7 @@ import {
   TradeStatusResponse,
 } from '../types';
 import {
+  ZapBundleRequest,
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
   ZapChains,
@@ -974,6 +977,38 @@ class DZapClient {
   }
 
   /**
+   * Executes a bundle of zap actions (multiple protocol interactions in sequence) as a single transaction.
+   * Use this for complex flows such as swap → bridge → zap, or multiple zap actions in one call.
+   *
+   * @param params - Configuration object for zap bundle execution
+   * @param params.request - The zap bundle request containing actions, account, recipient, and slippage
+   * @param params.signer - The wallet signer to sign and execute the transaction
+   * @param params.steps - Optional array of pre-built transaction steps (if not provided, will build from request)
+   * @returns Promise resolving to zap bundle transaction execution result
+   *
+   * @example
+   * ```typescript
+   * const result = await client.zapBundle({
+   *   request: {
+   *     actions: [{ action: 'swap', srcToken: { address: '0x...' }, srcChainId: 1, destToken: '0x...', destChainId: 1 }, ...],
+   *     account: '0x...',
+   *     recipient: '0x...',
+   *     refundee: '0x...',
+   *     slippage: 1
+   *   },
+   *   signer: walletClient
+   * });
+   * ```
+   */
+  public async zapBundle({ request, steps, signer }: { request: ZapBundleRequest; signer: WalletClient | Signer; steps?: ZapTransactionStep[] }) {
+    return await ZapTxnHandler.zapBundle({
+      request,
+      steps,
+      signer,
+    });
+  }
+
+  /**
    * Builds comprehensive transaction data for zap operations without executing them.
    * This method prepares all necessary steps, routing information, and transaction parameters
    * for complex multi-protocol interactions. The resulting data can be used with the zap method.
@@ -1038,6 +1073,37 @@ class DZapClient {
     }
     this.cancelTokenSource = Axios.CancelToken.source();
     const route: ZapQuoteResponse = (await fetchZapQuote(request, this.cancelTokenSource.token)).data;
+    return route;
+  }
+
+  /**
+   * Fetches pricing and routing for bundle operations (portfolio position actions).
+   * Use for claim fees, compound, decrease, increase, reposition.
+   *
+   * @param request - The bundle request with actions array
+   * @returns Promise resolving to zap quote (amountOut, approvalData, path)
+   */
+  public async getZapBundleQuote(request: ZapBundleRequest): Promise<ZapQuoteResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapQuoteResponse = (await fetchZapBundleQuote(request, this.cancelTokenSource.token)).data;
+    return route;
+  }
+
+  /**
+   * Builds transaction data for bundle operations (portfolio position actions).
+   *
+   * @param request - The bundle request with actions array
+   * @returns Promise resolving to zap build response (steps, path, approvalData)
+   */
+  public async buildZapBundleTx(request: ZapBundleRequest): Promise<ZapBuildTxnResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapBuildTxnResponse = (await fetchZapBundleBuildTx(request, this.cancelTokenSource.token)).data;
     return route;
   }
 
