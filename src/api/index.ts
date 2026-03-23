@@ -23,7 +23,15 @@ import {
   TradeBuildTxnRequest,
   TradeQuotesRequest,
 } from '../types';
-import { ZapBuildTxnRequest, ZapPoolDetailsRequest, ZapPoolsRequest, ZapPositionsRequest, ZapQuoteRequest, ZapStatusRequest } from '../types/zap';
+import {
+  ZapBundleRequest,
+  ZapBuildTxnRequest,
+  ZapPoolDetailsRequest,
+  ZapPoolsRequest,
+  ZapPositionsRequest,
+  ZapQuoteRequest,
+  ZapStatusRequest,
+} from '../types/zap';
 import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
@@ -75,6 +83,22 @@ export const fetchZapBuildTxnData = (request: ZapBuildTxnRequest, cancelToken?: 
 export const fetchZapQuote = (request: ZapQuoteRequest, cancelToken?: CancelToken) =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.quote,
+    data: request,
+    method: POST,
+    cancelToken,
+  });
+
+export const fetchZapBundleQuote = (request: ZapBundleRequest, cancelToken?: CancelToken) =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.bundle.quote,
+    data: request,
+    method: POST,
+    cancelToken,
+  });
+
+export const fetchZapBundleBuildTx = (request: ZapBundleRequest, cancelToken?: CancelToken) =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.bundle.buildTx,
     data: request,
     method: POST,
     cancelToken,

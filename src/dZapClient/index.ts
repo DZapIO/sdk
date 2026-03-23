@@ -14,6 +14,8 @@ import {
   fetchTokenDetails,
   fetchTradeBuildTxnData,
   fetchTradeQuotes,
+  fetchZapBundleBuildTx,
+  fetchZapBundleQuote,
   fetchZapBuildTxnData,
   fetchZapChains,
   fetchZapPoolDetails,
@@ -58,6 +60,7 @@ import {
   TradeStatusResponse,
 } from '../types';
 import {
+  ZapBundleRequest,
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
   ZapChains,
@@ -965,7 +968,15 @@ class DZapClient {
    * });
    * ```
    */
-  public async zap({ request, steps, signer }: { request: ZapBuildTxnRequest; signer: WalletClient | Signer; steps?: ZapTransactionStep[] }) {
+  public async zap({
+    request,
+    steps,
+    signer,
+  }: {
+    request: ZapBuildTxnRequest | ZapBundleRequest;
+    signer: WalletClient | Signer;
+    steps?: ZapTransactionStep[];
+  }) {
     return await ZapTxnHandler.zap({
       request,
       steps,
@@ -1038,6 +1049,39 @@ class DZapClient {
     }
     this.cancelTokenSource = Axios.CancelToken.source();
     const route: ZapQuoteResponse = (await fetchZapQuote(request, this.cancelTokenSource.token)).data;
+    return route;
+  }
+
+  /**
+   * Fetches quote data (pricing, routing, and approvals) for bundle operations.
+   * Bundle operations support portfolio position actions such as claim fees,
+   * harvest, decrease, increase, and reposition.
+   *
+   * @param request - Bundle quote request containing the actions array
+   * @returns Promise resolving to bundle quote response (amountOut, approvalData, path)
+   */
+  public async getZapBundleQuote(request: ZapBundleRequest): Promise<ZapQuoteResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapQuoteResponse = (await fetchZapBundleQuote(request, this.cancelTokenSource.token)).data;
+    return route;
+  }
+
+  /**
+   * Builds executable transaction data for bundle operations.
+   * Use this after fetching a bundle quote.
+   *
+   * @param request - Bundle build request containing the actions array
+   * @returns Promise resolving to bundle build response (steps, path, approvalData)
+   */
+  public async buildZapBundleTx(request: ZapBundleRequest): Promise<ZapBuildTxnResponse> {
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel('Cancelled due to new request');
+    }
+    this.cancelTokenSource = Axios.CancelToken.source();
+    const route: ZapBuildTxnResponse = (await fetchZapBundleBuildTx(request, this.cancelTokenSource.token)).data;
     return route;
   }
 

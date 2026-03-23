@@ -1,6 +1,7 @@
+import type { Chain } from 'viem/chains';
 import { tempo as tempoViem } from 'viem/chains';
 
-export const tempo = tempoViem.extend({
+export const tempo: Chain = tempoViem.extend({
   feeToken: '0x20C0000000000000000000000000000000000000',
   contracts: {
     multicall3: {

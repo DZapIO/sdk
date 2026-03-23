@@ -5,4 +5,6 @@ export const zapPathAction = {
   withdraw: 'withdraw',
   stake: 'stake',
   unstake: 'unstake',
+  increase: 'increase',
+  harvest: 'harvest',
 } as const;

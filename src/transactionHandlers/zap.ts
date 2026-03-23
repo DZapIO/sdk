@@ -1,9 +1,9 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
-import { fetchZapBuildTxnData } from '../api';
+import { fetchZapBuildTxnData, fetchZapBundleBuildTx } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
 import { DZapTransactionResponse, HexString } from '../types';
-import { ZapBuildTxnRequest, ZapBuildTxnResponse } from '../types/zap';
+import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapBundleRequest } from '../types/zap';
 import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
 import { getPublicClient, isTypeSigner } from '../utils';
 import { viemChainsById } from '../chains';
@@ -112,7 +112,7 @@ class ZapTxnHandler {
     steps,
     signer,
   }: {
-    request: ZapBuildTxnRequest;
+    request: ZapBuildTxnRequest | ZapBundleRequest;
     steps?: ZapStep[];
     signer: Signer | WalletClient;
   }): Promise<
@@ -124,9 +124,10 @@ class ZapTxnHandler {
     | DZapTransactionResponse
   > => {
     try {
-      const { srcChainId: chainId } = request;
+      const chainId = 'srcChainId' in request ? request.srcChainId : request.actions[0].srcChainId;
       if (!steps || steps.length === 0) {
-        const route: ZapBuildTxnResponse = (await fetchZapBuildTxnData(request)).data;
+        const route: ZapBuildTxnResponse =
+          'actions' in request ? (await fetchZapBundleBuildTx(request)).data : (await fetchZapBuildTxnData(request)).data;
         steps = route.steps;
         if (!steps || steps.length === 0) {
           return {
@@ -146,6 +147,13 @@ class ZapTxnHandler {
           }
           txnHash = result.txnHash as HexString;
         }
+      }
+      if (!txnHash) {
+        return {
+          status: TxnStatus.error,
+          code: StatusCodes.Error,
+          errorMsg: 'No executable steps found.',
+        };
       }
       return {
         status: TxnStatus.success,
