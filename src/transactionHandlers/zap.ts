@@ -148,6 +148,13 @@ class ZapTxnHandler {
           txnHash = result.txnHash as HexString;
         }
       }
+      if (!txnHash) {
+        return {
+          status: TxnStatus.error,
+          code: StatusCodes.Error,
+          errorMsg: 'No executable steps found.',
+        };
+      }
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,
