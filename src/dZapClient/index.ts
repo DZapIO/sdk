@@ -978,7 +978,7 @@ class DZapClient {
 
   /**
    * Executes a bundle of zap actions (multiple protocol interactions in sequence) as a single transaction.
-   * Use this for complex flows such as swap → bridge → zap, or multiple zap actions in one call.
+   * Use this for complex flows such as harvest → deposit, or multiple zap actions in one call.
    *
    * @param params - Configuration object for zap bundle execution
    * @param params.request - The zap bundle request containing actions, account, recipient, and slippage
@@ -1077,11 +1077,12 @@ class DZapClient {
   }
 
   /**
-   * Fetches pricing and routing for bundle operations (portfolio position actions).
-   * Use for claim fees, compound, decrease, increase, reposition.
+   * Fetches quote data (pricing, routing, and approvals) for bundle operations.
+   * Bundle operations support portfolio position actions such as claim fees,
+   * harvest, decrease, increase, and reposition.
    *
-   * @param request - The bundle request with actions array
-   * @returns Promise resolving to zap quote (amountOut, approvalData, path)
+   * @param request - Bundle quote request containing the actions array
+   * @returns Promise resolving to bundle quote response (amountOut, approvalData, path)
    */
   public async getZapBundleQuote(request: ZapBundleRequest): Promise<ZapQuoteResponse> {
     if (this.cancelTokenSource) {
@@ -1093,10 +1094,11 @@ class DZapClient {
   }
 
   /**
-   * Builds transaction data for bundle operations (portfolio position actions).
+   * Builds executable transaction data for bundle operations.
+   * Use this after fetching a bundle quote.
    *
-   * @param request - The bundle request with actions array
-   * @returns Promise resolving to zap build response (steps, path, approvalData)
+   * @param request - Bundle build request containing the actions array
+   * @returns Promise resolving to bundle build response (steps, path, approvalData)
    */
   public async buildZapBundleTx(request: ZapBundleRequest): Promise<ZapBuildTxnResponse> {
     if (this.cancelTokenSource) {
