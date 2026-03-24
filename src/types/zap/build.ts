@@ -19,12 +19,17 @@ export type ZapIntegratorConfig = {
 };
 
 export type ZapBuildTxnResponse = {
-  amountOut: string;
   approvalData: {
     callTo: HexString;
     approveTo: HexString;
     amount: string;
-  } | null;
+  }[];
+  output: {
+    address: string;
+    amount: string;
+    chainId: number;
+    minAmount: string;
+  }[];
   steps: ZapStep[];
   path: ZapPath[];
 };
