@@ -6,6 +6,8 @@ import { SignatureExpiryInSecs } from './constants/permit2';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
+  AllowancePermitTypes,
+  type AllowancePermitType,
   ApiRpcResponse,
   ApprovalMode,
   BatchPermitCallbackParams,
@@ -55,6 +57,8 @@ export * from './types/zap';
 export * from './zap/constants';
 
 export {
+  AllowancePermitTypes,
+  type AllowancePermitType,
   ApiRpcResponse,
   ApprovalMode,
   ApprovalModes,

@@ -9,6 +9,7 @@ import { ApprovalMode, HexString, TokenPermitData } from '../types';
 import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
 import { multicall } from './multicall';
 import { getPermit2Address } from './permit2';
+import { AllowancePermitType, AllowancePermitTypes } from '../types/permit';
 
 type AllowanceParams = {
   chainId: number;
@@ -146,13 +147,13 @@ export const batchGetAllowances = async ({
  * Get allowance information for tokens based on approval mode
  */
 export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicallAddress, mode, spender }: AllowanceParams) => {
-  const data: { [key: string]: { allowance: bigint; approvalNeeded: boolean; signatureNeeded: boolean } } = {};
+  const data: { [key: string]: { allowance: bigint; permitType: AllowancePermitType } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
 
   const approvalData = await Promise.all(
-    erc20Tokens.map(async ({ address, amount, permit }) => {
+    erc20Tokens.map(async ({ address, permit }) => {
       if (mode === ApprovalModes.AutoPermit) {
         const eip2612PermitData = await checkEIP2612PermitSupport({
           address,
@@ -161,30 +162,28 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
           owner: sender,
           permit,
         });
+        const permitType: AllowancePermitType = eip2612PermitData.supportsPermit ? AllowancePermitTypes.permitEIP2612 : AllowancePermitTypes.permit2;
+
         return {
           token: address,
-          spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId), // @dev: not needed, but added for consistency
-          amount,
-          isEIP2612PermitSupported: eip2612PermitData.supportsPermit,
-          isDefaultApprovalMode: false,
+          spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId),
+          permitType,
         };
       } else if (mode === ApprovalModes.Default) {
         return {
           token: address,
           spender,
-          amount,
-          isEIP2612PermitSupported: false,
-          isDefaultApprovalMode: true,
+          permitType: AllowancePermitTypes.default,
         };
       } else {
         const permit2Address = getPermit2Address(chainId);
-        return { token: address, spender: permit2Address, amount, isEIP2612PermitSupported: false, isDefaultApprovalMode: false };
+        return { token: address, spender: permit2Address, permitType: AllowancePermitTypes.permit2 };
       }
     }),
   );
 
   for (const { address } of nativeTokens) {
-    data[address] = { allowance: maxUint256, approvalNeeded: false, signatureNeeded: false };
+    data[address] = { allowance: maxUint256, permitType: AllowancePermitTypes.default };
   }
 
   if (erc20Tokens.length === 0) {
@@ -200,15 +199,13 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
     });
 
     for (let i = 0; i < approvalData.length; i++) {
-      const { token, amount, isEIP2612PermitSupported, isDefaultApprovalMode } = approvalData[i];
-      const allowance = isEIP2612PermitSupported ? maxUint256 : allowances[token];
-      const approvalNeeded = isEIP2612PermitSupported ? false : allowance < BigInt(amount);
-      const signatureNeeded = isDefaultApprovalMode ? false : true;
-      data[token] = { allowance, approvalNeeded, signatureNeeded };
+      const { token, permitType } = approvalData[i];
+      const allowance = permitType === AllowancePermitTypes.permitEIP2612 ? maxUint256 : allowances[token];
+      data[token] = { allowance, permitType };
     }
 
     return { status: TxnStatus.success, code: StatusCodes.Success, data };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Multicall allowance check failed:', error);
     return { status: TxnStatus.error, code: StatusCodes.Error, data };
   }

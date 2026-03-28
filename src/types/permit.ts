@@ -282,3 +282,11 @@ export type PermitBatchTransferFromValues = {
   nonce: bigint;
   deadline: bigint;
 };
+
+export const AllowancePermitTypes = {
+  permitEIP2612: 'permitEIP2612',
+  permit2: 'permit2',
+  default: 'default',
+} as const;
+
+export type AllowancePermitType = (typeof AllowancePermitTypes)[keyof typeof AllowancePermitTypes];
