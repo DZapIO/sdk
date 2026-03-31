@@ -9,7 +9,7 @@ import { ApprovalMode, HexString, TokenPermitData } from '../types';
 import { checkEIP2612PermitSupport } from './eip-2612/eip2612Permit';
 import { multicall } from './multicall';
 import { getPermit2Address } from './permit2';
-import { AllowancePermitType, AllowancePermitTypes } from '../types/permit';
+import { AllowanceType, AllowanceTypes } from '../types/permit';
 
 type AllowanceParams = {
   chainId: number;
@@ -147,7 +147,7 @@ export const batchGetAllowances = async ({
  * Get allowance information for tokens based on approval mode
  */
 export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicallAddress, mode, spender }: AllowanceParams) => {
-  const data: { [key: string]: { allowance: bigint; permitType: AllowancePermitType } } = {};
+  const data: { [key: string]: { allowance: bigint; type: AllowanceType } } = {};
 
   const nativeTokens = tokens.filter(({ address }) => isDZapNativeToken(address));
   const erc20Tokens = tokens.filter(({ address }) => !isDZapNativeToken(address));
@@ -162,28 +162,28 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
           owner: sender,
           permit,
         });
-        const permitType: AllowancePermitType = eip2612PermitData.supportsPermit ? AllowancePermitTypes.permitEIP2612 : AllowancePermitTypes.permit2;
+        const allowanceType: AllowanceType = eip2612PermitData.supportsPermit ? AllowanceTypes.eip2612 : AllowanceTypes.permit2;
 
         return {
           token: address,
           spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId),
-          permitType,
+          allowanceType,
         };
       } else if (mode === ApprovalModes.Default) {
         return {
           token: address,
           spender,
-          permitType: AllowancePermitTypes.default,
+          allowanceType: AllowanceTypes.dzap,
         };
       } else {
         const permit2Address = getPermit2Address(chainId);
-        return { token: address, spender: permit2Address, permitType: AllowancePermitTypes.permit2 };
+        return { token: address, spender: permit2Address, allowanceType: AllowanceTypes.permit2 };
       }
     }),
   );
 
   for (const { address } of nativeTokens) {
-    data[address] = { allowance: maxUint256, permitType: AllowancePermitTypes.default };
+    data[address] = { allowance: maxUint256, type: AllowanceTypes.dzap };
   }
 
   if (erc20Tokens.length === 0) {
@@ -199,9 +199,9 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
     });
 
     for (let i = 0; i < approvalData.length; i++) {
-      const { token, permitType } = approvalData[i];
-      const allowance = permitType === AllowancePermitTypes.permitEIP2612 ? maxUint256 : allowances[token];
-      data[token] = { allowance, permitType };
+      const { token, allowanceType } = approvalData[i];
+      const allowance = allowanceType === AllowanceTypes.eip2612 ? maxUint256 : allowances[token];
+      data[token] = { allowance, type: allowanceType };
     }
 
     return { status: TxnStatus.success, code: StatusCodes.Success, data };

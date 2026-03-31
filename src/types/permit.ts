@@ -283,10 +283,10 @@ export type PermitBatchTransferFromValues = {
   deadline: bigint;
 };
 
-export const AllowancePermitTypes = {
-  permitEIP2612: 'permitEIP2612',
+export const AllowanceTypes = {
+  eip2612: 'eip2612',
   permit2: 'permit2',
-  default: 'default',
+  dzap: 'dzap',
 } as const;
 
-export type AllowancePermitType = (typeof AllowancePermitTypes)[keyof typeof AllowancePermitTypes];
+export type AllowanceType = (typeof AllowanceTypes)[keyof typeof AllowanceTypes];

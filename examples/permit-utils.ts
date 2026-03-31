@@ -1,8 +1,9 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
+import { AllowancePermitTypes, ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
 import { StatusCodes, TxnStatus } from '../src/enums';
 import { HexString, SignatureCallbackParams } from '../src/types';
+import { AllowanceTypes } from '../src/types/permit';
 
 const dZapClient = DZapClient.getInstance();
 // Setup a signer. This is a placeholder.
@@ -36,7 +37,8 @@ async function runPermitExamples() {
     });
     console.log('Allowance details:', JSON.stringify(allowanceResponse, null, 2));
 
-    const { approvalNeeded } = allowanceResponse.data[tokenToApprove];
+    const allowanceData = allowanceResponse.data[tokenToApprove];
+    const approvalNeeded = allowanceData.type !== AllowanceTypes.eip2612 && allowanceData.allowance < BigInt(amountToTrade);
 
     // B. APPROVE (if allowance is insufficient and wallet exists)
 

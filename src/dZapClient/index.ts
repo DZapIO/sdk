@@ -758,17 +758,8 @@ class DZapClient {
    *
    * @example
    * ```typescript
-   * const allowanceInfo = await client.getAllowance({
-   *   chainId: 1,
-   *   sender: '0x...',
-   *   tokens: [
-   *     { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '1000000' }
-   *   ],
-   *   service: 'swap',
-   *   mode: ApprovalModes.Permit2
-   * });
-   *
-   * console.log('Approvals needed:', allowanceInfo.data.noOfApprovalsRequired);
+   * const { status, data } = await client.getAllowance({ chainId, sender, tokens, service });
+   * const { allowance, type } = data[token]!;
    * ```
    */
   public async getAllowance({
