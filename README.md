@@ -245,9 +245,11 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - `service`: AvailableDZapServices
   - `mode?`: ApprovalMode (defaults to `ApprovalModes.AutoPermit`)
 - **Output:**
-  - `{ status, code, data: { tokenAllowances, noOfApprovalsRequired, noOfSignaturesRequired } }`
+  - `{ status, code, data} }`
 - **Description:**
-  Returns the current allowance for each token and indicates how many approvals/signatures are needed.
+  - `data` is a map **token address → `{ allowance: bigint, type }`**
+  - `type` is an allowance route (`AllowanceTypes`): e.g. direct DZap contract (`dzap`), Permit2 (`permit2`), or EIP-2612 (`eip2612`).
+    Use the returned `allowance` vs your required `amount` per token to see if an `approve` or `sign` step is still needed; combine with `type` to choose the right follow-up (`approve`, `sign`, etc.).
 
 #### `approve({ chainId, signer, sender, rpcUrls, tokens, service, mode, approvalTxnCallback })`
 
