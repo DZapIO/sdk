@@ -1,6 +1,6 @@
 import { createWalletClient, http, parseUnits } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { AllowancePermitTypes, ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
+import { ApprovalModes, DZapClient, PermitTypes, Services } from '../src';
 import { StatusCodes, TxnStatus } from '../src/enums';
 import { HexString, SignatureCallbackParams } from '../src/types';
 import { AllowanceTypes } from '../src/types/permit';

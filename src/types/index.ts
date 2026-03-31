@@ -7,7 +7,7 @@ import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
-export { AllowanceTypes as AllowancePermitTypes, type AllowanceType as AllowancePermitType } from './permit';
+export { AllowanceTypes, type AllowanceType } from './permit';
 
 export type HexString = `0x${string}`;
 
