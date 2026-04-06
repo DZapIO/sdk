@@ -85,12 +85,7 @@ export const checkEIP2612PermitSupport = async ({
   const results = multicallResult.data as Array<{ status: string; result: unknown }>;
   const [domainSeparatorResult, nonceResult, versionResult, nameResult, permitTypeHashResult] = results;
 
-  if (
-    domainSeparatorResult.status !== TxnStatus.success ||
-    nonceResult.status !== TxnStatus.success ||
-    nameResult.status !== TxnStatus.success ||
-    permitTypeHashResult.status !== TxnStatus.success
-  ) {
+  if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
     return { supportsPermit: false };
   }
 
@@ -98,8 +93,10 @@ export const checkEIP2612PermitSupport = async ({
   const nonce = nonceResult.result as bigint;
   const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION;
 
-  const permitTypeHash = permitTypeHashResult.result as HexString;
-  if (permitTypeHash.toLowerCase() !== EIP2612_PERMIT_TYPEHASH.toLowerCase()) {
+  if (
+    permitTypeHashResult.status === TxnStatus.success &&
+    (permitTypeHashResult.result as string).toLowerCase() !== EIP2612_PERMIT_TYPEHASH.toLowerCase()
+  ) {
     return { supportsPermit: false };
   }
 
