@@ -126,11 +126,11 @@ export const checkEIP2612PermitSupport = async ({
 
   const nonce = nonceResult.result;
 
-  const hasEip712Domain = eip712DomainResult.status === TxnStatus.success && Boolean(eip712DomainResult.result);
-
   if (permitTypeHashResult.status === TxnStatus.success && permitTypeHashResult.result.toLowerCase() !== EIP2612_PERMIT_TYPEHASH.toLowerCase()) {
     return { supportsPermit: false };
   }
+
+  const hasEip712Domain = eip712DomainResult.status === TxnStatus.success && Boolean(eip712DomainResult.result);
 
   let name: string;
   let version: string;
