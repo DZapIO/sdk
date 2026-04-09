@@ -22,6 +22,7 @@ type EIP2612SupportMulticallItem<T> = MulticallSuccess<T> | MulticallFailure;
 type EIP712DomainResult = readonly [HexString, string, string, bigint, HexString, HexString, readonly bigint[]];
 type EIP2612SupportMulticallData = [
   EIP2612SupportMulticallItem<EIP712DomainResult>,
+  EIP2612SupportMulticallItem<string>,
   EIP2612SupportMulticallItem<bigint>,
   EIP2612SupportMulticallItem<string>,
   EIP2612SupportMulticallItem<string>,
@@ -44,6 +45,11 @@ const getEIP2612SupportMulticallResult = async ({
       address: address as HexString,
       abi: erc20PermitAbi,
       functionName: 'eip712Domain',
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.domainSeparator,
     },
     {
       address: address as HexString,
@@ -112,9 +118,9 @@ export const checkEIP2612PermitSupport = async ({
     return { supportsPermit: false };
   }
 
-  const [eip712DomainResult, nonceResult, nameResult, versionResult, permitTypeHashResult] = multicallResult.data;
+  const [eip712DomainResult, domainSeparatorResult, nonceResult, nameResult, versionResult, permitTypeHashResult] = multicallResult.data;
 
-  if (nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
+  if (nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success || domainSeparatorResult.status !== TxnStatus.success) {
     return { supportsPermit: false };
   }
 
