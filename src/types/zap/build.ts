@@ -25,10 +25,17 @@ export type ZapBuildTxnResponse = {
     amount: string;
   }[];
   output: {
-    address: string;
     amount: string;
-    chainId: number;
+    amountUSD: string;
     minAmount: string;
+    asset: {
+      address: string;
+      chainId: number;
+      decimals: number;
+      price: string;
+      symbol: string;
+      name: string;
+    };
   }[];
   steps: ZapStep[];
   path: ZapPath[];
