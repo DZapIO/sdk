@@ -24,19 +24,7 @@ export type ZapBuildTxnResponse = {
     approveTo: HexString;
     amount: string;
   }[];
-  output: {
-    amount: string;
-    amountUSD: string;
-    minAmount: string;
-    asset: {
-      address: string;
-      chainId: number;
-      decimals: number;
-      price: string;
-      symbol: string;
-      name: string;
-    };
-  }[];
+  output: ZapPath['output'];
   steps: ZapStep[];
   path: ZapPath[];
 };
