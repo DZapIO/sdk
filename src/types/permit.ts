@@ -129,6 +129,8 @@ type Permit2612BaseParams = {
   sigDeadline?: bigint;
   name: string;
   nonce: bigint;
+  /** Non-zero only when EIP-5267 `eip712Domain()` includes salt (e.g. some AMM pool tokens). */
+  salt?: HexString;
 } & BasePermitParams;
 
 export type DefaultPermit2612Params = {

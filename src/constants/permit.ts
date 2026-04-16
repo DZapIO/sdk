@@ -35,3 +35,5 @@ export const PermitToDZapPermitMode = {
 } as const;
 
 export const EIP2612_PERMIT_TYPEHASH = keccak256(stringToHex('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'));
+
+export const EIP712_ZERO_SALT = '0x0000000000000000000000000000000000000000000000000000000000000000';

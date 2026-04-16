@@ -81,6 +81,7 @@ class PermitTxnHandler {
         version: eip2612PermitData.data.version,
         name: eip2612PermitData.data.name,
         nonce: eip2612PermitData.data.nonce,
+        ...(eip2612PermitData.data.salt ? { salt: eip2612PermitData.data.salt } : {}),
       });
       return {
         status,
