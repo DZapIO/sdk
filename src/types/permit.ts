@@ -282,3 +282,11 @@ export type PermitBatchTransferFromValues = {
   nonce: bigint;
   deadline: bigint;
 };
+
+export const AllowanceTypes = {
+  eip2612: 'eip2612',
+  permit2: 'permit2',
+  dzap: 'dzap',
+} as const;
+
+export type AllowanceType = (typeof AllowanceTypes)[keyof typeof AllowanceTypes];

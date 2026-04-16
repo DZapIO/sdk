@@ -4,6 +4,7 @@ import { encodeApproveCallData } from '../encodeApproveCall';
 import { getAllowance } from '../erc20';
 import { isDZapNativeToken } from '../index';
 import { BatchCallParams, sendBatchCalls } from './sendBatchCalls';
+import { AllowanceTypes } from '../../types/permit';
 
 /**
  * Generates approval batch calls for tokens that need approval
@@ -39,7 +40,11 @@ export async function generateApprovalBatchCalls({
     rpcUrls,
   });
 
-  const tokensNeedingApproval = tokensToCheck.filter((token) => allowanceData[token.address]?.approvalNeeded);
+  const tokensNeedingApproval = tokensToCheck.filter((token) => {
+    const { allowance, type } = allowanceData[token.address] ?? {};
+    if (type === AllowanceTypes.eip2612) return false;
+    return allowance === undefined || allowance < BigInt(token.amount);
+  });
 
   return tokensNeedingApproval.map((token) => ({
     to: token.address,

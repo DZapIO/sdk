@@ -31,6 +31,6 @@ export type ZapPath = {
     asset: ZapPathAsset;
     amount: string;
     amountUSD: string;
-    dust?: boolean;
+    minAmount: string;
   }[];
 };
