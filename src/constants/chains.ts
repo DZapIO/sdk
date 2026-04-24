@@ -18,6 +18,7 @@ export const exclusiveChainIds = {
   citrea: 4114,
   pushTestnet: 42101,
   astralisTestnet: 71261,
+  btcln: 1002,
 };
 
 export const chainTypes = {

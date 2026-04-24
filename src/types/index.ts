@@ -317,7 +317,13 @@ export type BtcTxData = {
   feeRate: number;
 };
 
-export type TxData = EvmTxData | SvmTxData | BtcTxData;
+export type BtclnTxData = {
+  paymentRequestType: 'bolt11';
+  paymentRequest: string;
+  paymentExpiry: number;
+};
+
+export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData;
 
 export type TxRequestData<T> = {
   status: typeof STATUS.success;
@@ -347,6 +353,7 @@ export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
     outputs: PsbtOutput[];
     feeRate: number;
   };
+  btclnTxData?: BtclnTxData;
   additionalInfo: Record<string, Record<string, unknown>>;
   updatedQuotes: Record<string, string>;
 };
