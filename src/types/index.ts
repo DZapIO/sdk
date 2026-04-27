@@ -129,6 +129,7 @@ export type ProtocolFilter = { allow?: string[]; deny?: string[] };
 export type TradeQuotesRequest = {
   fromChain: number;
   gasless?: boolean;
+  private?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
