@@ -266,6 +266,7 @@ export type TradeBuildTxnRequest = {
   refundee: HexString;
   fromChain: number;
   gasless: boolean;
+  private?: boolean;
   disableEstimation?: boolean;
 
   data: TradeBuildTxnRequestData[];
