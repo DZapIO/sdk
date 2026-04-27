@@ -51,6 +51,7 @@ import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
+import { extendViemChain } from './utils/extendViemChain';
 import { formatToken } from './utils/tokens';
 
 export * from './types/zap';
@@ -74,6 +75,7 @@ export {
   DZapTransactionResponse,
   erc20Functions,
   EvmTxData,
+  extendViemChain,
   Fee,
   FeeDetails,
   formatToken,
