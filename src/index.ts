@@ -57,6 +57,7 @@ import { formatToken } from './utils/tokens';
 
 export * from './types/zap';
 export * from './zap/constants';
+export * from './chains';
 
 export {
   AllowanceTypes,
