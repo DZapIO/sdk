@@ -8,6 +8,7 @@ import { hyperliquid } from './definitions/hyperliquid';
 import { pushTestnet } from './definitions/pushTestnet';
 import { stableChain } from './definitions/stable';
 import { tempo } from './definitions/tempo';
+import { citrea } from './definitions/citrea';
 
 export { arthera } from './definitions/arthera';
 export { astralisTestnet } from './definitions/astralisTestnet';
@@ -18,8 +19,20 @@ export { hyperliquid } from './definitions/hyperliquid';
 export { pushTestnet } from './definitions/pushTestnet';
 export { stableChain } from './definitions/stable';
 export { tempo } from './definitions/tempo';
+export { citrea } from './definitions/citrea';
 
-export const customViemChains: viemChains.Chain[] = [fiveIre, arthera, hyperEvm, hyperliquid, stableChain, pushTestnet, astralisTestnet, tempo, hemi];
+export const customViemChains: viemChains.Chain[] = [
+  fiveIre,
+  arthera,
+  hyperEvm,
+  hyperliquid,
+  stableChain,
+  pushTestnet,
+  astralisTestnet,
+  tempo,
+  hemi,
+  citrea,
+];
 
 export const viemChainsById: Record<number, viemChains.Chain> = [...Object.values(viemChains), ...customViemChains].reduce((acc, chainData) => {
   return chainData.id
