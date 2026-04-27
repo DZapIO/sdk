@@ -129,6 +129,7 @@ export type ProtocolFilter = { allow?: string[]; deny?: string[] };
 export type TradeQuotesRequest = {
   fromChain: number;
   gasless?: boolean;
+  private?: boolean;
   data: TradeQuotesRequestData[];
   disableEstimation?: boolean;
   account?: string;
@@ -265,6 +266,7 @@ export type TradeBuildTxnRequest = {
   refundee: HexString;
   fromChain: number;
   gasless: boolean;
+  private?: boolean;
   disableEstimation?: boolean;
 
   data: TradeBuildTxnRequestData[];
