@@ -294,6 +294,7 @@ export type ParamQuotes = {
   destAmount: string;
   provider: string;
   minDestAmount: string;
+  priceImpact: string;
 };
 
 export type EvmTxData = {
