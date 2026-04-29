@@ -2,7 +2,6 @@ import { DEFAULT_PERMIT2_ADDRESS } from '../../constants/contract';
 import { permit2PrimaryType, PermitToDZapPermitMode } from '../../constants/permit';
 import { SignatureExpiryInSecs } from '../../constants/permit2';
 import { ContractVersion, DZapV1PermitMode, StatusCodes, TxnStatus } from '../../enums';
-import { HexString } from '../../types';
 import { encodeAbiParameters, maxUint256, maxUint48, parseAbiParameters } from 'viem';
 import { BasePermitResponse, BatchPermitAbiParams, Permit2Params } from '../../types/permit';
 import { generateDeadline } from '../date';
@@ -11,13 +10,11 @@ import { getPermit2Data } from './permitData';
 import { getPermit2Values } from './values';
 import { getPermit2WitnessData } from './witnessData';
 import { Services } from '../../constants';
-import { DZapClient } from '../..';
+import DZapClient from '../../dZapClient';
 
-export async function getPermit2Address(chainId: number): Promise<HexString> {
+export async function getPermit2Address(chainId: number) {
   const chainConfig = await DZapClient.getChainConfig();
-  const permit2Address = chainConfig[chainId].contracts?.permit2 ?? DEFAULT_PERMIT2_ADDRESS;
-  console.log('permit2Address', permit2Address);
-  console.log('chainId, config', chainId, chainConfig[chainId]);
+  const permit2Address = chainConfig[chainId]?.contracts?.permit2 ?? DEFAULT_PERMIT2_ADDRESS;
   return permit2Address;
 }
 
