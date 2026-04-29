@@ -13,9 +13,14 @@ import { Services } from '../../constants';
 import DZapClient from '../../dZapClient';
 
 export async function getPermit2Address(chainId: number) {
-  const chainConfig = await DZapClient.getChainConfig();
-  const permit2Address = chainConfig[chainId]?.contracts?.permit2 ?? DEFAULT_PERMIT2_ADDRESS;
-  return permit2Address;
+  try {
+    const chainConfig = await DZapClient.getChainConfig();
+    const permit2Address = chainConfig[chainId]?.contracts?.permit2 ?? DEFAULT_PERMIT2_ADDRESS;
+    return permit2Address;
+  } catch (error) {
+    console.error(`Error fetching Permit2 address for chainId ${chainId}:`, error);
+    return DEFAULT_PERMIT2_ADDRESS;
+  }
 }
 
 export const getPermit2Signature = async (params: Permit2Params): Promise<BasePermitResponse> => {
