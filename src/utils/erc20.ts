@@ -45,7 +45,7 @@ export const approveToken = async ({
   spender: HexString;
 }) => {
   if (mode !== ApprovalModes.Default) {
-    spender = getPermit2Address(chainId);
+    spender = await getPermit2Address(chainId);
   }
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
     let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
@@ -166,7 +166,7 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
 
         return {
           token: address,
-          spender: eip2612PermitData.supportsPermit ? spender : getPermit2Address(chainId),
+          spender: eip2612PermitData.supportsPermit ? spender : await getPermit2Address(chainId),
           allowanceType,
         };
       } else if (mode === ApprovalModes.Default) {
@@ -176,7 +176,7 @@ export const getAllowance = async ({ chainId, sender, tokens, rpcUrls, multicall
           allowanceType: AllowanceTypes.dzap,
         };
       } else {
-        const permit2Address = getPermit2Address(chainId);
+        const permit2Address = await getPermit2Address(chainId);
         return { token: address, spender: permit2Address, allowanceType: AllowanceTypes.permit2 };
       }
     }),
