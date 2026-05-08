@@ -23,6 +23,10 @@ export type SVMTxnDetails = {
   type: typeof chainTypes.svm;
   txnId: HexString;
   data: string[];
+  blockhash?: {
+    blockhash: string;
+    lastValidBlockHeight: number;
+  };
   estimatedGas: string;
   isJitoTx?: boolean;
 };

@@ -268,8 +268,8 @@ class DZapClient {
    * });
    * ```
    */
-  public getTradeTxnStatus({ txHash, chainId }: { txHash: string; chainId: number }): Promise<TradeStatusResponse> {
-    return fetchStatus({ txHash, chainId });
+  public getTradeTxnStatus(params: { txHash: string; chainId: number } | { privateTxId: string }): Promise<TradeStatusResponse> {
+    return fetchStatus(params);
   }
 
   /**
@@ -292,8 +292,8 @@ class DZapClient {
    * });
    * ```
    */
-  public getTradeMultiTxnStatus({ txHashes, chainIds }: { txHashes: string; chainIds: string }): Promise<TradeStatusResponse[]> {
-    return fetchMultiTxStatus({ txHashes, chainIds });
+  public getTradeMultiTxnStatus(params: { txHashes: string; chainIds: string } | { privateTxIds: string }): Promise<TradeStatusResponse[]> {
+    return fetchMultiTxStatus(params);
   }
 
   /**
