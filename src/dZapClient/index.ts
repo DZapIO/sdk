@@ -268,7 +268,7 @@ class DZapClient {
    * });
    * ```
    */
-  public getTradeTxnStatus(params: { txHash: string; chainId: number } | { privateTxId: string }): Promise<TradeStatusResponse> {
+  public getTradeTxnStatus(params: { txHash: string; chainId: number } | { txId: string }): Promise<TradeStatusResponse> {
     return fetchStatus(params);
   }
 
@@ -292,7 +292,7 @@ class DZapClient {
    * });
    * ```
    */
-  public getTradeMultiTxnStatus(params: { txHashes: string; chainIds: string } | { privateTxIds: string }): Promise<TradeStatusResponse[]> {
+  public getTradeMultiTxnStatus(params: { txHashes: string; chainIds: string } | { txIds: string }): Promise<TradeStatusResponse[]> {
     return fetchMultiTxStatus(params);
   }
 
