@@ -12,6 +12,7 @@ import {
   ApprovalMode,
   BatchPermitCallbackParams,
   BtcTxData,
+  BtclnTxData,
   Chain,
   ChainData,
   contractErrorActions,
@@ -51,10 +52,12 @@ import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
+import { extendViemChain } from './utils/extendViemChain';
 import { formatToken } from './utils/tokens';
 
 export * from './types/zap';
 export * from './zap/constants';
+export * from './chains';
 
 export {
   AllowanceTypes,
@@ -64,6 +67,7 @@ export {
   ApprovalModes,
   BatchPermitCallbackParams,
   BtcTxData,
+  BtclnTxData,
   Chain,
   ChainData,
   checkEIP2612PermitSupport,
@@ -74,6 +78,7 @@ export {
   DZapTransactionResponse,
   erc20Functions,
   EvmTxData,
+  extendViemChain,
   Fee,
   FeeDetails,
   formatToken,

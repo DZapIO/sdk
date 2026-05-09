@@ -189,23 +189,17 @@ export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
     method: GET,
   });
 
-export const fetchStatus = ({ txHash, chainId }: { txHash: string; chainId: number }) =>
+export const fetchStatus = (params: { txHash: string; chainId: number } | { txId: string }) =>
   invoke({
     endpoint: GET_STATUS,
-    data: {
-      txHash,
-      chainId,
-    },
+    data: params,
     method: GET,
   });
 
-export const fetchMultiTxStatus = ({ txHashes, chainIds }: { txHashes: string; chainIds: string }) =>
+export const fetchMultiTxStatus = (params: { txHashes: string; chainIds: string } | { txIds: string }) =>
   invoke({
     endpoint: GET_MULTI_STATUS,
-    data: {
-      txHashes,
-      chainIds,
-    },
+    data: params,
     method: GET,
   });
 
