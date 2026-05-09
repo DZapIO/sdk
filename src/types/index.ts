@@ -338,6 +338,7 @@ export type TxRequestData<T> = {
 export type TradeGasBuildTxnResponse<T = TxData> = TxRequestData<T> & {
   quotes: Record<string, ParamQuotes>;
   gasless: false;
+  private: boolean;
 };
 
 export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
