@@ -32,7 +32,7 @@ export async function classifySuivmAddress(params: {
       kind: AddressKind.TOKEN,
       isNative: false,
       isToken: true,
-      isContract: false,
+      isContract: true,
       address,
     };
   }

@@ -3,7 +3,7 @@ import { getPublicClient } from '..';
 import { erc20Abi } from '../../artifacts';
 import { erc20Functions } from '../../constants/erc20';
 import { ChainData, HexString } from '../../types';
-import { AddressCheckResult, AddressKind } from '../../types/address';
+import { AddressClassifyResult, AddressKind } from '../../types/address';
 import { formatToken, isNativeCurrency } from '../tokens';
 
 export async function classifyEvmAddress(params: {
@@ -11,7 +11,7 @@ export async function classifyEvmAddress(params: {
   chainId: number;
   chainConfig: ChainData;
   rpcUrls?: string[];
-}): Promise<AddressCheckResult> {
+}): Promise<AddressClassifyResult> {
   const { chainId, rpcUrls, chainConfig } = params;
   const address = formatToken(params.address) as HexString;
 

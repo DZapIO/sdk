@@ -2,7 +2,7 @@ import { ChainData } from '../../types';
 import { AddressClassifyResult, AddressKind } from '../../types/address';
 import { isNativeCurrency } from '../tokens';
 
-const tronAddressRegex = /^T[A-Za-z1-9]{33}$/;
+const tronAddressRegex = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
 
 export async function classifyTronvmAddress(params: {
   address: string;

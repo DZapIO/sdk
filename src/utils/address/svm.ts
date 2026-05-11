@@ -106,7 +106,7 @@ export async function classifySvmAddress(params: {
         kind: AddressKind.TOKEN,
         isNative: false,
         isToken: true,
-        isContract: false,
+        isContract: true,
         address: normalized,
       };
     }
