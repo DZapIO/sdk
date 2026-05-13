@@ -11,7 +11,7 @@ export async function classifyEvmAddress(params: {
   chainId: number;
   chainConfig: ChainData;
   rpcUrls?: string[];
-}): Promise<AddressClassifyResult> {
+}): Promise<AddressClassifyResult | null> {
   const { chainId, rpcUrls, chainConfig } = params;
   const address = formatToken(params.address) as HexString;
 
@@ -45,12 +45,14 @@ export async function classifyEvmAddress(params: {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error(`RPC error (getCode): ${message}`);
+    // Network failure — cannot determine type, return null so the caller can fallback
+    return null;
   }
 
   if (!bytecode || bytecode === '0x') {
     return {
       valid: true,
-      kind: AddressKind.EOA,
+      kind: AddressKind.WALLET,
       isNative: false,
       isToken: false,
       isContract: false,
@@ -58,6 +60,9 @@ export async function classifyEvmAddress(params: {
     };
   }
 
+  // bytecode is present → this is definitely a contract of some kind.
+  // Try decimals() to distinguish ERC-20 tokens from generic contracts.
+  // A revert means it is NOT an ERC-20; any other throw is a network error.
   try {
     await publicClient.readContract({
       address,
@@ -73,6 +78,8 @@ export async function classifyEvmAddress(params: {
       address,
     };
   } catch {
+    // decimals() reverted (not a token) OR network error.
+    // In both cases we already know it is a contract, so return CONTRACT.
     return {
       valid: true,
       kind: AddressKind.CONTRACT,

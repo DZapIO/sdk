@@ -3,7 +3,7 @@ export enum AddressKind {
   NATIVE = 'native',
   TOKEN = 'token',
   CONTRACT = 'contract',
-  EOA = 'eoa',
+  WALLET = 'wallet',
 }
 
 export type AddressClassifyResult = {
@@ -13,5 +13,4 @@ export type AddressClassifyResult = {
   isToken: boolean;
   isContract: boolean;
   address: string;
-  error?: string;
 };

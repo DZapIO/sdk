@@ -39,7 +39,7 @@ export async function classifyBvmAddress(params: {
 
   return {
     valid: true,
-    kind: AddressKind.EOA,
+    kind: AddressKind.WALLET,
     isNative: false,
     isToken: false,
     isContract: false,

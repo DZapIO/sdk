@@ -21,7 +21,7 @@ type ResolvedChainType =
 
 const classifiers: Record<
   ResolvedChainType,
-  (params: { address: string; chainId: number; chainConfig: ChainData; rpcUrls?: string[] }) => Promise<AddressClassifyResult>
+  (params: { address: string; chainId: number; chainConfig: ChainData; rpcUrls?: string[] }) => Promise<AddressClassifyResult | null>
 > = {
   [chainTypes.evm]: classifyEvmAddress,
   [chainTypes.svm]: classifySvmAddress,
@@ -37,7 +37,7 @@ const getChainType = (chainId: number, chainConfig: ChainData): ResolvedChainTyp
   return type as ResolvedChainType | undefined;
 };
 
-export const classifyAddress = async (params: { address: string; chainId: number; rpcUrls?: string[] }): Promise<AddressClassifyResult> => {
+export const classifyAddress = async (params: { address: string; chainId: number; rpcUrls?: string[] }): Promise<AddressClassifyResult | null> => {
   const chainConfig = await DZapClient.getChainConfig();
   const chainType = getChainType(params.chainId, chainConfig);
   if (!chainType) {

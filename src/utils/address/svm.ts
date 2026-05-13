@@ -23,7 +23,7 @@ export async function classifySvmAddress(params: {
   chainId: number;
   chainConfig: ChainData;
   rpcUrls?: string[];
-}): Promise<AddressClassifyResult> {
+}): Promise<AddressClassifyResult | null> {
   const { address, rpcUrls, chainConfig } = params;
   const pubkey = parseSvmAddress(address);
   if (!pubkey) {
@@ -57,22 +57,15 @@ export async function classifySvmAddress(params: {
     parsed = await connection.getParsedAccountInfo(pubkey);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return {
-      valid: false,
-      kind: AddressKind.INVALID,
-      isNative: false,
-      isToken: false,
-      isContract: false,
-      address: normalized,
-      error: `RPC error (getParsedAccountInfo): ${message}`,
-    };
+    console.error(`RPC error (getParsedAccountInfo): ${message}`);
+    return null;
   }
 
   const value = parsed.value;
   if (!value) {
     return {
       valid: true,
-      kind: AddressKind.EOA,
+      kind: AddressKind.WALLET,
       isNative: false,
       isToken: false,
       isContract: false,
@@ -125,7 +118,7 @@ export async function classifySvmAddress(params: {
 
   return {
     valid: true,
-    kind: AddressKind.EOA,
+    kind: AddressKind.WALLET,
     isNative: false,
     isToken: false,
     isContract: false,

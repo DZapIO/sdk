@@ -1,4 +1,6 @@
 export const exclusiveChainIds = {
+  aptos: 116201519,
+  ethereum: 1,
   zkSync: 324,
   arthera: 10242,
   gnosis: 100,
@@ -18,7 +20,12 @@ export const exclusiveChainIds = {
   citrea: 4114,
   pushTestnet: 42101,
   astralisTestnet: 71261,
+  btc: 1000,
   btcln: 1002,
+  solana: 7565164,
+  tron: 728126428,
+  sui: 19219,
+  ton: 607,
 };
 
 export const chainTypes = {
