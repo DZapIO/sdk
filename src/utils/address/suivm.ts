@@ -55,16 +55,16 @@ export async function classifySuivmAddress(params: {
   // On-chain: use sui_getObject to check if this address is a Move package (= contract)
   const rpcUrl = rpcUrls?.[0] ?? SUI_DEFAULT_RPC;
   try {
-    const response = await axios.post(
-      rpcUrl,
-      {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'sui_getObject',
-        params: [address, { showType: true }],
-      },
-      { validateStatus: (status) => status < 500 },
-    );
+    const response = await axios.post(rpcUrl, {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'sui_getObject',
+      params: [address, { showType: true }],
+    });
+
+    if (response.status !== 200 || response.data?.error) {
+      return null;
+    }
 
     const result = response.data?.result;
 

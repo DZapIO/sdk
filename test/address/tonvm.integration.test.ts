@@ -4,7 +4,8 @@
  *
  * Addresses used:
  *   WALLET   — uninitialized address (getAddressInformation returns no code)
- *   CONTRACT — active non-Jetton contract (has code, get_jetton_data exit_code 32)
+ *   TOKEN    — USDT Jetton master (get_jetton_data exit_code 0)
+ *   CONTRACT — active non-Jetton contract (has code, get_jetton_data exit_code ≠ 0)
  *
  * Note: TonCenter free tier allows ~1 req/s.
  * beforeEach adds a 1.5 s delay to stay within the rate limit.
@@ -41,6 +42,19 @@ describe('TON classifier (live — TON mainnet)', () => {
     });
     expect(result?.kind).toBe(AddressKind.WALLET);
     expect(result?.isContract).toBe(false);
+  });
+
+  it('classifies USDT Jetton master as TOKEN', async () => {
+    const result = await classifyTonvmAddress({
+      // TON USDT Jetton master — get_jetton_data returns exit_code 0
+      address: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
+      chainId: CHAIN_ID,
+      chainConfig,
+      rpcUrls: RPC,
+    });
+    expect(result?.kind).toBe(AddressKind.TOKEN);
+    expect(result?.isToken).toBe(true);
+    expect(result?.isContract).toBe(true);
   });
 
   it('classifies an active non-Jetton contract as CONTRACT', async () => {

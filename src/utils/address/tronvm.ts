@@ -40,12 +40,11 @@ export async function classifyTronvmAddress(params: {
   // On-chain: /wallet/getcontract returns contract details if deployed, empty object for EOA
   const baseUrl = (rpcUrls?.[0] ?? TRON_DEFAULT_RPC).replace(/\/$/, '');
   try {
-    const response = await axios.post(
-      `${baseUrl}/wallet/getcontract`,
-      { value: address, visible: true },
-      { validateStatus: (status) => status < 500 },
-    );
+    const response = await axios.post(`${baseUrl}/wallet/getcontract`, { value: address, visible: true });
 
+    if (response.status !== 200 || response.data?.error) {
+      return null;
+    }
     const contract = response.data;
     const hasBytecode = contract?.bytecode && String(contract.bytecode).length > 0;
 

@@ -40,8 +40,11 @@ export async function classifyTonvmAddress(params: {
   try {
     const infoResponse = await axios.get(`${baseUrl}/getAddressInformation`, {
       params: { address },
-      validateStatus: (status) => status < 500,
     });
+
+    if (infoResponse.status !== 200 || infoResponse.data?.error || infoResponse.data?.ok === false) {
+      return null;
+    }
 
     const result = infoResponse.data?.result;
 
@@ -54,6 +57,28 @@ export async function classifyTonvmAddress(params: {
         isContract: false,
         address,
       };
+    }
+
+    // Contract detected — check if it is a Jetton master (fungible token)
+    // by calling the mandatory get_jetton_data getter. exit_code 0 = success.
+    try {
+      const jettonResponse = await axios.post(
+        `${baseUrl}/runGetMethod`,
+        { address, method: 'get_jetton_data', stack: [] },
+        { validateStatus: (status) => status < 500 },
+      );
+      if (jettonResponse.data?.result?.exit_code === 0) {
+        return {
+          valid: true,
+          kind: AddressKind.TOKEN,
+          isNative: false,
+          isToken: true,
+          isContract: true,
+          address,
+        };
+      }
+    } catch {
+      // runGetMethod network error — fall through to CONTRACT
     }
 
     return {
