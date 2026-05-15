@@ -6,13 +6,13 @@ import { SignatureExpiryInSecs } from './constants/permit2';
 import DZapClient from './dZapClient';
 import { DZapPermitMode, StatusCodes, TxnStatus } from './enums';
 import {
-  AllowanceTypes,
   AllowanceType,
+  AllowanceTypes,
   ApiRpcResponse,
   ApprovalMode,
   BatchPermitCallbackParams,
-  BtcTxData,
   BtclnTxData,
+  BtcTxData,
   Chain,
   ChainData,
   contractErrorActions,
@@ -50,24 +50,23 @@ import {
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
+import { classifyAddress } from './utils/address';
 import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { extendViemChain } from './utils/extendViemChain';
 import { formatToken } from './utils/tokens';
 
+export * from './chains';
 export * from './types/zap';
 export * from './zap/constants';
-export * from './chains';
-
 export {
   AllowanceTypes,
-  type AllowanceType,
   ApiRpcResponse,
   ApprovalMode,
   ApprovalModes,
   BatchPermitCallbackParams,
-  BtcTxData,
   BtclnTxData,
+  BtcTxData,
   Chain,
   ChainData,
   checkEIP2612PermitSupport,
@@ -94,6 +93,7 @@ export {
   PsbtOutput,
   QuoteFilter,
   QuoteFilters,
+  classifyAddress,
   Services,
   SignatureCallbackParams,
   SignatureExpiryInSecs,
@@ -121,4 +121,5 @@ export {
   TxnStatus,
   ZapIntegratorConfig,
   ZapStatusResponse,
+  type AllowanceType,
 };

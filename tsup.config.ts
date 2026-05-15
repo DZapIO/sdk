@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   outDir: 'dist',
   external: [
+    '@solana/web3.js',
     'ethers',
     'viem',
     'axios',
