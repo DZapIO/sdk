@@ -256,7 +256,8 @@ class DZapClient {
    *
    * @param params - Configuration object for status checking
    * @param params.txHash - Transaction hash for single transaction status (requires chainId)
-   * @param params.chainId - Chain ID for single transaction status (requires txHash)
+   * @param params.chainId - Chain ID for single transaction status (required with txHash or txId)
+   * @param params.txId - Transaction ID for single transaction status (requires chainId)
    * @returns Promise resolving to status response(s) with transaction state and details
    *
    * @example
@@ -268,7 +269,7 @@ class DZapClient {
    * });
    * ```
    */
-  public getTradeTxnStatus(params: { txHash: string; chainId: number } | { txId: string }): Promise<TradeStatusResponse> {
+  public getTradeTxnStatus(params: { txHash: string; chainId: number } | { txId: string; chainId: number }): Promise<TradeStatusResponse> {
     return fetchStatus(params);
   }
 
@@ -278,21 +279,24 @@ class DZapClient {
    * For cross-chain transactions, this tracks the complete bridge process across both chains.
    *
    * @param params - Configuration object for status checking
-   * @param params.txHashes - Transaction hash for single transaction status (requires chainId)
-   * @param params.chainIds - Chain ID for single transaction status (requires txHash)
+   * @param params.txHashes - Comma-separated transaction hashes (requires chainIds)
+   * @param params.chainIds - Comma-separated chain IDs aligned to txHashes or txIds
+   * @param params.txIds - Comma-separated transaction IDs (requires chainIds)
    * @returns Promise resolving to status response(s) with transaction state and details
    *
    * @example
    * ```typescript
    *
    * // Multiple transactions status
-   * const multiStatus = await client.getTradeTxnStatus({
+   * const multiStatus = await client.getTradeMultiTxnStatus({
    *   txHashes: '0x123...,0x456...',
    *   chainIds: '1,42161'
    * });
    * ```
    */
-  public getTradeMultiTxnStatus(params: { txHashes: string; chainIds: string } | { txIds: string }): Promise<TradeStatusResponse[]> {
+  public getTradeMultiTxnStatus(
+    params: { txHashes: string; chainIds: string } | { txIds: string; chainIds: string },
+  ): Promise<TradeStatusResponse[]> {
     return fetchMultiTxStatus(params);
   }
 
@@ -1081,14 +1085,20 @@ class DZapClient {
    * Zap transactions involve multiple steps and this method provides detailed progress information
    * including which steps have completed and any potential issues encountered.
    *
-   * @param request - The zap transaction status request containing transaction identification
+   * @param request - `chainId` with either `txnHash` or `txnId` to identify the zap transaction
    * @returns Promise resolving to detailed zap transaction status information
    *
    * @example
    * ```typescript
    * const zapStatus = await client.getZapTxnStatus({
-   *   chainId: '1',
+   *   chainId: 1,
    *   txnHash: '0x...'
+   * });
+   *
+   * // Or by internal transaction id:
+   * const zapStatusByTxnId = await client.getZapTxnStatus({
+   *   chainId: 1,
+   *   txnId: '0x...'
    * });
    *
    * console.log('Zap status:', zapStatus.status);
