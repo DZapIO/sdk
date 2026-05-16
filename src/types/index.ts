@@ -9,6 +9,8 @@ import { GaslessBridgeParams, GaslessSwapParams } from './permit';
 
 export { AllowanceTypes, type AllowanceType } from './permit';
 
+export { AddressClassifyResult, AddressKind } from './address';
+
 export type HexString = `0x${string}`;
 
 export type StatusResponse = keyof typeof STATUS_RESPONSE;
@@ -295,6 +297,7 @@ export type ParamQuotes = {
   provider: string;
   minDestAmount: string;
   priceImpact?: string | null;
+  duration?: string;
 };
 
 export type EvmTxData = {
