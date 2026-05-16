@@ -297,6 +297,7 @@ export type ParamQuotes = {
   provider: string;
   minDestAmount: string;
   priceImpact?: string | null;
+  duration?: string;
 };
 
 export type EvmTxData = {
