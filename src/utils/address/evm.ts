@@ -6,6 +6,14 @@ import { ChainData, HexString } from '../../types';
 import { AddressClassifyResult, AddressKind } from '../../types/address';
 import { formatToken, isNativeCurrency } from '../tokens';
 
+const EIP7702_DELEGATION_PREFIX = '0xef0100';
+const EIP7702_DELEGATION_HEX_LENGTH = 2 + 23 * 2;
+
+function isEip7702DelegationCode(bytecode: HexString): boolean {
+  const normalized = bytecode.toLowerCase();
+  return normalized.startsWith(EIP7702_DELEGATION_PREFIX) && normalized.length === EIP7702_DELEGATION_HEX_LENGTH;
+}
+
 export async function classifyEvmAddress(params: {
   address: string;
   chainId: number;
@@ -49,7 +57,7 @@ export async function classifyEvmAddress(params: {
     return null;
   }
 
-  if (!bytecode || bytecode === '0x') {
+  if (!bytecode || bytecode === '0x' || isEip7702DelegationCode(bytecode)) {
     return {
       valid: true,
       kind: AddressKind.WALLET,
@@ -60,7 +68,7 @@ export async function classifyEvmAddress(params: {
     };
   }
 
-  // bytecode is present → this is definitely a contract of some kind.
+  // bytecode is present → this is a deployed contract (not an EIP-7702 delegated EOA).
   // Try decimals() to distinguish ERC-20 tokens from generic contracts.
   // A revert means it is NOT an ERC-20; any other throw is a network error.
   try {
