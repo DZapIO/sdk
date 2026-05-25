@@ -46,6 +46,17 @@ export async function classifyEvmAddress(params: {
   }
 
   const publicClient = getPublicClient({ rpcUrls, chainId });
+  // Kick off decimals() immediately so token addresses do not pay for two
+  // back-to-back RPC round trips. We still rely on getCode() to determine
+  // whether the address is a wallet or a deployed contract.
+  const decimalsPromise = publicClient
+    .readContract({
+      address,
+      abi: erc20Abi,
+      functionName: erc20Functions.decimals,
+    })
+    .then(() => true)
+    .catch(() => false);
 
   let bytecode: HexString | undefined;
   try {
@@ -69,14 +80,10 @@ export async function classifyEvmAddress(params: {
   }
 
   // bytecode is present → this is a deployed contract (not an EIP-7702 delegated EOA).
-  // Try decimals() to distinguish ERC-20 tokens from generic contracts.
-  // A revert means it is NOT an ERC-20; any other throw is a network error.
-  try {
-    await publicClient.readContract({
-      address,
-      abi: erc20Abi,
-      functionName: erc20Functions.decimals,
-    });
+  // Use the already in-flight decimals() call to distinguish ERC-20 tokens from generic contracts.
+  // A successful decimals() means TOKEN; a revert/throw means CONTRACT.
+  const hasDecimals = await decimalsPromise;
+  if (hasDecimals) {
     return {
       valid: true,
       kind: AddressKind.TOKEN,
@@ -85,16 +92,14 @@ export async function classifyEvmAddress(params: {
       isContract: true,
       address,
     };
-  } catch {
-    // decimals() reverted (not a token) OR network error.
-    // In both cases we already know it is a contract, so return CONTRACT.
-    return {
-      valid: true,
-      kind: AddressKind.CONTRACT,
-      isNative: false,
-      isToken: false,
-      isContract: true,
-      address,
-    };
   }
+
+  return {
+    valid: true,
+    kind: AddressKind.CONTRACT,
+    isNative: false,
+    isToken: false,
+    isContract: true,
+    address,
+  };
 }

@@ -37,6 +37,13 @@ export async function classifyTonvmAddress(params: {
   }
 
   const baseUrl = (rpcUrls?.[0] ?? TON_DEFAULT_RPC).replace(/\/$/, '');
+  // Kick off get_jetton_data immediately so Jetton masters do not pay for two
+  // back-to-back RPC round trips. We still rely on getAddressInformation to
+  // determine whether the address is a wallet or a deployed contract.
+  const jettonPromise = axios
+    .post(`${baseUrl}/runGetMethod`, { address, method: 'get_jetton_data', stack: [] }, { validateStatus: (status) => status < 500 })
+    .then((jettonResponse) => jettonResponse.data?.result?.exit_code === 0)
+    .catch(() => false);
   try {
     const infoResponse = await axios.get(`${baseUrl}/getAddressInformation`, {
       params: { address },
@@ -59,26 +66,17 @@ export async function classifyTonvmAddress(params: {
       };
     }
 
-    // Contract detected — check if it is a Jetton master (fungible token)
-    // by calling the mandatory get_jetton_data getter. exit_code 0 = success.
-    try {
-      const jettonResponse = await axios.post(
-        `${baseUrl}/runGetMethod`,
-        { address, method: 'get_jetton_data', stack: [] },
-        { validateStatus: (status) => status < 500 },
-      );
-      if (jettonResponse.data?.result?.exit_code === 0) {
-        return {
-          valid: true,
-          kind: AddressKind.TOKEN,
-          isNative: false,
-          isToken: true,
-          isContract: true,
-          address,
-        };
-      }
-    } catch {
-      // runGetMethod network error — fall through to CONTRACT
+    // Contract detected — use the already in-flight get_jetton_data call to distinguish Jetton masters from generic contracts. exit_code 0 = TOKEN.
+    const isJetton = await jettonPromise;
+    if (isJetton) {
+      return {
+        valid: true,
+        kind: AddressKind.TOKEN,
+        isNative: false,
+        isToken: true,
+        isContract: true,
+        address,
+      };
     }
 
     return {
