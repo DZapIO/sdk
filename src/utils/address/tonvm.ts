@@ -37,8 +37,7 @@ export async function classifyTonvmAddress(params: {
   }
 
   const baseUrl = (rpcUrls?.[0] ?? TON_DEFAULT_RPC).replace(/\/$/, '');
-  // Kick off get_jetton_data immediately so Jetton masters do not pay for two
-  // back-to-back RPC round trips. We still rely on getAddressInformation to
+  // Kick off get_jetton_data immediately so Jetton masters do not pay for two back-to-back RPC round trips. We still rely on getAddressInformation to
   // determine whether the address is a wallet or a deployed contract.
   const jettonPromise = axios
     .post(`${baseUrl}/runGetMethod`, { address, method: 'get_jetton_data', stack: [] }, { validateStatus: (status) => status < 500 })

@@ -46,8 +46,7 @@ export async function classifyEvmAddress(params: {
   }
 
   const publicClient = getPublicClient({ rpcUrls, chainId });
-  // Kick off decimals() immediately so token addresses do not pay for two
-  // back-to-back RPC round trips. We still rely on getCode() to determine
+  // Kick off decimals() immediately so token addresses do not pay for two back-to-back RPC round trips. We still rely on getCode() to determine
   // whether the address is a wallet or a deployed contract.
   const decimalsPromise = publicClient
     .readContract({
