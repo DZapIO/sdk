@@ -48,35 +48,31 @@ export async function classifyEvmAddress(params: {
   const publicClient = getPublicClient({ rpcUrls, chainId });
 
   let bytecode: HexString | undefined;
-  try {
-    bytecode = await publicClient.getCode({ address });
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    console.error(`RPC error (getCode): ${message}`);
-    // Network failure — cannot determine type, return null so the caller can fallback
-    return null;
-  }
 
-  if (!bytecode || bytecode === '0x' || isEip7702DelegationCode(bytecode)) {
-    return {
-      valid: true,
-      kind: AddressKind.WALLET,
-      isNative: false,
-      isToken: false,
-      isContract: false,
-      address,
-    };
-  }
-
-  // bytecode is present → this is a deployed contract (not an EIP-7702 delegated EOA).
-  // Try decimals() to distinguish ERC-20 tokens from generic contracts.
-  // A revert means it is NOT an ERC-20; any other throw is a network error.
-  try {
-    await publicClient.readContract({
+  const [bytecodeResult, decimalsResult] = await Promise.allSettled([
+    publicClient.getCode({ address }),
+    publicClient.readContract({
       address,
       abi: erc20Abi,
       functionName: erc20Functions.decimals,
-    });
+    }),
+  ]);
+
+  if (bytecodeResult.status === 'fulfilled') {
+    bytecode = bytecodeResult.value;
+    if (!bytecode || bytecode === '0x' || isEip7702DelegationCode(bytecode)) {
+      return {
+        valid: true,
+        kind: AddressKind.WALLET,
+        isNative: false,
+        isToken: false,
+        isContract: false,
+        address,
+      };
+    }
+  }
+
+  if (decimalsResult.status === 'fulfilled') {
     return {
       valid: true,
       kind: AddressKind.TOKEN,
@@ -85,9 +81,9 @@ export async function classifyEvmAddress(params: {
       isContract: true,
       address,
     };
-  } catch {
-    // decimals() reverted (not a token) OR network error.
-    // In both cases we already know it is a contract, so return CONTRACT.
+  }
+
+  if (bytecodeResult.status === 'fulfilled' && bytecode) {
     return {
       valid: true,
       kind: AddressKind.CONTRACT,
@@ -97,4 +93,6 @@ export async function classifyEvmAddress(params: {
       address,
     };
   }
+
+  return null;
 }

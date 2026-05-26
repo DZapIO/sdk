@@ -2,9 +2,29 @@ import axios from 'axios';
 import TonWeb from 'tonweb';
 import { ChainData } from '../../types';
 import { AddressClassifyResult, AddressKind } from '../../types/address';
-import { isNativeCurrency } from '../tokens';
+import { formatToken, isNativeCurrency } from '../tokens';
 
 const TON_DEFAULT_RPC = 'https://toncenter.com/api/v2';
+const TON_RPC_TIMEOUT_MS = 10_000;
+
+async function fetchTonAddressInformation(baseUrl: string, address: string) {
+  const response = await axios.get(`${baseUrl}/getAddressInformation`, {
+    params: { address },
+    timeout: TON_RPC_TIMEOUT_MS,
+  });
+  if (response.status !== 200 || response.data?.error || response.data?.ok === false) {
+    throw new Error(response.data?.error ?? `getAddressInformation failed with status ${response.status}`);
+  }
+  return response.data?.result;
+}
+
+async function fetchTonJettonData(baseUrl: string, address: string) {
+  const response = await axios.post(`${baseUrl}/runGetMethod`, { address, method: 'get_jetton_data', stack: [] }, { timeout: TON_RPC_TIMEOUT_MS });
+  if (response.status !== 200 || response.data?.error || response.data?.ok === false) {
+    throw new Error(response.data?.error ?? `runGetMethod failed with status ${response.status}`);
+  }
+  return response.data?.result;
+}
 
 export async function classifyTonvmAddress(params: {
   address: string;
@@ -12,7 +32,8 @@ export async function classifyTonvmAddress(params: {
   chainConfig: ChainData;
   rpcUrls?: string[];
 }): Promise<AddressClassifyResult | null> {
-  const { address, chainConfig, rpcUrls } = params;
+  const { chainConfig, rpcUrls } = params;
+  const address = formatToken(params.address);
 
   if (!TonWeb.utils.Address.isValid(address)) {
     return {
@@ -37,18 +58,11 @@ export async function classifyTonvmAddress(params: {
   }
 
   const baseUrl = (rpcUrls?.[0] ?? TON_DEFAULT_RPC).replace(/\/$/, '');
+
   try {
-    const infoResponse = await axios.get(`${baseUrl}/getAddressInformation`, {
-      params: { address },
-    });
+    const [infoResult, jettonResult] = await Promise.allSettled([fetchTonAddressInformation(baseUrl, address), fetchTonJettonData(baseUrl, address)]);
 
-    if (infoResponse.status !== 200 || infoResponse.data?.error || infoResponse.data?.ok === false) {
-      return null;
-    }
-
-    const result = infoResponse.data?.result;
-
-    if (!result?.code) {
+    if (infoResult.status === 'fulfilled' && !infoResult.value?.code) {
       return {
         valid: true,
         kind: AddressKind.WALLET,
@@ -59,39 +73,32 @@ export async function classifyTonvmAddress(params: {
       };
     }
 
-    // Contract detected — check if it is a Jetton master (fungible token)
-    // by calling the mandatory get_jetton_data getter. exit_code 0 = success.
-    try {
-      const jettonResponse = await axios.post(
-        `${baseUrl}/runGetMethod`,
-        { address, method: 'get_jetton_data', stack: [] },
-        { validateStatus: (status) => status < 500 },
-      );
-      if (jettonResponse.data?.result?.exit_code === 0) {
-        return {
-          valid: true,
-          kind: AddressKind.TOKEN,
-          isNative: false,
-          isToken: true,
-          isContract: true,
-          address,
-        };
-      }
-    } catch {
-      // runGetMethod network error — fall through to CONTRACT
+    if (jettonResult.status === 'fulfilled' && jettonResult.value?.exit_code === 0) {
+      return {
+        valid: true,
+        kind: AddressKind.TOKEN,
+        isNative: false,
+        isToken: true,
+        isContract: true,
+        address,
+      };
     }
 
-    return {
-      valid: true,
-      kind: AddressKind.CONTRACT,
-      isNative: false,
-      isToken: false,
-      isContract: true,
-      address,
-    };
+    if (infoResult.status === 'fulfilled' && infoResult.value?.code) {
+      return {
+        valid: true,
+        kind: AddressKind.CONTRACT,
+        isNative: false,
+        isToken: false,
+        isContract: true,
+        address,
+      };
+    }
+
+    return null;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    console.error(`RPC error (TON getAddressInformation): ${message}`);
+    console.error(`RPC error (TON classify): ${message}`);
     return null;
   }
 }
