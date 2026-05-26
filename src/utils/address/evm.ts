@@ -69,30 +69,29 @@ export async function classifyEvmAddress(params: {
         isContract: false,
         address,
       };
-    } else {
-      return {
-        valid: true,
-        kind: AddressKind.CONTRACT,
-        isNative: false,
-        isToken: false,
-        isContract: true,
-        address,
-      };
     }
   }
 
   if (decimalsResult.status === 'fulfilled') {
-    const decimals = decimalsResult.value;
-    if (decimals) {
-      return {
-        valid: true,
-        kind: AddressKind.TOKEN,
-        isNative: false,
-        isToken: true,
-        isContract: true,
-        address,
-      };
-    }
+    return {
+      valid: true,
+      kind: AddressKind.TOKEN,
+      isNative: false,
+      isToken: true,
+      isContract: true,
+      address,
+    };
+  }
+
+  if (bytecodeResult.status === 'fulfilled' && bytecode) {
+    return {
+      valid: true,
+      kind: AddressKind.CONTRACT,
+      isNative: false,
+      isToken: false,
+      isContract: true,
+      address,
+    };
   }
 
   return null;

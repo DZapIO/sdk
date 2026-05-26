@@ -5,9 +5,13 @@ import { AddressClassifyResult, AddressKind } from '../../types/address';
 import { formatToken, isNativeCurrency } from '../tokens';
 
 const TON_DEFAULT_RPC = 'https://toncenter.com/api/v2';
+const TON_RPC_TIMEOUT_MS = 10_000;
 
 async function fetchTonAddressInformation(baseUrl: string, address: string) {
-  const response = await axios.get(`${baseUrl}/getAddressInformation`, { params: { address } });
+  const response = await axios.get(`${baseUrl}/getAddressInformation`, {
+    params: { address },
+    timeout: TON_RPC_TIMEOUT_MS,
+  });
   if (response.status !== 200 || response.data?.error || response.data?.ok === false) {
     throw new Error(response.data?.error ?? `getAddressInformation failed with status ${response.status}`);
   }
@@ -15,11 +19,7 @@ async function fetchTonAddressInformation(baseUrl: string, address: string) {
 }
 
 async function fetchTonJettonData(baseUrl: string, address: string) {
-  const response = await axios.post(
-    `${baseUrl}/runGetMethod`,
-    { address, method: 'get_jetton_data', stack: [] },
-    { validateStatus: (status) => status < 500 },
-  );
+  const response = await axios.post(`${baseUrl}/runGetMethod`, { address, method: 'get_jetton_data', stack: [] }, { timeout: TON_RPC_TIMEOUT_MS });
   if (response.status !== 200 || response.data?.error || response.data?.ok === false) {
     throw new Error(response.data?.error ?? `runGetMethod failed with status ${response.status}`);
   }
