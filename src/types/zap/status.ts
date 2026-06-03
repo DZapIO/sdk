@@ -21,8 +21,11 @@ export type ZapStatusStep = {
 
 export type ZapStatusResponse = {
   status: ZapStatus;
-  steps: ZapStatusStep[];
+  account: string;
   recipient: string;
+  input: ZapStatusAsset[];
+  output: ZapStatusAsset[];
+  steps: ZapStatusStep[];
   timestamp: number;
   completedAt: number;
 };
