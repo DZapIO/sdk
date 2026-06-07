@@ -455,6 +455,7 @@ export type TradeStatusResponse = {
   chainId: number;
   timestamp: number;
   transactions: TxStatusForPair[];
+  type: 'swap' | 'bridge' | 'zap';
 };
 
 export type EIP2612GaslessExecuteTxParams = {
