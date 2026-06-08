@@ -7,7 +7,10 @@ export const BRIDGE_ERRORS = {
   BridgeCallFailed: 'BridgeCallFailed',
 };
 
-export function getErrorName(errorString: string) {
+export function getErrorName(errorString: unknown) {
+  if (typeof errorString !== 'string') {
+    return null;
+  }
   const match = errorString.match(/Error: (\w+)/);
   return match ? match[1] : null;
 }
@@ -42,14 +45,15 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
       status: TxnStatus.rejected,
     };
   }
-  let errMsg = error.shortMessage;
+  const metaMessages: unknown[] = Array.isArray(error?.metaMessages) ? error.metaMessages : [];
+  let errMsg = error?.shortMessage ?? error?.message;
 
-  const errName = getErrorName(error.metaMessages[0]);
+  const errName = getErrorName(metaMessages[0]);
 
   if (errName == BRIDGE_ERRORS.BridgeCallFailed) {
-    let msg = error.metaMessages[1];
+    let msg = metaMessages[1];
     try {
-      msg = getRevertMsg(error.metaMessages[1].match(/\((.*?)\)/)[1]);
+      msg = getRevertMsg((metaMessages[1] as string).match(/\((.*?)\)/)![1]);
     } catch (err) {
       // pass
     }

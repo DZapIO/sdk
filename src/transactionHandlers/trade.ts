@@ -320,13 +320,21 @@ class TradeTxnHandler {
         const gaslessTxResp: {
           status: TxnStatus;
           txnHash: HexString;
+          message?: string;
+          code?: number;
+          error?: unknown;
         } = await executeGaslessTxnData({
           chainId: request.fromChain,
           txId,
           permit,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
-          throw new Error('Failed to execute gasless transaction');
+          return {
+            status: TxnStatus.error,
+            errorMsg: gaslessTxResp.message ?? 'Failed to execute gasless transaction',
+            error: gaslessTxResp.error ?? gaslessTxResp,
+            code: gaslessTxResp.code ?? StatusCodes.ContractExecutionError,
+          };
         }
         return {
           status: TxnStatus.success,
