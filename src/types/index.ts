@@ -6,6 +6,7 @@ import { PermitTypes } from './../constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
 import { PsbtInput, PsbtOutput } from './btc';
 import { GaslessBridgeParams, GaslessSwapParams } from './permit';
+import { ZapUnderlyingToken } from './zap';
 
 export { AllowanceTypes, type AllowanceType } from './permit';
 
@@ -425,6 +426,7 @@ type StatusAsset = {
   symbol?: string;
   decimals?: number;
   logo?: string | undefined;
+  underlyingTokens?: ZapUnderlyingToken[];
 };
 
 export type TransactionInfo = {
