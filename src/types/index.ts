@@ -47,11 +47,62 @@ export type ContractErrorResponse = {
 };
 export type CalculatePointsRequest = {
   srcTokens: { amount: string; address: string; decimals: number }[];
-  destTokens: { amount: string; address: string; decimals: number }[];
+  destTokens: { address: string; decimals: number; chainId: number }[];
   providers: string[];
   chainId: number;
   account: string;
   txType: 'swap' | 'bridge';
+  gasless?: boolean;
+};
+
+export type XPBreakdown = {
+  dailyTxXP: number;
+  dailyCrossChainXP: number;
+  volumeXP: number;
+  weeklyChainBonus: number;
+  monthlyMilestoneBonus: number;
+  tierMultiplier: number;
+  campaignMultiplier: number;
+  streakMilestoneXP: number;
+  firstActionXP: number;
+};
+
+export const chestTypes = {
+  common: 'common',
+  uncommon: 'uncommon',
+  rare: 'rare',
+  epic: 'epic',
+  legendary: 'legendary',
+} as const;
+
+export type ChestType = (typeof chestTypes)[keyof typeof chestTypes];
+
+export const gemTypes = {
+  chest: 'chest',
+  streak: 'streak',
+} as const;
+
+export type GemType = (typeof gemTypes)[keyof typeof gemTypes];
+
+export type StreakMilestoneInfo = {
+  day: number;
+  xp: number;
+  gems: number;
+  chest: ChestType | null;
+};
+
+export type CalculatePointsResponse = {
+  points: number;
+  xpBreakdown: XPBreakdown;
+  streakMilestone: StreakMilestoneInfo | null;
+  gemsToAward: { count: number; type: GemType } | null;
+  chestsToAward: { count: number; type: ChestType }[];
+  firstSwapCompleted: boolean;
+  firstBridgeCompleted: boolean;
+  firstGaslessCompleted: boolean;
+  newChainIds: number[];
+  newMonthlyMilestones: number[];
+  error?: unknown;
 };
 
 export type DisabledPermitTokens = { eip2612: string[] };

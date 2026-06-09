@@ -41,6 +41,7 @@ import {
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
+  CalculatePointsResponse,
   Chain,
   ChainData,
   EvmTxData,
@@ -693,7 +694,7 @@ class DZapClient {
    * console.log('Earned points:', pointsResult.points);
    * ```
    */
-  public async calculatePoints(request: CalculatePointsRequest): Promise<{ points: number }> {
+  public async calculatePoints(request: CalculatePointsRequest): Promise<CalculatePointsResponse> {
     return await fetchCalculatedPoints(request);
   }
 
