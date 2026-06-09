@@ -47,11 +47,45 @@ export type ContractErrorResponse = {
 };
 export type CalculatePointsRequest = {
   srcTokens: { amount: string; address: string; decimals: number }[];
-  destTokens: { amount: string; address: string; decimals: number }[];
+  destTokens: { address: string; decimals: number; chainId: number }[];
   providers: string[];
   chainId: number;
   account: string;
   txType: 'swap' | 'bridge';
+  gasless?: boolean;
+};
+
+export type XPBreakdown = {
+  dailyTxXP: number;
+  dailyCrossChainXP: number;
+  volumeXP: number;
+  weeklyChainBonus: number;
+  monthlyMilestoneBonus: number;
+  tierMultiplier: number;
+  campaignMultiplier: number;
+  streakMilestoneXP: number;
+  firstActionXP: number;
+};
+
+export type StreakMilestoneInfo = {
+  day: number;
+  xp: number;
+  gems: number;
+  chest: string | null;
+};
+
+export type CalculatePointsResponse = {
+  points: number;
+  xpBreakdown: XPBreakdown;
+  streakMilestone: StreakMilestoneInfo | null;
+  gemsToAward: { count: number; type: string } | null;
+  chestsToAward: { count: number; type: string }[];
+  firstSwapCompleted: boolean;
+  firstBridgeCompleted: boolean;
+  firstGaslessCompleted: boolean;
+  newChainIds: number[];
+  newMonthlyMilestones: number[];
+  error?: unknown;
 };
 
 export type DisabledPermitTokens = { eip2612: string[] };
