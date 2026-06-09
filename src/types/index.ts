@@ -71,7 +71,7 @@ export type StreakMilestoneInfo = {
   day: number;
   xp: number;
   gems: number;
-  chest: ChestType | null;
+  chest: string | null;
 };
 
 export type CalculatePointsResponse = {
