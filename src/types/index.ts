@@ -67,23 +67,6 @@ export type XPBreakdown = {
   firstActionXP: number;
 };
 
-export const chestTypes = {
-  common: 'common',
-  uncommon: 'uncommon',
-  rare: 'rare',
-  epic: 'epic',
-  legendary: 'legendary',
-} as const;
-
-export type ChestType = (typeof chestTypes)[keyof typeof chestTypes];
-
-export const gemTypes = {
-  chest: 'chest',
-  streak: 'streak',
-} as const;
-
-export type GemType = (typeof gemTypes)[keyof typeof gemTypes];
-
 export type StreakMilestoneInfo = {
   day: number;
   xp: number;
@@ -95,8 +78,8 @@ export type CalculatePointsResponse = {
   points: number;
   xpBreakdown: XPBreakdown;
   streakMilestone: StreakMilestoneInfo | null;
-  gemsToAward: { count: number; type: GemType } | null;
-  chestsToAward: { count: number; type: ChestType }[];
+  gemsToAward: { count: number; type: string } | null;
+  chestsToAward: { count: number; type: string }[];
   firstSwapCompleted: boolean;
   firstBridgeCompleted: boolean;
   firstGaslessCompleted: boolean;
