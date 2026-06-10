@@ -902,16 +902,16 @@ class DZapClient {
    * });
    * ```
    */
-  public async sign(
+  public async sign<T extends PermitMode = PermitMode>(
     params: Prettify<
       Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless' | 'contractVersion'> & {
         spender?: HexString;
-        permitType?: PermitMode;
+        permitType?: T;
         rpcUrls?: string[];
         service: AvailableDZapServices;
       }
     >,
-  ): Promise<SignPermitResponse> {
+  ): Promise<SignPermitResponse<T>> {
     const { service, chainId } = params;
     const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();
@@ -926,7 +926,7 @@ class DZapClient {
       gasless: false,
       contractVersion: chainConfig[chainId]?.version || ContractVersion.v1,
     } as GasSignatureParams;
-    return await PermitTxnHandler.signPermit(request);
+    return (await PermitTxnHandler.signPermit(request)) as SignPermitResponse<T>;
   }
 
   /**

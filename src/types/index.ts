@@ -289,7 +289,6 @@ export type TradeBuildTxnRequestData = {
   slippage: number;
   additionalInfo?: AdditionalInfo;
   permitData?: string;
-  permit?: TokenPermitData;
 };
 
 export type ParamQuotes = {
@@ -526,28 +525,33 @@ export type GaslessSignatureParams = ((SignatureParamsBase & GaslessBridgeParams
 
 export type SignatureParams = GasSignatureParams | GaslessSignatureParams;
 
-export type SignPermitResponse =
-  | {
-      status: TxnStatus.success;
-      code: StatusCodes;
-      tokens: {
-        address: HexString;
-        permitData?: HexString;
-        amount: string;
-      }[];
-      permitType: PermitMode;
-    }
-  | {
-      status: TxnStatus.success;
-      code: StatusCodes;
-      batchPermitData: HexString;
-      permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
-    }
-  | {
-      status: Exclude<TxnStatus, typeof TxnStatus.success>;
-      code: StatusCodes;
-      permitType: PermitMode;
-    };
+type PermitSingleResponse = {
+  status: TxnStatus.success;
+  code: StatusCodes;
+  tokens: {
+    address: HexString;
+    permitData?: HexString;
+    amount: string;
+  }[];
+  permitType: PermitMode;
+};
+
+type PermitBatchResponse = {
+  status: TxnStatus.success;
+  code: StatusCodes;
+  batchPermitData: HexString;
+  permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
+};
+
+type PermitErrorResponse = {
+  status: Exclude<TxnStatus, typeof TxnStatus.success>;
+  code: StatusCodes;
+  permitType: PermitMode;
+};
+
+export type SignPermitResponse<T extends PermitMode = PermitMode> = T extends typeof PermitTypes.PermitBatchWitnessTransferFrom
+  ? PermitBatchResponse | PermitErrorResponse
+  : PermitSingleResponse | PermitErrorResponse;
 
 export type BroadcastTxData = string;
 
