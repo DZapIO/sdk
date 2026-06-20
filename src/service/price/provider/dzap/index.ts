@@ -7,7 +7,8 @@ export class DZapPriceProvider implements IPriceProvider {
 
   public fetchPrices = async (chainId: number, tokenAddresses: string[]): Promise<Record<string, string | null>> => {
     try {
-      const tokenPrices = await fetchTokenPrice(tokenAddresses, chainId);
+      const tokens = tokenAddresses.join(',');
+      const tokenPrices = await fetchTokenPrice(tokens, chainId);
       return tokenPrices;
     } catch (e) {
       console.error('Failed to fetch token price', e);
