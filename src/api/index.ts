@@ -182,7 +182,7 @@ export const fetchTokenDetails = (
   });
 };
 
-export const fetchTokenPrice = (tokenAddresses: string[], chainId: number) =>
+export const fetchTokenPrice = (tokenAddresses: string, chainId: number) =>
   invoke({
     endpoint: GET_TOKEN_PRICE,
     data: { tokenAddresses, chainId },
