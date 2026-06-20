@@ -184,6 +184,14 @@ class PermitTxnHandler {
   public static async signPermit(signPermitReq: GasSignatureParams): Promise<SignPermitResponse> {
     const { tokens } = signPermitReq;
     if (tokens.length === 0) {
+      if (signPermitReq.permitType === PermitTypes.PermitBatchWitnessTransferFrom) {
+        return {
+          status: TxnStatus.success,
+          code: StatusCodes.Success,
+          batchPermitData: DEFAULT_PERMIT2_DATA as HexString,
+          permitType: PermitTypes.PermitBatchWitnessTransferFrom,
+        };
+      }
       return { status: TxnStatus.success, code: StatusCodes.Success, tokens, permitType: signPermitReq.permitType };
     }
     const oneToMany = tokens.length > 1 && isOneToMany(tokens[0].address, tokens[1].address);
@@ -222,10 +230,17 @@ class PermitTxnHandler {
         permitType: resp.permitType,
       };
     } else {
+      if (signPermitReq.permitType === PermitTypes.PermitBatchWitnessTransferFrom) {
+        return { status: TxnStatus.error, code: StatusCodes.Error, permitType: PermitTypes.PermitBatchWitnessTransferFrom };
+      }
+
       const totalSrcAmount = calcTotalSrcTokenAmount(tokens);
       let firstTokenNonce: bigint | null = null;
 
-      let permitType = PermitTxnHandler.v1PermitSupport({ contractVersion: signPermitReq.contractVersion, service: signPermitReq.service })
+      let permitType: PermitMode = PermitTxnHandler.v1PermitSupport({
+        contractVersion: signPermitReq.contractVersion,
+        service: signPermitReq.service,
+      })
         ? PermitTypes.PermitSingle
         : signPermitReq.permitType;
 

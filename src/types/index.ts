@@ -525,7 +525,7 @@ export type GaslessSignatureParams = ((SignatureParamsBase & GaslessBridgeParams
 
 export type SignatureParams = GasSignatureParams | GaslessSignatureParams;
 
-type PermitSingleResponse = {
+export type PermitSingleResponse = {
   status: TxnStatus.success;
   code: StatusCodes;
   tokens: {
@@ -536,22 +536,40 @@ type PermitSingleResponse = {
   permitType: PermitMode;
 };
 
-type PermitBatchResponse = {
+export type PermitBatchResponse = {
   status: TxnStatus.success;
   code: StatusCodes;
   batchPermitData: HexString;
   permitType: typeof PermitTypes.PermitBatchWitnessTransferFrom;
 };
 
-type PermitErrorResponse = {
+export type PermitErrorResponse = {
   status: Exclude<TxnStatus, typeof TxnStatus.success>;
   code: StatusCodes;
   permitType: PermitMode;
 };
 
-export type SignPermitResponse<T extends PermitMode = PermitMode> = T extends typeof PermitTypes.PermitBatchWitnessTransferFrom
-  ? PermitBatchResponse | PermitErrorResponse
-  : PermitSingleResponse | PermitErrorResponse;
+/**
+ * Response of `DZapClient.sign` / `PermitTxnHandler.signPermit`, narrowed by the **requested**
+ * permit mode `T`:
+ *
+ * - `AutoPermit` (the default): the effective mode is resolved at runtime from the contract
+ *   version, service and token set, so the response may be single, batch or error —
+ *   {@link PermitSingleResponse} | {@link PermitBatchResponse} | {@link PermitErrorResponse}.
+ *   Use `'batchPermitData' in response` to distinguish a batch response from a single one.
+ * - `PermitBatchWitnessTransferFrom`: {@link PermitBatchResponse} | {@link PermitErrorResponse}.
+ *   When batch cannot be fulfilled (e.g. a v1 contract or batch permits disabled) the call
+ *   resolves to {@link PermitErrorResponse} rather than silently downgrading to a single permit,
+ *   so the `batchPermitData` field is guaranteed present on success.
+ * - Any other (single) mode: {@link PermitSingleResponse} | {@link PermitErrorResponse}.
+ *
+ * Always check `status === TxnStatus.success` before accessing mode-specific fields.
+ */
+export type SignPermitResponse<T extends PermitMode = PermitMode> = T extends typeof PermitTypes.AutoPermit
+  ? PermitSingleResponse | PermitBatchResponse | PermitErrorResponse
+  : T extends typeof PermitTypes.PermitBatchWitnessTransferFrom
+    ? PermitBatchResponse | PermitErrorResponse
+    : PermitSingleResponse | PermitErrorResponse;
 
 export type BroadcastTxData = string;
 
