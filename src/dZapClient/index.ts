@@ -926,7 +926,7 @@ class DZapClient {
       gasless: false,
       contractVersion: chainConfig[chainId]?.version || ContractVersion.v1,
     } as GasSignatureParams;
-    return (await PermitTxnHandler.signPermit(request)) as SignPermitResponse<T>;
+    return await PermitTxnHandler.signPermit<T>(request);
   }
 
   /**

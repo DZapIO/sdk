@@ -7,6 +7,7 @@ export class DZapPriceProvider implements IPriceProvider {
 
   public fetchPrices = async (chainId: number, tokenAddresses: string[]): Promise<Record<string, string | null>> => {
     try {
+      if (tokenAddresses.length === 0) return {};
       const tokens = tokenAddresses.join(',');
       const tokenPrices = await fetchTokenPrice(tokens, chainId);
       return tokenPrices;
