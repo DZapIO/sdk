@@ -883,11 +883,19 @@ class DZapClient {
    * @param params.permitType - Optional permit type (defaults to AutoPermit for optimal compatibility)
    * @param params.signatureCallback - Optional callback function for each completed signature
    * @param params.spender - Optional custom spender address (if not using default DZap contract)
-   * @returns Promise resolving to permit signatures and related data
+   * @returns Promise resolving to a {@link SignPermitResponse}, narrowed by the requested `permitType`:
+   *   - `AutoPermit` (default): `PermitSingleResponse | PermitBatchResponse | PermitErrorResponse` — the
+   *     effective mode is chosen at runtime, so narrow with `'batchPermitData' in result`.
+   *   - `PermitBatchWitnessTransferFrom`: `PermitBatchResponse | PermitErrorResponse`. If batch cannot be
+   *     fulfilled (e.g. a v1 contract or batch permits disabled) the result is an error rather than a
+   *     silent single-permit downgrade, so `batchPermitData` is guaranteed present on success.
+   *   - Any other (single) mode: `PermitSingleResponse | PermitErrorResponse`.
+   *   Always check `status === TxnStatus.success` before reading mode-specific fields.
    *
    * @example
    * ```typescript
-   * const permitResult = await client.sign({
+   * // Explicit batch request -> result is typed PermitBatchResponse | PermitErrorResponse
+   * const result = await client.sign({
    *   chainId: 1,
    *   sender: '0x...',
    *   tokens: [
@@ -895,23 +903,26 @@ class DZapClient {
    *   ],
    *   service: 'swap',
    *   signer: walletClient,
-   *   permitType: PermitTypes.Permit2,
-   *   signatureCallback: async ({ permitData, srcToken }) => {
-   *     console.log(`Signed permit for ${srcToken}:`, permitData);
-   *   }
+   *   permitType: PermitTypes.PermitBatchWitnessTransferFrom,
    * });
+   *
+   * if (result.status === TxnStatus.success) {
+   *   console.log('batch permit:', result.batchPermitData);
+   * } else {
+   *   console.log('batch permit could not be produced:', result.code);
+   * }
    * ```
    */
-  public async sign(
+  public async sign<T extends PermitMode = PermitMode>(
     params: Prettify<
       Omit<GasSignatureParams, 'spender' | 'permitType' | 'rpcUrls' | 'gasless' | 'contractVersion'> & {
         spender?: HexString;
-        permitType?: PermitMode;
+        permitType?: T;
         rpcUrls?: string[];
         service: AvailableDZapServices;
       }
     >,
-  ): Promise<SignPermitResponse> {
+  ): Promise<SignPermitResponse<T>> {
     const { service, chainId } = params;
     const spenderAddress = params?.spender || ((await this.getDZapContractAddress({ chainId, service })) as HexString);
     const chainConfig = await DZapClient.getChainConfig();
