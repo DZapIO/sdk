@@ -1,6 +1,7 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
-import { broadcastTradeTx, executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
+import { executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
+import { viemChainsById } from '../chains';
 import { exclusiveChainIds } from '../constants/chains';
 import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
@@ -13,15 +14,13 @@ import {
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
 } from '../types';
-import { CustomTypedDataParams } from '../types/permit';
 import { isTypeSigner } from '../utils';
-import { viemChainsById } from '../chains';
 import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
+import { HyperLiquidTxHandler } from './hyperliquid';
 import PermitTxnHandler from './permit';
-import { signCustomTypedData } from '../utils/signIntent/custom';
 
 class TradeTxnHandler {
   private static sendTransaction = async (
@@ -118,71 +117,6 @@ class TradeTxnHandler {
     };
   };
 
-  private static sendHyperLiquidTransaction = async (
-    signer: Signer | WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
-    txnData: TradeBuildTxnResponse,
-    chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-  ) => {
-    let txnDetails;
-
-    if (chainId === exclusiveChainIds.hyperLiquid) {
-      const providerData = additionalInfo ? Object.values(additionalInfo)[0] : null;
-      const typedData =
-        providerData && 'typedData' in (providerData as { typedData: CustomTypedDataParams })
-          ? (providerData as { typedData: CustomTypedDataParams }).typedData
-          : null;
-
-      if (!additionalInfo || !typedData) {
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Missing additional info for HyperLiquid transaction',
-          code: StatusCodes.Error,
-        };
-      }
-
-      const resp = await signCustomTypedData({
-        signer,
-        account: txnParams.from as HexString,
-        domain: typedData.domain,
-        types: typedData.types,
-        message: typedData.message,
-        primaryType: typedData.primaryType,
-      });
-
-      if (resp.status !== TxnStatus.success) {
-        throw new Error('Failed to sign transaction');
-      }
-      txnDetails = resp.data?.signature;
-    } else {
-      const resp = await this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-      if (resp.status !== TxnStatus.success) {
-        throw new Error('Failed to sign transaction');
-      }
-      txnDetails = resp.txnHash;
-    }
-
-    const txResp = await broadcastTradeTx({
-      chainId,
-      txData: txnDetails as HexString,
-      txId: txnData.txId,
-    });
-
-    if (txResp.status !== TxnStatus.success) {
-      throw new Error('Failed to broadcast or save transaction');
-    }
-
-    return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      txnHash: txResp.txnHash as HexString,
-      additionalInfo,
-      updatedQuotes,
-    };
-  };
-
   public static buildAndSendTransaction = async ({
     request,
     signer,
@@ -212,8 +146,8 @@ class TradeTxnHandler {
       const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
-      if ([chainId, ...request.data.map((e) => e.toChain)].some((chain) => chain === exclusiveChainIds.hyperLiquid)) {
-        return this.sendHyperLiquidTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
+      if (chainId === exclusiveChainIds.hyperLiquid) {
+        return HyperLiquidTxHandler.sendTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
       }
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
