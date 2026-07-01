@@ -16,7 +16,7 @@ export const exclusiveChainIds = {
   abstract: 2741,
   lens: 232,
   citreaTestnet: 5115,
-  hyperLiquid: 998,
+  hyperLiquid: 1337,
   citrea: 4114,
   pushTestnet: 42101,
   astralisTestnet: 71261,
