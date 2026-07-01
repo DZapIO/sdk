@@ -8,7 +8,7 @@ import { signCustomTypedData } from '../utils/signIntent/custom';
 export class HyperLiquidTxHandler {
   static sendTransaction = async (
     signer: Signer | WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
+    account: HexString,
     txnData: TradeBuildTxnResponse,
     chainId: number,
     additionalInfo: AdditionalInfo | undefined,
@@ -27,24 +27,27 @@ export class HyperLiquidTxHandler {
     const txData: HyperLiquidBroadcastTxData[] = [];
     for (let i = 0; i < signTypedData.length; i++) {
       const typedData = signTypedData[i];
-      const resp = await signCustomTypedData({
-        signer,
-        account: txnParams.from as HexString,
-        domain: typedData.domain,
-        types: typedData.types,
-        message: typedData.message,
-        primaryType: typedData.primaryType,
-      });
-      if (resp.status !== TxnStatus.success) {
+      const [resp, signatureChainId] = await Promise.all([
+        signCustomTypedData({
+          signer,
+          account,
+          domain: typedData.domain,
+          types: typedData.types,
+          message: typedData.message,
+          primaryType: typedData.primaryType,
+        }),
+        signer.getChainId(),
+      ]);
+      if (resp.status !== TxnStatus.success || !resp.data?.signature) {
         throw new Error('Failed to sign transaction');
       }
 
       txData.push({
-        primaryType: typedData.primaryType as string,
+        primaryType: typedData.primaryType,
         message: typedData.message,
-        signature: resp.data?.signature as HexString,
-        account: txnParams.from as HexString,
-        signatureChainId: await signer.getChainId(),
+        signature: resp.data.signature,
+        account,
+        signatureChainId,
       });
     }
 

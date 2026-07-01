@@ -147,7 +147,14 @@ class TradeTxnHandler {
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
       if (chainId === exclusiveChainIds.hyperLiquid) {
-        return HyperLiquidTxHandler.sendTransaction(signer, txnParams, buildTxnResponseData, chainId, additionalInfo, updatedQuotes);
+        return HyperLiquidTxHandler.sendTransaction(
+          signer,
+          txnParams.from as HexString,
+          buildTxnResponseData,
+          chainId,
+          additionalInfo,
+          updatedQuotes,
+        );
       }
       // Handle ethers signer (no batching support)
       if (batchTransaction && !isTypeSigner(signer)) {
