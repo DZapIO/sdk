@@ -329,7 +329,18 @@ export type BtclnTxData = {
   paymentExpiry: number;
 };
 
-export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData;
+export type HyperLiquidSignTypedData<M extends Record<string, unknown> = Record<string, unknown>> = {
+  domain: TypedDataDomain;
+  types: Record<string, { name: string; type: string }[]>;
+  primaryType: string;
+  message: M;
+};
+
+export type HyperLiquidTxData = {
+  signTypedData: HyperLiquidSignTypedData[];
+};
+
+export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData | HyperLiquidTxData;
 
 export type TxRequestData<T> = {
   status: typeof STATUS.success;
@@ -571,7 +582,15 @@ export type SignPermitResponse<T extends PermitMode = PermitMode> = T extends ty
     ? PermitBatchResponse | PermitErrorResponse
     : PermitSingleResponse | PermitErrorResponse;
 
-export type BroadcastTxData = string;
+export type HyperLiquidBroadcastTxData = {
+  message: Record<string, unknown>;
+  primaryType: string;
+  signatureChainId: number;
+  signature: HexString;
+  account: HexString;
+};
+
+export type BroadcastTxData = string | HyperLiquidBroadcastTxData[];
 
 export type BroadcastTxParams = {
   txId: string;
