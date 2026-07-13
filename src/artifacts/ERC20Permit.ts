@@ -86,6 +86,32 @@ export const erc20PermitAbi = [
   },
   {
     inputs: [],
+    name: 'getDomainSeperator',
+    outputs: [
+      {
+        internalType: 'bytes32',
+        name: '',
+        type: 'bytes32',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'ERC712_VERSION',
+    outputs: [
+      {
+        internalType: 'string',
+        name: '',
+        type: 'string',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
     name: 'PERMIT_TYPEHASH',
     outputs: [
       {
@@ -303,6 +329,25 @@ export const erc20PermitAbi = [
       },
     ],
     name: 'nonces',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'owner',
+        type: 'address',
+      },
+    ],
+    name: 'getNonce',
     outputs: [
       {
         internalType: 'uint256',

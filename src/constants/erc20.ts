@@ -17,6 +17,9 @@ export const erc20Functions = {
   version: 'version',
   nonces: 'nonces',
   domainSeparator: 'DOMAIN_SEPARATOR',
+  getDomainSeparator: 'getDomainSeperator',
+  getNonce: 'getNonce',
+  erc712Version: 'ERC712_VERSION',
 } as const;
 
 export const eip2612PermitFunctions = {
