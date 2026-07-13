@@ -51,13 +51,29 @@ export const checkEIP2612PermitSupport = async ({
     {
       address: address as HexString,
       abi: erc20PermitAbi,
+      functionName: erc20Functions.getDomainSeparator,
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
       functionName: erc20Functions.nonces,
       args: [owner],
     },
     {
       address: address as HexString,
       abi: erc20PermitAbi,
+      functionName: erc20Functions.getNonce,
+      args: [owner],
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
       functionName: erc20Functions.version,
+    },
+    {
+      address: address as HexString,
+      abi: erc20PermitAbi,
+      functionName: erc20Functions.erc712Version,
     },
     {
       address: address as HexString,
@@ -83,15 +99,41 @@ export const checkEIP2612PermitSupport = async ({
   }
 
   const results = multicallResult.data as Array<{ status: string; result: unknown }>;
-  const [domainSeparatorResult, nonceResult, versionResult, nameResult, permitTypeHashResult] = results;
+  const [
+    domainSeparatorResult,
+    eip712DomainSeparatorResult,
+    nonceResult,
+    eip712NonceResult,
+    versionResult,
+    eip712VersionResult,
+    nameResult,
+    permitTypeHashResult,
+  ] = results;
 
-  if (domainSeparatorResult.status !== TxnStatus.success || nonceResult.status !== TxnStatus.success || nameResult.status !== TxnStatus.success) {
+  const domainSeparator =
+    domainSeparatorResult?.status === TxnStatus.success
+      ? (domainSeparatorResult.result as HexString)
+      : eip712DomainSeparatorResult?.status === TxnStatus.success
+        ? (eip712DomainSeparatorResult.result as HexString)
+        : null;
+  const nonce =
+    nonceResult?.status === TxnStatus.success
+      ? (nonceResult.result as bigint)
+      : eip712NonceResult?.status === TxnStatus.success
+        ? (eip712NonceResult.result as bigint)
+        : null;
+  const version =
+    versionResult?.status === TxnStatus.success
+      ? (versionResult.result as string)
+      : eip712VersionResult?.status === TxnStatus.success
+        ? (eip712VersionResult.result as string)
+        : DEFAULT_PERMIT_VERSION;
+
+  if (!domainSeparator || !nonce || nameResult.status !== TxnStatus.success) {
     return { supportsPermit: false };
   }
 
   const name = nameResult.result as string;
-  const nonce = nonceResult.result as bigint;
-  const version = versionResult.status === TxnStatus.success ? (versionResult.result as string) : DEFAULT_PERMIT_VERSION;
 
   if (
     permitTypeHashResult.status === TxnStatus.success &&
