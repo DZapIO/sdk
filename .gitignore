@@ -11,11 +11,14 @@ electron-builder.yml
 yalc.lock
 yarn.lock
 # testing
-/coverage/
+coverage/
+.nyc_output/
+*.lcov
+jest.results.json
+.jest-cache/
 src/types/contracts/
 src/types/gateway/
 tsconfig.tsbuildinfo
 public/**/*.js
-jest.results.json
 *.#*
 bun.lockb

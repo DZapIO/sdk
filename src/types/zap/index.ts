@@ -1,9 +1,30 @@
 import { HexString, ProviderDetails } from '../';
 import { ZapPathAsset } from './path';
 
-export type ZapProviders = Record<string, ProviderDetails>;
+export type ZapApiResponse<T> = {
+  status: 'success';
+  data: T;
+};
 
-export type ZapChains = { [key: string]: { name: string; supportedProviders: string[] } };
+export type ZapProviderDetails = ProviderDetails & {
+  tags?: string[];
+  description?: string;
+  websiteUrl?: string;
+  supportedActions?: string[];
+  supportedChainIds?: number[];
+};
+
+export type ZapProviders = Record<string, ZapProviderDetails>;
+
+export type ZapChainConfig = {
+  name: string;
+  supportedProviders: string[];
+  contracts?: {
+    zap?: string;
+  };
+};
+
+export type ZapChains = { [key: string]: ZapChainConfig };
 
 export type ZapFee = {
   amount: string;
@@ -24,6 +45,7 @@ export type ZapUnderlyingToken = {
 export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {
   amount: string;
   amountUSD: string;
+  price?: string;
 };
 
 export * from './build';

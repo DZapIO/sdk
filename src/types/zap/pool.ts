@@ -27,16 +27,32 @@ export type ZapPool = {
   name: string;
   provider: string;
   underlyingAssets: ZapUnderlyingToken[];
-  tvl: string;
+  tvl: number | string;
   apr: number;
+  apy?: number;
   metadata?: unknown;
   symbol: string;
   decimals: number;
+  metricsRefresh?: {
+    lastRefreshedAt: number;
+    nextRefreshAt: number;
+  };
 };
 
 export type ZapPoolDetails = {
   address: string;
-  slot0: {
+  chainId: number;
+  name: string;
+  symbol: string;
+  decimals: number;
+  floorLevel?: number;
+  logo?: string;
+  platformId?: string;
+  underlyingTokens?: ZapUnderlyingToken[];
+  metadata?: unknown;
+  apr?: number;
+  apy?: number;
+  slot0?: {
     sqrtPriceX96: string;
     tick: number;
     tickSpacing: number;

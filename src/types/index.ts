@@ -24,10 +24,12 @@ export type NativeTokenInfo = {
   symbol: string;
   decimals: number;
   name: string;
-  balance: string;
-  price?: string;
-  logo: string;
+  balance?: string;
+  price?: string | number | null;
+  logo?: string;
   isErc20?: boolean;
+  chainId?: number;
+  coinKey?: string;
 };
 
 export const contractErrorActions = {
@@ -57,22 +59,22 @@ export type CalculatePointsRequest = {
 export type DisabledPermitTokens = { eip2612: string[] };
 
 export type Chain = {
-  coinKey: string;
+  coinKey?: string;
   chainId: number;
   chainType: string;
   name: string;
-  coin: string;
-  dcaContract: string;
-  swapBridgeContract: string;
-  logo: string;
+  coin?: string;
+  dcaContract?: string;
+  swapBridgeContract?: string;
+  logo?: string;
   tokenlistUrl?: string;
   multicallAddress?: HexString;
-  blockExplorerUrl: string;
-  nativeToken: NativeTokenInfo;
-  rpcProviders: ApiRpcResponse[];
-  pricingAvailable: boolean;
-  balanceAvailable: boolean;
-  supportedAs: {
+  blockExplorerUrl?: string;
+  nativeToken?: NativeTokenInfo;
+  rpcProviders?: ApiRpcResponse[];
+  pricingAvailable?: boolean;
+  balanceAvailable?: boolean;
+  supportedAs?: {
     source: boolean;
     destination: boolean;
   };
@@ -89,17 +91,25 @@ export type Chain = {
     chainKey: string;
     nativeTokenKey: string;
   };
-  disableMultiTxn: boolean;
+  disableMultiTxn?: boolean;
   isEnabled: boolean;
-  mainnet: boolean;
+  mainnet?: boolean;
   tags?: Tag[];
   version?: ContractVersion;
+  tokens?: {
+    native: { symbol: string; address: string; decimals: number };
+    wnative: { symbol: string; address: string; decimals: number };
+  };
 };
+
+export type SupportedChainsResponse = Chain[];
+
+export type ApiRpcKeyType = 'ALCHEMY_KEY' | 'BLASTAPI_KEY' | 'ANKR_KEY' | 'ZAN_KEY' | 'DRPC_KEY';
 
 export type ApiRpcResponse = {
   url: string;
   keyRequired: boolean;
-  keyType?: 'ALCHEMY_KEY' | 'BLASTAPI_KEY';
+  keyType?: ApiRpcKeyType;
 };
 
 export type ProviderDetails = {
@@ -117,6 +127,7 @@ export type FeeDetails = {
   amount: string;
   amountUSD: string;
   included: boolean;
+  units?: string;
 };
 
 export type Fee = {
@@ -162,7 +173,9 @@ export type TradeQuotesRequestData = {
 export type TradeStep = {
   type: string;
   exchange: {
-    logo: string;
+    id?: string;
+    icon?: string;
+    logo?: string;
     name: string;
   };
 };
@@ -245,9 +258,14 @@ export type TokenPermitData = {
 };
 
 export type TokenInfo = Prettify<
-  Omit<NativeTokenInfo, 'isErc20'> & {
+  Omit<NativeTokenInfo, 'isErc20' | 'price'> & {
     chainId: number;
+    price?: string | number | null;
     balanceInUsd?: number | null;
+    coinKey?: string;
+    verified?: boolean;
+    balanceSlot?: number;
+    allowanceSlot?: number;
     isDisabledOnSwapBridge?: {
       source: boolean;
       destination: boolean;
@@ -262,6 +280,12 @@ export type TokenInfo = Prettify<
 
 export type TokenResponse = {
   [key: string]: TokenInfo;
+};
+
+export type TokenPriceResponse = Record<string, string>;
+
+export type BalancesResponse = {
+  result: TokenResponse;
 };
 
 export type TradeBuildTxnRequest = {
@@ -463,6 +487,7 @@ export type TxStatusForPair = {
 export type TradeStatusResponse = {
   status: StatusResponse;
   gasless: boolean;
+  private?: boolean;
   txHash: string;
   chainId: number;
   timestamp: number;

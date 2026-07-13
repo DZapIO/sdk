@@ -52,7 +52,10 @@ export class CoingeckoPriceProvider implements IPriceProvider {
         addressesWithoutNativeToken.length !== tokenAddresses.length ? this.fetchNativePrice(chainId, chainConfig) : undefined,
       ]);
       if (chainConfig[chainId].isEnabled && nativePrice) {
-        erc20Prices[chainConfig[chainId].nativeToken.contract] = nativePrice.toString();
+        const nativeContract = chainConfig[chainId].nativeToken?.contract;
+        if (nativeContract) {
+          erc20Prices[nativeContract] = nativePrice.toString();
+        }
       }
 
       return erc20Prices;
