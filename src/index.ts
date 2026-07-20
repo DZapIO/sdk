@@ -47,6 +47,8 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
   TradeStep,
+  UnavailableRoute,
+  UnavailableRoutes,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
@@ -121,6 +123,8 @@ export {
   TradeStatusResponse,
   TradeStep,
   TxnStatus,
+  UnavailableRoute,
+  UnavailableRoutes,
   ZapIntegratorConfig,
   ZapStatusResponse,
   type AllowanceType,

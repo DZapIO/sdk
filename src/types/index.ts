@@ -206,6 +206,16 @@ export type TradeQuotesByProviderId = {
   [providerAndBridge: string]: TradeQuote;
 };
 
+export type UnavailableRoute = {
+  errorType: string;
+  message: string;
+  details?: Record<string, unknown>;
+};
+
+export type UnavailableRoutes = {
+  [providerAndBridge: string]: UnavailableRoute;
+};
+
 export type TradeQuotesResponse = {
   [pair: string]: {
     status?: string;
@@ -215,6 +225,7 @@ export type TradeQuotesResponse = {
     bestReturnSource: string;
     questSource?: string;
     quoteRates?: TradeQuotesByProviderId;
+    unavailableRoutes?: UnavailableRoutes;
     tokensWithoutPrice: Record<number, string[]>;
   };
 };
