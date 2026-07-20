@@ -203,7 +203,7 @@ export type TradeQuote = {
 };
 
 export type TradeQuotesByProviderId = {
-  [providerAndBridge: string]: TradeQuote;
+  [provider: string]: TradeQuote;
 };
 
 export type UnavailableRoute = {
@@ -213,7 +213,7 @@ export type UnavailableRoute = {
 };
 
 export type UnavailableRoutes = {
-  [providerAndBridge: string]: UnavailableRoute;
+  [provider: string]: UnavailableRoute;
 };
 
 export type TradeQuotesResponse = {
