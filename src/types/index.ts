@@ -203,7 +203,17 @@ export type TradeQuote = {
 };
 
 export type TradeQuotesByProviderId = {
-  [providerAndBridge: string]: TradeQuote;
+  [provider: string]: TradeQuote;
+};
+
+export type UnavailableRoute = {
+  errorType: string;
+  message: string;
+  details?: Record<string, unknown>;
+};
+
+export type UnavailableRoutes = {
+  [provider: string]: UnavailableRoute;
 };
 
 export type TradeQuotesResponse = {
@@ -215,6 +225,7 @@ export type TradeQuotesResponse = {
     bestReturnSource: string;
     questSource?: string;
     quoteRates?: TradeQuotesByProviderId;
+    unavailableRoutes?: UnavailableRoutes;
     tokensWithoutPrice: Record<number, string[]>;
   };
 };
