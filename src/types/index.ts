@@ -206,14 +206,44 @@ export type TradeQuotesByProviderId = {
   [provider: string]: TradeQuote;
 };
 
-export type UnavailableRoute = {
-  errorType: string;
-  message: string;
-  details?: Record<string, unknown>;
+export type ProtocolErrorType = 'AMOUNT' | 'ROUTE' | 'SLIPPAGE' | 'UNKNOWN';
+
+export type ProtocolRouteReason = 'NO_ROUTE' | 'UNSUPPORTED_PAIR' | 'INSUFFICIENT_LIQUIDITY' | 'UNSUPPORTED_TOKEN' | 'UNSUPPORTED_CHAIN';
+
+export type ProtocolAmountReason = 'AMOUNT_TOO_LOW' | 'AMOUNT_TOO_HIGH' | 'AMOUNT_OUT_OF_RANGE';
+
+export type ProtocolAmountErrorDetails = {
+  providerMessage: string;
+  minAmount?: string;
+  maxAmount?: string;
+  token?: string;
+  decimals?: number;
 };
 
+export type ProtocolRouteErrorDetails = {
+  providerMessage: string;
+  reason: ProtocolRouteReason;
+};
+
+export type ProtocolSlippageErrorDetails = {
+  providerMessage: string;
+  recommendedSlippage?: string;
+  receivedAmount?: string;
+  expectedAmount?: string;
+};
+
+export type ProtocolUnknownErrorDetails = {
+  providerMessage?: string;
+};
+
+export type ProtocolErrorInfo =
+  | { errorType: 'AMOUNT'; message: ProtocolAmountReason; details: ProtocolAmountErrorDetails }
+  | { errorType: 'ROUTE'; message: ProtocolRouteReason; details: ProtocolRouteErrorDetails }
+  | { errorType: 'SLIPPAGE'; message: string; details: ProtocolSlippageErrorDetails }
+  | { errorType: 'UNKNOWN'; message: string; details: ProtocolUnknownErrorDetails };
+
 export type UnavailableRoutes = {
-  [provider: string]: UnavailableRoute;
+  [provider: string]: ProtocolErrorInfo;
 };
 
 export type TradeQuotesResponse = {
