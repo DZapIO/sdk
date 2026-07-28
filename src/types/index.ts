@@ -451,6 +451,8 @@ export type GaslessBaseParamsResponse = {
   };
 };
 
+export type GaslessTradeBuildTxnResponse = GaslessBaseParamsResponse;
+
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
 
 export type DZapAvailableAbis = (typeof DZapAbis)[keyof typeof DZapAbis];
