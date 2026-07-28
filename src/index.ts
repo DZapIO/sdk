@@ -1,4 +1,4 @@
-import { OtherAbis, QuoteFilters, Services, STATUS } from './constants';
+import { OtherAbis, QuoteFilters, Services, STATUS, STATUS_RESPONSE } from './constants';
 import { ApprovalModes } from './constants/approval';
 import { erc20Functions } from './constants/erc20';
 import { PermitTypes } from './constants/permit';
@@ -21,6 +21,7 @@ import {
   EvmTxData,
   Fee,
   FeeDetails,
+  GaslessTokensByChain,
   GaslessTradeBuildTxnResponse,
   HexString,
   HyperLiquidTxData,
@@ -92,6 +93,7 @@ export {
   Fee,
   FeeDetails,
   formatToken,
+  GaslessTokensByChain,
   GaslessTradeBuildTxnResponse,
   getTokensPairKey,
   HexString,
@@ -111,6 +113,7 @@ export {
   SignPermitResponse,
   SinglePermitCallbackParams,
   STATUS,
+  STATUS_RESPONSE,
   StatusCodes,
   SvmTxData,
   SwapInfo,

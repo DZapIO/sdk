@@ -2,6 +2,7 @@ import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
 import { viemChainsById } from '../chains';
+import { DEFAULT_PERMIT_DATA } from '../constants';
 import { exclusiveChainIds } from '../constants/chains';
 import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
@@ -248,7 +249,7 @@ class TradeTxnHandler {
                   return {
                     token: req.srcToken as HexString,
                     amount: req.amount,
-                    permit: req.permitData as HexString,
+                    permit: (req.permitData as HexString) || DEFAULT_PERMIT_DATA,
                   };
                 }),
                 gaslessIntentNonce: resp.data.nonce?.toString(),

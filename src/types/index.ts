@@ -298,11 +298,16 @@ export type TokenInfo = Prettify<
       destination: boolean;
     };
     permit?: TokenPermitData;
+    gasless?: boolean;
   }
 >;
 
 export type TokenResponse = {
   [key: string]: TokenInfo;
+};
+
+export type GaslessTokensByChain = {
+  [chainId: number]: TokenResponse;
 };
 
 export type TradeBuildTxnRequest = {
@@ -434,13 +439,16 @@ type SwapGaslessTxData = {
   value: string;
 };
 
-export type GaslessTradeBuildTxnResponse = {
+export type GaslessBaseParamsResponse = {
   status: 'success';
   txId: HexString;
   transaction: BridgeGaslessTxData | SwapGaslessTxData;
   quotes: Record<string, ParamQuotes>;
   gasless: true;
   onlySwapData: false;
+  fees: {
+    executorFee: FeeDetails[];
+  };
 };
 
 export type AvailableDZapServices = (typeof Services)[keyof typeof Services];
