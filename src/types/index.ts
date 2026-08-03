@@ -352,8 +352,12 @@ export type EvmTxData = {
 export type SvmTxData = {
   from: string;
   data: string;
+  broadcastViaProvider?: boolean;
   blockhash?: string;
   lastValidBlockHeight?: number;
+  // Present when isJitoTx: the full ordered Jito bundle the client signs and submits as an array. `data` is transactions[0].
+  transactions?: string[];
+  isJitoTx?: boolean;
 };
 
 export type BtcTxData = {
@@ -403,6 +407,12 @@ export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
   to?: string;
   value?: string;
   gasLimit?: string;
+  broadcastViaProvider?: boolean;
+  // SVM: present as a Jito bundle when isJitoTx — sign every entry and submit the array to /broadcast.
+  isJitoTx?: boolean;
+  transactions?: string[];
+  // SVM same-chain multi-pair: pairs that had no compatible provider and were dropped from this build.
+  droppedPairs?: { pair: string; reason: string }[];
   svmTxData?: {
     blockhash: string;
     lastValidBlockHeight: number;
@@ -631,7 +641,8 @@ export type HyperLiquidBroadcastTxData = {
   account: HexString;
 };
 
-export type BroadcastTxData = string | HyperLiquidBroadcastTxData[];
+// string: single tx (EVM/SVM). string[]: a signed SVM Jito bundle submitted at once. HyperLiquidBroadcastTxData[]: hyperliquid.
+export type BroadcastTxData = string | string[] | HyperLiquidBroadcastTxData[];
 
 export type BroadcastTxParams = {
   txId: string;
