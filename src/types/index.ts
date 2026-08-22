@@ -235,9 +235,7 @@ export type Token = {
 export type TokenPermitData = {
   eip2612: {
     supported: boolean;
-    data?: {
-      domain?: TypedDataDomain;
-    };
+    domain?: TypedDataDomain;
   };
   permit2: {
     supported: boolean;
