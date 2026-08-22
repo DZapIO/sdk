@@ -33,6 +33,7 @@ pnpm add @dzapio/sdk
   - [Chain Utilities](#chain-utilities)
   - [Approval and Signature Utilities](#approval-and-signature-utilities)
 - [Token Approval Mechanism](#token-approval-mechanism)
+- [Gasless Execution](#gasless-execution)
 - [Types](#types)
 - [License](#license)
 
@@ -218,6 +219,27 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Description:**
   Returns the latest prices for the specified tokens.
 
+#### `getAllGaslessTokens(): Promise<GaslessTokensByChain>`
+
+- **Purpose:** Fetches every token that supports gasless execution, on every chain where gasless is enabled.
+- **Output:**
+  - `Promise<GaslessTokensByChain>` (`Record<chainId, Record<tokenAddress, TokenInfo>>`)
+- **Description:**
+  Use this to decide whether a trade can be executed gaslessly before requesting a quote. Each token's
+  `permit` field indicates which authorization modes it supports. Addresses are checksummed. See
+  [Gasless Execution](#gasless-execution).
+
+#### `getGaslessTokens(chainId: number): Promise<TokenResponse>`
+
+- **Purpose:** Fetches the tokens that support gasless execution on a single chain.
+- **Input:**
+  - `chainId`: number
+- **Output:**
+  - `Promise<TokenResponse>` (`Record<tokenAddress, TokenInfo>`, empty if the chain has none)
+- **Description:**
+  Single-chain variant of `getAllGaslessTokens`. Normalize the address you look up (e.g. with
+  `formatToken`) before indexing, since keys are checksummed.
+
 ---
 
 ### Chain Utilities
@@ -338,6 +360,55 @@ Automatically chooses between EIP2612 and Permit2 based on token support.
 3. **Approve if Needed**: Use `approve()` for on-chain approvals
 4. **Sign if Preferred**: Use `sign()` for gas-less permit signatures
 5. **Execute Transaction**: Pass permit data to transaction methods
+
+---
+
+## Gasless Execution
+
+Gasless lets a user swap or bridge with **zero native balance**: they sign an authorization
+off-chain, DZap submits the transaction and pays gas, and the gas cost is deducted from the trade
+output in the source token.
+
+```typescript
+import { DZapClient, PermitTypes, Services, TxnStatus } from '@dzapio/sdk';
+
+const dZap = DZapClient.getInstance();
+
+// 1. Is this token gasless on this chain?
+const gaslessTokens = await dZap.getGaslessTokens(42161);
+if (!gaslessTokens[srcToken]) throw new Error('not gasless — use trade() instead');
+
+// 2. Quote with gasless: true, then pick a route
+const quotes = await dZap.getTradeQuotes({ fromChain: 42161, account, gasless: true, data: [...] });
+
+// 3. Authorize the token (EIP-2612 permit shown — no gas needed)
+const permit = await dZap.sign({
+  chainId: 42161,
+  sender: account,
+  signer,
+  service: Services.trade,
+  permitType: PermitTypes.EIP2612Permit,
+  tokens: [{ address: srcToken, amount }],
+});
+
+// 4. Build + sign the intent + let DZap execute
+const result = await dZap.tradeGasless({
+  request: { fromChain: 42161, sender: account, refundee: account, gasless: true, data: [{ ...routeData, permitData: permit.tokens[0].permitData }] },
+  signer,
+});
+
+if (result.status === TxnStatus.success) console.log(result.txnHash);
+```
+
+Three authorization modes are supported:
+
+| Mode                 | One-time on-chain tx? | Per-trade signatures | Use when                                                                                         |
+| -------------------- | --------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| **EIP-2612 permit**  | No                    | 2 (permit + intent)  | Token supports `permit`; the only mode that works with zero native balance and no prior approval |
+| **ERC-20 allowance** | Yes (approve router)  | 1 (intent)           | An allowance already exists, or the user can afford one approval now                             |
+| **Permit2**          | Yes (approve Permit2) | 1 (batch intent)     | Repeated or multi-token trades — one approval covers all of them                                 |
+
+Full walkthrough, REST/EIP-712 details and error handling: [docs/gasless.mdx](docs/gasless.mdx).
 
 ---
 

@@ -9,6 +9,8 @@ import {
   fetchAllTokens,
   fetchBalances,
   fetchCalculatedPoints,
+  fetchGaslessTokens,
+  fetchGaslessTokensByChain,
   fetchMultiTxStatus,
   fetchStatus,
   fetchTokenDetails,
@@ -45,6 +47,7 @@ import {
   ChainData,
   EvmTxData,
   GasSignatureParams,
+  GaslessTokensByChain,
   GaslessTradeBuildTxnResponse,
   HexString,
   OtherAvailableAbis,
@@ -353,6 +356,56 @@ class DZapClient {
       console.error('Error fetching or updating tokens:', error);
       return {};
     }
+  }
+
+  /**
+   * Fetches every token that supports gasless execution, across all chains where gasless is enabled.
+   * Use this to decide whether a trade can be executed gaslessly before requesting a quote:
+   * a token missing from this list cannot pay its own gas and must be traded with a regular transaction.
+   *
+   * Each token carries a `permit` field describing which authorization methods it supports
+   * (`permit.eip2612.supported` / `permit.permit2.supported`), which determines the gasless flow to use.
+   *
+   * @returns Promise resolving to gasless tokens grouped by chain ID, then keyed by token address
+   *
+   * @example
+   * ```typescript
+   * const gaslessTokens = await client.getAllGaslessTokens();
+   *
+   * // Chains where gasless is available
+   * console.log('Gasless chains:', Object.keys(gaslessTokens));
+   *
+   * // Check a specific token
+   * const usdcOnArbitrum = gaslessTokens[42161]?.['0xaf88d065e77c8cC2239327C5EDb3A432268e5831'];
+   * console.log('USDC gasless supported:', !!usdcOnArbitrum);
+   * ```
+   */
+  public getAllGaslessTokens(): Promise<GaslessTokensByChain> {
+    return fetchGaslessTokens();
+  }
+
+  /**
+   * Fetches the tokens that support gasless execution on a single chain.
+   * Prefer this over {@link DZapClient.getAllGaslessTokens} when you only care about one network.
+   *
+   * Token addresses are returned checksummed, so normalize the address you look up
+   * (for example with `formatToken`) before indexing into the response.
+   *
+   * @param chainId - The blockchain network ID to fetch gasless tokens for
+   * @returns Promise resolving to gasless tokens keyed by token address (empty object if the chain has none)
+   *
+   * @example
+   * ```typescript
+   * const gaslessTokens = await client.getGaslessTokens(42161);
+   *
+   * const usdc = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+   * if (gaslessTokens[usdc]) {
+   *   console.log('USDC supports gasless, eip2612:', gaslessTokens[usdc].permit?.eip2612.supported);
+   * }
+   * ```
+   */
+  public getGaslessTokens(chainId: number): Promise<TokenResponse> {
+    return fetchGaslessTokensByChain(chainId);
   }
 
   /**
