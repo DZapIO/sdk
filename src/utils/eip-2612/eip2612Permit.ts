@@ -133,14 +133,12 @@ export const getEIP2612PermitSignature = async (
 
     const { address } = token;
     const amount = token.amount ? BigInt(token.amount) : maxUint256;
-    const domain = token?.permit?.eip2612?.data?.domain
-      ? token?.permit?.eip2612?.data?.domain
-      : {
-          name,
-          version,
-          chainId,
-          verifyingContract: address,
-        };
+    const domain = token.permit?.eip2612?.domain ?? {
+      name,
+      version,
+      chainId,
+      verifyingContract: address,
+    };
 
     const message = {
       owner: account,
