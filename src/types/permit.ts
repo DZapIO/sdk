@@ -1,10 +1,10 @@
 import { Signer, TypedDataField } from 'ethers';
+import { Address, TypedData, TypedDataDomain, WalletClient } from 'viem';
+import { AvailableDZapServices, TokenPermitData } from '.';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
 import { GaslessTxType } from '../constants';
 import { permit2PrimaryType } from '../constants/permit';
 import { ContractVersion } from '../enums';
-import { Address, TypedDataDomain, WalletClient } from 'viem';
-import { AvailableDZapServices, TokenPermitData } from '.';
 
 export const defaultWitnessType = {
   typeName: 'DZapTransferWitness',
@@ -154,7 +154,7 @@ export type CustomTypedDataParams = {
   account: HexString;
   signer: WalletClient | Signer;
   domain: TypedDataDomain;
-  types: Record<string, Array<TypedDataField>>;
+  types: Record<string, Array<TypedDataField>> | TypedData;
   message: Record<string, any>;
   primaryType: string;
 };

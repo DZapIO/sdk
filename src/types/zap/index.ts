@@ -26,6 +26,7 @@ export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {
   amountUSD: string;
 };
 
+export * from './broadcast';
 export * from './build';
 export * from './bundle';
 export * from './path';

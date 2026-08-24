@@ -35,6 +35,7 @@ import GenericTxnHandler from '../transactionHandlers/generic';
 import PermitTxnHandler from '../transactionHandlers/permit';
 import TradeTxnHandler from '../transactionHandlers/trade';
 import ZapTxnHandler from '../transactionHandlers/zap';
+import ZapPreExecutionStepHandler from '../zap/handlers/preExecutionStepHandler';
 import {
   ApprovalMode,
   AvailableDZapServices,
@@ -74,9 +75,12 @@ import {
   ZapQuoteRequest,
   ZapQuoteResponse,
   ZapStatusRequest,
+  ZapPreExecutionStep,
+  ZapPreExecutionStepData,
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
+import { ZapBroadcastTxParams, ZapBroadcastTxResult } from '../types/zap/broadcast';
 import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
 import { approveToken, getAllowance } from '../utils/erc20';
@@ -949,6 +953,8 @@ class DZapClient {
    * @param params.request - The zap build request containing operation parameters
    * @param params.signer - The wallet signer to sign and execute the transaction
    * @param params.steps - Optional array of pre-built transaction steps (if not provided, will build from request)
+   * @param params.preExecutionSteps - Optional steps from a quote that must be signed before the route can be built.
+   *   Their signatures are sent with the buildTx request; routes that ask for them cannot be built without them.
    * @returns Promise resolving to zap transaction execution result
    *
    * @example
@@ -977,17 +983,59 @@ class DZapClient {
   public async zap({
     request,
     steps,
+    preExecutionSteps,
     signer,
   }: {
     request: ZapBuildTxnRequest | ZapBundleRequest;
     signer: WalletClient | Signer;
     steps?: ZapTransactionStep[];
+    preExecutionSteps?: ZapPreExecutionStep[];
   }) {
     return await ZapTxnHandler.zap({
       request,
       steps,
+      preExecutionSteps,
       signer,
     });
+  }
+
+  /**
+   * Signs the pre-execution steps a zap quote asked for and returns the data to send with the
+   * following buildTx request.
+   *
+   * Some routes (1inch limit orders, Aave borrows) cannot be built until the account has signed a
+   * typed-data payload the quote hands back — the signature is embedded in the route itself, so it
+   * has to exist before the route does. Building without it fails server-side.
+   *
+   * @param params.preExecutionSteps - The `preExecutionSteps` from a quote response
+   * @param params.signer - The wallet signer asked to sign each step
+   * @param params.account - Signing account; resolved from the signer when omitted
+   * @returns The signed step data, to pass as `preExecutionStepsData` on the buildTx request
+   *
+   * @example
+   * ```typescript
+   * const quote = await client.getZapBundleQuote(request);
+   * const preExecutionStepsData = await client.handlePreExecutionSteps({
+   *   preExecutionSteps: quote.preExecutionSteps,
+   *   signer: walletClient,
+   * });
+   * const route = await client.buildZapBundleTx({ ...request, preExecutionStepsData });
+   * ```
+   */
+  public async handlePreExecutionSteps({
+    preExecutionSteps,
+    signer,
+    account,
+  }: {
+    preExecutionSteps?: ZapPreExecutionStep[];
+    signer: WalletClient | Signer;
+    account?: string;
+  }): Promise<ZapPreExecutionStepData[]> {
+    const result = await ZapPreExecutionStepHandler.handle({ steps: preExecutionSteps, signer, account });
+    if (result.status !== TxnStatus.success || !('preExecutionStepsData' in result)) {
+      throw new Error(('errorMsg' in result && result.errorMsg) || 'Failed to sign the zap pre-execution steps.');
+    }
+    return result.preExecutionStepsData;
   }
 
   /**
@@ -1308,14 +1356,12 @@ class DZapClient {
    * @param request - The trade transaction request containing source chainId, txnData and txId
    * @returns Promise resolving to the broadcasted transaction Hash in response
    */
-  public async broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
+  public async broadcastZapTx(request: ZapBroadcastTxParams): Promise<ZapBroadcastTxResult> {
     try {
       const response = await broadcastZapTx(request);
       if (response.status === TxnStatus.success) {
-        return {
-          status: TxnStatus.success,
-          txnHash: response.data.txnHash,
-        };
+        const { txnHash, txnId, additionalInfo } = response.data;
+        return { status: TxnStatus.success, txnHash, txnId, ...(additionalInfo ? { additionalInfo } : {}) };
       }
       throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
     } catch (error) {

@@ -14,6 +14,7 @@ class GenericTxnHandler {
     to,
     data,
     value,
+    gasLimit,
   }: {
     chainId: number;
     signer: Signer | WalletClient;
@@ -21,6 +22,7 @@ class GenericTxnHandler {
     to: HexString;
     data: HexString;
     value: string;
+    gasLimit?: string;
   }) => {
     try {
       if (isTypeSigner(signer)) {
@@ -30,6 +32,7 @@ class GenericTxnHandler {
           to,
           data,
           value,
+          gasLimit: gasLimit && BigInt(gasLimit) > BigInt(0) ? BigInt(gasLimit) : undefined,
         });
         return {
           status: TxnStatus.success,
