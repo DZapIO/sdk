@@ -1,4 +1,5 @@
 import { ProviderDetails } from '..';
+import { ZapLimitOrderDetails } from './limitOrder';
 import { ZapPathAsset } from './path';
 
 export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
@@ -28,6 +29,7 @@ export type ZapStatusResponse = {
   steps: ZapStatusStep[];
   timestamp: number;
   completedAt: number;
+  limitOrderDetails?: ZapLimitOrderDetails;
 };
 
 export type ZapStatusRequest = {

@@ -1360,8 +1360,8 @@ class DZapClient {
     try {
       const response = await broadcastZapTx(request);
       if (response.status === TxnStatus.success) {
-        const { txnHash, txnId, additionalInfo } = response.data;
-        return { status: TxnStatus.success, txnHash, txnId, ...(additionalInfo ? { additionalInfo } : {}) };
+        const { txnHash, txnId } = response.data;
+        return { status: TxnStatus.success, txnHash, txnId };
       }
       throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
     } catch (error) {

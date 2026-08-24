@@ -24,7 +24,6 @@ export type ZapBroadcastTxParams = {
 export type ZapBroadcastResult = {
   txnHash: string;
   txnId: string;
-  additionalInfo?: Record<string, unknown>;
 };
 
 export type BroadcastZapTxSuccessResponse = {

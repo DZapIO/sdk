@@ -29,6 +29,7 @@ export type ZapUnderlyingTokenWithAmount = ZapUnderlyingToken & {
 export * from './broadcast';
 export * from './build';
 export * from './bundle';
+export * from './limitOrder';
 export * from './path';
 export * from './pool';
 export * from './position';

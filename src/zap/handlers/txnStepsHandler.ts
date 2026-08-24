@@ -16,7 +16,6 @@ export type ZapStepsResult =
       status: TxnStatus.success;
       code: StatusCodes | number;
       txnHash?: string;
-      additionalInfo?: Record<string, unknown>;
     }
   | DZapTransactionResponse;
 
@@ -103,7 +102,7 @@ class ZapTxnStepsHandler {
       throw new Error(response.data?.message || 'Failed to broadcast the zap order.');
     }
 
-    return { txnHash: response.data.txnHash, additionalInfo: response.data.additionalInfo };
+    return { txnHash: response.data.txnHash };
   };
 
   public static handle = async ({
@@ -117,7 +116,6 @@ class ZapTxnStepsHandler {
   }): Promise<ZapStepsResult> => {
     try {
       let txnHash: string | undefined;
-      let additionalInfo: Record<string, unknown> | undefined;
       let pendingSignature: HexString | undefined;
 
       for (const step of steps) {
@@ -148,10 +146,9 @@ class ZapTxnStepsHandler {
         // The signature belongs to the order just submitted; it must not leak into a later broadcast.
         pendingSignature = undefined;
         txnHash = result.txnHash ?? txnHash;
-        additionalInfo = result.additionalInfo ?? additionalInfo;
       }
 
-      if (!txnHash && !additionalInfo) {
+      if (!txnHash) {
         return {
           status: TxnStatus.error,
           code: StatusCodes.Error,
@@ -159,7 +156,7 @@ class ZapTxnStepsHandler {
         };
       }
 
-      return { status: TxnStatus.success, code: StatusCodes.Success, txnHash, additionalInfo };
+      return { status: TxnStatus.success, code: StatusCodes.Success, txnHash };
     } catch (error: unknown) {
       console.log({ error });
       return handleViemTransactionError({ error });
