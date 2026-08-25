@@ -10,16 +10,7 @@ export type ZapProviderBroadcastTxData = {
 
 export type ZapBroadcastTxData = ZapOnChainBroadcastTxData | ZapProviderBroadcastTxData;
 
-/**
- * `providerId` and the shape of `txData` move together: set `providerId` and `txData` must be an
- * object, omit it and `txData` must be a string. The backend rejects any other combination.
- */
-export type ZapBroadcastTxParams = {
-  txId: string;
-  chainId: number;
-  txData: ZapBroadcastTxData;
-  providerId?: string;
-};
+export type ZapBroadcastTxParams = { txId: string; chainId: number; txData: ZapBroadcastTxData };
 
 export type ZapBroadcastResult = {
   txnHash: string;

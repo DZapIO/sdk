@@ -42,6 +42,15 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
       status: TxnStatus.rejected,
     };
   }
+  if (!Array.isArray(error?.metaMessages)) {
+    return {
+      status: TxnStatus.error,
+      error,
+      errorMsg: error?.shortMessage || error?.message || 'An unknown error occurred.',
+      code: StatusCodes.ContractExecutionError,
+    };
+  }
+
   let errMsg = error.shortMessage;
 
   const errName = getErrorName(error.metaMessages[0]);

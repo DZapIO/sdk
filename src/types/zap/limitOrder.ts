@@ -1,4 +1,4 @@
-export type ZapLimitOrderStatus = 'open' | 'partiallyFilled' | 'filled' | 'expired' | 'cancelled' | 'invalid';
+export type ZapLimitOrderStatus = 'open' | 'partiallyFilled' | 'filled' | 'expired' | 'invalid';
 
 export type ZapLimitOrderDetails = {
   provider: string;

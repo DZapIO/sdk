@@ -5,7 +5,7 @@ import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
 import GenericTxnHandler from '../../transactionHandlers/generic';
 import { DZapTransactionResponse, HexString } from '../../types';
-import { isZapTxnStep, ZapBroadcastStepData, ZapSignStepData, ZapTransactionStep, ZapTxnDetails } from '../../types/zap/step';
+import { isZapTxnStep, ZapBroadcastStepData, ZapSignStepData, ZapTransactionStep, ZapTxnDetails, ZapTxnStepAction } from '../../types/zap/step';
 import { getPublicClient, getSignerAddress } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { signCustomTypedData } from '../../utils/signIntent/custom';
@@ -60,16 +60,18 @@ class ZapTxnStepsHandler {
     chainId,
     txnData,
     signer,
+    rpcUrls,
   }: {
     chainId: number;
     txnData: ZapTxnDetails;
     signer: Signer | WalletClient;
+    rpcUrls?: string[];
   }): Promise<DZapTransactionResponse> => {
     const result = await ZapTxnStepsHandler.sendTxnStep({ chainId, txnData, signer });
     if (result.status !== TxnStatus.success) {
       return result;
     }
-    await getPublicClient({ chainId, rpcUrls: undefined }).waitForTransactionReceipt({ hash: result.txnHash as HexString });
+    await getPublicClient({ chainId, rpcUrls }).waitForTransactionReceipt({ hash: result.txnHash as HexString });
     return result;
   };
 
@@ -89,12 +91,11 @@ class ZapTxnStepsHandler {
   };
 
   public static handleBroadcastStep = async ({ data, signature }: { data: ZapBroadcastStepData; signature?: HexString }) => {
-    const { txnId, chainId, providerId, payload } = data;
+    const { txnId, chainId, payload } = data;
 
     const response = await broadcastZapTx({
       txId: txnId,
       chainId,
-      providerId,
       txData: { payload: { ...(payload as Record<string, unknown>), signature } },
     });
 
@@ -105,14 +106,32 @@ class ZapTxnStepsHandler {
     return { txnHash: response.data.txnHash };
   };
 
+  private static processTxnStep = async ({
+    step,
+    chainId,
+    signer,
+    rpcUrls,
+  }: {
+    step: { action: ZapTxnStepAction; data: ZapTxnDetails };
+    chainId: number;
+    signer: Signer | WalletClient;
+    rpcUrls?: string[];
+  }): Promise<DZapTransactionResponse> => {
+    return step.action === zapStepAction.approve
+      ? ZapTxnStepsHandler.handleApproveStep({ chainId, txnData: step.data, signer, rpcUrls })
+      : ZapTxnStepsHandler.handleExecuteStep({ chainId, txnData: step.data, signer });
+  };
+
   public static handle = async ({
     chainId,
     steps,
     signer,
+    rpcUrls,
   }: {
     chainId: number;
     steps: ZapTransactionStep[];
     signer: Signer | WalletClient;
+    rpcUrls?: string[];
   }): Promise<ZapStepsResult> => {
     try {
       let txnHash: string | undefined;
@@ -121,9 +140,7 @@ class ZapTxnStepsHandler {
       for (const step of steps) {
         if (isZapTxnStep(step)) {
           const isApproval = step.action === zapStepAction.approve;
-          const result = isApproval
-            ? await ZapTxnStepsHandler.handleApproveStep({ chainId, txnData: step.data, signer })
-            : await ZapTxnStepsHandler.handleExecuteStep({ chainId, txnData: step.data, signer });
+          const result = await ZapTxnStepsHandler.processTxnStep({ step, chainId, signer, rpcUrls });
           if (result.status !== TxnStatus.success) {
             return result;
           }

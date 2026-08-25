@@ -955,6 +955,7 @@ class DZapClient {
    * @param params.steps - Optional array of pre-built transaction steps (if not provided, will build from request)
    * @param params.preExecutionSteps - Optional steps from a quote that must be signed before the route can be built.
    *   Their signatures are sent with the buildTx request; routes that ask for them cannot be built without them.
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to zap transaction execution result
    *
    * @example
@@ -985,17 +986,21 @@ class DZapClient {
     steps,
     preExecutionSteps,
     signer,
+    rpcUrls,
   }: {
     request: ZapBuildTxnRequest | ZapBundleRequest;
     signer: WalletClient | Signer;
     steps?: ZapTransactionStep[];
     preExecutionSteps?: ZapPreExecutionStep[];
+    rpcUrls?: string[];
   }) {
+    const chainId = 'srcChainId' in request ? request.srcChainId : request.actions[0].srcChainId;
     return await ZapTxnHandler.zap({
       request,
       steps,
       preExecutionSteps,
       signer,
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
     });
   }
 

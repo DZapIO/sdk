@@ -94,7 +94,6 @@ export type ZapBroadcastStepData = {
   type: keyof typeof chainTypes;
   txnId: HexString;
   chainId: number;
-  providerId: string;
   payload: unknown;
 };
 

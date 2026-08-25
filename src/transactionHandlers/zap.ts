@@ -60,18 +60,20 @@ class ZapTxnHandler {
     steps,
     preExecutionSteps,
     signer,
+    rpcUrls,
   }: {
     request: ZapBuildTxnRequest | ZapBundleRequest;
     steps?: ZapStep[];
     preExecutionSteps?: ZapPreExecutionStep[];
     signer: Signer | WalletClient;
+    rpcUrls?: string[];
   }): Promise<ZapStepsResult> => {
     try {
       const chainId = 'srcChainId' in request ? request.srcChainId : request.actions[0].srcChainId;
       let buildRequest = request;
 
       if (preExecutionSteps?.length) {
-        const preExecutionResult = await ZapPreExecutionStepHandler.handle({ steps: preExecutionSteps, signer });
+        const preExecutionResult = await ZapPreExecutionStepHandler.handle({ steps: preExecutionSteps, signer, account: request.account });
         if (preExecutionResult.status !== TxnStatus.success || !('preExecutionStepsData' in preExecutionResult)) {
           return preExecutionResult;
         }
@@ -91,7 +93,7 @@ class ZapTxnHandler {
         }
       }
 
-      return await ZapTxnStepsHandler.handle({ chainId, steps, signer });
+      return await ZapTxnStepsHandler.handle({ chainId, steps, signer, rpcUrls });
     } catch (error: unknown) {
       console.log({ error });
       return handleViemTransactionError({ error });
