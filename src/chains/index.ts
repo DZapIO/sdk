@@ -1,4 +1,5 @@
 import * as viemChains from 'viem/chains';
+import { arcTestnet } from './definitions/arcTestnet';
 import { arthera } from './definitions/arthera';
 import { astralisTestnet } from './definitions/astralisTestnet';
 import { citrea } from './definitions/citrea';
@@ -11,6 +12,7 @@ import { robinhood } from './definitions/robinhood';
 import { stableChain } from './definitions/stable';
 import { tempo } from './definitions/tempo';
 
+export { arcTestnet } from './definitions/arcTestnet';
 export { arthera } from './definitions/arthera';
 export { astralisTestnet } from './definitions/astralisTestnet';
 export { citrea } from './definitions/citrea';
@@ -35,6 +37,7 @@ export const customViemChains: viemChains.Chain[] = [
   hemi,
   citrea,
   robinhood,
+  arcTestnet,
 ];
 
 export const viemChainsById: Record<number, viemChains.Chain> = [...Object.values(viemChains), ...customViemChains].reduce((acc, chainData) => {
