@@ -1,13 +1,9 @@
 import { ProviderDetails } from '..';
-import { ZapPathAsset } from './path';
+import { ZapAssetAmount } from './path';
 
 export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 
-export type ZapStatusAsset = {
-  asset: ZapPathAsset;
-  amount: string;
-  amountUSD: string;
-};
+export type ZapStatusAsset = ZapAssetAmount;
 
 export type ZapStatusStep = {
   chainId: number;

@@ -1,5 +1,7 @@
 import { HexString } from '..';
-import { ZapPath } from './path';
+import { ZapFee } from './fee';
+import { ZapOutputAmount, ZapPath } from './path';
+import { ZapRefund } from './refund';
 import { ZapStep } from './step';
 
 export type ZapRouteRequestPositionDetails = {
@@ -24,8 +26,11 @@ export type ZapBuildTxnResponse = {
     approveTo: HexString;
     amount: string;
   }[];
-  dust: ZapPath['output'];
-  output: ZapPath['output'];
+  /** returned to the user on top of `output` — positive-slippage dust and any rent given back */
+  refund: ZapRefund[];
+  /** every fee the route charges, across all of its steps */
+  fees: ZapFee[];
+  output: ZapOutputAmount[];
   steps: ZapStep[];
   path: ZapPath[];
 };
