@@ -20,14 +20,14 @@ export type ZapPathAsset = {
 };
 
 /** An amount of one asset, with its USD value at quote time. */
-export type ZapAssetAmount = {
+export type ZapAsset = {
   asset: ZapPathAsset;
   amount: string;
   amountUSD: string;
 };
 
 /** An asset amount the user receives, with the floor it is guaranteed not to fall below. */
-export type ZapOutputAmount = ZapAssetAmount & {
+export type ZapOutput = ZapAsset & {
   minAmount: string;
 };
 
@@ -37,6 +37,6 @@ export type ZapPath = {
   fee: ZapFee[];
   refund: ZapRefund[];
   estimatedDuration: number;
-  input: ZapAssetAmount[];
-  output: ZapOutputAmount[];
+  input: ZapAsset[];
+  output: ZapOutput[];
 };
