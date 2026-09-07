@@ -2,8 +2,6 @@ import * as viemChains from 'viem/chains';
 import { arcTestnet } from './definitions/arcTestnet';
 import { arthera } from './definitions/arthera';
 import { astralisTestnet } from './definitions/astralisTestnet';
-import { bitcoin } from '@bigmi/core';
-import { bitcoinTestnet } from './definitions/bitcoinTestnet';
 import { bitlayer } from './definitions/bitlayer';
 import { citrea } from './definitions/citrea';
 import { fiveIre } from './definitions/fiveIre';
@@ -21,6 +19,7 @@ export { arcTestnet } from './definitions/arcTestnet';
 export { arthera } from './definitions/arthera';
 export { astralisTestnet } from './definitions/astralisTestnet';
 export { bitlayer } from './definitions/bitlayer';
+export { bitcoin } from '@bigmi/core';
 export { bitcoinTestnet } from './definitions/bitcoinTestnet';
 export { citrea } from './definitions/citrea';
 export { fiveIre } from './definitions/fiveIre';
@@ -51,11 +50,6 @@ export const customViemChains: viemChains.Chain[] = [
   merlin,
   katana,
 ];
-
-export const bigmiChains = {
-  bitcoin,
-  bitcoinTestnet,
-};
 
 export const viemChainsById: Record<number, viemChains.Chain> = [...Object.values(viemChains), ...customViemChains].reduce((acc, chainData) => {
   return chainData.id
