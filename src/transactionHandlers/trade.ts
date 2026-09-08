@@ -13,6 +13,7 @@ import {
   HexString,
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
+  isSignTradeBuildTxnResponse,
 } from '../types';
 import { isTypeSigner } from '../utils';
 import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
@@ -20,6 +21,7 @@ import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCall
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
 import { handleViemTransactionError, isAxiosError } from '../utils/errors';
 import { HyperLiquidTxHandler } from './hyperliquid';
+import { IntentTxHandler } from './intent';
 import PermitTxnHandler from './permit';
 
 class TradeTxnHandler {
@@ -143,7 +145,21 @@ class TradeTxnHandler {
         buildTxnResponseData = await fetchTradeBuildTxnData(request);
       }
 
-      const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
+      const { additionalInfo, updatedQuotes } = buildTxnResponseData;
+
+      // an intent route has no calldata to send - the caller signs the order instead
+      if (isSignTradeBuildTxnResponse(buildTxnResponseData)) {
+        return IntentTxHandler.signAndBroadcast({
+          signer,
+          account: buildTxnResponseData.from,
+          txnData: buildTxnResponseData,
+          chainId,
+          additionalInfo,
+          updatedQuotes,
+        });
+      }
+
+      const { data, from, to, value, gasLimit } = buildTxnResponseData;
       const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
 
       if (chainId === exclusiveChainIds.hyperLiquid) {
