@@ -16,27 +16,41 @@ import {
   QUOTES_URL,
 } from '../constants/urlConstants';
 import {
+  BalancesResponse,
   BroadcastTxParams,
   BroadcastTxResponse,
   CalculatePointsRequest,
   GaslessExecuteTxParams,
+  SupportedChainsResponse,
+  TokenInfo,
+  TokenPriceResponse,
+  TokenResponse,
   TradeBuildTxnRequest,
   TradeQuotesRequest,
+  TradeQuotesResponse,
+  TradeStatusResponse,
 } from '../types';
 import {
+  ZapApiResponse,
   ZapBundleRequest,
   ZapBuildTxnRequest,
+  ZapChains,
+  ZapPoolDetails,
   ZapPoolDetailsRequest,
   ZapPoolsRequest,
+  ZapPoolsResponse,
   ZapPositionsRequest,
+  ZapPositionsResponse,
+  ZapProviders,
   ZapQuoteRequest,
   ZapStatusRequest,
+  ZapStatusResponse,
 } from '../types/zap';
 import { BroadcastZapTxResponse } from '../types/zap/broadcast';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
 
-export const fetchTradeQuotes = (request: TradeQuotesRequest) =>
+export const fetchTradeQuotes = (request: TradeQuotesRequest): Promise<TradeQuotesResponse> =>
   invoke({
     endpoint: QUOTES_URL,
     data: request,
@@ -104,47 +118,47 @@ export const fetchZapBundleBuildTx = (request: ZapBundleRequest, cancelToken?: C
     cancelToken,
   });
 
-export const fetchZapTxnStatus = (request: ZapStatusRequest) =>
+export const fetchZapTxnStatus = (request: ZapStatusRequest): Promise<ZapApiResponse<ZapStatusResponse>> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.status,
     data: request,
     method: GET,
   });
 
-export const fetchZapPositions = (request: ZapPositionsRequest) =>
+export const fetchZapPositions = (request: ZapPositionsRequest): Promise<ZapApiResponse<ZapPositionsResponse>> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.positions,
     data: request,
     method: GET,
   });
 
-export const fetchZapPools = (request: ZapPoolsRequest) =>
+export const fetchZapPools = (request: ZapPoolsRequest): Promise<ZapApiResponse<ZapPoolsResponse>> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.pools,
     data: request,
     method: GET,
   });
 
-export const fetchZapPoolDetails = (request: ZapPoolDetailsRequest) =>
+export const fetchZapPoolDetails = (request: ZapPoolDetailsRequest): Promise<ZapApiResponse<ZapPoolDetails>> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.poolDetails,
     data: request,
     method: GET,
   });
 
-export const fetchZapChains = () =>
+export const fetchZapChains = (): Promise<ZapApiResponse<ZapChains>> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.config.chains,
     method: GET,
   });
 
-export const fetchZapProviders = () =>
+export const fetchZapProviders = (): Promise<ZapApiResponse<ZapProviders>> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.config.providers,
     method: GET,
   });
 
-export const fetchAllSupportedChains = () =>
+export const fetchAllSupportedChains = (): Promise<SupportedChainsResponse> =>
   invoke({
     endpoint: GET_ALL_CHAINS_URL,
     data: {},
@@ -152,7 +166,7 @@ export const fetchAllSupportedChains = () =>
     shouldRetry: true,
   });
 
-export const fetchAllTokens = (chainId: number, source?: string, account?: string) =>
+export const fetchAllTokens = (chainId: number, source?: string, account?: string): Promise<TokenResponse> =>
   invoke({
     endpoint: GET_ALL_TOKENS_URL,
     data: { chainId, source, account },
@@ -160,13 +174,27 @@ export const fetchAllTokens = (chainId: number, source?: string, account?: strin
     shouldRetry: true,
   });
 
-export const fetchTokenDetails = (
+export function fetchTokenDetails(
+  tokenAddress: string,
+  chainId: number,
+  account?: string,
+  includeBalance?: boolean,
+  includePrice?: boolean,
+): Promise<TokenInfo>;
+export function fetchTokenDetails(
+  tokenAddress: string[],
+  chainId: number,
+  account?: string,
+  includeBalance?: boolean,
+  includePrice?: boolean,
+): Promise<TokenResponse>;
+export function fetchTokenDetails(
   tokenAddress: string | string[],
   chainId: number,
   account?: string,
   includeBalance?: boolean,
   includePrice?: boolean,
-) => {
+) {
   const data = {
     tokenAddress: Array.isArray(tokenAddress) ? undefined : tokenAddress,
     tokenAddresses: Array.isArray(tokenAddress) ? tokenAddress.join(',') : undefined,
@@ -180,23 +208,25 @@ export const fetchTokenDetails = (
     data,
     method: GET,
   });
-};
+}
 
-export const fetchTokenPrice = (tokenAddresses: string, chainId: number) =>
+export const fetchTokenPrice = (tokenAddresses: string, chainId: number): Promise<TokenPriceResponse> =>
   invoke({
     endpoint: GET_TOKEN_PRICE,
     data: { tokenAddresses, chainId },
     method: GET,
   });
 
-export const fetchStatus = (params: { txHash: string; chainId: number } | { txId: string; chainId: number }) =>
+export const fetchStatus = (params: { txHash: string; chainId: number } | { txId: string; chainId: number }): Promise<TradeStatusResponse> =>
   invoke({
     endpoint: GET_STATUS,
     data: params,
     method: GET,
   });
 
-export const fetchMultiTxStatus = (params: { txHashes: string; chainIds: string } | { txIds: string; chainIds: string }) =>
+export const fetchMultiTxStatus = (
+  params: { txHashes: string; chainIds: string } | { txIds: string; chainIds: string },
+): Promise<TradeStatusResponse[]> =>
   invoke({
     endpoint: GET_MULTI_STATUS,
     data: params,
@@ -210,7 +240,7 @@ export const fetchCalculatedPoints = (request: CalculatePointsRequest) =>
     method: POST,
   });
 
-export const fetchBalances = (chainId: number, account: string) => {
+export const fetchBalances = (chainId: number, account: string): Promise<BalancesResponse> => {
   return invoke({
     endpoint: GET_BALANCES,
     data: { chainId, account },
