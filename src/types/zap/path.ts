@@ -19,14 +19,14 @@ export type ZapPathAsset = {
   underlyingTokens?: ZapUnderlyingToken[];
 };
 
-/** An amount of one asset, with its USD value at quote time. */
+/** One asset with its amount and USD value at quote time. */
 export type ZapAsset = {
   asset: ZapPathAsset;
   amount: string;
   amountUSD: string;
 };
 
-/** An asset amount the user receives, with the floor it is guaranteed not to fall below. */
+/** An asset the user receives, with the floor its amount is guaranteed not to fall below. */
 export type ZapOutput = ZapAsset & {
   minAmount: string;
 };
