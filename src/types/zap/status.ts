@@ -3,24 +3,22 @@ import { ZapAsset } from './path';
 
 export type ZapStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 
-export type ZapStatusAsset = ZapAsset;
-
 export type ZapStatusStep = {
   chainId: number;
   hash?: string;
   status: ZapStatus;
   action: string;
   protocol: ProviderDetails;
-  input: ZapStatusAsset[];
-  output: ZapStatusAsset[];
+  input: ZapAsset[];
+  output: ZapAsset[];
 };
 
 export type ZapStatusResponse = {
   status: ZapStatus;
   account: string;
   recipient: string;
-  input: ZapStatusAsset[];
-  output: ZapStatusAsset[];
+  input: ZapAsset[];
+  output: ZapAsset[];
   steps: ZapStatusStep[];
   timestamp: number;
   completedAt: number;
