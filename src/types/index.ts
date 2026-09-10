@@ -1,6 +1,16 @@
 import { Signer } from 'ethers';
 import { Prettify, TypedDataDomain, WalletClient } from 'viem';
-import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, STATUS, STATUS_RESPONSE, Services } from './../constants';
+import {
+  APPROVAL_METHOD,
+  DZapAbis,
+  GaslessTxType,
+  OtherAbis,
+  QuoteFilters,
+  STATUS,
+  STATUS_RESPONSE,
+  Services,
+  TX_RESPONSE_TYPE,
+} from './../constants';
 import { ApprovalModes } from './../constants/approval';
 import { PermitTypes } from './../constants/permit';
 import { AppEnv, ContractVersion, StatusCodes, TxnStatus } from './../enums';
@@ -181,6 +191,20 @@ export type TradePath = {
 
 export type Tag = { title: string; link?: string; message?: string };
 
+export type ApprovalMethod = (typeof APPROVAL_METHOD)[keyof typeof APPROVAL_METHOD];
+
+/**
+ * Present when the src token must be approved to a protocol other than the DZap router -
+ * intent routes settle through the provider's own contract, so the router never moves the funds.
+ */
+export type QuoteApproval = {
+  spender: HexString;
+  token: string;
+  chainId: number;
+  amount: string;
+  methods: ApprovalMethod[];
+};
+
 export type TradeQuote = {
   bridgeDetails?: ProviderDetails;
   providerDetails: ProviderDetails;
@@ -200,6 +224,7 @@ export type TradeQuote = {
   path: TradePath[];
   tags?: Tag[];
   additionalInfo?: AdditionalInfo;
+  approval?: QuoteApproval;
 };
 
 export type TradeQuotesByProviderId = {
@@ -340,6 +365,7 @@ export type ParamQuotes = {
 };
 
 export type EvmTxData = {
+  type?: typeof TX_RESPONSE_TYPE.execution;
   from: HexString;
   data: HexString;
   to: HexString;
@@ -368,18 +394,35 @@ export type BtclnTxData = {
   paymentExpiry: number;
 };
 
-export type HyperLiquidSignTypedData<M extends Record<string, unknown> = Record<string, unknown>> = {
+export type SignTypedData<M extends Record<string, unknown> = Record<string, unknown>> = {
   domain: TypedDataDomain;
   types: Record<string, { name: string; type: string }[]>;
   primaryType: string;
   message: M;
 };
 
+export type HyperLiquidSignTypedData<M extends Record<string, unknown> = Record<string, unknown>> = SignTypedData<M>;
+
+/** EIP-712 payload the caller signs for an intent route, in place of sending a transaction. */
+export type Eip712SignPayload = SignTypedData & { standard: 'eip712' };
+
 export type HyperLiquidTxData = {
   signTypedData: HyperLiquidSignTypedData[];
 };
 
-export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData | HyperLiquidTxData;
+/**
+ * Returned instead of {@link EvmTxData} by routes that settle off-chain: the caller signs
+ * `signPayload` and hands the signature back through `broadcastTradeTx`, and no transaction
+ * is ever sent from the caller's wallet.
+ */
+export type EvmSignTxData = {
+  type: typeof TX_RESPONSE_TYPE.sign;
+  from: HexString;
+  broadcastViaProvider: true;
+  signPayload: Eip712SignPayload;
+};
+
+export type TxData = EvmTxData | EvmSignTxData | SvmTxData | BtcTxData | BtclnTxData | HyperLiquidTxData;
 
 export type TxRequestData<T> = {
   status: typeof STATUS.success;
@@ -394,26 +437,48 @@ export type TradeGasBuildTxnResponse<T = TxData> = TxRequestData<T> & {
   private: boolean;
 };
 
-export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
-  //@deprecated
-  data: string;
-  from: string;
-  to?: string;
-  value?: string;
-  gasLimit?: string;
-  svmTxData?: {
-    blockhash: string;
-    lastValidBlockHeight: number;
-  };
-  btcTxData?: {
-    inputs: PsbtInput[];
-    outputs: PsbtOutput[];
-    feeRate: number;
-  };
-  btclnTxData?: BtclnTxData;
+type BuildTxnResponseCommonFields = {
   additionalInfo: Record<string, Record<string, unknown>>;
   updatedQuotes: Record<string, string>;
 };
+
+export type ExecutionTradeBuildTxnResponse = TradeGasBuildTxnResponse<Exclude<TxData, EvmSignTxData>> &
+  BuildTxnResponseCommonFields & {
+    type?: typeof TX_RESPONSE_TYPE.execution;
+    //@deprecated
+    data: string;
+    from: string;
+    to?: string;
+    value?: string;
+    gasLimit?: string;
+    svmTxData?: {
+      blockhash: string;
+      lastValidBlockHeight: number;
+    };
+    btcTxData?: {
+      inputs: PsbtInput[];
+      outputs: PsbtOutput[];
+      feeRate: number;
+    };
+    btclnTxData?: BtclnTxData;
+  };
+
+/**
+ * Returned for intent routes. There is no calldata to send - the caller signs `signPayload`
+ * and the provider settles the order once the signature reaches the backend.
+ */
+export type SignTradeBuildTxnResponse = TradeGasBuildTxnResponse<EvmSignTxData> &
+  BuildTxnResponseCommonFields & {
+    type: typeof TX_RESPONSE_TYPE.sign;
+    broadcastViaProvider: true;
+    from: HexString;
+    signPayload: Eip712SignPayload;
+  };
+
+export type TradeBuildTxnResponse = ExecutionTradeBuildTxnResponse | SignTradeBuildTxnResponse;
+
+export const isSignTradeBuildTxnResponse = (response: TradeBuildTxnResponse): response is SignTradeBuildTxnResponse =>
+  response.type === TX_RESPONSE_TYPE.sign;
 
 export type GaslessTxTypes = keyof typeof GaslessTxType;
 
@@ -629,7 +694,9 @@ export type HyperLiquidBroadcastTxData = {
   account: HexString;
 };
 
-export type BroadcastTxData = string | HyperLiquidBroadcastTxData[];
+export type IntentSignatureData = { signature: HexString };
+
+export type BroadcastTxData = string | HyperLiquidBroadcastTxData[] | IntentSignatureData;
 
 export type BroadcastTxParams = {
   txId: string;
