@@ -198,6 +198,7 @@ export type TradeQuote = {
   gasless: boolean;
   steps: TradeStep[];
   path: TradePath[];
+  simulated?: boolean;
   tags?: Tag[];
   additionalInfo?: AdditionalInfo;
 };
