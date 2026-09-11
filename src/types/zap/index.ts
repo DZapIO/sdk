@@ -1,16 +1,8 @@
 import { HexString, ProviderDetails } from '../';
-import { ZapPathAsset } from './path';
 
 export type ZapProviders = Record<string, ProviderDetails>;
 
 export type ZapChains = { [key: string]: { name: string; supportedProviders: string[] } };
-
-export type ZapFee = {
-  amount: string;
-  amountUSD: string;
-  asset: ZapPathAsset;
-  included: boolean;
-};
 
 export type ZapUnderlyingToken = {
   chainId: number;
@@ -31,8 +23,10 @@ export * from './build';
 export * from './bundle';
 export * from './limitOrder';
 export * from './path';
+export * from './refund';
 export * from './pool';
 export * from './position';
 export * from './quote';
 export * from './status';
 export * from './step';
+export * from './fee';
