@@ -1,12 +1,20 @@
 import { HexString } from '..';
+import { ZapPreExecutionStep, ZapPreExecutionStepData, ZapStep } from './step';
 import { ZapFee } from './fee';
 import { ZapOutput, ZapPath } from './path';
 import { ZapRefund } from './refund';
-import { ZapStep } from './step';
 
-export type ZapRouteRequestPositionDetails = {
+export type ZapErc721PositionDetails = {
   nftId: string;
 };
+
+export type ZapLimitOrderPositionDetails = {
+  provider: string;
+  limitPrice: string;
+  expiry?: number;
+};
+
+export type ZapRouteRequestPositionDetails = ZapErc721PositionDetails | ZapLimitOrderPositionDetails;
 
 export type ZapRouteRequestPoolDetails = {
   lowerTick: number;
@@ -33,6 +41,7 @@ export type ZapBuildTxnResponse = {
   output: ZapOutput[];
   steps: ZapStep[];
   path: ZapPath[];
+  preExecutionSteps?: ZapPreExecutionStep[];
 };
 export type ZapBuildTxnRequest = {
   srcToken: string;
@@ -45,6 +54,7 @@ export type ZapBuildTxnRequest = {
   account: string;
   integrator?: ZapIntegratorConfig;
   permitData?: string;
+  preExecutionStepsData?: ZapPreExecutionStepData[];
   amount?: string;
   estimateGas?: boolean;
   positionDetails?: ZapRouteRequestPositionDetails;

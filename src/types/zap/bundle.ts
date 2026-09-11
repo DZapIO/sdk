@@ -1,5 +1,7 @@
+import { HexString } from '..';
 import { ZapIntegratorConfig, ZapRouteRequestPoolDetails, ZapRouteRequestPositionDetails } from './build';
 import { ZapPathAction } from './path';
+import { ZapPreExecutionStepData } from './step';
 
 export type ZapBundleSrcToken = {
   address: string;
@@ -15,6 +17,8 @@ export type ZapBundleAction = {
   positionDetails?: ZapRouteRequestPositionDetails;
   poolDetails?: ZapRouteRequestPoolDetails;
   protocol?: string;
+  permitData?: HexString;
+  batchPermitData?: HexString;
 };
 
 export type ZapBundleRequest = {
@@ -28,4 +32,5 @@ export type ZapBundleRequest = {
   integrator?: ZapIntegratorConfig;
   allowedDexes?: string[];
   allowedBridges?: string[];
+  preExecutionStepsData?: ZapPreExecutionStepData[];
 };
