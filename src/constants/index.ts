@@ -53,6 +53,17 @@ export const PERMIT_TYPEHASH_CONST = '0x6e71edae12b1b97f4d1f60370fef10105fa2faae
 export const DEFAULT_PERMIT_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, '0x']);
 export const DEFAULT_PERMIT2_DATA = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT2_APPROVE, '0x']);
 
+export const TX_RESPONSE_TYPE = {
+  execution: 'execution',
+  sign: 'sign',
+} as const;
+
+export const APPROVAL_METHOD = {
+  approve: 'approve',
+  permit: 'permit',
+  permit2: 'permit2',
+} as const;
+
 export const STATUS_RESPONSE = {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',

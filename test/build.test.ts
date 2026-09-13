@@ -1,5 +1,5 @@
 import DZapClient from '../src/dZapClient';
-import { TradeBuildTxnRequest } from '../src/types';
+import { TradeBuildTxnRequest, isSignTradeBuildTxnResponse } from '../src/types';
 
 describe('DZapClient - buildTxn', () => {
   let client: DZapClient;
@@ -32,10 +32,13 @@ describe('DZapClient - buildTxn', () => {
 
     const result = await client.buildTradeTxn(request);
     expect(result).toBeDefined();
-    expect(result.data).toBeDefined();
-    expect(result.to).toBeDefined();
     expect(result.from).toBeDefined();
     expect(result.chainId).toBeDefined();
+    // these routes settle on-chain, so the response must carry calldata rather than an order to sign
+    expect(isSignTradeBuildTxnResponse(result)).toBe(false);
+    if (isSignTradeBuildTxnResponse(result)) return;
+    expect(result.data).toBeDefined();
+    expect(result.to).toBeDefined();
   });
 
   it('should build a same-chain transaction', async () => {
@@ -62,9 +65,12 @@ describe('DZapClient - buildTxn', () => {
 
     const result = await client.buildTradeTxn(request);
     expect(result).toBeDefined();
-    expect(result.data).toBeDefined();
-    expect(result.to).toBeDefined();
     expect(result.from).toBeDefined();
     expect(result.chainId).toBeDefined();
+    // these routes settle on-chain, so the response must carry calldata rather than an order to sign
+    expect(isSignTradeBuildTxnResponse(result)).toBe(false);
+    if (isSignTradeBuildTxnResponse(result)) return;
+    expect(result.data).toBeDefined();
+    expect(result.to).toBeDefined();
   });
 });
