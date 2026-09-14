@@ -385,6 +385,53 @@ test runner. `--runInBand` eliminates it completely (11 suites run, 39 tests). B
 `.ts`, and `exclude` does not stop files reachable via imports. Fix: raise `target` to `ES2020`+.
 Deferred to its own commit because it changes emit semantics.
 
+### D6 · P8 CONFIRMED — `instanceof Signer` observed returning false for a real signer
+
+P8 was filed as a structural hazard I had reasoned about but **not** reproduced. It has now
+reproduced, in plain Node with no TypeScript and no test framework involved:
+
+```
+$ node -e "const {Wallet,Signer}=require('ethers'); \
+           console.log(new Wallet(KEY) instanceof Signer)"
+false                                    # ethers 5.7.2
+```
+
+**Provenance, stated honestly:** this surfaced after a `yarn install` failed partway
+(`ENOENT … find-up`) and mixed a yarn-style layout into a pnpm-managed `node_modules`, producing
+more than one copy of `ethers`. It is therefore a *corrupted-install* reproduction, not a clean
+consumer scenario. That does not weaken the finding — it demonstrates the exact mechanism that bites
+a consumer whenever a bundler or package manager resolves two copies of `ethers`, which the
+dependency audit already proved happens (235 duplicated packages in the wallet tree, including
+`viem` at three versions).
+
+**Consequence in production:** `isTypeSigner` is the discriminator for all 7 ethers/viem branches.
+When it wrongly returns `false`, a valid ethers `Signer` is routed down the viem path and signing
+fails with an unrelated error — the silent, confusing failure mode the SDK should never have.
+
+**Why the characterisation test earned its place:** the suite caught this by failing the *primary*
+assertion (`recognises a real ethers signer`), not the hazard-documenting one. Had commit 8 not
+landed first, this would have been invisible.
+
+**Action:** this promotes the duck-typing migration from "nice to have" to required, and it must
+not depend on `instanceof` at all. Reference implementation: check for the ethers v5 marker
+(`_isSigner === true`) or the structural `_signTypedData`/`getAddress` pair.
+
+### D5 · No lockfile is committed — builds are not reproducible
+
+`git ls-files` tracks **no lockfile of any kind**, and `.gitignore:12` explicitly ignores
+`yarn.lock`. Every install — developer, CI, or release — re-resolves the `^` ranges in
+`package.json` from scratch, so two builds of the same commit can ship different transitive code.
+For a package that signs financial transactions this is a supply-chain finding in its own right:
+it defeats `--frozen-lockfile`, makes `npm audit` results unreproducible, and means a compromised
+transitive release is picked up silently on the next install.
+
+Compounding it, the working tree is **pnpm-managed** (`node_modules/.pnpm/` exists) while the only
+lockfile on disk is a stale, untracked `yarn.lock` whose `--frozen-lockfile` check already fails.
+Six of nine runtime dependencies are floating ranges.
+
+**Fix:** commit a `pnpm-lock.yaml`, add a `packageManager` field, remove the stale `yarn.lock`, and
+make CI install with `--frozen-lockfile`.
+
 ### D4 · The repository has no git tags
 
 `git tag` is empty. No published version can be mapped to a commit, so release boundaries had to
@@ -519,6 +566,78 @@ wallet-RPC-failure classification. Zero first-party type errors; lint clean (2 p
 
 **Still open for P6:** typed `DZapError` classes with stable codes (commit 10) — this commit only
 stops the handler crashing.
+
+### Commit 7 — CI, test split, and reproducible installs
+
+**Fixes:** P5 (High), P7 (partially), D2, D3, D5.
+**Changed:** `jest.config.mjs`, `package.json`, `tsconfig.json`, `.gitignore`,
+`.github/workflows/test.yml` (new), `pnpm-lock.yaml` (new).
+
+**What:**
+
+- Split the suite into two jest `projects`: `unit` (`test/unit/**`, offline, gates CI) and
+  `integration` (everything else — live DZap API, public RPCs, Sui mainnet, advisory only).
+- Pinned `maxWorkers: 1` at run level. Jest serializes worker results with `JSON.stringify`, and
+  library code logs axios errors whose `req`/`res` references are circular, so parallel runs died
+  with `Converting circular structure to JSON` and falsely reported "Test suite failed to run".
+- Moved `testTimeout` to CLI flags: jest rejects it in **both** root and project position when
+  `projects` is used, which is undocumented and cost a debugging cycle.
+- Made `tsc --noEmit` usable as a CI gate: **362 dependency errors → 0**. Two separate causes, and
+  I got the second one wrong the first time:
+  - `target: es2017` → `ES2020` cleared 360 `TS2737` "BigInt literals are not available" errors.
+  - The last 2 (`TS4113` on `override cause`, `TS2554` on `new Error(msg, { cause })`) were **not**
+    target-related at all. They were `lib: ["ES2021", "DOM"]` missing `Error.cause`, which is
+    ES2022. `lib` → `ES2022` cleared both.
+  - I predicted the viem 2.48.4 → 2.56.5 upgrade would fix these, since it moves `ox`
+    0.14.20 → 0.14.44. **It did not** — both errors survived the upgrade unchanged. The upgrade is
+    retained on its own merit (it is the fix for P2's `ws` advisory), not for this.
+- First CI workflow in the repository: lint → types → build → unit tests, with integration
+  advisory. Actions pinned by commit SHA (a tag can be moved after review) and `permissions: {}`
+  default-deny.
+- Committed `pnpm-lock.yaml` and stopped ignoring lockfiles.
+
+**Why CI uses pnpm, not yarn:** the working tree was already pnpm-managed while the only lockfile
+on disk was an untracked, stale `yarn.lock` that failed `--frozen-lockfile`. Running `yarn install`
+against that tree corrupted it — see D6.
+
+**Advantage:** a merge can now be blocked by something. Before this, nothing gated a publish: no
+tests, no lint, no typecheck. The unit/integration split is what makes the gate *credible* — a gate
+that goes red because a third-party RPC is down gets ignored within a week.
+
+**Impact:** unit suite 24/24 green in ~7s with no network. Typecheck 0 first-party errors. Build
+clean (`dist/index.mjs` 390.97 KB, `dist/index.d.ts` 93.46 KB).
+
+**Honest caveat:** this commit's own verification was briefly invalidated by the corrupted install
+in D6. Every number above was re-measured on a clean `pnpm install` afterwards.
+
+**Second caveat — I shipped a bug in this workflow and caught it late.** The file was rewritten to
+use `yarn` while I believed `yarn.lock` was authoritative. Once `pnpm-lock.yaml` was committed and
+`yarn.lock` deleted, that workflow would have failed at the install step. It is now pnpm, and
+`pnpm/action-setup` deliberately specifies no `version:` so it reads `packageManager` from
+`package.json` and CI cannot drift from local.
+
+### Commit 7a — `style: fix pre-existing prettier violations blocking CI`
+
+**Fixes:** prerequisite for P5. **Changed:** `src/enums/index.ts`, `src/utils/index.ts`.
+
+**What:** Four `prettier/prettier` errors — quoted enum keys and a missing parenthesis pair in a
+modulo expression — fixed with `eslint --fix`.
+
+**Why separate:** these are **pre-existing**, verified identical at the branch point `1b00384`
+(4 errors before any of my changes). They are not related to the CI work, but `lint` is the first
+step of the new workflow, so CI would have been red on arrival — the exact failure I criticised in
+the review. Fixing them in their own commit keeps the debt visible instead of burying it inside an
+unrelated change.
+
+**Verification:** the diff is 4 lines across 2 files and is formatting-only.
+`r = (d + r) % 16 | 0` became `r = ((d + r) % 16) | 0` — explicit parenthesisation of the *existing*
+precedence, since `%` already binds tighter than `|`. The enum change leaves both key and value
+identical. Because these lines sit inside `generateUUID`, precedence equality and runtime output
+were both checked rather than assumed.
+
+**Full CI sequence verified locally, in workflow order:** `lint` PASS → `check:types` PASS →
+`build` PASS → `test:unit` 24/24. Workflow file: valid YAML, 0 yarn references, 6 SHA-pinned
+actions, 0 unpinned.
 
 ---
 
