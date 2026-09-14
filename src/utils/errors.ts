@@ -42,14 +42,18 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
       status: TxnStatus.rejected,
     };
   }
-  let errMsg = error.shortMessage;
+  let errMsg = error?.shortMessage ?? error?.message ?? 'Transaction failed';
 
-  const errName = getErrorName(error.metaMessages[0]);
+  // viem only populates metaMessages on some error classes. Reading it
+  // unguarded threw a TypeError from inside this handler, which masked the
+  // original transaction error entirely.
+  const metaMessages: unknown[] = Array.isArray(error?.metaMessages) ? error.metaMessages : [];
+  const errName = typeof metaMessages[0] === 'string' ? getErrorName(metaMessages[0]) : null;
 
   if (errName == BRIDGE_ERRORS.BridgeCallFailed) {
-    let msg = error.metaMessages[1];
+    let msg = metaMessages[1] as string | undefined;
     try {
-      msg = getRevertMsg(error.metaMessages[1].match(/\((.*?)\)/)[1]);
+      msg = getRevertMsg((metaMessages[1] as string).match(/\((.*?)\)/)![1]);
     } catch (err) {
       // pass
     }
