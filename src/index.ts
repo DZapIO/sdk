@@ -67,6 +67,7 @@ import { extendViemChain } from './utils/extendViemChain';
 import { formatToken } from './utils/tokens';
 
 export * from './chains';
+export * from './errors';
 export * from './types/zap';
 export * from './zap/constants';
 export type { DZapClientOptions } from './dZapClient';
