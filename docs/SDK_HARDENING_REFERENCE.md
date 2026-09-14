@@ -774,6 +774,39 @@ invoke".
 entire `jayson` subtree stops being installed. That is now the strongest remaining argument for the
 split, independent of package count.
 
+### Commit 10 — `feat: add typed DZapError hierarchy with stable codes`
+
+**Fixes:** P6 (the half commit 9 did not). **Changed:** `src/errors/index.ts` (new),
+`src/index.ts`, `test/unit/dzapError.unit.test.ts` (new).
+
+**What:** `DZapError` (name, stable numeric `code`, `cause` with the stack hoisted to the real
+failure site) plus ten subclasses, a `DZapErrorCode` enum, and an `isDZapError` guard — all
+exported from the package root.
+
+**Why:** with zero `Error` subclasses, the only way to distinguish a user rejection from a slippage
+failure from an RPC outage was to string-match `errorMsg`. That breaks silently the moment someone
+rewords a message, and it is the difference between an integrator writing
+`if (e instanceof UserRejectedError) return;` and writing `if (e.errorMsg === 'Rejected by User')`.
+
+**Deliberately additive — and this is the important boundary.** Every existing
+`{ status, code, errorMsg }` return is unchanged, so nothing breaks and no consumer is forced to
+migrate. **The 38 client methods do not yet throw these.** Routing them through the hierarchy
+changes the public contract and belongs in 3.0.0. So P6 is now *available* but not yet *enforced*;
+anyone reading this should not assume `getTradeQuotes` rejects with a `DZapError` today.
+
+**Two details worth keeping:**
+- The constructor calls `Object.setPrototypeOf(this, new.target.prototype)` because extending the
+  built-in `Error` breaks `instanceof` under some transpile targets. A test pins the whole chain.
+- A test asserts `DZapErrorCode` has no duplicate values. A duplicate would silently collapse two
+  distinct failure modes into one branch for every consumer switching on codes, and nothing else in
+  the toolchain would catch it.
+
+`override readonly cause` only compiles because commit 7 raised `lib` to ES2022.
+
+**Impact:** 66/66 tests across 6 suites, 0 type errors (no collision with the root barrel), 0 lint
+errors. Verified present in `dist/index.d.ts` and the runtime bundle, so it is a real public API
+rather than dead code.
+
 ---
 
 ## 10a. Cumulative result
