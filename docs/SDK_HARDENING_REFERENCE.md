@@ -639,6 +639,126 @@ were both checked rather than assumed.
 `build` PASS → `test:unit` 24/24. Workflow file: valid YAML, 0 yarn references, 6 SHA-pinned
 actions, 0 unpinned.
 
+### Commit 11 — `refactor: replace ethers signature/ABI helpers with viem`
+
+**Fixes:** P2 (prerequisite for dropping `ethers`).
+**Changed:** `src/utils/eip-2612/eip2612Permit.ts`, `test/unit/permitEncoding.unit.test.ts` (new).
+
+**What:** `ethers.utils.splitSignature` → `parseSignature`;
+`ethers.utils.defaultAbiCoder.encode` (×2) → `encodeAbiParameters`.
+
+**Why:** `getEIP2612PermitSignature` was the last runtime use of `ethers` outside
+`isTypeSigner`. viem is already a dependency and already imported in this file, so the swap
+removes a 30-package subtree without adding anything.
+
+**The hazard this nearly hid — worth reading before touching any signing code.** viem's
+`parseSignature` returns `v` as a **bigint** (`27n`/`28n`) *and* exposes `yParity` (`0`/`1`).
+Encoding `yParity` where a contract expects `uint8 v` does not throw: it produces a signature that
+ecrecovers to the **wrong address**. The permit is then either rejected on-chain or, worse,
+validated against parameters the user never agreed to. `v` is converted with `Number(sig.v)` and a
+test pins that `v !== yParity`.
+
+**Method:** the six equivalence tests were written and **green before** the refactor, asserting
+byte-identical output from ethers and viem across the v1/non-zap long form, the v2/zap short form,
+and `maxUint256`. The refactor was only made once both implementations were proven to agree.
+
+**Advantage:** removes the `@ethersproject/*` tree (30 packages) and the `ws` advisory path behind
+P2's 3 critical / 5 high findings, with on-chain-equivalent output rather than a hopeful swap.
+
+**Impact:** 0 type errors, 30/30 unit tests across 4 suites, 0 lint errors.
+
+**State after this commit:** exactly **one** runtime use of `ethers` remains repo-wide —
+`variable instanceof Signer` at `src/utils/index.ts:168`. The other 11 imports are `Signer` /
+`TypedDataField` in pure type position. Commit 12 removes that last one, after which `ethers` can
+leave `dependencies` entirely.
+
+### Commit 12 — `fix: detect ethers signers structurally, not with instanceof`
+
+**Fixes:** P8 (confirmed in D6). **Changed:** `src/utils/index.ts`,
+`test/unit/isTypeSigner.unit.test.ts`.
+
+**What:** `variable instanceof Signer` → a structural check: `_isSigner === true`, falling back to
+the presence of `_signTypedData` **and** `getAddress`. The `Signer` import becomes `import type`,
+removing the last runtime use of `ethers` in the codebase.
+
+**Why:** `instanceof` compares constructor identity. A valid signer from a second copy of `ethers`
+fails it — observed in this repo with three copies installed simultaneously (D6). ethers v5 sets
+`_isSigner = true` on the prototype for precisely this purpose; it is what `Signer.isSigner()`
+checks internally, so this is the library's own sanctioned mechanism rather than a guess.
+
+**A test expectation was deliberately flipped.** Commit 8's characterisation test asserted that a
+foreign-copy signer returns `false`, with a comment saying that if it ever returned `true` the
+migration had landed. It now asserts `true`. That is the intended signal, changed knowingly and
+recorded here — not a test bent to fit an implementation.
+
+**Over-matching guarded:** a bare `{ getAddress }` object must still be rejected, and viem's
+`WalletClient` — which has neither `_isSigner` nor `_signTypedData` — must continue to return
+`false`, or every EVM transaction would route down the wrong branch. Both are pinned by tests.
+
+**Advantage:** removes a silent, environment-dependent failure in the signing path, and unblocks
+removing `ethers` from `dependencies` entirely (30-package `@ethersproject/*` subtree plus the `ws`
+advisory path).
+
+### Commit 13 — `refactor: replace tonweb with a dependency-free TON validator`
+
+**Fixes:** P1 (Blocker) — the single highest-value change in this branch.
+**Changed:** `src/utils/address/tonAddress.ts` (new), `src/utils/address/tonvm.ts`,
+`test/unit/tonAddress.unit.test.ts` (new), `package.json`, `pnpm-lock.yaml`.
+
+**What:** `TonWeb.utils.Address.isValid` → ~120 dependency-free lines supporting both address
+forms, with CRC-16/XMODEM computed exactly as tonweb did, and base64 decoded without `Buffer` or
+`atob` so one code path serves Node and the browser.
+
+**Why it mattered so much:** `tonweb` was used for **one call** and cost **558 of 671** transitive
+packages — 83% of the tree for a single address check.
+
+**It also answered an open question.** P1 recorded that a backend/browser SDK was installing
+`react-native`, `expo` and `metro`, but I marked the edge chain **UNVERIFIED** rather than guess.
+Removing `tonweb` removes all of them (via `isomorphic-webcrypto` and `@ledgerhq/hw-transport-*`).
+The hypothesis is now proven by removal, not by argument.
+
+**Method — parity before removal:** 25 tests ran **both** implementations over every case while
+tonweb was still installed, and they agreed on all: 9 valid forms (both tags, both workchains, the
+test flag, raw), 12 invalid forms, a corrupted checksum, a bad tag byte, and the CRC-16/XMODEM
+vector `0x31C3`. A too-permissive validator would let funds go to an address with a corrupted
+checksum, which is precisely what TON's CRC exists to prevent. The comparison is gone now that
+tonweb is uninstalled; the evidence lives in the commit.
+
+**A false alarm, recorded because it nearly became a false claim.** After removal, `react-native`,
+`expo` and `metro` still appeared under `node_modules/.pnpm/`. They were leftover entries in pnpm's
+content-addressed store, not reachable graph nodes — absent from `pnpm-lock.yaml`, and `pnpm why`
+returns nothing. Directory listings are not the dependency graph.
+
+---
+
+## 10a. Cumulative result
+
+Measured on a clean consumer install (`npm install --package-lock-only --ignore-scripts`) of the
+current manifest:
+
+| Metric | Before | After | Change |
+| --- | --- | --- | --- |
+| Transitive packages | 719 | **113** | **−606 (−84%)** |
+| Vulnerabilities | 25 | **5** | −20 |
+| — critical | 3 | **0** | **eliminated** |
+| — high | 5 | **2** | −3 |
+| — moderate | 17 | **3** | −14 |
+| `react-native` / `expo` / `metro` | present | **absent** | — |
+| `ethers` | dependency | **optional peer** | — |
+| `tonweb` | dependency | **removed** | — |
+| Unit tests | 0 | **57** (5 suites, offline) | — |
+| First-party type errors | 0 of 362 | **0 of 0** | — |
+| CI | none | lint → types → build → tests | — |
+
+For context, `@lifi/sdk` core + EVM provider + viem resolves to 16 packages. At 113 we are no
+longer in a different category from the benchmark, though still well above it — the remaining gap
+is `@solana/web3.js`, `@bigmi/core` and `bitcoin-address-validation`, which the adapter split
+(P1, deferred) would move behind opt-in packages.
+
+**Not claimed:** bundle size. `dist/index.js` went 392.96 → 395.34 KB. Tree-shaking had already
+elided most of tonweb's inlined code, and viem 2.56.5 is larger than 2.48.4. The win here is
+install footprint and vulnerability count.
+
 ---
 
 ## 10. How to reproduce every number
