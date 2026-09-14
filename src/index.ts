@@ -69,6 +69,7 @@ import { formatToken } from './utils/tokens';
 export * from './chains';
 export * from './types/zap';
 export * from './zap/constants';
+export type { DZapClientOptions } from './dZapClient';
 export {
   AllowanceTypes,
   ApiRpcResponse,

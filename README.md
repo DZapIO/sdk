@@ -46,16 +46,15 @@ import { DZapClient } from '@dzapio/sdk';
 // Basic initialization
 const dZap = DZapClient.getInstance();
 
-// With custom RPC URLs (optional)
-const customRpcUrls = {
-  1: ['https://eth.llamarpc.com'], // Ethereum mainnet
-  42161: ['https://arbitrum.llamarpc.com'], // Arbitrum
-  // Add more chains as needed
-};
-
-// Initialize with custom RPC URLs
-// This is useful if you want to use specific RPC endpoints instead of the defaults.
-const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
+// With an API key and/or custom RPC URLs (both optional)
+const dZapConfigured = DZapClient.getInstance({
+  apiKey: process.env.DZAP_API_KEY,
+  rpcUrls: {
+    1: ['https://eth.llamarpc.com'], // Ethereum mainnet
+    42161: ['https://arbitrum.llamarpc.com'], // Arbitrum
+    // Add more chains as needed
+  },
+});
 ```
 
 ---
