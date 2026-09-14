@@ -444,6 +444,82 @@ training and RAG input, so it was teaching agents to call `getQuotes()` and `bui
 `package.json` value at each bump commit; the absence of tags (D4) is stated in the file rather
 than papered over.
 
+### Commit 5 — `docs: point type reference at published declarations`
+
+**Fixes:** P10 (Medium). **Changed:** `README.md`.
+
+**What:** Replaced the pointer to `src/types` with the bundled `dist/index.d.ts` and a concrete
+`import type { … } from '@dzapio/sdk'` example.
+
+**Why:** `src/` is excluded by both `.npmignore` and the `files` field, so an installed consumer has
+no `src/` directory. The documentation sent people to a path that does not exist in the artifact
+they installed.
+
+**Advantage:** The type story now works for the only audience that matters — people who installed
+from npm. Naming the root exports also makes editor autocomplete the discovery mechanism rather
+than the repository.
+
+**Impact:** Documentation only.
+
+### Commit 6 — `build: declare sideEffects false`
+
+**Fixes:** P9 (Medium). **Changed:** `package.json`.
+
+**What:** Added `"sideEffects": false`.
+
+**Why:** Without it, bundlers must conservatively assume every module has import-time side effects
+and cannot eliminate unused code.
+
+**Advantage:** This is the single highest-leverage line for consumer bundle size. A frontend
+importing only `getTokenPrices` no longer has to ship the whole package. It also compounds with the
+dependency work: tree-shaking can only drop `@solana/web3.js` and friends once the bundler is
+permitted to reason about reachability.
+
+**Safety:** Verified the SDK has no import-time side effects — every module only defines and
+exports. Unit suite passes unchanged. Measuring the actual byte reduction requires a consumer-side
+bundle and is deferred to the adapter-split work.
+
+**Impact:** Metadata only, no runtime change.
+
+### Commit 8 — `test: pin isTypeSigner behaviour incl. duplicate-copy hazard`
+
+**Fixes:** Prepares P8 (Medium). **Changed:** `test/unit/isTypeSigner.unit.test.ts` (new).
+
+**What:** Five tests pinning `isTypeSigner` against a real ethers `Wallet`, a viem-style client,
+primitives, and a structurally identical signer from a foreign ethers copy.
+
+**Why:** This function is the discriminator for all 7 ethers/viem branches. It must not be changed
+without a characterisation test first.
+
+**Advantage:** The hazard is now executable rather than theoretical. The foreign-copy test asserts
+the *current* (broken) result, so the day duck-typing lands, that test fails loudly and documents
+the behaviour change instead of silently passing.
+
+**Impact:** 5 tests, offline, no production change.
+
+### Commit 9 — `fix: guard viem error handler against missing metaMessages`
+
+**Fixes:** P6 (High), partially. **Changed:** `src/utils/errors.ts`,
+`test/unit/errors.unit.test.ts` (new).
+
+**What:** `metaMessages` is treated as optional; `errMsg` falls back `shortMessage → message →
+'Transaction failed'`; `BridgeCallFailed` extraction survives a missing second element.
+
+**Why:** The handler threw a `TypeError` on any viem error class lacking `metaMessages`. An error
+handler that crashes is worse than no error handler — it replaces a real, actionable transaction
+failure with an unrelated crash from inside the SDK.
+
+**Advantage:** Failures now surface the actual cause. This is the difference between an integrator
+seeing "insufficient funds" and seeing "Cannot read properties of undefined (reading '0')" from
+inside a dependency.
+
+**Impact:** 11 tests covering the crash paths and pinning existing user-rejection and
+wallet-RPC-failure classification. Zero first-party type errors; lint clean (2 pre-existing
+`no-explicit-any` warnings on lines 28 and 72, untouched).
+
+**Still open for P6:** typed `DZapError` classes with stable codes (commit 10) — this commit only
+stops the handler crashing.
+
 ---
 
 ## 10. How to reproduce every number
