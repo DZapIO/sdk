@@ -1,4 +1,3 @@
-import { Signer } from 'ethers';
 import { Prettify, TypedDataDomain, WalletClient } from 'viem';
 import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, STATUS, STATUS_RESPONSE, Services } from './../constants';
 import { ApprovalModes } from './../constants/approval';
@@ -550,7 +549,7 @@ export type SignatureCallbackParams = SinglePermitCallbackParams | BatchPermitCa
 export type SignatureParamsBase = {
   chainId: number;
   sender: HexString;
-  signer: WalletClient | Signer;
+  signer: WalletClient;
   tokens: {
     address: HexString;
     permitData?: HexString;

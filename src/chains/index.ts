@@ -19,7 +19,7 @@ export { arcTestnet } from './definitions/arcTestnet';
 export { arthera } from './definitions/arthera';
 export { astralisTestnet } from './definitions/astralisTestnet';
 export { bitlayer } from './definitions/bitlayer';
-export { bitcoin } from '@bigmi/core';
+export { bitcoin } from './definitions/bitcoin';
 export { bitcoinTestnet } from './definitions/bitcoinTestnet';
 export { citrea } from './definitions/citrea';
 export { fiveIre } from './definitions/fiveIre';

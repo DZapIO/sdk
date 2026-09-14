@@ -1,11 +1,10 @@
-import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { fetchZapBuildTxnData, fetchZapBundleBuildTx } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
 import { DZapTransactionResponse, HexString } from '../types';
 import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapBundleRequest } from '../types/zap';
 import { ZapStep, ZapEvmTxnDetails } from '../types/zap/step';
-import { getPublicClient, isTypeSigner } from '../utils';
+import { getPublicClient } from '../utils';
 import { viemChainsById } from '../chains';
 import { handleViemTransactionError } from '../utils/errors';
 import { zapStepAction } from '../zap/constants/step';
@@ -18,49 +17,29 @@ class ZapTxnHandler {
   }: {
     chainId: number;
     txnData: ZapEvmTxnDetails;
-    signer: Signer | WalletClient;
+    signer: WalletClient;
   }): Promise<DZapTransactionResponse> => {
     try {
-      const { callData, callTo, value, estimatedGas } = txnData;
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        const from = await signer.getAddress();
-        const txnRes = await signer.sendTransaction({
-          from,
-          to: callTo,
-          data: callData,
-          value: BigInt(value),
-          gasLimit: BigInt(estimatedGas) ? BigInt(estimatedGas) : undefined,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash: txnRes.hash as HexString,
-        };
-      } else {
-        console.log('Using viem walletClient.');
-        const txnHash = await signer.sendTransaction({
-          chain: viemChainsById[chainId],
-          account: signer.account?.address as HexString,
-          to: txnData.callTo,
-          data: txnData.callData,
-          value: BigInt(txnData.value),
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash,
-        };
-      }
+      const txnHash = await signer.sendTransaction({
+        chain: viemChainsById[chainId],
+        account: signer.account?.address as HexString,
+        to: txnData.callTo,
+        data: txnData.callData,
+        value: BigInt(txnData.value),
+      });
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        txnHash,
+      };
     } catch (error: any) {
       console.log({ error });
       return handleViemTransactionError({ error });
     }
   };
 
-  public static approve = async ({ chainId, data, signer }: { chainId: number; data: ZapEvmTxnDetails; signer: Signer | WalletClient }) => {
+  public static approve = async ({ chainId, data, signer }: { chainId: number; data: ZapEvmTxnDetails; signer: WalletClient }) => {
     try {
-      const { callData, callTo, value, estimatedGas } = data;
       const publicClient = getPublicClient({ chainId, rpcUrls: undefined });
       const blockNumber = await publicClient.getBlockNumber();
       console.log('block Number and data');
@@ -71,36 +50,18 @@ class ZapTxnHandler {
         },
         { depth: null },
       );
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        const from = await signer.getAddress();
-        const txnRes = await signer.sendTransaction({
-          from,
-          to: callTo,
-          data: callData,
-          value: BigInt(value),
-          gasLimit: BigInt(estimatedGas) ? BigInt(estimatedGas) : undefined,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash: txnRes.hash as HexString,
-        };
-      } else {
-        console.log('Using viem walletClient.');
-        const txnHash = await signer.sendTransaction({
-          chain: viemChainsById[chainId],
-          account: signer.account?.address as HexString,
-          to: data.callTo,
-          data: data.callData,
-          value: BigInt(data.value),
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash,
-        };
-      }
+      const txnHash = await signer.sendTransaction({
+        chain: viemChainsById[chainId],
+        account: signer.account?.address as HexString,
+        to: data.callTo,
+        data: data.callData,
+        value: BigInt(data.value),
+      });
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        txnHash,
+      };
     } catch (error: any) {
       console.log({ error });
       return handleViemTransactionError({ error });
@@ -114,7 +75,7 @@ class ZapTxnHandler {
   }: {
     request: ZapBuildTxnRequest | ZapBundleRequest;
     steps?: ZapStep[];
-    signer: Signer | WalletClient;
+    signer: WalletClient;
   }): Promise<
     | {
         status: TxnStatus.success;

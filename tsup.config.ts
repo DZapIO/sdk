@@ -7,7 +7,6 @@ export default defineConfig({
   outDir: 'dist',
   external: [
     '@solana/web3.js',
-    'ethers',
     'viem',
     'axios',
     'decimal.js',

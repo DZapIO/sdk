@@ -1,7 +1,7 @@
-import { ChainId, defineChain } from '@bigmi/core';
+import { bitcoinChainIds, defineBitcoinChain } from './bitcoin';
 
-export const bitcoinTestnet = /*#__PURE__*/ defineChain({
-  id: ChainId.BITCOIN_TESTNET4,
+export const bitcoinTestnet = /*#__PURE__*/ defineBitcoinChain({
+  id: bitcoinChainIds.BITCOIN_TESTNET4,
   name: 'Bitcoin Testnet',
   nativeCurrency: { name: 'Bitcoin', symbol: 'BTC', decimals: 8 },
   rpcUrls: {

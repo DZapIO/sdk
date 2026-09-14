@@ -1,4 +1,3 @@
-import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
 import { viemChainsById } from '../chains';
@@ -14,7 +13,6 @@ import {
   TradeBuildTxnRequest,
   TradeBuildTxnResponse,
 } from '../types';
-import { isTypeSigner } from '../utils';
 import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
 import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
@@ -24,32 +22,19 @@ import PermitTxnHandler from './permit';
 
 class TradeTxnHandler {
   private static sendTransaction = async (
-    signer: Signer | WalletClient,
+    signer: WalletClient,
     txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
     chainId: number,
     additionalInfo: AdditionalInfo | undefined,
     updatedQuotes: Record<string, string>,
   ): Promise<DZapTransactionResponse> => {
-    let txnHash: HexString;
-
-    if (isTypeSigner(signer)) {
-      const txnRes = await signer.sendTransaction({
-        from: txnParams.from,
-        to: txnParams.to,
-        data: txnParams.data,
-        value: txnParams.value,
-        gasLimit: txnParams.gasLimit,
-      });
-      txnHash = txnRes.hash as HexString;
-    } else {
-      txnHash = await signer.sendTransaction({
-        chain: viemChainsById[chainId],
-        account: txnParams.from as HexString,
-        to: txnParams.to as HexString,
-        data: txnParams.data as HexString,
-        value: BigInt(txnParams.value),
-      });
-    }
+    const txnHash = await signer.sendTransaction({
+      chain: viemChainsById[chainId],
+      account: txnParams.from as HexString,
+      to: txnParams.to as HexString,
+      data: txnParams.data as HexString,
+      value: BigInt(txnParams.value),
+    });
 
     return {
       status: TxnStatus.success,
@@ -126,7 +111,7 @@ class TradeTxnHandler {
     rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: WalletClient;
     txnData?: TradeBuildTxnResponse;
     batchTransaction: boolean;
     multicallAddress?: HexString;
@@ -156,8 +141,7 @@ class TradeTxnHandler {
           updatedQuotes,
         );
       }
-      // Handle ethers signer (no batching support)
-      if (batchTransaction && !isTypeSigner(signer)) {
+      if (batchTransaction) {
         return this.sendTxnWithBatch(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
       }
 
@@ -194,7 +178,7 @@ class TradeTxnHandler {
     txnStatusCallback,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: WalletClient;
     rpcUrls: string[];
     spender: HexString;
     txnData?: GaslessTradeBuildTxnResponse;
