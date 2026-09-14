@@ -19,3 +19,9 @@ public/**/*.js
 jest.results.json
 *.#*
 bun.lockb
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# headroom's per-session wrapper state (live pid/port + env-var ownership).
+.claude/.headroom_wrap_*
