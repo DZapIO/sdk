@@ -15,34 +15,34 @@
 
 ## 1. Executive summary
 
-| Metric | `@dzapio/sdk` 2.0.50 | `@lifi/sdk` 4.7.0 | Delta |
-| --- | --- | --- | --- |
-| Declared runtime deps | 9 | **1** (`@lifi/types`) | 9× |
-| Total resolved tree (core alone) | **719** | **2** | **360×** |
-| Core + EVM + viem (fair comparison) | 719 | **16** | **45×** |
-| Core + EVM + Solana + BTC + Sui (their max) | n/a | **111** | ours is 6.5× bigger than their *maximum* |
-| `npm audit` | **25** (3 critical, 5 high, 17 moderate) | **0** | — |
-| Duplicate multi-version packages | `ws`×4, `debug`×3, `commander`×3, … | **0** | — |
-| CI | **none** (no `.github/`) | tests + publish + release | — |
-| Publish provenance | **none** | OIDC trusted publishing + `NPM_CONFIG_PROVENANCE` | — |
-| Typed error classes | **0** | 8 classes, 28 numeric codes | — |
-| Tests | 11 files, 0 on trade/permit paths | co-located `.unit.spec.ts` per action | — |
-| `sideEffects` declared | **no** | `false` | — |
-| Entrypoints | 1 monolith (122 exports) | 1 core + 6 provider packages | — |
+| Metric                                      | `@dzapio/sdk` 2.0.50                     | `@lifi/sdk` 4.7.0                                 | Delta                                    |
+| ------------------------------------------- | ---------------------------------------- | ------------------------------------------------- | ---------------------------------------- |
+| Declared runtime deps                       | 9                                        | **1** (`@lifi/types`)                             | 9×                                       |
+| Total resolved tree (core alone)            | **719**                                  | **2**                                             | **360×**                                 |
+| Core + EVM + viem (fair comparison)         | 719                                      | **16**                                            | **45×**                                  |
+| Core + EVM + Solana + BTC + Sui (their max) | n/a                                      | **111**                                           | ours is 6.5× bigger than their _maximum_ |
+| `npm audit`                                 | **25** (3 critical, 5 high, 17 moderate) | **0**                                             | —                                        |
+| Duplicate multi-version packages            | `ws`×4, `debug`×3, `commander`×3, …      | **0**                                             | —                                        |
+| CI                                          | **none** (no `.github/`)                 | tests + publish + release                         | —                                        |
+| Publish provenance                          | **none**                                 | OIDC trusted publishing + `NPM_CONFIG_PROVENANCE` | —                                        |
+| Typed error classes                         | **0**                                    | 8 classes, 28 numeric codes                       | —                                        |
+| Tests                                       | 11 files, 0 on trade/permit paths        | co-located `.unit.spec.ts` per action             | —                                        |
+| `sideEffects` declared                      | **no**                                   | `false`                                           | —                                        |
+| Entrypoints                                 | 1 monolith (122 exports)                 | 1 core + 6 provider packages                      | —                                        |
 
 **The single most important structural finding:** every heavy dependency we carry is confined to
 thin address-validation / chain-definition utilities — **not** core trading logic. The modular split
 is therefore far cheaper than the 719-package footprint suggests.
 
-| Dependency | Files using it | What for |
-| --- | --- | --- |
-| `tonweb` | **1** (`src/utils/address/tonvm.ts:17`) | one call: `TonWeb.utils.Address.isValid()` |
-| `@solana/web3.js` | **1** (`src/utils/address/svm.ts`) | address classification |
-| `bitcoin-address-validation` | **1** (`src/utils/address/bvm.ts`) | address validation |
-| `@bigmi/core` | **2** (`src/chains/**`) | chain definitions |
-| `ethers` | 12 imports, but **3 runtime sites** | see §4.1 |
-| `decimal.js` | 2 | amount math |
-| `node-cache` | 1 | cache provider |
+| Dependency                   | Files using it                          | What for                                   |
+| ---------------------------- | --------------------------------------- | ------------------------------------------ |
+| `tonweb`                     | **1** (`src/utils/address/tonvm.ts:17`) | one call: `TonWeb.utils.Address.isValid()` |
+| `@solana/web3.js`            | **1** (`src/utils/address/svm.ts`)      | address classification                     |
+| `bitcoin-address-validation` | **1** (`src/utils/address/bvm.ts`)      | address validation                         |
+| `@bigmi/core`                | **2** (`src/chains/**`)                 | chain definitions                          |
+| `ethers`                     | 12 imports, but **3 runtime sites**     | see §4.1                                   |
+| `decimal.js`                 | 2                                       | amount math                                |
+| `node-cache`                 | 1                                       | cache provider                             |
 
 ---
 
@@ -51,6 +51,7 @@ is therefore far cheaper than the 719-package footprint suggests.
 Severity: **B**locker / **H**igh / **M**edium / **L**ow
 
 ### P1 · B · 719-package dependency tree, incl. React Native / Expo / Metro
+
 `npm init -y` + `npm i @dzapio/sdk` resolves **719 packages**. The tree contains `react-native`,
 `expo-modules-autolinking`, `metro`, `@react-native/codegen`, `hermes-parser`, `@expo/cli` — in a
 package whose only root is `@dzapio/sdk`.
@@ -62,26 +63,33 @@ package whose only root is `@dzapio/sdk`.
 toolchain in a backend/browser SDK is indefensible.
 
 ### P2 · B · 25 vulnerabilities, and npm's only fix is a 39-version downgrade
+
 3 critical, 5 high, 17 moderate. Root causes: `ws` advisories reached via `ethers@5.7.2`
 (`@ethersproject/providers <=5.7.2`) and `viem <=2.49.3`.
-`npm audit fix --force` reports: *"Will install @dzapio/sdk@2.0.11, which is a breaking change."*
+`npm audit fix --force` reports: _"Will install @dzapio/sdk@2.0.11, which is a breaking change."_
 `ethers@5` is a maintenance-mode line.
 
 ### P3 · B · The documented init example is wrong and fails silently
+
 `src/dZapClient/index.ts:114`:
+
 ```ts
 public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient
 ```
+
 Both the JSDoc above it (lines 107–111) **and** `README.md:50-58` show:
+
 ```ts
 const clientWithRpc = DZapClient.getInstance({ 1: ['https://eth.llamarpc.com'], 42161: [...] });
 ```
+
 This passes the RPC map as `apiKey`. `config.setApiKey(rpcMap)` runs, RPCs are never applied, and a
 stringified object is sent as the `x-api-key` header (`src/utils/axios.ts:26`). No error is raised.
 The JSDoc `@param` block documents only `rpcUrlsByChainId` and omits `apiKey` entirely.
 **This is the first line of code every integrator and every AI agent writes.**
 
 ### P4 · H · Shipped CHANGELOG documents an API that has never existed
+
 `CHANGELOG.md` is in the published tarball (`files: ["dist","README.md","CHANGELOG.md","LICENSE"]`).
 Its only entry is `## [1.0.0] - 2025-07-XX` — an unreplaced placeholder date — for a package
 published at **2.0.50**. It documents `getQuotes()`, `buildTxn()`, `buildAndSendTransaction()`,
@@ -91,54 +99,65 @@ published at **2.0.50**. It documents `getQuotes()`, `buildTxn()`, `buildAndSend
 **AI impact:** this is training/RAG corpus. It teaches agents a fabricated API.
 
 ### P5 · H · No CI, manual publish, no provenance
+
 No `.github/` directory exists in this repo. Publishing is `npm run build && npm publish` from a
 developer machine. `_npmUser = dzapio <dezaptech@gmail.com>` (single shared account).
 `dist.signatures` present (standard registry signing) but `dist.attestations` absent → **no build
 provenance**. Nothing gates a publish on tests passing.
 
 ### P6 · H · No typed errors; the error handler itself can crash
+
 `grep "extends Error" src/` → **zero matches**. `src/utils/errors.ts` returns plain objects
 (`{ error, errorMsg, code, status }`), so consumers must string-match `errorMsg`.
 `handleViemTransactionError` does `getErrorName(error.metaMessages[0])` with no guard — any viem
-error lacking `metaMessages` throws a `TypeError` *from inside the error handler*, masking the
+error lacking `metaMessages` throws a `TypeError` _from inside the error handler_, masking the
 original failure.
 
 ### P7 · H · Tests do not cover a single value-bearing path
+
 11 test files: 4 unit + 7 address-validation integration. Zero tests for quoting, approvals,
 permits, or transaction building. `jest.config.mjs` sets no coverage collection and no thresholds.
 1,330-line `dZapClient/index.ts` with 38 public methods is effectively untested.
 
 ### P8 · M · `instanceof Signer` is a latent cross-copy bug
+
 `src/utils/index.ts:167-169`:
+
 ```ts
 export const isTypeSigner = (variable: any): variable is Signer => variable instanceof Signer;
 ```
+
 This is the discriminator branching ethers vs viem in **7** call sites. `instanceof` fails across
 duplicate package copies — and duplicates are already proven in the consumer tree. A valid ethers
 Signer from a second `ethers` copy silently takes the viem branch and fails confusingly.
 **UNVERIFIED as an observed failure** — reproduce with a test before changing.
 
 ### P9 · M · Not tree-shakeable
+
 No `sideEffects` field in `package.json`. One entrypoint, 122 exported symbols, no subpath exports.
 A consumer calling `getTokenPrices` pays for the whole ~400KB bundle.
 
 ### P10 · M · README points at files that are not published
-`README.md:346`: *"All input/output types are defined in the SDK's `src/types` directory."*
+
+`README.md:346`: _"All input/output types are defined in the SDK's `src/types` directory."_
 `src/` is excluded by both `.npmignore` and `files`. npm consumers have no `src/`. The real answer —
-a 95KB `dist/index.d.ts` — is never mentioned. (LI.FI solves this by *shipping `src/**/*.ts`*; see §4.4.)
+a 95KB `dist/index.d.ts` — is never mentioned. (LI.FI solves this by _shipping `src/**/*.ts`_; see §4.4.)
 
 ### P11 · M · Singleton config is the pattern LI.FI abandoned
+
 `DZapClient.getInstance()` + module-global `config` (`src/config/index.ts`) means one API key and one
 RPC map per process. LI.FI moved from module-level `createConfig` (v3) to explicit
 `createClient({ integrator, providers })` (v4) precisely to avoid this. Blocks multi-tenant/server use.
 
 ### P12 · L · Library logs to console unconditionally
+
 61 `console.*` calls in `src/`. **No keys or mnemonics are logged** (verified). But
 `console.log({ receipt })`, `console.log({ error })`, `console.dir(...)`, a bare
 `console.log(uuid)` (`src/utils/index.ts:159`), and raw signature-generation errors
 (`eip2612Permit.ts:179`, `permit2/index.ts:110`) ship in library code.
 
 ### P13 · L · `prepare` script breaks git-URL installs
+
 `"prepare": "husky install && yarn run fix-permissions"` — `scripts/` is not published, so a
 git-dependency install runs husky in the consumer repo and then fails on the missing script.
 
@@ -147,6 +166,7 @@ git-dependency install runs husky in the consumer repo and then fails on the mis
 ## 3. What LI.FI does that we do not
 
 ### 3.1 Modular provider architecture (the core lesson)
+
 Core `@lifi/sdk` has **one** dependency. Ecosystem support is opt-in:
 
 ```
@@ -162,15 +182,18 @@ Consumers install only what they use. The ecosystem library is a **peer** the co
 because the consumer owns the wallet object.
 
 ### 3.2 Explicit client, standalone actions
+
 ```ts
 const client = createClient({ integrator: 'YourApp', providers: [EthereumProvider({ getWalletClient })] })
 const quote  = await getQuote(client, { fromChain: ChainId.ARB, ... })
 ```
+
 Actions are standalone functions taking `client` as the first argument — one file per action
 (`getQuote.ts`, `getRoutes.ts`, `getStatus.ts`, … ~20 of them), each with a co-located
 `getQuote.unit.spec.ts`. Fully tree-shakeable. Ours is a 38-method class behind a singleton.
 
 ### 3.3 Structured error model
+
 `BaseError extends Error` carrying `name`, a numeric `code`, and `cause`, with root-cause stack
 hoisting. `ErrorName` (12 values) + `LiFiErrorCode` (28 numeric codes, 1000–1027) +
 `ErrorMessage`. Concrete subclasses: `RPCError`, `ProviderError`, `TransactionError`,
@@ -178,12 +201,14 @@ hoisting. `ErrorName` (12 values) + `LiFiErrorCode` (28 numeric codes, 1000–10
 (carries `retryParams`). Every error file has a co-located `.unit.spec.ts`.
 
 ### 3.4 Packaging discipline
+
 `type: module`, `sideEffects: false`, dual `dist/esm` + `dist/cjs` with per-directory
 `package.json` type markers, an `exports` map that also exposes `./package.json`, and `files` that
 ships **`src/**/*.ts` with specs excluded** — so consumers can read the source and get perfect
 go-to-definition. That is the correct fix for our P10.
 
 ### 3.5 Release engineering
+
 Changesets (independent versioning, per-package `CHANGELOG.md`, `@changesets/changelog-github`),
 commitlint + conventional commits, husky `pre-commit` = `check && check:types && check:circular-deps && knip`,
 `pre-push` = unit tests. CI `tests.yaml` = lint → build → types → test. `publish.yaml` uses
@@ -191,11 +216,13 @@ commitlint + conventional commits, husky `pre-commit` = `check && check:types &&
 SHA-pinned actions. `madge --circular` for cycles, `knip` for dead deps.
 
 ### 3.6 Built for AI consumers
+
 The repo ships a root **`CLAUDE.md`** and a `.claude/skills/release/SKILL.md`. Their `CLAUDE.md`
 documents build invariants, code style ("no default exports"), known issues, and the exact release
 rules. Notably, their docs tell AI-agent builders to prefer the **REST API** over the SDK.
 
 ### 3.7 Where we are NOT behind
+
 - Our `examples/` has 5 files; theirs has one (`examples/node`).
 - Our README's method-by-method reference is more complete than their README.
 - Our `tsconfig` already sets `strict: true`.
@@ -208,14 +235,15 @@ rules. Notably, their docs tell AI-agent builders to prefer the **REST API** ove
 ## 4. Target architecture
 
 ### 4.1 Remove `ethers` entirely (unblocks P2)
+
 12 files import from `ethers`, but only **3 are runtime uses**:
 
-| Site | Use | Replacement | Risk |
-| --- | --- | --- | --- |
-| `eip2612Permit.ts:161` | `ethers.utils.splitSignature` | `parseSignature` (viem) | Low |
-| `eip2612Permit.ts:165,169` | `ethers.utils.defaultAbiCoder.encode` ×2 | `encodeAbiParameters` (viem) | Low |
-| `signTypedData.ts:27` | `signer as Wallet` (type assertion) | local minimal interface | Low |
-| `utils/index.ts:168` | `variable instanceof Signer` | duck-type check | **Medium — test first** |
+| Site                       | Use                                      | Replacement                  | Risk                    |
+| -------------------------- | ---------------------------------------- | ---------------------------- | ----------------------- |
+| `eip2612Permit.ts:161`     | `ethers.utils.splitSignature`            | `parseSignature` (viem)      | Low                     |
+| `eip2612Permit.ts:165,169` | `ethers.utils.defaultAbiCoder.encode` ×2 | `encodeAbiParameters` (viem) | Low                     |
+| `signTypedData.ts:27`      | `signer as Wallet` (type assertion)      | local minimal interface      | Low                     |
+| `utils/index.ts:168`       | `variable instanceof Signer`             | duck-type check              | **Medium — test first** |
 
 **Verified:** viem 2.48.4 already exports `parseSignature`, `hexToSignature`, `serializeSignature`,
 `encodeAbiParameters`, `parseAbiParameters`, `recoverAddress`.
@@ -223,23 +251,27 @@ All remaining `Signer` / `TypedDataField` imports become `import type`, and `eth
 **optional peer dependency** so consumers passing an ethers Signer keep their types.
 
 ### 4.2 Split ecosystems into optional adapters (unblocks P1)
+
 ```
 @dzapio/sdk            → core: API client, quotes, build, status, EVM via viem
 @dzapio/adapter-solana → @solana/web3.js
 @dzapio/adapter-bitcoin→ bitcoin-address-validation / @bigmi/core
 @dzapio/adapter-ton    → replaces tonweb (or drops it; see below)
 ```
+
 `tonweb` should likely be **deleted rather than moved**: it is used for one call,
 `TonWeb.utils.Address.isValid()`. TON user-friendly addresses are 48-char base64url, 36 bytes, with
 a CRC16-CCITT checksum — ~30 dependency-free lines.
 
 ### 4.3 Error model (mirrors §3.3)
+
 `DZapError extends Error` with `name`, numeric `code`, `cause`; `DZapErrorCode` enum; subclasses
 `ValidationError`, `RPCError`, `ProviderError`, `TransactionError`, `SlippageError`,
 `AllowanceError`, `UserRejectedError`, `ServerError`, `UnknownError`. Exported from the root so
 consumers can `instanceof`. Guard `handleViemTransactionError` against missing `metaMessages` (P6).
 
 ### 4.4 Packaging
+
 Add `"sideEffects": false`; ship `src/**/*.ts` (specs excluded) so P10's pointer becomes true; add
 subpath exports; keep dual ESM/CJS.
 
@@ -267,22 +299,22 @@ Required tests, in order:
 
 ## 6. Commit plan (small, ordered, each with tests)
 
-| # | Commit | Fixes | Test |
-| --- | --- | --- | --- |
-| 1 | `chore: add graft + agent tooling config` | — | n/a |
-| 2 | `docs: add SDK hardening reference` | — | n/a |
-| 3 | `fix: correct getInstance docs + add options overload` | P3 | test 1 |
-| 4 | `docs: regenerate CHANGELOG from git history` | P4 | n/a |
-| 5 | `docs: point types reference at published artifacts` | P10 | n/a |
-| 6 | `build: declare sideEffects false` | P9 | bundle-size assert |
-| 7 | `ci: add test/lint/build workflow` | P5 | CI green |
-| 8 | `test: cover isTypeSigner incl. duplicate-copy case` | P8 | test 2 |
-| 9 | `fix: guard viem error handler against missing metaMessages` | P6 | test 4 |
-| 10 | `feat: typed DZapError hierarchy with stable codes` | P6 | new specs |
-| 11 | `refactor: replace ethers utils with viem equivalents` | P2 | test 3 |
-| 12 | `refactor: duck-type signer detection; drop ethers runtime dep` | P2/P8 | test 2 |
-| 13 | `refactor: replace tonweb with dependency-free TON validation` | P1 | test 6 |
-| 14 | `chore: upgrade remaining deps to latest stable` | P2 | full suite |
+| #   | Commit                                                          | Fixes | Test               |
+| --- | --------------------------------------------------------------- | ----- | ------------------ |
+| 1   | `chore: add graft + agent tooling config`                       | —     | n/a                |
+| 2   | `docs: add SDK hardening reference`                             | —     | n/a                |
+| 3   | `fix: correct getInstance docs + add options overload`          | P3    | test 1             |
+| 4   | `docs: regenerate CHANGELOG from git history`                   | P4    | n/a                |
+| 5   | `docs: point types reference at published artifacts`            | P10   | n/a                |
+| 6   | `build: declare sideEffects false`                              | P9    | bundle-size assert |
+| 7   | `ci: add test/lint/build workflow`                              | P5    | CI green           |
+| 8   | `test: cover isTypeSigner incl. duplicate-copy case`            | P8    | test 2             |
+| 9   | `fix: guard viem error handler against missing metaMessages`    | P6    | test 4             |
+| 10  | `feat: typed DZapError hierarchy with stable codes`             | P6    | new specs          |
+| 11  | `refactor: replace ethers utils with viem equivalents`          | P2    | test 3             |
+| 12  | `refactor: duck-type signer detection; drop ethers runtime dep` | P2/P8 | test 2             |
+| 13  | `refactor: replace tonweb with dependency-free TON validation`  | P1    | test 6             |
+| 14  | `chore: upgrade remaining deps to latest stable`                | P2    | full suite         |
 
 Commits 1–9 are low-risk. **10–14 touch signing paths** and each needs its tests landed first.
 
@@ -291,12 +323,12 @@ Commits 1–9 are low-risk. **10–14 touch signing paths** and each needs its t
 ## 7. Decisions needed before coding
 
 1. **Package split (P1):** full multi-package split now, or single package with `ethers`/`tonweb`
-   removed first? *Recommendation: remove `ethers` + `tonweb` first (biggest win, lowest risk),
-   defer the split.*
+   removed first? _Recommendation: remove `ethers` + `tonweb` first (biggest win, lowest risk),
+   defer the split._
 2. **`ethers` as optional peer, or dropped outright?** Dropping is a **breaking change** for
    consumers passing ethers Signers → requires a major version.
 3. **Version target:** these fixes are `2.0.51` patches, or cut **`3.0.0`** and do it properly?
-   *Recommendation: 3.0.0 with a migration guide — several fixes are breaking by nature.*
+   _Recommendation: 3.0.0 with a migration guide — several fixes are breaking by nature._
 4. **Adopt changesets + commitlint** now, or after the code work?
 5. **Jest → vitest?** LI.FI uses vitest; our jest config already needs a `uuid` CJS shim hack.
 
@@ -306,6 +338,7 @@ Commits 1–9 are low-risk. **10–14 touch signing paths** and each needs its t
 
 `@dzapio/wallet`, `@dzapio/widget` (separate repo). Two known widget-repo issues recorded here so
 they are not lost:
+
 - Widget `README.md:28-33` tells users to `npm install @dzapio/widget@beta`, but dist-tags are
   `{ beta: 0.0.1-beta.0, latest: 0.2.0 }` — the documented command installs a stale pre-release.
 - `examples/next` has no `.env.example` despite the README requiring `NEXT_PUBLIC_WC_PROJECT_ID`.
@@ -315,13 +348,101 @@ they are not lost:
 ## 9. Explicitly unverified
 
 - Exact dependency edge chain from a DZap dep to `react-native`/`expo` (P1).
-- Full inventory of *deprecated* transitive packages — `npm install --package-lock-only` does not
+- Full inventory of _deprecated_ transitive packages — `npm install --package-lock-only` does not
   emit deprecation warnings, so the original "deprecated transitive dependencies" report is
   neither confirmed nor refuted.
 - Whether `tonweb` / `@bigmi/core` / `bitcoin-address-validation` are bundled into `dist` (they are
   absent from the tsup `external` list, but the grep was inconclusive).
 - `npmjs.com` package pages (HTTP 403); registry API was used instead.
-- P8 as an *observed* failure rather than a structural hazard.
+- P8 as an _observed_ failure rather than a structural hazard.
+
+---
+
+## 9b. Findings discovered during implementation
+
+These were not visible from static review and change the plan.
+
+### D1 · The test suite has zero unit tests and zero HTTP mocks
+
+All 11 original test files hit live networks — the DZap API, public RPCs, Sui mainnet. My first
+classification pass wrongly marked `quotes`/`status`/`build` as offline because they reach the
+network *through* `DZapClient` rather than importing `axios` directly. `msw`, `nock` and
+`jest.mock` appear nowhere in `test/`. There is therefore no test that can gate a merge.
+
+### D2 · Jest workers crash on circular axios objects
+
+Running the suite in parallel produces `TypeError: Converting circular structure to JSON` and
+`Test suite failed to run`. The cause is jest-worker serializing a console-logged axios error
+(`req` ↔ `res` cycle) back to the parent process — i.e. pain point **P12** directly breaking the
+test runner. `--runInBand` eliminates it completely (11 suites run, 39 tests). Baseline with
+`--runInBand`: 3 suites / 5 tests fail, all genuine live-API flakiness.
+
+### D3 · `tsc --noEmit` cannot be used as a CI gate as-is
+
+362 errors, **all** from `node_modules` (`ox`, a viem transitive), 0 first-party. They are
+`TS2737: BigInt literals are not available when targeting lower than ES2020` against
+`tsconfig.json`'s `target: es2017`. `skipLibCheck: true` does not help because `ox` ships raw
+`.ts`, and `exclude` does not stop files reachable via imports. Fix: raise `target` to `ES2020`+.
+Deferred to its own commit because it changes emit semantics.
+
+### D4 · The repository has no git tags
+
+`git tag` is empty. No published version can be mapped to a commit, so release boundaries had to
+be recovered from the `package.json` value at each bump commit. This is an auditability gap in its
+own right and compounds P5 (no provenance).
+
+---
+
+## 10b. Work log
+
+Each entry records what changed, why, the advantage, and measured impact.
+
+### Commit 3 — `fix: correct getInstance contract and document it truthfully`
+
+**Fixes:** P3 (Blocker).
+**Changed:** `src/dZapClient/index.ts`, `src/index.ts`, `README.md`,
+`test/unit/getInstance.unit.test.ts` (new).
+
+**What:** Added an options-object overload `getInstance({ apiKey, rpcUrls })`; kept the positional
+form; added a deprecated overload accepting a bare chain-ID map; added `TypeError` guards; exported
+`DZapClientOptions`; corrected the README and JSDoc examples.
+
+**Why:** Both the README and the JSDoc documented a call shape that put the RPC map into the
+`apiKey` parameter. Requests went out unauthenticated with `[object Object]`-style values in the
+`x-api-key` header and the custom RPCs were silently ignored.
+
+**Advantage:** The failure mode is eliminated in three independent ways — the recommended form is
+order-independent, the previously-wrong form now does the right thing, and genuinely invalid input
+throws instead of failing silently. Integrations that copied the old docs start working on upgrade
+rather than breaking.
+
+**Design note:** A bare chain-ID map could have been left as a compile error, which is louder. It
+was accepted as a deprecated RPC map instead, because the people passing that shape are precisely
+the ones who followed the official documentation; breaking them to punish our own error is the
+wrong trade.
+
+**Impact:** 8 new unit tests, all passing, in 3.8s with no network. Full suite 42 passed / 47 vs
+baseline 34 / 39 — same 5 pre-existing live-network failures, no regression. First offline unit
+tests in the repository.
+
+### Commit 4 — `docs: rebuild CHANGELOG from git history`
+
+**Fixes:** P4 (High).
+**Changed:** `CHANGELOG.md`.
+
+**What:** Replaced the placeholder `[1.0.0] - 2025-07-XX` entry with entries reconstructed from
+commit history for 2.0.31 → 2.0.50, plus an `Unreleased` section.
+
+**Why:** The old file listed six method names that have never existed in this package, and it ships
+inside the published tarball.
+
+**Advantage:** Removes a fabricated API reference from the published artifact. This matters
+disproportionately for AI-assisted integration: a changelog inside the tarball is high-signal
+training and RAG input, so it was teaching agents to call `getQuotes()` and `buildTxn()`.
+
+**Impact:** Documentation only, no runtime change. Version boundaries recovered from the
+`package.json` value at each bump commit; the absence of tags (D4) is stated in the file rather
+than papered over.
 
 ---
 
