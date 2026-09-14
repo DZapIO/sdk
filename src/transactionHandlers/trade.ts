@@ -1,4 +1,4 @@
-import { Signer } from 'ethers';
+import type { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
 import { viemChainsById } from '../chains';

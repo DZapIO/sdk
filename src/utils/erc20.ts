@@ -1,4 +1,4 @@
-import { Signer } from 'ethers';
+import type { Signer } from 'ethers';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
 import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
 import { erc20Abi } from '../artifacts';

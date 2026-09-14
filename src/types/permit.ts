@@ -1,4 +1,4 @@
-import { Signer, TypedDataField } from 'ethers';
+import type { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
 import { GaslessTxType } from '../constants';
 import { permit2PrimaryType } from '../constants/permit';

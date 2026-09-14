@@ -36,10 +36,15 @@ describe('isTypeSigner', () => {
     expect(isTypeSigner(42)).toBe(false);
   });
 
-  it('DOCUMENTS THE HAZARD: a structurally valid signer from another ethers copy is not recognised', () => {
+  it('recognises a structurally valid signer from another ethers copy', () => {
     // Shape-identical to an ethers v5 Signer, but not constructed from the
     // same class object — exactly what happens when a consumer's bundler
     // resolves a second copy of ethers.
+    //
+    // This expectation was deliberately flipped from false to true when the
+    // duck-typing migration landed. Under the old `instanceof Signer` check
+    // this returned false and silently routed a valid signer down the viem
+    // branch; see D6 in docs/SDK_HARDENING_REFERENCE.md.
     const foreignSigner = {
       _signTypedData: async () => '0x',
       signMessage: async () => '0x',
@@ -49,8 +54,20 @@ describe('isTypeSigner', () => {
       _isSigner: true,
     };
 
-    // Current behaviour. If this ever starts returning true, the duck-typing
-    // migration has landed and this expectation should flip.
-    expect(isTypeSigner(foreignSigner)).toBe(false);
+    expect(isTypeSigner(foreignSigner)).toBe(true);
+  });
+
+  it('recognises a signer by structure even without the _isSigner marker', () => {
+    const structural = {
+      _signTypedData: async () => '0x',
+      getAddress: async () => '0x0000000000000000000000000000000000000001',
+    };
+
+    expect(isTypeSigner(structural)).toBe(true);
+  });
+
+  it('rejects an object that merely has getAddress', () => {
+    // Guards against over-matching: many objects expose getAddress.
+    expect(isTypeSigner({ getAddress: async () => '0x' })).toBe(false);
   });
 });

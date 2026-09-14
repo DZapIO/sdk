@@ -115,10 +115,17 @@
     "axios": "^1.2.1",
     "bitcoin-address-validation": "^2.2.3",
     "decimal.js": "^10.4.3",
-    "ethers": "5.7.2",
     "node-cache": "^5.1.2",
     "tonweb": "^0.0.66",
     "viem": "2.56.5"
+  },
+  "peerDependencies": {
+    "ethers": "^5.7.2"
+  },
+  "peerDependenciesMeta": {
+    "ethers": {
+      "optional": true
+    }
   },
   "repository": {
     "type": "git",

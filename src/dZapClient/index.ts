@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
+import type { Signer } from 'ethers';
 
 import { Prettify, TransactionReceipt, WalletClient } from 'viem';
 import {
