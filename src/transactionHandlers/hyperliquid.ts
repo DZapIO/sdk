@@ -1,4 +1,3 @@
-import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { broadcastTradeTx } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
@@ -7,7 +6,7 @@ import { signCustomTypedData } from '../utils/signIntent/custom';
 
 export class HyperLiquidTxHandler {
   static sendTransaction = async (
-    signer: Signer | WalletClient,
+    signer: WalletClient,
     account: HexString,
     txnData: TradeBuildTxnResponse,
     chainId: number,

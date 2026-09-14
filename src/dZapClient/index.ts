@@ -1,5 +1,4 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
 
 import { Prettify, TransactionReceipt, WalletClient } from 'viem';
 import {
@@ -466,7 +465,7 @@ class DZapClient {
    *
    * @param params - Configuration object for the trade operation
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
-   * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
+   * @param params.signer - The viem WalletClient used to sign and send the transaction
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
    * @param params.batchTransaction - Optional flag to enable batch transaction. If true, the transaction will be sent as a batch transaction with EIP-5792.
    * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
@@ -498,7 +497,7 @@ class DZapClient {
     rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: WalletClient;
     txnData?: TradeBuildTxnResponse;
     batchTransaction?: boolean;
     rpcUrls?: string[];
@@ -523,7 +522,7 @@ class DZapClient {
    *
    * @param params - Configuration object for the trade operation
    * @param params.request - The build transaction request containing trade details (tokens, amounts, etc.)
-   * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
+   * @param params.signer - The viem WalletClient used to sign and send the transaction
    * @param params.txnData - Optional pre-built gasless transaction data. If provided, skips the build step
    * @param params.txnStatusCallback - Optional callback to notify the status of the transaction execution
    * @returns Promise resolving to the transaction execution result
@@ -569,7 +568,7 @@ class DZapClient {
     txnStatusCallback,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: WalletClient;
     txnData?: GaslessTradeBuildTxnResponse;
     txnStatusCallback?: (status: TxnStatus) => void;
   }) {
@@ -591,7 +590,7 @@ class DZapClient {
    *
    * @param params - Configuration object for transaction sending
    * @param params.chainId - The blockchain network ID where the transaction will be executed
-   * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
+   * @param params.signer - The viem WalletClient used to sign and send the transaction
    * @param params.txnData - Complete transaction data including calldata, value, and gas parameters
    * @returns Promise resolving to the transaction execution result
    *
@@ -609,7 +608,7 @@ class DZapClient {
    * });
    * ```
    */
-  public async sendTransaction({ chainId, signer, txnData }: { chainId: number; signer: Signer | WalletClient; txnData: EvmTxData }) {
+  public async sendTransaction({ chainId, signer, txnData }: { chainId: number; signer: WalletClient; txnData: EvmTxData }) {
     return await GenericTxnHandler.sendTransaction({
       signer,
       chainId,
@@ -842,7 +841,7 @@ class DZapClient {
     spender,
   }: {
     chainId: number;
-    signer: WalletClient | Signer;
+    signer: WalletClient;
     tokens: { address: HexString; amount: string }[];
     approvalTxnCallback?: ({
       txnDetails,
@@ -980,7 +979,7 @@ class DZapClient {
     signer,
   }: {
     request: ZapBuildTxnRequest | ZapBundleRequest;
-    signer: WalletClient | Signer;
+    signer: WalletClient;
     steps?: ZapTransactionStep[];
   }) {
     return await ZapTxnHandler.zap({

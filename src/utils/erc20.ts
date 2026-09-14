@@ -1,6 +1,5 @@
-import { Signer } from 'ethers';
-import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
+import { maxUint256, MulticallParameters, WalletClient } from 'viem';
+import { isDZapNativeToken, writeContract } from '.';
 import { erc20Abi } from '../artifacts';
 import { ApprovalModes } from '../constants/approval';
 import { erc20Functions } from '../constants/erc20';
@@ -31,7 +30,7 @@ export const approveToken = async ({
   spender,
 }: {
   chainId: number;
-  signer: WalletClient | Signer;
+  signer: WalletClient;
   mode: ApprovalMode;
   tokens: { address: HexString; amount: string }[];
   rpcUrls?: string[];
@@ -48,35 +47,15 @@ export const approveToken = async ({
     spender = getPermit2Address(chainId);
   }
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
-    let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
-    if (isTypeSigner(signer)) {
-      const from = await signer.getAddress();
-      const callData = encodeFunctionData({
-        abi: erc20Abi,
-        functionName: erc20Functions.approve,
-        args: [spender, BigInt(tokens[dataIdx].amount)],
-      });
-      await signer.sendTransaction({
-        from,
-        chainId,
-        to: tokens[dataIdx].address,
-        data: callData,
-      });
-      return {
-        status: TxnStatus.success,
-        code: StatusCodes.Success,
-      };
-    } else {
-      txnDetails = await writeContract({
-        chainId,
-        contractAddress: tokens[dataIdx].address,
-        abi: erc20Abi,
-        functionName: erc20Functions.approve,
-        args: [spender, tokens[dataIdx].amount],
-        rpcUrls,
-        signer,
-      });
-    }
+    const txnDetails = await writeContract({
+      chainId,
+      contractAddress: tokens[dataIdx].address,
+      abi: erc20Abi,
+      functionName: erc20Functions.approve,
+      args: [spender, tokens[dataIdx].amount],
+      rpcUrls,
+      signer,
+    });
     if (txnDetails.code !== StatusCodes.Success) {
       return {
         status: txnDetails.status,

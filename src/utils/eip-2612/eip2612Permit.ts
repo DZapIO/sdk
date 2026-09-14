@@ -1,5 +1,4 @@
-import { ethers } from 'ethers';
-import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
+import { encodeAbiParameters, maxUint256, parseAbiParameters, parseSignature } from 'viem';
 import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
 import { config } from '../../config';
 import { Services } from '../../constants';
@@ -158,17 +157,24 @@ export const getEIP2612PermitSignature = async (
       primaryType: 'Permit',
     });
 
-    const sig = ethers.utils.splitSignature(signature);
+    const { r, s, v, yParity } = parseSignature(signature);
+    // viem omits v when the wallet returns a 0/1 recovery id; the permit contracts expect 27/28
+    const sigV = v !== undefined ? Number(v) : yParity + 27;
 
     const dZapPermitData =
       contractVersion === ContractVersion.v1 && service !== Services.zap
-        ? ethers.utils.defaultAbiCoder.encode(
-            ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
-            [account, spender, amount, deadline, sig.v, sig.r, sig.s],
-          )
-        : ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
+        ? encodeAbiParameters(parseAbiParameters('address, address, uint256, uint256, uint8, bytes32, bytes32'), [
+            account,
+            spender,
+            amount,
+            deadline,
+            sigV,
+            r,
+            s,
+          ])
+        : encodeAbiParameters(parseAbiParameters('uint256, uint8, bytes32, bytes32'), [deadline, sigV, r, s]);
 
-    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData as HexString]);
+    const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData]);
 
     return {
       status: TxnStatus.success,

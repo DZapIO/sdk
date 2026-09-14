@@ -99,7 +99,7 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Purpose:** Builds and sends a trade transaction in one step.
 - **Input:**
   - `request`: `TradeBuildTxnRequest`
-  - `signer`: `Signer` or `WalletClient`
+  - `signer`: `WalletClient` (viem)
   - `txnData?`: `TradeBuildTxnResponse`
 - **Output:**
   - Transaction result
@@ -158,7 +158,7 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Purpose:** Builds and sends a zap transaction in one step.
 - **Input:**
   - `request`: ZapBuildTxnRequest
-  - `signer`: WalletClient | Signer
+  - `signer`: `WalletClient` (viem)
   - `steps?`: ZapTransactionStep[] (optional, will build if not provided)
 - **Output:**
   - Transaction result
@@ -256,7 +256,7 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
 - **Purpose:** Approves tokens for spending based on the specified approval mode.
 - **Input:**
   - `chainId`: number
-  - `signer`: `Signer` or `WalletClient`
+  - `signer`: `WalletClient` (viem)
   - `sender`: HexString
   - `rpcUrls?`: string[]
   - `tokens`: Array of `{ address: HexString; amount: bigint }`
@@ -276,7 +276,7 @@ const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
   - `sender`: HexString
   - `tokens`: Array of `{ address: HexString; amount: string }`
   - `service`: AvailableDZapServices
-  - `signer`: `Signer` or `WalletClient`
+  - `signer`: `WalletClient` (viem)
   - `permitType?`: PermitMode (defaults to `PermitTypes.AutoPermit`)
   - `rpcUrls?`: string[]
   - `signatureCallback?`: Callback function for each signature result

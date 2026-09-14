@@ -1,23 +1,22 @@
-import { TypedDataField } from 'ethers';
 import { PermitBatchTransferFromValues, PermitSingleValues, PermitTransferFromValues, WitnessData } from '../../types/permit';
-import type { Address, TypedDataDomain } from 'viem';
+import type { Address, TypedDataDomain, TypedDataParameter } from 'viem';
 import { permit2Domain } from './domain';
 
 type PermitSingleData = {
   domain: TypedDataDomain;
-  types: Record<string, Array<TypedDataField>>;
+  types: Record<string, Array<TypedDataParameter>>;
   message: PermitSingleValues;
 };
 
 type PermitTransferFromData = {
   domain: TypedDataDomain;
-  types: Record<string, Array<TypedDataField>>;
+  types: Record<string, Array<TypedDataParameter>>;
   message: PermitTransferFromValues;
 };
 
 type PermitBatchTransferFromData = {
   domain: TypedDataDomain;
-  types: Record<string, Array<TypedDataField>>;
+  types: Record<string, Array<TypedDataParameter>>;
   message: PermitBatchTransferFromValues;
 };
 

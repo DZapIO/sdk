@@ -1,9 +1,8 @@
-import { Signer, TypedDataField } from 'ethers';
 import { HexString, PermitMode, StatusCodes, TxnStatus } from '..';
 import { GaslessTxType } from '../constants';
 import { permit2PrimaryType } from '../constants/permit';
 import { ContractVersion } from '../enums';
-import { Address, TypedDataDomain, WalletClient } from 'viem';
+import { Address, TypedDataDomain, TypedDataParameter, WalletClient } from 'viem';
 import { AvailableDZapServices, TokenPermitData } from '.';
 
 export const defaultWitnessType = {
@@ -115,7 +114,7 @@ export type BasePermitParams = {
   spender: HexString;
   rpcUrls?: string[];
   deadline?: bigint;
-  signer: WalletClient | Signer;
+  signer: WalletClient;
   contractVersion: ContractVersion;
   service: AvailableDZapServices;
 };
@@ -152,9 +151,9 @@ export type Gasless2612PermitParams = GaslessSwapPermit2612Params | GaslessBridg
 
 export type CustomTypedDataParams = {
   account: HexString;
-  signer: WalletClient | Signer;
+  signer: WalletClient;
   domain: TypedDataDomain;
-  types: Record<string, Array<TypedDataField>>;
+  types: Record<string, Array<TypedDataParameter>>;
   message: Record<string, any>;
   primaryType: string;
 };

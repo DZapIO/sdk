@@ -104,14 +104,11 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@solana/web3.js": "1.95.8",
+    "@solana/web3.js": "1.99.0",
     "axios": "^1.2.1",
-    "@bigmi/core": "^0.6.0",
     "bitcoin-address-validation": "^2.2.3",
     "decimal.js": "^10.4.3",
-    "ethers": "5.7.2",
     "node-cache": "^5.1.2",
-    "tonweb": "^0.0.66",
     "viem": "2.48.4"
   },
   "repository": {
