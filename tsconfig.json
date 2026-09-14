@@ -5,14 +5,14 @@
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "target": "es2017",
+    "target": "ES2020",
     "sourceMap": false,
     "outDir": "./dist",
     "incremental": true,
     "moduleResolution": "Node",
     "skipLibCheck": true,
     "strict": true,
-    "lib": ["ES2021", "DOM"]
+    "lib": ["ES2022", "DOM"]
   },
   "include": ["src/**/*", "examples/**/*", "test/**/*"],
   "exclude": ["node_modules", "lib", "**/*spec.tx"]

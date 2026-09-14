@@ -20,8 +20,9 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
+  "packageManager": "pnpm@10.33.2",
   "publishConfig": {
     "access": "public"
   },
@@ -35,6 +36,10 @@
     "build": "tsup",
     "dev": "nodemon",
     "test": "jest",
+    "test:unit": "jest --selectProjects unit --testTimeout=10000",
+    "test:integration": "jest --selectProjects integration --testTimeout=30000",
+    "test:coverage": "jest --selectProjects unit --testTimeout=10000 --coverage",
+    "check:types": "tsc --noEmit",
     "lint": "eslint --cache src/**/*.ts",
     "lint:fix": "eslint --cache --fix src/**/*.ts",
     "pretty": "prettier --write --ignore-unknown src/**/*.ts",
@@ -105,15 +110,15 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@bigmi/core": "^0.6.0",
     "@solana/web3.js": "1.95.8",
     "axios": "^1.2.1",
-    "@bigmi/core": "^0.6.0",
     "bitcoin-address-validation": "^2.2.3",
     "decimal.js": "^10.4.3",
     "ethers": "5.7.2",
     "node-cache": "^5.1.2",
     "tonweb": "^0.0.66",
-    "viem": "2.48.4"
+    "viem": "2.56.5"
   },
   "repository": {
     "type": "git",
