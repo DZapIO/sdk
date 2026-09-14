@@ -729,6 +729,51 @@ tonweb is uninstalled; the evidence lives in the commit.
 content-addressed store, not reachable graph nodes — absent from `pnpm-lock.yaml`, and `pnpm why`
 returns nothing. Directory listings are not the dependency graph.
 
+### Commit 14 — `chore: bump @solana/web3.js to clear the last high-severity findings`
+
+**Fixes:** P2 (final step). **Changed:** `package.json`, `pnpm-lock.yaml`.
+
+**What:** `@solana/web3.js` `1.95.8` (pinned exact) → `^1.99.0`.
+
+**Why:** after commits 11–13, **every** remaining vulnerability traced to this one package:
+
+| Advisory | Severity | Path |
+| --- | --- | --- |
+| `bigint-buffer` buffer overflow | **high** | `@solana/web3.js` |
+| `stream-json` O(depth²) DoS | moderate | `jayson` → `@solana/web3.js` |
+| `uuid <11.1.1` bounds check | moderate | `jayson` → `@solana/web3.js` |
+
+**Measured effect:** 5 → 4 vulnerabilities, and **2 high → 0**. Package count rises 113 → 115, so
+this trades two packages for eliminating the last high-severity findings — worth it, but stated
+plainly rather than presented as a pure win.
+
+**Risk:** low. The entire API surface used is `PublicKey`, `Connection`, `clusterApiUrl` and
+`connection.getParsedAccountInfo`, in one file (`src/utils/address/svm.ts`). All are stable 1.x
+APIs. Smoke-tested at 1.99.0 rather than assumed.
+
+**Bonus:** the widget repo's tree already carried `@solana/web3.js` at both `1.95.8` and `1.99.0`.
+Bumping de-duplicates it there too.
+
+### The remaining 4 moderates cannot be fixed by upgrading
+
+This is the honest end state, and it matters for the production-readiness goal.
+
+Both residual advisories live in `jayson`, `@solana/web3.js`'s JSON-RPC client. `npm audit fix
+--force` proposes `@solana/web3.js@0.0.3` — a 2018 package — which is not a fix, it is npm finding
+the only version without the transitive. **So 4 moderates is the floor for as long as
+`@solana/web3.js` is a direct dependency.**
+
+*Assessment, not proof:* neither looks reachable from our usage. We call
+`connection.getParsedAccountInfo`; we do not use jayson's `stream-json` `pick/ignore/filter/replace`
+filters, nor `uuid` v3/v5/v6 with an explicit `buf` argument. I have not proven unreachability, so
+this should not be reported to a security reviewer as "not exploitable" — only as "not on a path we
+invoke".
+
+**The real fix is the adapter split (P1, deferred):** moving Solana behind an opt-in
+`@dzapio/adapter-solana` takes an EVM-only consumer to **zero** known vulnerabilities, because the
+entire `jayson` subtree stops being installed. That is now the strongest remaining argument for the
+split, independent of package count.
+
 ---
 
 ## 10a. Cumulative result
@@ -738,11 +783,12 @@ current manifest:
 
 | Metric | Before | After | Change |
 | --- | --- | --- | --- |
-| Transitive packages | 719 | **113** | **−606 (−84%)** |
-| Vulnerabilities | 25 | **5** | −20 |
+| Transitive packages | 719 | **115** | **−604 (−84%)** |
+| Direct dependencies | 9 | **7** | −2 |
+| Vulnerabilities | 25 | **4** | −21 |
 | — critical | 3 | **0** | **eliminated** |
-| — high | 5 | **2** | −3 |
-| — moderate | 17 | **3** | −14 |
+| — high | 5 | **0** | **eliminated** |
+| — moderate | 17 | **4** | −13 |
 | `react-native` / `expo` / `metro` | present | **absent** | — |
 | `ethers` | dependency | **optional peer** | — |
 | `tonweb` | dependency | **removed** | — |
@@ -750,10 +796,15 @@ current manifest:
 | First-party type errors | 0 of 362 | **0 of 0** | — |
 | CI | none | lint → types → build → tests | — |
 
-For context, `@lifi/sdk` core + EVM provider + viem resolves to 16 packages. At 113 we are no
+For context, `@lifi/sdk` core + EVM provider + viem resolves to 16 packages. At 115 we are no
 longer in a different category from the benchmark, though still well above it — the remaining gap
 is `@solana/web3.js`, `@bigmi/core` and `bitcoin-address-validation`, which the adapter split
-(P1, deferred) would move behind opt-in packages.
+(P1, deferred) would move behind opt-in packages. That split is also what takes an EVM-only
+consumer from 4 known vulnerabilities to zero, since the entire `jayson` subtree stops being
+installed.
+
+Verified end to end in CI order on the final tree: `lint` PASS, `check:types` PASS, `build` PASS,
+`test:unit` 57/57 PASS. Lint is 0 errors / 25 pre-existing `no-explicit-any` warnings.
 
 **Not claimed:** bundle size. `dist/index.js` went 392.96 → 395.34 KB. Tree-shaking had already
 elided most of tonweb's inlined code, and viem 2.56.5 is larger than 2.48.4. The win here is
