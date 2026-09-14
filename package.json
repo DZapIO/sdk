@@ -116,7 +116,6 @@
     "bitcoin-address-validation": "^2.2.3",
     "decimal.js": "^10.4.3",
     "node-cache": "^5.1.2",
-    "tonweb": "^0.0.66",
     "viem": "2.56.5"
   },
   "peerDependencies": {
