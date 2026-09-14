@@ -80,7 +80,6 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
-import { ZapBroadcastTxParams, ZapBroadcastTxResult } from '../types/zap/broadcast';
 import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
 import { approveToken, getAllowance } from '../utils/erc20';
@@ -1008,7 +1007,7 @@ class DZapClient {
    * Signs the pre-execution steps a zap quote asked for and returns the data to send with the
    * following buildTx request.
    *
-   * Some routes (1inch limit orders, Aave borrows) cannot be built until the account has signed a
+   * Some routes (Aave borrows, for instance) cannot be built until the account has signed a
    * typed-data payload the quote hands back — the signature is embedded in the route itself, so it
    * has to exist before the route does. Building without it fails server-side.
    *
@@ -1361,12 +1360,14 @@ class DZapClient {
    * @param request - The trade transaction request containing source chainId, txnData and txId
    * @returns Promise resolving to the broadcasted transaction Hash in response
    */
-  public async broadcastZapTx(request: ZapBroadcastTxParams): Promise<ZapBroadcastTxResult> {
+  public async broadcastZapTx(request: BroadcastTxParams): Promise<BroadcastTxResponse> {
     try {
       const response = await broadcastZapTx(request);
       if (response.status === TxnStatus.success) {
-        const { txnHash, txnId } = response.data;
-        return { status: TxnStatus.success, txnHash, txnId };
+        return {
+          status: TxnStatus.success,
+          txnHash: response.data.txnHash,
+        };
       }
       throw new Error(response.data?.message || 'Failed to broadcast zap transaction');
     } catch (error) {

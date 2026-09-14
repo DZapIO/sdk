@@ -1,15 +1,13 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
-import { broadcastZapTx } from '../../api';
 import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
 import GenericTxnHandler from '../../transactionHandlers/generic';
 import { DZapTransactionResponse, HexString } from '../../types';
-import { isZapTxnStep, ZapBroadcastStepData, ZapSignStepData, ZapTransactionStep, ZapTxnDetails, ZapTxnStepAction } from '../../types/zap/step';
+import { ZapTransactionStep, ZapTxnDetails } from '../../types/zap/step';
 import { getPublicClient, getSignerAddress } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
-import { signCustomTypedData } from '../../utils/signIntent/custom';
-import { zapSignStepKind, zapStepAction } from '../constants/step';
+import { zapStepAction } from '../constants/step';
 
 export type ZapStepsResult =
   | {
@@ -75,44 +73,13 @@ class ZapTxnStepsHandler {
     return result;
   };
 
-  public static handleSignStep = async ({ data, signer }: { data: ZapSignStepData; signer: Signer | WalletClient }) => {
-    if (data.kind !== zapSignStepKind.limitOrder) {
-      throw new Error(`Unsupported sign step kind: ${data.kind}. Only ${zapSignStepKind.limitOrder} steps can be signed by the SDK.`);
-    }
-    const { domain, types, message, primaryType } = data.typedData;
-    return await signCustomTypedData({
-      signer,
-      account: await getSignerAddress(signer),
-      domain,
-      types,
-      message,
-      primaryType,
-    });
-  };
-
-  public static handleBroadcastStep = async ({ data, signature }: { data: ZapBroadcastStepData; signature?: HexString }) => {
-    const { txnId, chainId, payload } = data;
-
-    const response = await broadcastZapTx({
-      txId: txnId,
-      chainId,
-      txData: { payload: { ...(payload as Record<string, unknown>), signature } },
-    });
-
-    if (response.status !== TxnStatus.success) {
-      throw new Error(response.data?.message || 'Failed to broadcast the zap order.');
-    }
-
-    return { txnHash: response.data.txnHash };
-  };
-
   private static processTxnStep = async ({
     step,
     chainId,
     signer,
     rpcUrls,
   }: {
-    step: { action: ZapTxnStepAction; data: ZapTxnDetails };
+    step: ZapTransactionStep;
     chainId: number;
     signer: Signer | WalletClient;
     rpcUrls?: string[];
@@ -135,34 +102,15 @@ class ZapTxnStepsHandler {
   }): Promise<ZapStepsResult> => {
     try {
       let txnHash: string | undefined;
-      let pendingSignature: HexString | undefined;
 
       for (const step of steps) {
-        if (isZapTxnStep(step)) {
-          const isApproval = step.action === zapStepAction.approve;
-          const result = await ZapTxnStepsHandler.processTxnStep({ step, chainId, signer, rpcUrls });
-          if (result.status !== TxnStatus.success) {
-            return result;
-          }
-          if (!isApproval) {
-            txnHash = result.txnHash;
-          }
-          continue;
+        const result = await ZapTxnStepsHandler.processTxnStep({ step, chainId, signer, rpcUrls });
+        if (result.status !== TxnStatus.success) {
+          return result;
         }
-
-        if (step.action === zapStepAction.sign) {
-          const result = await ZapTxnStepsHandler.handleSignStep({ data: step.data, signer });
-          if (result.status !== TxnStatus.success || !result.data) {
-            return result as DZapTransactionResponse;
-          }
-          pendingSignature = result.data.signature;
-          continue;
+        if (step.action !== zapStepAction.approve) {
+          txnHash = result.txnHash;
         }
-
-        const result = await ZapTxnStepsHandler.handleBroadcastStep({ data: step.data, signature: pendingSignature });
-        // The signature belongs to the order just submitted; it must not leak into a later broadcast.
-        pendingSignature = undefined;
-        txnHash = result.txnHash ?? txnHash;
       }
 
       if (!txnHash) {

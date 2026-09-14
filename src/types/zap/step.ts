@@ -1,13 +1,9 @@
 import { TypedData, TypedDataDomain } from 'viem';
 import { HexString } from '..';
 import { chainTypes } from '../../constants/chains';
-import { zapBroadcastMode, zapPreExecutionStepType, zapSignStepKind, zapStepAction } from '../../zap/constants/step';
+import { zapPreExecutionStepType, zapStepAction } from '../../zap/constants/step';
 
 export type StepAction = keyof typeof zapStepAction;
-
-export type ZapSignStepKind = keyof typeof zapSignStepKind;
-
-export type ZapBroadcastMode = (typeof zapBroadcastMode)[keyof typeof zapBroadcastMode];
 
 export type ZapPreExecutionStepType = keyof typeof zapPreExecutionStepType;
 
@@ -68,46 +64,9 @@ export type ZapSignPreExecutionStepData = {
 
 export type ZapPreExecutionStepData = ZapSignPreExecutionStepData;
 
-type ZapSignStepDataBase = {
-  type: keyof typeof chainTypes;
-  txnId: HexString;
+export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> = {
+  action: StepAction;
+  data: T;
 };
-
-/**
- * Perps actions are not executed by the SDK yet — the type exists so `sign` steps of this kind can be
- * recognised and rejected explicitly rather than silently mishandled.
- */
-export type ZapPerpsSignStepData = ZapSignStepDataBase & {
-  kind: typeof zapSignStepKind.perpsActions;
-  actions: unknown[];
-};
-
-export type ZapLimitOrderSignStepData = ZapSignStepDataBase & {
-  kind: typeof zapSignStepKind.limitOrder;
-  providerId: string;
-  typedData: ZapTypedDataPayload;
-};
-
-export type ZapSignStepData = ZapPerpsSignStepData | ZapLimitOrderSignStepData;
-
-export type ZapBroadcastStepData = {
-  type: keyof typeof chainTypes;
-  txnId: HexString;
-  chainId: number;
-  payload: unknown;
-};
-
-export type ZapTxnStepAction = typeof zapStepAction.execute | typeof zapStepAction.approve;
-
-export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> =
-  | { action: typeof zapStepAction.approve; data: T }
-  | { action: typeof zapStepAction.execute; data: T }
-  | { action: typeof zapStepAction.sign; data: ZapSignStepData }
-  | { action: typeof zapStepAction.broadcast; data: ZapBroadcastStepData };
 
 export type ZapStep = ZapTransactionStep;
-
-const zapTxnStepActions: StepAction[] = [zapStepAction.approve, zapStepAction.execute];
-
-export const isZapTxnStep = <T extends ZapTxnDetails>(step: ZapTransactionStep<T>): step is { action: ZapTxnStepAction; data: T } =>
-  zapTxnStepActions.includes(step.action);

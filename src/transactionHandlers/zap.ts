@@ -48,7 +48,7 @@ class ZapTxnHandler {
    * Runs a zap end to end: pre-execution steps, then buildTx, then the steps it returns.
    *
    * `preExecutionSteps` come from a quote. Their signatures are sent with the buildTx request as
-   * `preExecutionStepsData`, which some routes (1inch limit orders, Aave borrows) require before
+   * `preExecutionStepsData`, which some routes (Aave borrows, for instance) require before
    * they can be built at all — so they are handled before anything is built, and skipping them is
    * only safe when the quote didn't ask for any.
    *

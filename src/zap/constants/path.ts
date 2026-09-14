@@ -10,5 +10,4 @@ export const zapPathAction = {
   harvest: 'harvest',
   long: 'long',
   short: 'short',
-  limitOrder: 'limitOrder',
 } as const;

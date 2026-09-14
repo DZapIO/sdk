@@ -4,17 +4,9 @@ import { ZapFee } from './fee';
 import { ZapOutput, ZapPath } from './path';
 import { ZapRefund } from './refund';
 
-export type ZapErc721PositionDetails = {
+export type ZapRouteRequestPositionDetails = {
   nftId: string;
 };
-
-export type ZapLimitOrderPositionDetails = {
-  provider: string;
-  limitPrice: string;
-  expiry?: number;
-};
-
-export type ZapRouteRequestPositionDetails = ZapErc721PositionDetails | ZapLimitOrderPositionDetails;
 
 export type ZapRouteRequestPoolDetails = {
   lowerTick: number;
