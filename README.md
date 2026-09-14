@@ -342,7 +342,15 @@ Automatically chooses between EIP2612 and Permit2 based on token support.
 
 ## Types
 
-All input/output types are defined in the SDK's `src/types` directory. Refer to those files for detailed type definitions.
+Every input and output type is exported from the package root and ships with the package as bundled
+TypeScript declarations (`dist/index.d.ts`). Import them directly:
+
+```typescript
+import type { TradeQuotesRequest, TradeQuotesResponse, DZapClientOptions, Token, ChainData } from '@dzapio/sdk';
+```
+
+Your editor's go-to-definition will take you to the full definition. The `src/` directory is **not**
+published to npm, so it is not available to installed consumers.
 
 ---
 
