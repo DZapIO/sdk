@@ -14,6 +14,7 @@ export type ZapBundleAction = {
   srcChainId: number;
   destToken?: string;
   destChainId?: number;
+  destAmount?: string;
   positionDetails?: ZapRouteRequestPositionDetails;
   poolDetails?: ZapRouteRequestPoolDetails;
   protocol?: string;
