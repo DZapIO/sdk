@@ -14,7 +14,7 @@ import {
 import * as ABI from '../artifacts';
 import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
 
-import { Signer } from 'ethers';
+import type { Signer } from 'ethers';
 import { viemChainsById } from '../chains';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
@@ -142,10 +142,10 @@ export const generateUUID = () => {
   const uuid = 'xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx'.replace(/[xy]/g, (c) => {
     let r = Math.random() * 16;
     if (d > 0) {
-      r = (d + r) % 16 | 0;
+      r = ((d + r) % 16) | 0;
       d = Math.floor(d / 16);
     } else {
-      r = (d2 + r) % 16 | 0;
+      r = ((d2 + r) % 16) | 0;
       d2 = Math.floor(d2 / 16);
     }
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
@@ -164,8 +164,28 @@ export const getTrxId = (account: string) => {
 
 export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
+/**
+ * Detects an ethers Signer structurally rather than with `instanceof`.
+ *
+ * `instanceof` compares constructor identity, so it returns false for a
+ * perfectly valid Signer that originated from a *different copy* of ethers —
+ * which happens whenever a bundler or package manager resolves two copies.
+ * That was observed in this repository: three copies of ethers were installed
+ * at once and `new Wallet(key) instanceof Signer` evaluated to false, silently
+ * routing an ethers signer down the viem branch.
+ *
+ * ethers v5 marks every Signer with `_isSigner = true` on the prototype for
+ * exactly this reason. The structural check is the documented fallback and
+ * matches what `Signer.isSigner()` does internally, without needing to import
+ * ethers as a runtime value.
+ *
+ * viem's WalletClient has neither `_isSigner` nor `_signTypedData`, so it is
+ * correctly rejected.
+ */
 export const isTypeSigner = (variable: any): variable is Signer => {
-  return variable instanceof Signer;
+  if (variable === null || typeof variable !== 'object') return false;
+  if (variable._isSigner === true) return true;
+  return typeof variable._signTypedData === 'function' && typeof variable.getAddress === 'function';
 };
 
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;

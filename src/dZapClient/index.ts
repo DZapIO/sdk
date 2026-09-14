@@ -1,5 +1,5 @@
 import Axios, { CancelTokenSource } from 'axios';
-import { Signer } from 'ethers';
+import type { Signer } from 'ethers';
 
 import { Prettify, TransactionReceipt, WalletClient } from 'viem';
 import {
@@ -83,6 +83,19 @@ import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
 import { updateQuotes } from '../utils/updateQuotes';
 
+/**
+ * Configuration accepted by {@link DZapClient.getInstance}.
+ *
+ * Using named fields rather than positional arguments makes it impossible to
+ * pass an RPC map where an API key is expected.
+ */
+export type DZapClientOptions = {
+  /** Authenticates requests via the `x-api-key` header. */
+  apiKey?: string;
+  /** Maps chain ID to custom RPC endpoints, e.g. `{ 1: ['https://eth.llamarpc.com'] }`. */
+  rpcUrls?: Record<number, string[]>;
+};
+
 class DZapClient {
   private static instance: DZapClient;
   private cancelTokenSource: CancelTokenSource | null = null;
@@ -93,10 +106,14 @@ class DZapClient {
   }
 
   /**
-   * Returns the singleton instance of DZapClient with optional custom RPC configuration.
+   * Returns the singleton instance of DZapClient.
    * This ensures only one instance of the client exists throughout the application lifecycle.
    *
-   * @param rpcUrlsByChainId - Optional mapping of chain IDs to custom RPC URLs for blockchain interactions
+   * Prefer the options-object form — it is impossible to pass arguments in the wrong
+   * order, and it is the form documented in the README.
+   *
+   * @param options - `{ apiKey, rpcUrls }`. `apiKey` authenticates requests via the
+   *   `x-api-key` header; `rpcUrls` maps chain ID to custom RPC endpoints.
    * @returns The singleton DZapClient instance
    *
    * @example
@@ -104,22 +121,65 @@ class DZapClient {
    * // Basic initialization
    * const client = DZapClient.getInstance();
    *
-   * // With custom RPC URLs
-   * const clientWithRpc = DZapClient.getInstance({
-   *   1: ['https://eth.llamarpc.com'],
-   *   42161: ['https://arbitrum.llamarpc.com']
+   * // Recommended: options object
+   * const client = DZapClient.getInstance({
+   *   apiKey: process.env.DZAP_API_KEY,
+   *   rpcUrls: {
+   *     1: ['https://eth.llamarpc.com'],
+   *     42161: ['https://arbitrum.llamarpc.com'],
+   *   },
    * });
+   *
+   * // Legacy positional form (still supported)
+   * const client = DZapClient.getInstance('my-api-key', { 1: ['https://eth.llamarpc.com'] });
    * ```
    */
-  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient {
+  public static getInstance(options?: DZapClientOptions): DZapClient;
+  public static getInstance(apiKey?: string, rpcUrlsByChainId?: Record<number, string[]>): DZapClient;
+  /**
+   * @deprecated Passing a bare chain-ID map is the shape the pre-2.0.51 docs showed.
+   * It used to land in the `apiKey` slot and silently disable authentication. It is
+   * still honoured as an RPC map, but prefer `getInstance({ rpcUrls })`.
+   */
+  public static getInstance(rpcUrlsByChainId?: Record<number, string[]>): DZapClient;
+  public static getInstance(
+    apiKeyOrOptions?: string | DZapClientOptions | Record<number, string[]>,
+    rpcUrlsByChainId?: Record<number, string[]>,
+  ): DZapClient {
     if (!DZapClient.instance) {
       DZapClient.instance = new DZapClient();
     }
+
+    let apiKey: string | undefined;
+    let rpcUrls: Record<number, string[]> | undefined = rpcUrlsByChainId;
+
+    if (typeof apiKeyOrOptions === 'string') {
+      apiKey = apiKeyOrOptions;
+    } else if (apiKeyOrOptions !== null && typeof apiKeyOrOptions === 'object') {
+      const candidate = apiKeyOrOptions as DZapClientOptions & Record<string, unknown>;
+      const isOptionsObject = 'apiKey' in candidate || 'rpcUrls' in candidate;
+
+      if (isOptionsObject) {
+        if (candidate.apiKey !== undefined && typeof candidate.apiKey !== 'string') {
+          throw new TypeError(`DZapClient.getInstance: "apiKey" must be a string, received ${typeof candidate.apiKey}.`);
+        }
+        apiKey = candidate.apiKey;
+        rpcUrls = candidate.rpcUrls ?? rpcUrls;
+      } else {
+        // Historically the README and JSDoc showed `getInstance({ 1: [...] })`, which
+        // silently landed an RPC map in the `apiKey` slot. Accept that shape as an RPC
+        // map so those integrations start working instead of failing unauthenticated.
+        rpcUrls = apiKeyOrOptions as Record<number, string[]>;
+      }
+    } else if (apiKeyOrOptions !== undefined) {
+      throw new TypeError(`DZapClient.getInstance: expected an options object or an apiKey string, received ${typeof apiKeyOrOptions}.`);
+    }
+
     if (apiKey) {
       config.setApiKey(apiKey);
     }
-    if (rpcUrlsByChainId) {
-      config.setRpcUrlsByChainId(rpcUrlsByChainId);
+    if (rpcUrls) {
+      config.setRpcUrlsByChainId(rpcUrls);
     }
     return DZapClient.instance;
   }

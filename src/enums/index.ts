@@ -1,6 +1,6 @@
 export enum AppEnv {
-  'production' = 'production',
-  'development' = 'development',
+  production = 'production',
+  development = 'development',
 }
 
 export enum ZapPermitType {

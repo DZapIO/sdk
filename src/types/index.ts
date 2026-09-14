@@ -1,4 +1,4 @@
-import { Signer } from 'ethers';
+import type { Signer } from 'ethers';
 import { Prettify, TypedDataDomain, WalletClient } from 'viem';
 import { DZapAbis, GaslessTxType, OtherAbis, QuoteFilters, STATUS, STATUS_RESPONSE, Services } from './../constants';
 import { ApprovalModes } from './../constants/approval';

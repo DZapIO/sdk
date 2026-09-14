@@ -1,4 +1,4 @@
-import { TypedDataField } from 'ethers';
+import type { TypedDataField } from 'ethers';
 import { PermitBatchTransferFromValues, PermitSingleValues, PermitTransferFromValues, WitnessData } from '../../types/permit';
 import type { Address, TypedDataDomain } from 'viem';
 import { permit2Domain } from './domain';

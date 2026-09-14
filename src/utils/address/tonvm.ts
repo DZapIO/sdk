@@ -1,8 +1,8 @@
 import axios from 'axios';
-import TonWeb from 'tonweb';
 import { ChainData } from '../../types';
 import { AddressClassifyResult, AddressKind } from '../../types/address';
 import { isNativeCurrency } from '../tokens';
+import { isValidTonAddress } from './tonAddress';
 
 const TON_DEFAULT_RPC = 'https://toncenter.com/api/v2';
 
@@ -14,7 +14,7 @@ export async function classifyTonvmAddress(params: {
 }): Promise<AddressClassifyResult | null> {
   const { address, chainConfig, rpcUrls } = params;
 
-  if (!TonWeb.utils.Address.isValid(address)) {
+  if (!isValidTonAddress(address)) {
     return {
       valid: false,
       kind: AddressKind.INVALID,

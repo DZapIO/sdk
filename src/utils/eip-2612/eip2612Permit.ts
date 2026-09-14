@@ -1,5 +1,4 @@
-import { ethers } from 'ethers';
-import { encodeAbiParameters, maxUint256, parseAbiParameters } from 'viem';
+import { encodeAbiParameters, maxUint256, parseAbiParameters, parseSignature } from 'viem';
 import { erc20PermitAbi } from '../../artifacts/ERC20Permit';
 import { config } from '../../config';
 import { Services } from '../../constants';
@@ -158,15 +157,24 @@ export const getEIP2612PermitSignature = async (
       primaryType: 'Permit',
     });
 
-    const sig = ethers.utils.splitSignature(signature);
+    const sig = parseSignature(signature);
+    // viem returns v as a bigint; the contracts expect uint8 27/28. Note that
+    // sig.yParity (0/1) is NOT interchangeable with v here — encoding it would
+    // produce a signature that recovers to the wrong address.
+    const v = Number(sig.v);
 
     const dZapPermitData =
       contractVersion === ContractVersion.v1 && service !== Services.zap
-        ? ethers.utils.defaultAbiCoder.encode(
-            ['address', 'address', 'uint256', 'uint256', 'uint8', 'bytes32', 'bytes32'],
-            [account, spender, amount, deadline, sig.v, sig.r, sig.s],
-          )
-        : ethers.utils.defaultAbiCoder.encode(['uint256', 'uint8', 'bytes32', 'bytes32'], [deadline, sig.v, sig.r, sig.s]);
+        ? encodeAbiParameters(parseAbiParameters('address, address, uint256, uint256, uint8, bytes32, bytes32'), [
+            account as HexString,
+            spender as HexString,
+            BigInt(amount),
+            BigInt(deadline),
+            v,
+            sig.r,
+            sig.s,
+          ])
+        : encodeAbiParameters(parseAbiParameters('uint256, uint8, bytes32, bytes32'), [BigInt(deadline), v, sig.r, sig.s]);
 
     const permitData = encodeAbiParameters(parseAbiParameters('uint8, bytes'), [DZapPermitMode.PERMIT, dZapPermitData as HexString]);
 

@@ -9,6 +9,11 @@ dist/
 electron-builder.yml
 /.yalc
 yalc.lock
+# yarn.lock is NOT ignored by accident any more: this package is pnpm-managed
+# and commits pnpm-lock.yaml so that installs are reproducible. A stray
+# yarn.lock alongside it produces two different dependency graphs for the same
+# commit -- which is how three copies of ethers ended up installed at once and
+# silently broke `instanceof Signer` in the signing path.
 yarn.lock
 # testing
 /coverage/
@@ -19,3 +24,9 @@ public/**/*.js
 jest.results.json
 *.#*
 bun.lockb
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# headroom's per-session wrapper state (live pid/port + env-var ownership).
+.claude/.headroom_wrap_*

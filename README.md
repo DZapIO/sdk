@@ -46,16 +46,15 @@ import { DZapClient } from '@dzapio/sdk';
 // Basic initialization
 const dZap = DZapClient.getInstance();
 
-// With custom RPC URLs (optional)
-const customRpcUrls = {
-  1: ['https://eth.llamarpc.com'], // Ethereum mainnet
-  42161: ['https://arbitrum.llamarpc.com'], // Arbitrum
-  // Add more chains as needed
-};
-
-// Initialize with custom RPC URLs
-// This is useful if you want to use specific RPC endpoints instead of the defaults.
-const dZapWithCustomRpc = DZapClient.getInstance(customRpcUrls);
+// With an API key and/or custom RPC URLs (both optional)
+const dZapConfigured = DZapClient.getInstance({
+  apiKey: process.env.DZAP_API_KEY,
+  rpcUrls: {
+    1: ['https://eth.llamarpc.com'], // Ethereum mainnet
+    42161: ['https://arbitrum.llamarpc.com'], // Arbitrum
+    // Add more chains as needed
+  },
+});
 ```
 
 ---
@@ -343,7 +342,15 @@ Automatically chooses between EIP2612 and Permit2 based on token support.
 
 ## Types
 
-All input/output types are defined in the SDK's `src/types` directory. Refer to those files for detailed type definitions.
+Every input and output type is exported from the package root and ships with the package as bundled
+TypeScript declarations (`dist/index.d.ts`). Import them directly:
+
+```typescript
+import type { TradeQuotesRequest, TradeQuotesResponse, DZapClientOptions, Token, ChainData } from '@dzapio/sdk';
+```
+
+Your editor's go-to-definition will take you to the full definition. The `src/` directory is **not**
+published to npm, so it is not available to installed consumers.
 
 ---
 
