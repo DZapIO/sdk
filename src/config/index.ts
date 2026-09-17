@@ -45,7 +45,7 @@ export function createConfig() {
     // RPC URLs methods
     getRpcUrlsByChainId: (chainId: number) => config.rpcUrlsByChainId[chainId],
     setRpcUrlsByChainId: (rpcUrlsByChainId: Record<number, string[]>) => {
-      config.rpcUrlsByChainId = rpcUrlsByChainId;
+      config.rpcUrlsByChainId = { ...config.rpcUrlsByChainId, ...rpcUrlsByChainId };
     },
 
     // Chain configuration methods
