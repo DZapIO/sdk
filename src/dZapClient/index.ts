@@ -511,7 +511,7 @@ class DZapClient {
       txnData,
       batchTransaction,
       multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
-      rpcUrls,
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(request.fromChain),
     });
   }
 
@@ -526,6 +526,7 @@ class DZapClient {
    * @param params.signer - The wallet signer (ethers Signer or viem WalletClient) to sign and send the transaction
    * @param params.txnData - Optional pre-built gasless transaction data. If provided, skips the build step
    * @param params.txnStatusCallback - Optional callback to notify the status of the transaction execution
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to the transaction execution result
    *
    * @example
@@ -567,17 +568,19 @@ class DZapClient {
     signer,
     txnData,
     txnStatusCallback,
+    rpcUrls,
   }: {
     request: TradeBuildTxnRequest;
     signer: Signer | WalletClient;
     txnData?: GaslessTradeBuildTxnResponse;
     txnStatusCallback?: (status: TxnStatus) => void;
+    rpcUrls?: string[];
   }) {
     const spender = (await this.getDZapContractAddress({ chainId: request.fromChain, service: Services.trade })) as HexString;
     return await TradeTxnHandler.buildGaslessTxAndSignPermit({
       request,
       signer,
-      rpcUrls: config.getRpcUrlsByChainId(request.fromChain),
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(request.fromChain),
       spender,
       txnData,
       txnStatusCallback,
