@@ -1,25 +1,12 @@
-import {
-  Abi,
-  createPublicClient,
-  fallback,
-  http,
-  parseEventLogs,
-  ParseEventLogsReturnType,
-  stringToHex,
-  Transaction,
-  TransactionReceipt,
-  WalletClient,
-  zeroAddress,
-} from 'viem';
+import { Abi, createPublicClient, fallback, http, stringToHex, WalletClient, zeroAddress } from 'viem';
 import * as ABI from '../artifacts';
-import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
+import { AvailableDZapServices, HexString, OtherAvailableAbis } from '../types';
 
 import { Signer } from 'ethers';
 import { viemChainsById } from '../chains';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
-import { SwapInputDataDecoder } from './decoder/swap/inputDataDecoder';
 import { formatToken } from './tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
@@ -142,10 +129,10 @@ export const generateUUID = () => {
   const uuid = 'xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx'.replace(/[xy]/g, (c) => {
     let r = Math.random() * 16;
     if (d > 0) {
-      r = (d + r) % 16 | 0;
+      r = ((d + r) % 16) | 0;
       d = Math.floor(d / 16);
     } else {
-      r = (d2 + r) % 16 | 0;
+      r = ((d2 + r) % 16) | 0;
       d2 = Math.floor(d2 / 16);
     }
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
@@ -187,79 +174,6 @@ export const getDZapAbi = (service: AvailableDZapServices, version: ContractVers
     default:
       throw new Error('Invalid Service');
   }
-};
-
-export const handleDecodeTxnData = (
-  transaction: Transaction,
-  receipt: TransactionReceipt,
-  service: AvailableDZapServices,
-  chain: Chain,
-): { swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] } => {
-  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
-  try {
-    events = parseEventLogs({
-      abi: dZapAbi,
-      logs: receipt.logs,
-    });
-  } catch (e) {
-    events = [];
-  }
-
-  events = events?.filter((item: any) => item !== null);
-  const txLogArgs = events[0]?.args as { swapInfo: SwapInfo | SwapInfo[] };
-  const swapFailPairs: string[] = [];
-
-  let swapInfo: SwapInfo | SwapInfo[] = [];
-  if (Array.isArray(txLogArgs?.swapInfo)) {
-    swapInfo = txLogArgs.swapInfo.map((info) => {
-      if (BigInt(info.returnToAmount) === BigInt(0) || BigInt(info.fromAmount) === BigInt(0)) {
-        swapFailPairs.push(
-          getTokensPairKey({
-            srcToken: info.fromToken,
-            destToken: info.toToken,
-            srcChainId: chain.chainId,
-            destChainId: chain.chainId,
-            srcChainNativeAddress: chain?.nativeToken?.contract,
-            destChainNativeAddress: chain?.nativeToken?.contract,
-          }),
-        );
-      }
-      return {
-        ...info,
-        fromToken: formatToken(info.fromToken, chain?.nativeToken?.contract),
-        toToken: formatToken(info.toToken, chain?.nativeToken?.contract),
-      };
-    });
-  } else if (typeof txLogArgs?.swapInfo === 'object' && Object.keys(txLogArgs?.swapInfo).length > 0) {
-    const { fromAmount, returnToAmount, fromToken, toToken } = txLogArgs.swapInfo;
-    if (BigInt(returnToAmount) === BigInt(0) || BigInt(fromAmount) === BigInt(0)) {
-      swapFailPairs.push(
-        getTokensPairKey({
-          srcToken: fromToken,
-          destToken: toToken,
-          srcChainId: chain.chainId,
-          destChainId: chain.chainId,
-          srcChainNativeAddress: chain?.nativeToken?.contract,
-          destChainNativeAddress: chain?.nativeToken?.contract,
-        }),
-      );
-    }
-    swapInfo = {
-      ...txLogArgs.swapInfo,
-      fromToken: formatToken(txLogArgs.swapInfo.fromToken, chain?.nativeToken?.contract),
-      toToken: formatToken(txLogArgs.swapInfo.toToken, chain?.nativeToken?.contract),
-    };
-  }
-
-  // update swap info with input data
-  const updatedSwapInfo =
-    new SwapInputDataDecoder().updateSwapInfo({
-      data: transaction.input,
-      eventSwapInfo: swapInfo,
-    }) || swapInfo;
-
-  return { swapInfo: updatedSwapInfo, swapFailPairs };
 };
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {
