@@ -1,8 +1,8 @@
 import { Connection } from '@solana/web3.js';
 import axios from 'axios';
 import { solanaNativeToken, solanaWNativeToken, suiNativeToken } from '../../src/constants/address';
-import { decodeSuivmSwapAmounts } from '../../src/utils/decoder/swap/suivm';
-import { decodeSvmSwapAmounts } from '../../src/utils/decoder/swap/svm';
+import { decodeSuivmTokenMovements } from '../../src/utils/decoder/suivm';
+import { decodeSvmTokenMovements } from '../../src/utils/decoder/svm';
 
 const SOLANA_RPC = ['https://api.mainnet-beta.solana.com'];
 const SUI_RPC = ['https://sui-rpc.publicnode.com'];
@@ -34,10 +34,10 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = '5M4gvaPoWM4pBr6eVgdJGCVi9WeoLyt38eDP6bXkJ7CQ2UASnduU1U8M4GS7CPXqozg2kJbrXt9pAgzBWCrQjTea';
     if (!(await served(txHash, solanaTransaction(txHash)))) return;
 
-    const result = await decodeSvmSwapAmounts({ txHash, rpcUrls: SOLANA_RPC });
+    const result = await decodeSvmTokenMovements({ txHash, rpcUrls: SOLANA_RPC });
 
-    expect(result?.input).toEqual([{ token: 'H7USvkkqQT3cu7CkeBtY7w6kcE8ckSzNraxrTdR1xyJe', amount: BigInt('3051482914610') }]);
-    expect(result?.output).toEqual([{ token: 'PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S', amount: BigInt(166_624_255) }]);
+    expect(result?.sent).toEqual([{ token: 'H7USvkkqQT3cu7CkeBtY7w6kcE8ckSzNraxrTdR1xyJe', amount: BigInt('3051482914610') }]);
+    expect(result?.received).toEqual([{ token: 'PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S', amount: BigInt(166_624_255) }]);
   });
 
   it('reads sol spent by a swap that closed a wrapped sol account it already held', async () => {
@@ -46,10 +46,10 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = '5TfKqcCBQ3WbD1QFMrBG27btxQoWGmJfkRgGNDnESYUFENaADWQkhvEQXLbAYQGnPgtvRgVrdGQBydVm4ZJ6mxqR';
     if (!(await served(txHash, solanaTransaction(txHash)))) return;
 
-    const result = await decodeSvmSwapAmounts({ txHash, rpcUrls: SOLANA_RPC });
+    const result = await decodeSvmTokenMovements({ txHash, rpcUrls: SOLANA_RPC });
 
-    expect(result?.input).toEqual([{ token: solanaNativeToken, amount: BigInt(119_371_845) }]);
-    expect(result?.output).toEqual([{ token: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', amount: BigInt(234_885) }]);
+    expect(result?.sent).toEqual([{ token: solanaNativeToken, amount: BigInt(119_371_845) }]);
+    expect(result?.received).toEqual([{ token: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', amount: BigInt(234_885) }]);
   });
 
   it('reads a swap out of wrapped sol into sol as both sides of a swap', async () => {
@@ -58,10 +58,10 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = '2PQdnXmGq4SGdSiWyYakmnyXBwLmrRqi7PJrTgPRZAetMgtWrvWWiJQk2NvnKfRbRhh6EkiHaek76rXFvD9rnFoC';
     if (!(await served(txHash, solanaTransaction(txHash)))) return;
 
-    const result = await decodeSvmSwapAmounts({ txHash, rpcUrls: SOLANA_RPC });
+    const result = await decodeSvmTokenMovements({ txHash, rpcUrls: SOLANA_RPC });
 
-    expect(result?.input).toEqual([{ token: solanaWNativeToken, amount: BigInt(10_054_032) }]);
-    expect(result?.output).toEqual([{ token: solanaNativeToken, amount: BigInt(10_054_032) }]);
+    expect(result?.sent).toEqual([{ token: solanaWNativeToken, amount: BigInt(10_054_032) }]);
+    expect(result?.received).toEqual([{ token: solanaNativeToken, amount: BigInt(10_054_032) }]);
   });
 
   it('reads a swap out of sol into wrapped sol as both sides of a swap', async () => {
@@ -70,10 +70,10 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = '3cTfHaL9zTXb8ErBXNVx7Z5CCtsQRt67FmTDGxozJrop7yVqDrALx2EdL2G3DuKPab1gWxgRVitdDzv8a5pHVrq1';
     if (!(await served(txHash, solanaTransaction(txHash)))) return;
 
-    const result = await decodeSvmSwapAmounts({ txHash, rpcUrls: SOLANA_RPC });
+    const result = await decodeSvmTokenMovements({ txHash, rpcUrls: SOLANA_RPC });
 
-    expect(result?.input).toEqual([{ token: solanaNativeToken, amount: BigInt(4_588_877) }]);
-    expect(result?.output).toEqual([{ token: solanaWNativeToken, amount: BigInt(4_588_877) }]);
+    expect(result?.sent).toEqual([{ token: solanaNativeToken, amount: BigInt(4_588_877) }]);
+    expect(result?.received).toEqual([{ token: solanaWNativeToken, amount: BigInt(4_588_877) }]);
   });
 
   it('reads both sides of a sui coin to coin swap and no sui for the gas it paid', async () => {
@@ -81,12 +81,12 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = 'ENS55GdzTtttNNnDMZ49hx8x6BGhku1Cn2ejtRUYxgV8';
     if (!(await served(txHash, suiTransaction(txHash)))) return;
 
-    const result = await decodeSuivmSwapAmounts({ txHash, rpcUrls: SUI_RPC });
+    const result = await decodeSuivmTokenMovements({ txHash, rpcUrls: SUI_RPC });
 
-    expect(result?.input).toEqual([
+    expect(result?.sent).toEqual([
       { token: '0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC', amount: BigInt(8_050_998) },
     ]);
-    expect(result?.output).toEqual([
+    expect(result?.received).toEqual([
       { token: '0x9d297676e7a4b771ab023291377b2adfaa4938fb9080b8d12430e4b108b836a9::xaum::XAUM', amount: BigInt(1_879_773) },
     ]);
   });
@@ -95,11 +95,11 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = '8SK72NNkb3ektHBvJSsAmuL92aJCsKK7hRp725idZkMX';
     if (!(await served(txHash, suiTransaction(txHash)))) return;
 
-    const result = await decodeSuivmSwapAmounts({ txHash, rpcUrls: SUI_RPC });
+    const result = await decodeSuivmTokenMovements({ txHash, rpcUrls: SUI_RPC });
 
-    expect(result?.input).toEqual([
+    expect(result?.sent).toEqual([
       { token: '0x5ffe80c90a653e3ca056fd3926987bf3e8068ca21528bb4fdbc4d487cc152dad::jackson::JACKSON', amount: BigInt(146_900_000) },
     ]);
-    expect(result?.output).toEqual([{ token: suiNativeToken, amount: BigInt(19_943_359) }]);
+    expect(result?.received).toEqual([{ token: suiNativeToken, amount: BigInt(19_943_359) }]);
   });
 });

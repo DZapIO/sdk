@@ -3,16 +3,16 @@ import { solanaNativeToken, solanaWNativeToken } from '../../src/constants/addre
 import { Chain, HexString, SwapInfo } from '../../src/types';
 import { handleDecodeNonEvmSwapData } from '../../src/utils';
 import { SwapAbisByFunctionName } from '../../src/utils/decoder/swap/abis';
-import { updateSwapInfo } from '../../src/utils/decoder/swap/inputDataDecoder';
+import { updateSwapInfo } from '../../src/utils/decoder/swap';
 
-jest.mock('../../src/utils/decoder/swap/svm', () => ({ decodeSvmSwapAmounts: jest.fn() }));
-jest.mock('../../src/utils/decoder/swap/suivm', () => ({ decodeSuivmSwapAmounts: jest.fn() }));
+jest.mock('../../src/utils/decoder/svm', () => ({ decodeSvmTokenMovements: jest.fn() }));
+jest.mock('../../src/utils/decoder/suivm', () => ({ decodeSuivmTokenMovements: jest.fn() }));
 
-import { decodeSuivmSwapAmounts } from '../../src/utils/decoder/swap/suivm';
-import { decodeSvmSwapAmounts } from '../../src/utils/decoder/swap/svm';
+import { decodeSuivmTokenMovements } from '../../src/utils/decoder/suivm';
+import { decodeSvmTokenMovements } from '../../src/utils/decoder/svm';
 
-const decodeSvm = decodeSvmSwapAmounts as jest.Mock;
-const decodeSuivm = decodeSuivmSwapAmounts as jest.Mock;
+const decodeSvm = decodeSvmTokenMovements as jest.Mock;
+const decodeSuivm = decodeSuivmTokenMovements as jest.Mock;
 
 const USDC: HexString = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 const WETH: HexString = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1';
@@ -84,8 +84,8 @@ describe('swap decoding', () => {
 
   it('takes both amounts from the transaction on chains decoded by balance changes', async () => {
     decodeSvm.mockResolvedValue({
-      input: [{ token: SOLANA_USDC, amount: BigInt(150_000_000) }],
-      output: [{ token: solanaNativeToken, amount: BigInt(2_000_000_000) }],
+      sent: [{ token: SOLANA_USDC, amount: BigInt(150_000_000) }],
+      received: [{ token: solanaNativeToken, amount: BigInt(2_000_000_000) }],
     });
 
     const result = await updateSwapInfo({
@@ -108,8 +108,8 @@ describe('swap decoding', () => {
 
   it('tells sol and wrapped sol apart when they are the two sides of the swap', async () => {
     decodeSvm.mockResolvedValue({
-      input: [{ token: solanaWNativeToken, amount: BigInt(10_054_032) }],
-      output: [{ token: solanaNativeToken, amount: BigInt(10_054_032) }],
+      sent: [{ token: solanaWNativeToken, amount: BigInt(10_054_032) }],
+      received: [{ token: solanaNativeToken, amount: BigInt(10_054_032) }],
     });
 
     const result = await updateSwapInfo({
@@ -129,7 +129,7 @@ describe('swap decoding', () => {
   });
 
   it('routes sui chains to their own decoder', async () => {
-    decodeSuivm.mockResolvedValue({ input: [], output: [] });
+    decodeSuivm.mockResolvedValue({ sent: [], received: [] });
 
     await updateSwapInfo({ chainType: 'suivm', txHash: 'digest', eventSwapInfo: quoted() });
 
@@ -148,7 +148,7 @@ describe('swap decoding', () => {
   });
 
   it('reports a pair as failed only when the transaction received nothing for it', async () => {
-    decodeSvm.mockResolvedValue({ input: [{ token: SOLANA_USDC, amount: BigInt(150_000_000) }], output: [] });
+    decodeSvm.mockResolvedValue({ sent: [{ token: SOLANA_USDC, amount: BigInt(150_000_000) }], received: [] });
     const nothingReceived = await handleDecodeNonEvmSwapData({
       txHash: 'signature',
       eventSwapInfo: quoted({ fromToken: SOLANA_USDC, toToken: solanaNativeToken, returnToAmount: BigInt(0) }),
@@ -156,8 +156,8 @@ describe('swap decoding', () => {
     });
 
     decodeSvm.mockResolvedValue({
-      input: [{ token: SOLANA_USDC, amount: BigInt(150_000_000) }],
-      output: [{ token: solanaNativeToken, amount: BigInt(2_000_000_000) }],
+      sent: [{ token: SOLANA_USDC, amount: BigInt(150_000_000) }],
+      received: [{ token: solanaNativeToken, amount: BigInt(2_000_000_000) }],
     });
     const received = await handleDecodeNonEvmSwapData({
       txHash: 'signature',

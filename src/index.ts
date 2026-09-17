@@ -61,7 +61,7 @@ import { PsbtInput, PsbtOutput } from './types/btc';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
 import { classifyAddress } from './utils/address';
-import { updateSwapInfo } from './utils/decoder/swap/inputDataDecoder';
+import { updateSwapInfo } from './utils/decoder/swap';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { extendViemChain } from './utils/extendViemChain';
 import { formatToken } from './utils/tokens';

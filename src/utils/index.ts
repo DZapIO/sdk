@@ -19,7 +19,7 @@ import { viemChainsById } from '../chains';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
-import { updateSwapInfo } from './decoder/swap/inputDataDecoder';
+import { updateSwapInfo } from './decoder/swap';
 import { formatToken } from './tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };

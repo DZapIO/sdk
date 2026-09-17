@@ -1,7 +1,7 @@
 import { decodeFunctionData } from 'viem/utils';
 import { HexString } from '../../../types';
 import { SwapAbisByFunctionName } from './abis';
-import { SwapAmountDecodeResult, TokenAmount } from './types';
+import { TokenAmount, TokenMovements } from '../types';
 
 const decodeSingleSwapData = (data: HexString): ReadonlyArray<TokenAmount> => {
   const decodedData = decodeFunctionData({ data, abi: SwapAbisByFunctionName.SingleSwap });
@@ -42,7 +42,7 @@ const swapFunctionSignatureWithInputTokenIndex: Record<HexString, (data: HexStri
   '0x0d2eedd4': decodeGaslessExecuteSwapData,
 };
 
-export const decodeEvmSwapAmounts = ({ data }: { data?: HexString }): SwapAmountDecodeResult | undefined => {
+export const decodeEvmSwapInput = ({ data }: { data?: HexString }): TokenMovements | undefined => {
   if (!data || data === '0x') {
     return undefined;
   }
@@ -51,9 +51,10 @@ export const decodeEvmSwapAmounts = ({ data }: { data?: HexString }): SwapAmount
   if (!decoder) {
     return undefined;
   }
-  const input = decoder(data).filter((item) => item?.token && item?.amount);
-  if (input.length === 0) {
+  const sent = decoder(data).filter((item) => item?.token && item?.amount);
+  if (sent.length === 0) {
     return undefined;
   }
-  return { input };
+  // calldata only carries what the swap was given; what came back is known from the event
+  return { sent };
 };

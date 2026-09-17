@@ -1,17 +1,17 @@
 import axios from 'axios';
-import { suiNativeToken } from '../../../constants/address';
-import { SwapAmountDecodeResult, TokenAmount } from './types';
+import { suiNativeToken } from '../../constants/address';
+import { TokenAmount, TokenMovements } from './types';
 
 // sui's own public fullnodes no longer serve json-rpc, so the fallback has to be a provider that does
 const SUI_DEFAULT_RPC = 'https://sui-rpc.publicnode.com';
 
-export const decodeSuivmSwapAmounts = async ({
+export const decodeSuivmTokenMovements = async ({
   txHash,
   rpcUrls,
 }: {
   txHash?: string;
   rpcUrls?: string[];
-}): Promise<SwapAmountDecodeResult | undefined> => {
+}): Promise<TokenMovements | undefined> => {
   if (!txHash) {
     return undefined;
   }
@@ -33,25 +33,25 @@ export const decodeSuivmSwapAmounts = async ({
     return undefined;
   }
 
-  // the sender's SUI balance change is net of the gas it paid, which is not part of the swap
+  // the sender's SUI balance change is net of the gas it paid, which was not traded
   const gasUsed = result?.effects?.gasUsed;
   const gasCost = gasUsed ? BigInt(gasUsed.computationCost ?? 0) + BigInt(gasUsed.storageCost ?? 0) - BigInt(gasUsed.storageRebate ?? 0) : BigInt(0);
 
-  const input: TokenAmount[] = [];
-  const output: TokenAmount[] = [];
+  const sent: TokenAmount[] = [];
+  const received: TokenAmount[] = [];
   balanceChanges
     .filter((change) => change.owner?.AddressOwner === sender)
     .forEach((change) => {
       const amount = BigInt(change.amount) + (change.coinType === suiNativeToken ? gasCost : BigInt(0));
       if (amount < BigInt(0)) {
-        input.push({ token: change.coinType, amount: -amount });
+        sent.push({ token: change.coinType, amount: -amount });
       } else if (amount > BigInt(0)) {
-        output.push({ token: change.coinType, amount });
+        received.push({ token: change.coinType, amount });
       }
     });
 
-  if (input.length === 0 && output.length === 0) {
+  if (sent.length === 0 && received.length === 0) {
     return undefined;
   }
-  return { input, output };
+  return { sent, received };
 };

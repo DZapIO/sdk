@@ -1,14 +1,8 @@
 import { clusterApiUrl, Connection } from '@solana/web3.js';
-import { solanaNativeToken, solanaWNativeToken } from '../../../constants/address';
-import { SwapAmountDecodeResult, TokenAmount } from './types';
+import { solanaNativeToken, solanaWNativeToken } from '../../constants/address';
+import { TokenAmount, TokenMovements } from './types';
 
-export const decodeSvmSwapAmounts = async ({
-  txHash,
-  rpcUrls,
-}: {
-  txHash?: string;
-  rpcUrls?: string[];
-}): Promise<SwapAmountDecodeResult | undefined> => {
+export const decodeSvmTokenMovements = async ({ txHash, rpcUrls }: { txHash?: string; rpcUrls?: string[] }): Promise<TokenMovements | undefined> => {
   if (!txHash) {
     return undefined;
   }
@@ -29,8 +23,8 @@ export const decodeSvmSwapAmounts = async ({
   const addDelta = (token: string, delta: bigint) => deltas.set(token, (deltas.get(token) ?? BigInt(0)) + delta);
 
   // rent the signer pays to open a token account, or gets back when one is closed, moves lamports
-  // without being part of the swap. a wrapped sol account also carries the wrapped lamports
-  // themselves, which are the swap and are already counted as a token movement.
+  // without anything being traded. a wrapped sol account also carries the wrapped lamports
+  // themselves, which are traded and are already counted as a token movement.
   let rentAdjustment = BigInt(0);
   const rentOf = (accountIndex: number, wrappedDelta: bigint) =>
     BigInt(postBalances[accountIndex] ?? 0) - BigInt(preBalances[accountIndex] ?? 0) - wrappedDelta;
@@ -54,23 +48,23 @@ export const decodeSvmSwapAmounts = async ({
       rentAdjustment += rentOf(pre.accountIndex, wrappedPart(pre.mint, delta));
     });
 
-  // lamports and wSOL are reported as the movements they are rather than as one asset, so that a
-  // swap between the two reads as a swap instead of cancelling itself out
+  // lamports and wSOL are reported as the separate movements they are rather than as one asset, so
+  // that trading one for the other reads as a trade instead of cancelling itself out
   const nativeDelta = BigInt(postBalances[0] ?? 0) - BigInt(preBalances[0] ?? 0) + BigInt(meta.fee ?? 0) + rentAdjustment;
   addDelta(solanaNativeToken, nativeDelta);
 
-  const input: TokenAmount[] = [];
-  const output: TokenAmount[] = [];
+  const sent: TokenAmount[] = [];
+  const received: TokenAmount[] = [];
   deltas.forEach((amount, token) => {
     if (amount < BigInt(0)) {
-      input.push({ token, amount: -amount });
+      sent.push({ token, amount: -amount });
     } else if (amount > BigInt(0)) {
-      output.push({ token, amount });
+      received.push({ token, amount });
     }
   });
 
-  if (input.length === 0 && output.length === 0) {
+  if (sent.length === 0 && received.length === 0) {
     return undefined;
   }
-  return { input, output };
+  return { sent, received };
 };
