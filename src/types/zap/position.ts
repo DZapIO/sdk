@@ -1,5 +1,6 @@
 import { ZapUnderlyingTokenWithAmount } from '.';
 import { HexString } from '..';
+import { ZapLimitOrderDetails } from './limitOrder';
 
 export type ZapPositionsRequest = {
   account: HexString;
@@ -22,6 +23,7 @@ export type ZapPosition = {
   };
   metadata?: unknown;
   decimals: number;
+  limitOrderDetails?: ZapLimitOrderDetails;
 };
 
 export type ZapPositionsResponse = {

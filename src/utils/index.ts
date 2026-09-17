@@ -168,6 +168,20 @@ export const isTypeSigner = (variable: any): variable is Signer => {
   return variable instanceof Signer;
 };
 
+/**
+ * Resolves the signing account from either signer kind.
+ */
+export const getSignerAddress = async (signer: Signer | WalletClient): Promise<HexString> => {
+  if (isTypeSigner(signer)) {
+    return (await signer.getAddress()) as HexString;
+  }
+  const address = signer.account?.address;
+  if (!address) {
+    throw new Error('The provided walletClient has no account attached.');
+  }
+  return address;
+};
+
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
 export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
