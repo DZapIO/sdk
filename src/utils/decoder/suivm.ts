@@ -1,20 +1,11 @@
 import axios from 'axios';
 import { suiNativeToken } from '../../constants/address';
-import { TokenAmount, TokenMovements } from './types';
+import { DecodeTransactionParameters, DecodeTransactionReturnType, TokenAmount } from '../../types/decoder';
 
 // sui's own public fullnodes no longer serve json-rpc, so the fallback has to be a provider that does
 const SUI_DEFAULT_RPC = 'https://sui-rpc.publicnode.com';
 
-export const decodeSuivmTokenMovements = async ({
-  txHash,
-  rpcUrls,
-}: {
-  txHash?: string;
-  rpcUrls?: string[];
-}): Promise<TokenMovements | undefined> => {
-  if (!txHash) {
-    return undefined;
-  }
+export const decodeSuivmTransaction = async ({ txHash, rpcUrls }: DecodeTransactionParameters): DecodeTransactionReturnType => {
   const rpcUrl = rpcUrls?.[0] ?? SUI_DEFAULT_RPC;
   const response = await axios.post(rpcUrl, {
     jsonrpc: '2.0',
@@ -33,9 +24,14 @@ export const decodeSuivmTokenMovements = async ({
     return undefined;
   }
 
-  // the sender's SUI balance change is net of the gas it paid, which was not traded
+  // the sender's SUI balance change is net of the gas it paid, which was not traded. a sponsored
+  // transaction's gas is paid by its sponsor, so the sender's balance change is the trade alone
   const gasUsed = result?.effects?.gasUsed;
-  const gasCost = gasUsed ? BigInt(gasUsed.computationCost ?? 0) + BigInt(gasUsed.storageCost ?? 0) - BigInt(gasUsed.storageRebate ?? 0) : BigInt(0);
+  const senderPaidGas = (result?.transaction?.data?.gasData?.owner ?? sender) === sender;
+  const gasCost =
+    gasUsed && senderPaidGas
+      ? BigInt(gasUsed.computationCost ?? 0) + BigInt(gasUsed.storageCost ?? 0) - BigInt(gasUsed.storageRebate ?? 0)
+      : BigInt(0);
 
   const sent: TokenAmount[] = [];
   const received: TokenAmount[] = [];

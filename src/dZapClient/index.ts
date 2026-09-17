@@ -27,7 +27,6 @@ import {
 } from '../api';
 import { config } from '../config';
 import { Services } from '../constants';
-import { chainTypes } from '../constants/chains';
 import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
@@ -79,7 +78,8 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
-import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeNonEvmSwapData, handleDecodeTxnData } from '../utils';
+import { getDZapAbi, getOtherAbis } from '../utils';
+import { decodeTxnData } from '../utils/decoder';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
@@ -640,19 +640,22 @@ class DZapClient {
   }
 
   /**
-   * Decodes and interprets transaction data for DZap protocol operations, resolving the actual
-   * fromAmount/returnToAmount for a swap. On EVM this parses the transaction receipt's logs and
-   * calldata; on Solana and Sui, which have no equivalent on-chain event to parse, it derives the
-   * actual amounts from the transaction's balance changes and patches them onto the caller-supplied
-   * `eventSwapInfo` (e.g. the quoted swap info).
+   * Decodes and interprets transaction data for DZap protocol operations on any supported chain type,
+   * resolving the swap info and the actual fromAmount/returnToAmount of each swap.
+   * On EVM the swap info is parsed from the transaction receipt's events. Solana and Sui have no such
+   * event, so the caller-supplied `eventSwapInfo` (e.g. the quoted swap info) is patched with the
+   * amounts the transaction actually moved.
    *
    * @param params - Configuration object for transaction decoding
-   * @param params.data - EVM only: the transaction receipt containing logs and events to decode
-   * @param params.txHash - Solana/Sui only: the transaction signature/digest
-   * @param params.eventSwapInfo - Solana/Sui only: the swap info to patch with actual amounts
+   * @param params.data - EVM: the transaction receipt to decode, fetched by `txHash` when omitted
+   * @param params.txHash - The transaction hash, signature or digest; required on non-EVM chains
+   * @param params.eventSwapInfo - Non-EVM: the swap info to patch with the actual amounts
    * @param params.service - The DZap service type that generated the transaction
    * @param params.chainId - The blockchain network ID where the transaction occurred
-   * @returns Promise resolving to decoded transaction data with structured information
+   * @param params.rpcUrls - Optional custom RPC URLs to read the transaction from
+   * @returns Promise resolving to the swap info and failed swap pairs. `isAmountPatched` tells whether the
+   * amounts were read from the transaction; when they could not be, the swap info is returned as given and
+   * `amountPatchError` says why.
    *
    * @example
    * ```typescript
@@ -671,32 +674,21 @@ class DZapClient {
     eventSwapInfo,
     service,
     chainId,
+    rpcUrls,
   }: {
     data?: TransactionReceipt;
     txHash?: string;
     eventSwapInfo?: SwapInfo | SwapInfo[];
     service: AvailableDZapServices;
     chainId: number;
+    rpcUrls?: string[];
   }) {
     const chainConfig = await DZapClient.getChainConfig();
     const chain = chainConfig?.[chainId];
     if (!chain) {
       throw new Error('Chains config not found');
     }
-
-    if (chain.chainType !== chainTypes.evm) {
-      if (!txHash || !eventSwapInfo) {
-        throw new Error('txHash and eventSwapInfo are required to decode a non-EVM transaction');
-      }
-      return handleDecodeNonEvmSwapData({ txHash, eventSwapInfo, chain, rpcUrls: config.getRpcUrlsByChainId(chainId) });
-    }
-
-    if (!data) {
-      throw new Error('data (transaction receipt) is required to decode an EVM transaction');
-    }
-    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
-    const transactionData = await publicClient.getTransaction({ hash: data.transactionHash });
-    return handleDecodeTxnData(transactionData, data, service, chain);
+    return decodeTxnData({ service, chain, receipt: data, txHash, eventSwapInfo, rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId) });
   }
 
   /**

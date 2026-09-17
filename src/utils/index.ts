@@ -1,25 +1,12 @@
-import {
-  Abi,
-  createPublicClient,
-  fallback,
-  http,
-  parseEventLogs,
-  ParseEventLogsReturnType,
-  stringToHex,
-  Transaction,
-  TransactionReceipt,
-  WalletClient,
-  zeroAddress,
-} from 'viem';
+import { Abi, createPublicClient, fallback, http, stringToHex, WalletClient, zeroAddress } from 'viem';
 import * as ABI from '../artifacts';
-import { AvailableDZapServices, Chain, HexString, OtherAvailableAbis, SwapInfo } from '../types';
+import { AvailableDZapServices, HexString, OtherAvailableAbis } from '../types';
 
 import { Signer } from 'ethers';
 import { viemChainsById } from '../chains';
 import { DZapAbis, dZapNativeTokenFormat, OtherAbis, Services } from '../constants';
 import { RPC_BATCHING_WAIT_TIME, RPC_RETRY_DELAY } from '../constants/rpc';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
-import { updateSwapInfo } from './decoder/swap';
 import { formatToken } from './tokens';
 
 const publicClientRpcConfig = { batch: { wait: RPC_BATCHING_WAIT_TIME }, retryDelay: RPC_RETRY_DELAY };
@@ -187,101 +174,6 @@ export const getDZapAbi = (service: AvailableDZapServices, version: ContractVers
     default:
       throw new Error('Invalid Service');
   }
-};
-
-const getSwapFailPairKey = (info: Pick<SwapInfo, 'fromToken' | 'toToken' | 'fromAmount' | 'returnToAmount'>, chain: Chain): string | undefined => {
-  if (BigInt(info.returnToAmount) !== BigInt(0) && BigInt(info.fromAmount) !== BigInt(0)) {
-    return undefined;
-  }
-  return getTokensPairKey({
-    srcToken: info.fromToken,
-    destToken: info.toToken,
-    srcChainId: chain.chainId,
-    destChainId: chain.chainId,
-    srcChainNativeAddress: chain?.nativeToken?.contract,
-    destChainNativeAddress: chain?.nativeToken?.contract,
-  });
-};
-
-export const handleDecodeTxnData = async (
-  transaction: Transaction,
-  receipt: TransactionReceipt,
-  service: AvailableDZapServices,
-  chain: Chain,
-): Promise<{ swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] }> => {
-  let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
-  const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
-  try {
-    events = parseEventLogs({
-      abi: dZapAbi,
-      logs: receipt.logs,
-    });
-  } catch (e) {
-    events = [];
-  }
-
-  events = events?.filter((item: any) => item !== null);
-  const txLogArgs = events[0]?.args as { swapInfo: SwapInfo | SwapInfo[] };
-  const swapFailPairs: string[] = [];
-
-  let swapInfo: SwapInfo | SwapInfo[] = [];
-  if (Array.isArray(txLogArgs?.swapInfo)) {
-    swapInfo = txLogArgs.swapInfo.map((info) => {
-      const failPairKey = getSwapFailPairKey(info, chain);
-      if (failPairKey) {
-        swapFailPairs.push(failPairKey);
-      }
-      return {
-        ...info,
-        fromToken: formatToken(info.fromToken, chain?.nativeToken?.contract),
-        toToken: formatToken(info.toToken, chain?.nativeToken?.contract),
-      };
-    });
-  } else if (typeof txLogArgs?.swapInfo === 'object' && Object.keys(txLogArgs?.swapInfo).length > 0) {
-    const failPairKey = getSwapFailPairKey(txLogArgs.swapInfo, chain);
-    if (failPairKey) {
-      swapFailPairs.push(failPairKey);
-    }
-    swapInfo = {
-      ...txLogArgs.swapInfo,
-      fromToken: formatToken(txLogArgs.swapInfo.fromToken, chain?.nativeToken?.contract),
-      toToken: formatToken(txLogArgs.swapInfo.toToken, chain?.nativeToken?.contract),
-    };
-  }
-
-  const updatedSwapInfo =
-    (await updateSwapInfo({
-      chainType: chain.chainType,
-      data: transaction.input,
-      eventSwapInfo: swapInfo,
-    })) || swapInfo;
-
-  return { swapInfo: updatedSwapInfo, swapFailPairs };
-};
-
-export const handleDecodeNonEvmSwapData = async ({
-  txHash,
-  eventSwapInfo,
-  chain,
-  rpcUrls,
-}: {
-  txHash: string;
-  eventSwapInfo: SwapInfo | SwapInfo[];
-  chain: Chain;
-  rpcUrls?: string[];
-}): Promise<{ swapFailPairs: string[]; swapInfo: SwapInfo | SwapInfo[] }> => {
-  const updatedSwapInfo =
-    (await updateSwapInfo({
-      chainType: chain.chainType,
-      txHash,
-      eventSwapInfo,
-      rpcUrls,
-    })) || eventSwapInfo;
-
-  const infos = Array.isArray(updatedSwapInfo) ? updatedSwapInfo : [updatedSwapInfo];
-  const swapFailPairs = infos.map((info) => getSwapFailPairKey(info, chain)).filter((key): key is string => Boolean(key));
-
-  return { swapInfo: updatedSwapInfo, swapFailPairs };
 };
 
 export const getOtherAbis = (name: OtherAvailableAbis) => {

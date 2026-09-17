@@ -1,13 +1,27 @@
-import { clusterApiUrl, Connection } from '@solana/web3.js';
+import { clusterApiUrl, Connection, ParsedTransactionWithMeta } from '@solana/web3.js';
 import { solanaNativeToken, solanaWNativeToken } from '../../constants/address';
-import { TokenAmount, TokenMovements } from './types';
+import { DecodeTransactionParameters, DecodeTransactionReturnType, TokenAmount } from '../../types/decoder';
 
-export const decodeSvmTokenMovements = async ({ txHash, rpcUrls }: { txHash?: string; rpcUrls?: string[] }): Promise<TokenMovements | undefined> => {
-  if (!txHash) {
-    return undefined;
+// an rpc node can take a moment to serve a transaction the client already saw confirmed
+const SVM_TX_LOOKUP_ATTEMPTS = 6;
+const SVM_TX_LOOKUP_BASE_DELAY_MS = 500;
+
+const getConfirmedTransaction = async (connection: Connection, txHash: string, attempt = 1): Promise<ParsedTransactionWithMeta> => {
+  // read at confirmed, as finalized lags the confirmation the client decodes after by several seconds
+  const tx = await connection.getParsedTransaction(txHash, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+  if (tx) {
+    return tx;
   }
+  if (attempt >= SVM_TX_LOOKUP_ATTEMPTS) {
+    throw new Error(`transaction ${txHash} not found after ${attempt} attempts`);
+  }
+  await new Promise((resolve) => setTimeout(resolve, SVM_TX_LOOKUP_BASE_DELAY_MS * 2 ** (attempt - 1)));
+  return getConfirmedTransaction(connection, txHash, attempt + 1);
+};
+
+export const decodeSvmTransaction = async ({ txHash, rpcUrls }: DecodeTransactionParameters): DecodeTransactionReturnType => {
   const connection = new Connection(rpcUrls?.[0] || clusterApiUrl('mainnet-beta'));
-  const tx = await connection.getParsedTransaction(txHash, { maxSupportedTransactionVersion: 0 });
+  const tx = await getConfirmedTransaction(connection, txHash);
   const meta = tx?.meta;
   const owner = tx?.transaction?.message?.accountKeys?.[0]?.pubkey?.toBase58();
   if (!meta || !owner) {

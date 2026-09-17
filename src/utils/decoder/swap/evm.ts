@@ -1,7 +1,8 @@
 import { decodeFunctionData } from 'viem/utils';
+import { getPublicClient } from '../..';
 import { HexString } from '../../../types';
 import { SwapAbisByFunctionName } from './abis';
-import { TokenAmount, TokenMovements } from '../types';
+import { DecodeTransactionParameters, DecodeTransactionReturnType, TokenAmount } from '../../../types/decoder';
 
 const decodeSingleSwapData = (data: HexString): ReadonlyArray<TokenAmount> => {
   const decodedData = decodeFunctionData({ data, abi: SwapAbisByFunctionName.SingleSwap });
@@ -42,16 +43,13 @@ const swapFunctionSignatureWithInputTokenIndex: Record<HexString, (data: HexStri
   '0x0d2eedd4': decodeGaslessExecuteSwapData,
 };
 
-export const decodeEvmSwapInput = ({ data }: { data?: HexString }): TokenMovements | undefined => {
-  if (!data || data === '0x') {
-    return undefined;
-  }
-  const functionSignature = data.slice(0, 10) as HexString;
-  const decoder = swapFunctionSignatureWithInputTokenIndex[functionSignature];
+export const decodeEvmTransaction = async ({ txHash, chainId, rpcUrls }: DecodeTransactionParameters): DecodeTransactionReturnType => {
+  const { input } = await getPublicClient({ chainId, rpcUrls }).getTransaction({ hash: txHash as HexString });
+  const decoder = swapFunctionSignatureWithInputTokenIndex[input.slice(0, 10) as HexString];
   if (!decoder) {
     return undefined;
   }
-  const sent = decoder(data).filter((item) => item?.token && item?.amount);
+  const sent = decoder(input).filter((item) => item?.token && item?.amount);
   if (sent.length === 0) {
     return undefined;
   }

@@ -1,71 +1,95 @@
+import { config } from '../../../config';
 import { chainTypes } from '../../../constants/chains';
-import { HexString, SwapInfo } from '../../../types';
+import { SwapInfo } from '../../../types';
 import { formatToken } from '../../tokens';
-import { decodeSuivmTokenMovements } from '../suivm';
-import { decodeSvmTokenMovements } from '../svm';
-import { TokenAmount, TokenMovements } from '../types';
-import { decodeEvmSwapInput } from './evm';
+import { decodeSuivmTransaction } from '../suivm';
+import { decodeSvmTransaction } from '../svm';
+import {
+  DecodeTransactionParameters,
+  DecodeTransactionReturnType,
+  SwapAmountsPatchResult,
+  TokenAmount,
+  TxTokenAmounts,
+} from '../../../types/decoder';
+import { decodeEvmTransaction } from './evm';
 
 type ResolvedChainType = typeof chainTypes.evm | typeof chainTypes.svm | typeof chainTypes.suivm;
 
-type DecoderParams = { data?: HexString; txHash?: string; rpcUrls?: string[] };
-
 // evm reads the amounts out of the swap calldata, the others out of what the transaction moved
-const decoders: Record<ResolvedChainType, (params: DecoderParams) => TokenMovements | undefined | Promise<TokenMovements | undefined>> = {
-  [chainTypes.evm]: decodeEvmSwapInput,
-  [chainTypes.svm]: decodeSvmTokenMovements,
-  [chainTypes.suivm]: decodeSuivmTokenMovements,
+const transactionDecoders: Record<ResolvedChainType, (params: DecodeTransactionParameters) => DecodeTransactionReturnType> = {
+  [chainTypes.evm]: decodeEvmTransaction,
+  [chainTypes.svm]: decodeSvmTransaction,
+  [chainTypes.suivm]: decodeSuivmTransaction,
 };
 
+// deposits of the same token add up, as the transaction moved all of them
 const amountByToken = (tokenAmounts: ReadonlyArray<TokenAmount>): Record<string, bigint> =>
   tokenAmounts.reduce(
     (acc, cur) => {
-      acc[formatToken(cur.token)] = cur.amount;
+      const token = formatToken(cur.token);
+      acc[token] = (acc[token] ?? BigInt(0)) + cur.amount;
       return acc;
     },
     {} as Record<string, bigint>,
   );
 
-const patchSwapInfo = (eventSwapInfo: SwapInfo[] | SwapInfo, movements: TokenMovements): SwapInfo[] | SwapInfo => {
-  const sentByToken = amountByToken(movements.sent);
-  const receivedByToken = movements.received ? amountByToken(movements.received) : undefined;
+const swapCountByToken = (tokens: ReadonlyArray<string>): Record<string, number> =>
+  tokens.reduce(
+    (acc, cur) => {
+      const token = formatToken(cur);
+      acc[token] = (acc[token] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
-  const patch = (info: SwapInfo): SwapInfo => ({
-    ...info,
-    fromAmount: sentByToken[formatToken(info.fromToken)] ?? info.fromAmount,
-    returnToAmount: (receivedByToken && receivedByToken[formatToken(info.toToken)]) ?? info.returnToAmount,
-  });
+const applyTxTokenAmounts = (eventSwapInfo: SwapInfo[] | SwapInfo, txTokenAmounts: TxTokenAmounts): SwapAmountsPatchResult => {
+  const swaps = Array.isArray(eventSwapInfo) ? eventSwapInfo : [eventSwapInfo];
+  const sentByToken = amountByToken(txTokenAmounts.sent);
+  const receivedByToken = amountByToken(txTokenAmounts.received ?? []);
+  const swapsByFromToken = swapCountByToken(swaps.map((info) => info.fromToken));
+  const swapsByToToken = swapCountByToken(swaps.map((info) => info.toToken));
 
-  return Array.isArray(eventSwapInfo) ? eventSwapInfo.map(patch) : patch(eventSwapInfo);
+  // the amounts a transaction moved are totals per token, so a token shared by several swaps says nothing about what each of them moved
+  const amountOf = (amounts: Record<string, bigint>, swapCounts: Record<string, number>, token: string): bigint | undefined =>
+    swapCounts[formatToken(token)] === 1 ? amounts[formatToken(token)] : undefined;
+
+  let isAmountPatched = false;
+  const patch = (info: SwapInfo): SwapInfo => {
+    const fromAmount = amountOf(sentByToken, swapsByFromToken, info.fromToken);
+    const returnToAmount = amountOf(receivedByToken, swapsByToToken, info.toToken);
+    isAmountPatched = isAmountPatched || fromAmount !== undefined || returnToAmount !== undefined;
+    return { ...info, fromAmount: fromAmount ?? info.fromAmount, returnToAmount: returnToAmount ?? info.returnToAmount };
+  };
+
+  const swapInfo = Array.isArray(eventSwapInfo) ? eventSwapInfo.map(patch) : patch(eventSwapInfo);
+  return isAmountPatched
+    ? { swapInfo, isAmountPatched }
+    : { swapInfo, isAmountPatched, amountPatchError: 'no token amount of the transaction matched a swap token' };
 };
 
-export const updateSwapInfo = async ({
+// never throws: when the amounts can't be read from the transaction the swap info is returned as given, with the reason
+export const patchSwapAmountsFromTx = async ({
   chainType,
-  eventSwapInfo,
-  data,
+  chainId,
   txHash,
   rpcUrls,
+  eventSwapInfo,
 }: {
-  chainType?: string;
-  eventSwapInfo?: SwapInfo[] | SwapInfo;
-  data?: HexString;
-  txHash?: string;
-  rpcUrls?: string[];
-}): Promise<SwapInfo[] | SwapInfo | undefined> => {
-  if (!eventSwapInfo || !chainType) {
-    return eventSwapInfo;
-  }
-  const decoder = decoders[chainType as ResolvedChainType];
-  if (!decoder) {
-    return eventSwapInfo;
+  chainType: string;
+  eventSwapInfo: SwapInfo[] | SwapInfo;
+} & DecodeTransactionParameters): Promise<SwapAmountsPatchResult> => {
+  const decodeTransaction = transactionDecoders[chainType as ResolvedChainType];
+  if (!decodeTransaction) {
+    return { swapInfo: eventSwapInfo, isAmountPatched: false, amountPatchError: `decoding ${chainType} transactions is not supported` };
   }
   try {
-    const movements = await decoder({ data, txHash, rpcUrls });
-    if (!movements) {
-      return eventSwapInfo;
+    const txTokenAmounts = await decodeTransaction({ txHash, chainId, rpcUrls: rpcUrls ?? config.getRpcUrlsByChainId(chainId) });
+    if (!txTokenAmounts) {
+      return { swapInfo: eventSwapInfo, isAmountPatched: false, amountPatchError: `no token amounts could be decoded from transaction ${txHash}` };
     }
-    return patchSwapInfo(eventSwapInfo, movements);
+    return applyTxTokenAmounts(eventSwapInfo, txTokenAmounts);
   } catch (error) {
-    return eventSwapInfo;
+    return { swapInfo: eventSwapInfo, isAmountPatched: false, amountPatchError: error instanceof Error ? error.message : String(error) };
   }
 };
