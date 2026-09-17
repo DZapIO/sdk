@@ -1,140 +1,73 @@
-import { decodeFunctionData } from 'viem/utils';
-import { SwapAbisByFunctionName } from './abis';
+import { chainTypes } from '../../../constants/chains';
 import { HexString, SwapInfo } from '../../../types';
 import { formatToken } from '../../tokens';
+import { decodeEvmSwapAmounts } from './evm';
+import { decodeSuivmSwapAmounts } from './suivm';
+import { decodeSvmSwapAmounts } from './svm';
+import { SwapAmountDecodeResult, TokenAmount } from './types';
 
-export class SwapInputDataDecoder {
-  private decodeSingleSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
-    const decodedData = decodeFunctionData({
-      data,
-      abi: SwapAbisByFunctionName.SingleSwap,
-    });
-    return [decodedData?.args?.[4]];
-  };
+type ResolvedChainType = typeof chainTypes.evm | typeof chainTypes.svm | typeof chainTypes.suivm;
 
-  private decodeMultiSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
-    const decodedData = decodeFunctionData({
-      data,
-      abi: SwapAbisByFunctionName.MultiSwapAbi,
-    });
-    return decodedData?.args?.[4];
-  };
+type SwapAmountDecoderParams = { data?: HexString; txHash?: string; rpcUrls?: string[] };
 
-  private decodeBatchPermitSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
-    const decodedData = decodeFunctionData({
-      data,
-      abi: SwapAbisByFunctionName.BatchPermitSwapAbi,
-    });
-    const permitData = decodedData?.args?.[5]?.permitted;
-    return permitData;
-  };
+const decoders: Record<
+  ResolvedChainType,
+  (params: SwapAmountDecoderParams) => SwapAmountDecodeResult | undefined | Promise<SwapAmountDecodeResult | undefined>
+> = {
+  [chainTypes.evm]: decodeEvmSwapAmounts,
+  [chainTypes.svm]: decodeSvmSwapAmounts,
+  [chainTypes.suivm]: decodeSuivmSwapAmounts,
+};
 
-  private decodeGaslessExecuteMultiSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
-    const decodedData = decodeFunctionData({
-      data,
-      abi: SwapAbisByFunctionName.GaslessExecuteMultiSwapAbi,
-    });
-    return decodedData?.args?.[7];
-  };
-
-  private decodeGaslessExecuteMultiSwapWithWitnessData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
-    const decodedData = decodeFunctionData({
-      data,
-      abi: SwapAbisByFunctionName.GaslessExecuteMultiSwapWithWitnessAbi,
-    });
-    return decodedData?.args?.[7];
-  };
-
-  private decodeGaslessExecuteSwapData = (data: HexString): ReadonlyArray<{ token: HexString; amount: bigint }> => {
-    const decodedData = decodeFunctionData({
-      data,
-      abi: SwapAbisByFunctionName.GaslessExecuteSwapAbi,
-    });
-    return [decodedData?.args?.[7]];
-  };
-
-  private readonly swapFunctionSignatureWithInputTokenIndex: Record<
-    HexString,
-    { name: string; decoder: (data: HexString) => ReadonlyArray<{ token: HexString; amount: bigint }> }
-  > = {
-    '0x50d52584': {
-      name: 'singleSwap',
-      decoder: this.decodeSingleSwapData,
+const toTokenAmountMap = (tokenAmounts: ReadonlyArray<TokenAmount>): Record<string, bigint> =>
+  tokenAmounts.reduce(
+    (acc, cur) => {
+      acc[formatToken(cur.token)] = cur.amount;
+      return acc;
     },
-    '0x8de34776': {
-      name: 'multiSwap',
-      decoder: this.decodeMultiSwapData,
-    },
-    '0x8d44ea24': {
-      name: 'batchPermitSwap',
-      decoder: this.decodeBatchPermitSwapData,
-    },
-    '0xd367ada5': {
-      name: 'gaslessExecuteMultiSwap',
-      decoder: this.decodeGaslessExecuteMultiSwapData,
-    },
-    '0xdcdc6089': {
-      name: 'gaslessExecuteMultiSwapWithWitness',
-      decoder: this.decodeGaslessExecuteMultiSwapWithWitnessData,
-    },
-    '0x0d2eedd4': {
-      name: 'gaslessExecuteSwap',
-      decoder: this.decodeGaslessExecuteSwapData,
-    },
-  };
+    {} as Record<string, bigint>,
+  );
 
-  public updateSwapInfo = ({
-    data,
-    eventSwapInfo,
-  }: {
-    eventSwapInfo?: SwapInfo[] | SwapInfo;
-    data?: HexString;
-  }): SwapInfo[] | SwapInfo | undefined => {
-    try {
-      if (!data || !eventSwapInfo || data === '0x') {
-        return eventSwapInfo;
-      }
-      const functionSignature = data.slice(0, 10) as HexString;
-      const decoder = this.swapFunctionSignatureWithInputTokenIndex[functionSignature]?.decoder;
-      if (!decoder) {
-        return eventSwapInfo;
-      }
+const patchSwapInfo = (eventSwapInfo: SwapInfo[] | SwapInfo, result: SwapAmountDecodeResult): SwapInfo[] | SwapInfo => {
+  const inputAmountByToken = toTokenAmountMap(result.input);
+  const outputAmountByToken = result.output ? toTokenAmountMap(result.output) : undefined;
 
-      const inputTokenData: ReadonlyArray<{ token: HexString; amount: bigint }> = decoder(data);
-      if (!inputTokenData || inputTokenData.length === 0) {
-        return eventSwapInfo;
-      }
+  const patch = (info: SwapInfo): SwapInfo => ({
+    ...info,
+    fromAmount: inputAmountByToken[formatToken(info.fromToken)] ?? info.fromAmount,
+    returnToAmount: (outputAmountByToken && outputAmountByToken[formatToken(info.toToken)]) ?? info.returnToAmount,
+  });
 
-      // update input amount for each swap info
-      const tokenToAmount = inputTokenData
-        .filter((item) => item.token && item.amount)
-        .reduce(
-          (acc, cur) => {
-            acc[formatToken(cur.token)] = cur.amount;
-            return acc;
-          },
-          {} as Record<string, bigint>,
-        );
+  return Array.isArray(eventSwapInfo) ? eventSwapInfo.map(patch) : patch(eventSwapInfo);
+};
 
-      if (Array.isArray(eventSwapInfo)) {
-        return eventSwapInfo.map((item) => {
-          const formattedSrcToken = formatToken(item.fromToken);
-          const inputAmount = tokenToAmount[formattedSrcToken] || item.fromAmount;
-          return {
-            ...item,
-            fromAmount: inputAmount,
-          };
-        });
-      } else {
-        const formattedSrcToken = formatToken(eventSwapInfo.fromToken);
-        const inputAmount = tokenToAmount[formattedSrcToken] || eventSwapInfo.fromAmount;
-        return {
-          ...eventSwapInfo,
-          fromAmount: inputAmount,
-        };
-      }
-    } catch (error) {
+export const updateSwapInfo = async ({
+  chainType,
+  eventSwapInfo,
+  data,
+  txHash,
+  rpcUrls,
+}: {
+  chainType?: string;
+  eventSwapInfo?: SwapInfo[] | SwapInfo;
+  data?: HexString;
+  txHash?: string;
+  rpcUrls?: string[];
+}): Promise<SwapInfo[] | SwapInfo | undefined> => {
+  if (!eventSwapInfo || !chainType) {
+    return eventSwapInfo;
+  }
+  const decoder = decoders[chainType as ResolvedChainType];
+  if (!decoder) {
+    return eventSwapInfo;
+  }
+  try {
+    const result = await decoder({ data, txHash, rpcUrls });
+    if (!result) {
       return eventSwapInfo;
     }
-  };
-}
+    return patchSwapInfo(eventSwapInfo, result);
+  } catch (error) {
+    return eventSwapInfo;
+  }
+};
