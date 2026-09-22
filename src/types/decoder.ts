@@ -46,13 +46,22 @@ export type DecodeSuivmTxnDataParams = DecodeGivenSwapInfoTxnDataParams<SuivmCha
 
 export type DecodeTxnDataParams = DecodeEvmTxnDataParams | DecodeSvmTxnDataParams | DecodeSuivmTxnDataParams;
 
+// the receipt-or-txHash half on its own: Omit collapses a union, so anything derived from the params
+// omits from the object half below and intersects this back in
+export type DecodeTxnDataReceiptOrTxHash = { data: TransactionReceipt; txHash?: string } | { data?: undefined; txHash: string };
+
 // the chain is looked up by chainId, so only the receipt-or-txHash rule can be held to at compile time here
-export type DecodeTxnDataClientParams = {
+export type DecodeTxnDataClientOptions = {
   service: AvailableDZapServices;
   chainId: number;
   rpcUrls?: string[];
   eventSwapInfo?: SwapInfo | SwapInfo[];
-} & ({ data: TransactionReceipt; txHash?: string } | { data?: undefined; txHash: string });
+};
+
+export type DecodeTxnDataClientParams = DecodeTxnDataClientOptions & DecodeTxnDataReceiptOrTxHash;
+
+// for callers that already know the service, e.g. one bound to a single dZap service
+export type DecodeTxnDataClientParamsWithoutService = Omit<DecodeTxnDataClientOptions, 'service'> & DecodeTxnDataReceiptOrTxHash;
 
 // whether the swap amounts were taken from the transaction itself, and why not when they were not
 export type SwapAmountsPatchResult = {
