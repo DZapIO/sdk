@@ -58,7 +58,7 @@ import {
   UnavailableRoutes,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
-import { DecodeTxnDataClientParams, DecodeTxnDataResponse, SwapAmountsPatchResult } from './types/decoder';
+import { DecodeTxnDataClientParams, DecodeTxnDataClientParamsWithoutService, DecodeTxnDataResponse, SwapAmountsPatchResult } from './types/decoder';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
 import { classifyAddress } from './utils/address';
@@ -85,6 +85,7 @@ export {
   contractErrorActions,
   ContractErrorResponse,
   DecodeTxnDataClientParams,
+  DecodeTxnDataClientParamsWithoutService,
   DecodeTxnDataResponse,
   DZapClient,
   DZapPermitMode,
