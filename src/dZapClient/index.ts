@@ -14,9 +14,9 @@ import {
   fetchTokenDetails,
   fetchTradeBuildTxnData,
   fetchTradeQuotes,
+  fetchZapBuildTxnData,
   fetchZapBundleBuildTx,
   fetchZapBundleQuote,
-  fetchZapBuildTxnData,
   fetchZapChains,
   fetchZapPoolDetails,
   fetchZapPools,
@@ -59,10 +59,11 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from '../types';
+import { DecodeTxnDataClientParams } from '../types/decoder';
 import {
-  ZapBundleRequest,
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
+  ZapBundleRequest,
   ZapChains,
   ZapPoolDetails,
   ZapPoolDetailsRequest,
@@ -77,7 +78,6 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
-import { DecodeTxnDataClientParams, DecodeTxnDataParams } from '../types/decoder';
 import { getDZapAbi, getOtherAbis } from '../utils';
 import { decodeTxnData } from '../utils/decoder';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
@@ -668,20 +668,9 @@ class DZapClient {
    * console.log('Decoded transaction:', decodedData);
    * ```
    */
-  public async decodeTxnData({ data, txHash, eventSwapInfo, service, chainId, rpcUrls }: DecodeTxnDataClientParams) {
+  public async decodeTxnData(params: DecodeTxnDataClientParams) {
     const chainConfig = await DZapClient.getChainConfig();
-    const chain = chainConfig?.[chainId];
-    if (!chain) {
-      throw new Error('Chains config not found');
-    }
-    return decodeTxnData({
-      service,
-      chain,
-      receipt: data,
-      txHash,
-      eventSwapInfo,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
-    } as DecodeTxnDataParams);
+    return decodeTxnData({ ...params, chainsConfig: chainConfig });
   }
 
   /**
