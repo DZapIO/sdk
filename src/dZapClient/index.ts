@@ -1,7 +1,7 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 
-import { Prettify, TransactionReceipt, WalletClient } from 'viem';
+import { Prettify, WalletClient } from 'viem';
 import {
   broadcastTradeTx,
   broadcastZapTx,
@@ -14,9 +14,9 @@ import {
   fetchTokenDetails,
   fetchTradeBuildTxnData,
   fetchTradeQuotes,
+  fetchZapBuildTxnData,
   fetchZapBundleBuildTx,
   fetchZapBundleQuote,
-  fetchZapBuildTxnData,
   fetchZapChains,
   fetchZapPoolDetails,
   fetchZapPools,
@@ -59,10 +59,11 @@ import {
   TradeQuotesResponse,
   TradeStatusResponse,
 } from '../types';
+import { DecodeTxnDataClientParams } from '../types/decoder';
 import {
-  ZapBundleRequest,
   ZapBuildTxnRequest,
   ZapBuildTxnResponse,
+  ZapBundleRequest,
   ZapChains,
   ZapPoolDetails,
   ZapPoolDetailsRequest,
@@ -77,7 +78,8 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
-import { getDZapAbi, getOtherAbis, getPublicClient, handleDecodeTxnData } from '../utils';
+import { getDZapAbi, getOtherAbis } from '../utils';
+import { decodeTxnData } from '../utils/decoder';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
 import { approveToken, getAllowance } from '../utils/erc20';
 import { updateTokenListPrices } from '../utils/tokens';
@@ -638,15 +640,22 @@ class DZapClient {
   }
 
   /**
-   * Decodes and interprets transaction receipt data for DZap protocol operations.
-   * This method parses transaction logs and events to provide human-readable transaction details.
-   * Useful for analyzing completed transactions and extracting structured data.
+   * Decodes and interprets transaction data for DZap protocol operations on any supported chain type,
+   * resolving the swap info and the actual fromAmount/returnToAmount of each swap.
+   * On EVM the swap info is parsed from the transaction receipt's events. Solana and Sui have no such
+   * event, so the caller-supplied `eventSwapInfo` (e.g. the quoted swap info) is patched with the
+   * amounts the transaction actually moved.
    *
    * @param params - Configuration object for transaction decoding
-   * @param params.data - The transaction receipt containing logs and events to decode
+   * @param params.data - EVM: the transaction receipt to decode, fetched by `txHash` when omitted
+   * @param params.txHash - The transaction hash, signature or digest; required on non-EVM chains
+   * @param params.eventSwapInfo - Non-EVM: the swap info to patch with the actual amounts
    * @param params.service - The DZap service type that generated the transaction
    * @param params.chainId - The blockchain network ID where the transaction occurred
-   * @returns Promise resolving to decoded transaction data with structured information
+   * @param params.rpcUrls - Optional custom RPC URLs to read the transaction from
+   * @returns Promise resolving to the swap info and failed swap pairs. `isAmountPatched` tells whether the
+   * amounts were read from the transaction; when they could not be, the swap info is returned as given and
+   * `amountPatchError` says why.
    *
    * @example
    * ```typescript
@@ -659,18 +668,9 @@ class DZapClient {
    * console.log('Decoded transaction:', decodedData);
    * ```
    */
-  public async decodeTxnData({ data, service, chainId }: { data: TransactionReceipt; service: AvailableDZapServices; chainId: number }) {
-    const publicClient = getPublicClient({ chainId, rpcUrls: config.getRpcUrlsByChainId(chainId) });
-    const [chainConfig, transactionData] = await Promise.all([
-      DZapClient.getChainConfig(),
-      publicClient.getTransaction({
-        hash: data.transactionHash,
-      }),
-    ]);
-    if (chainConfig === null || chainConfig?.[chainId] == null) {
-      throw new Error('Chains config not found');
-    }
-    return handleDecodeTxnData(transactionData, data, service, chainConfig[chainId]);
+  public async decodeTxnData(params: DecodeTxnDataClientParams) {
+    const chainConfig = await DZapClient.getChainConfig();
+    return decodeTxnData({ ...params, chainsConfig: chainConfig });
   }
 
   /**
