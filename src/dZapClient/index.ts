@@ -1,7 +1,7 @@
 import Axios, { CancelTokenSource } from 'axios';
 import { Signer } from 'ethers';
 
-import { Prettify, TransactionReceipt, WalletClient } from 'viem';
+import { Prettify, WalletClient } from 'viem';
 import {
   broadcastTradeTx,
   broadcastZapTx,
@@ -50,7 +50,6 @@ import {
   OtherAvailableAbis,
   PermitMode,
   SignPermitResponse,
-  SwapInfo,
   TokenInfo,
   TokenPermitData,
   TokenResponse,
@@ -78,6 +77,7 @@ import {
   ZapStatusResponse,
   ZapTransactionStep,
 } from '../types/zap';
+import { DecodeTxnDataClientParams, DecodeTxnDataParams } from '../types/decoder';
 import { getDZapAbi, getOtherAbis } from '../utils';
 import { decodeTxnData } from '../utils/decoder';
 import { BatchCallParams, sendBatchCalls, waitForBatchTransactionReceipt } from '../utils/eip-5792';
@@ -668,27 +668,20 @@ class DZapClient {
    * console.log('Decoded transaction:', decodedData);
    * ```
    */
-  public async decodeTxnData({
-    data,
-    txHash,
-    eventSwapInfo,
-    service,
-    chainId,
-    rpcUrls,
-  }: {
-    data?: TransactionReceipt;
-    txHash?: string;
-    eventSwapInfo?: SwapInfo | SwapInfo[];
-    service: AvailableDZapServices;
-    chainId: number;
-    rpcUrls?: string[];
-  }) {
+  public async decodeTxnData({ data, txHash, eventSwapInfo, service, chainId, rpcUrls }: DecodeTxnDataClientParams) {
     const chainConfig = await DZapClient.getChainConfig();
     const chain = chainConfig?.[chainId];
     if (!chain) {
       throw new Error('Chains config not found');
     }
-    return decodeTxnData({ service, chain, receipt: data, txHash, eventSwapInfo, rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId) });
+    return decodeTxnData({
+      service,
+      chain,
+      receipt: data,
+      txHash,
+      eventSwapInfo,
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
+    } as DecodeTxnDataParams);
   }
 
   /**

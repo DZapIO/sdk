@@ -3,6 +3,8 @@ import { dZapCoreAbi } from '../../src/artifacts';
 import { solanaNativeToken } from '../../src/constants/address';
 import { exclusiveChainIds } from '../../src/constants/chains';
 import { Chain, HexString, SwapInfo } from '../../src/types';
+import { ChainType } from '../../src/types/chains';
+import { DecodeTxnDataParams } from '../../src/types/decoder';
 import * as utils from '../../src/utils';
 import { decodeTxnData } from '../../src/utils/decoder';
 
@@ -19,7 +21,9 @@ const ARBITRUM = 42161;
 const TX_HASH: HexString = `0x${'ab'.repeat(32)}`;
 const account: HexString = '0x99BCEBf44433E901597D9fCb16E799a4847519f6';
 
-const chainOf = (chainId: number, chainType: string) => ({ chainId, chainType, nativeToken: { contract: zeroAddress } }) as unknown as Chain;
+// the chainType is kept as a literal so each chain lands on its own arm of DecodeTxnDataParams
+const chainOf = <T extends ChainType>(chainId: number, chainType: T) =>
+  ({ chainId, chainType, nativeToken: { contract: zeroAddress } }) as unknown as Chain & { chainType: T };
 const arbitrum = chainOf(ARBITRUM, 'evm');
 const solana = chainOf(exclusiveChainIds.solana, 'svm');
 
@@ -127,9 +131,14 @@ describe('transaction decoding', () => {
     expect(swapFailPairs).toEqual([]);
   });
 
+  // the types rule these calls out, so they stand in for a js caller getting it wrong
   it('asks for what it needs to find the swap info', async () => {
-    await expect(decodeTxnData({ service: 'trade', chain: arbitrum })).rejects.toThrow('receipt or txHash is required');
-    await expect(decodeTxnData({ service: 'trade', chain: solana, txHash: 'signature' })).rejects.toThrow('txHash and eventSwapInfo are required');
+    await expect(decodeTxnData({ service: 'trade', chain: arbitrum } as unknown as DecodeTxnDataParams)).rejects.toThrow(
+      'receipt or txHash is required',
+    );
+    await expect(decodeTxnData({ service: 'trade', chain: solana, txHash: 'signature' } as unknown as DecodeTxnDataParams)).rejects.toThrow(
+      'txHash and eventSwapInfo are required',
+    );
     expect(patchSwapAmounts).not.toHaveBeenCalled();
   });
 });

@@ -1,9 +1,15 @@
-import { Abi, parseEventLogs, ParseEventLogsReturnType } from 'viem';
+import { Abi, parseEventLogs, ParseEventLogsReturnType, TransactionReceipt } from 'viem';
 import { getDZapAbi, getPublicClient, getTokensPairKey } from '..';
 import { chainTypes } from '../../constants/chains';
 import { ContractVersion } from '../../enums';
 import { Chain, HexString, SwapInfo } from '../../types';
-import { DecodeTxnDataParams, DecodeTxnDataResponse } from '../../types/decoder';
+import {
+  DecodeEvmTxnDataParams,
+  DecodeSuivmTxnDataParams,
+  DecodeSvmTxnDataParams,
+  DecodeTxnDataParams,
+  DecodeTxnDataResponse,
+} from '../../types/decoder';
 import { formatToken } from '../tokens';
 import { patchSwapAmountsFromTx } from './swap';
 
@@ -13,14 +19,25 @@ const formatSwapInfoTokens = (info: SwapInfo, chain: Chain): SwapInfo => ({
   toToken: formatToken(info.toToken, chain?.nativeToken?.contract),
 });
 
-type SwapInfoReader = (params: DecodeTxnDataParams) => Promise<{ txHash: string; swapInfo: SwapInfo | SwapInfo[] }>;
+type SwapInfoReadResult = { txHash: string; swapInfo: SwapInfo | SwapInfo[] };
 
-// the swap info of an evm transaction is read from the event its dZap contract emitted
-const readEvmSwapInfo: SwapInfoReader = async ({ service, chain, receipt, txHash, rpcUrls }) => {
-  if (!receipt && !txHash) {
+const isEvmDecodeParams = (params: DecodeTxnDataParams): params is DecodeEvmTxnDataParams => params.chain.chainType === chainTypes.evm;
+
+// the receipt is fetched by txHash when the caller did not already have it
+const getTxReceipt = async ({ chain, receipt, txHash, rpcUrls }: DecodeEvmTxnDataParams): Promise<TransactionReceipt> => {
+  if (receipt) {
+    return receipt;
+  }
+  if (!txHash) {
     throw new Error('receipt or txHash is required to decode an evm transaction');
   }
-  const txReceipt = receipt ?? (await getPublicClient({ chainId: chain.chainId, rpcUrls }).getTransactionReceipt({ hash: txHash as HexString }));
+  return getPublicClient({ chainId: chain.chainId, rpcUrls }).getTransactionReceipt({ hash: txHash as HexString });
+};
+
+// the swap info of an evm transaction is read from the event its dZap contract emitted
+const readEvmSwapInfo = async (params: DecodeEvmTxnDataParams): Promise<SwapInfoReadResult> => {
+  const { chain, service } = params;
+  const txReceipt = await getTxReceipt(params);
 
   let events: ParseEventLogsReturnType<Abi, undefined, true, any> = [];
   const dZapAbi = getDZapAbi(service, chain?.version || ContractVersion.v1);
@@ -41,15 +58,15 @@ const readEvmSwapInfo: SwapInfoReader = async ({ service, chain, receipt, txHash
 };
 
 // chains without a dZap event to read take the swap info (e.g. the quote) from the caller
-const readGivenSwapInfo: SwapInfoReader = async ({ chain, txHash, eventSwapInfo }) => {
+const readGivenSwapInfo = async ({
+  chain,
+  txHash,
+  eventSwapInfo,
+}: DecodeSvmTxnDataParams | DecodeSuivmTxnDataParams): Promise<SwapInfoReadResult> => {
   if (!txHash || !eventSwapInfo) {
     throw new Error(`txHash and eventSwapInfo are required to decode a ${chain.chainType} transaction`);
   }
   return { txHash, swapInfo: eventSwapInfo };
-};
-
-const swapInfoReaders: Partial<Record<string, SwapInfoReader>> = {
-  [chainTypes.evm]: readEvmSwapInfo,
 };
 
 // a swap that gave nothing back failed for its token pair
@@ -69,8 +86,7 @@ const getSwapFailPairs = (swapInfo: SwapInfo | SwapInfo[], chain: Chain): string
 
 export const decodeTxnData = async (params: DecodeTxnDataParams): Promise<DecodeTxnDataResponse> => {
   const { chain, rpcUrls } = params;
-  const readSwapInfo = swapInfoReaders[chain.chainType] ?? readGivenSwapInfo;
-  const { txHash, swapInfo } = await readSwapInfo(params);
+  const { txHash, swapInfo } = isEvmDecodeParams(params) ? await readEvmSwapInfo(params) : await readGivenSwapInfo(params);
 
   // the amounts actually swapped are read from the transaction itself, on chain types that support it
   const patchResult = await patchSwapAmountsFromTx({ chainType: chain.chainType, chainId: chain.chainId, txHash, rpcUrls, eventSwapInfo: swapInfo });
