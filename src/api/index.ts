@@ -9,6 +9,7 @@ import {
   GET_ALL_CHAINS_URL,
   GET_ALL_TOKENS_URL,
   GET_BALANCES,
+  GET_GASLESS_TOKENS_URL,
   GET_MULTI_STATUS,
   GET_STATUS,
   GET_TOKEN_DETAILS_URL,
@@ -156,6 +157,22 @@ export const fetchAllTokens = (chainId: number, source?: string, account?: strin
   invoke({
     endpoint: GET_ALL_TOKENS_URL,
     data: { chainId, source, account },
+    method: GET,
+    shouldRetry: true,
+  });
+
+export const fetchGaslessTokens = () =>
+  invoke({
+    endpoint: GET_GASLESS_TOKENS_URL,
+    data: {},
+    method: GET,
+    shouldRetry: true,
+  });
+
+export const fetchGaslessTokensByChain = (chainId: number) =>
+  invoke({
+    endpoint: `${GET_GASLESS_TOKENS_URL}/${chainId}`,
+    data: {},
     method: GET,
     shouldRetry: true,
   });
