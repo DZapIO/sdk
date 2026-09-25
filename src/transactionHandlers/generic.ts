@@ -1,59 +1,57 @@
-import { Signer } from 'ethers';
-import { WalletClient } from 'viem';
 import { StatusCodes, TxnStatus } from '../enums';
-import { HexString } from '../types';
-import { isTypeSigner } from '../utils';
-import { viemChainsById } from '../chains';
-import { handleViemTransactionError } from '../utils/errors';
+import { DZapTransactionResponse, HexString, TxData, WaitForTxnResponse } from '../types';
+import { DZapSigner } from '../types/signer';
+import { toTxnErrorResponse } from '../utils/errors';
+import { getChainAdapter, getChainAdapterFor } from './adapters';
 
 class GenericTxnHandler {
+  /**
+   * Sends a prebuilt transaction with the adapter of the chain's type.
+   */
   public static sendTransaction = async ({
+    chainType,
     chainId,
     signer,
-    from,
-    to,
-    data,
-    value,
+    txnData,
+    txId,
+    rpcUrls,
   }: {
+    chainType: string;
     chainId: number;
-    signer: Signer | WalletClient;
-    from: HexString;
-    to: HexString;
-    data: HexString;
-    value: string;
-  }) => {
+    signer: DZapSigner;
+    txnData: TxData;
+    txId?: string;
+    rpcUrls?: string[];
+  }): Promise<DZapTransactionResponse> => {
     try {
-      if (isTypeSigner(signer)) {
-        console.log('Using ethers signer.');
-        const txnRes = await signer.sendTransaction({
-          from,
-          to,
-          data,
-          value,
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash: txnRes.hash as HexString,
-        };
-      } else {
-        console.log('Using viem walletClient.');
-        const txnHash = await signer.sendTransaction({
-          chain: viemChainsById[chainId],
-          account: from as HexString,
-          to: to as HexString,
-          data: data as HexString,
-          value: BigInt(value),
-        });
-        return {
-          status: TxnStatus.success,
-          code: StatusCodes.Success,
-          txnHash,
-        };
-      }
-    } catch (error: any) {
+      const { txnHash } = await getChainAdapterFor(chainType, signer).sendTransaction({ chainId, signer, txnData, txId, rpcUrls });
+      return { status: TxnStatus.success, code: StatusCodes.Success, txnHash: txnHash as HexString };
+    } catch (error) {
       console.log({ error });
-      return handleViemTransactionError({ error });
+      return toTxnErrorResponse(error);
+    }
+  };
+
+  /**
+   * Waits for a transaction to settle with the adapter of the chain's type.
+   */
+  public static waitForTransaction = async ({
+    chainType,
+    chainId,
+    txnHash,
+    rpcUrls,
+    timeoutMs,
+  }: {
+    chainType: string;
+    chainId: number;
+    txnHash: string;
+    rpcUrls?: string[];
+    timeoutMs?: number;
+  }): Promise<WaitForTxnResponse> => {
+    try {
+      return await getChainAdapter(chainType).waitForTransaction({ chainId, txnHash, rpcUrls, timeoutMs });
+    } catch (error) {
+      return { status: TxnStatus.error, txnHash, error };
     }
   };
 }

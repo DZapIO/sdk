@@ -10,6 +10,7 @@ export const ZAP_ENDPOINTS = {
   buildTx: '/buildTx',
   quote: '/quote',
   broadcast: '/broadcast',
+  execute: '/execute',
   bundle: {
     quote: '/bundle/quote',
     buildTx: '/bundle/buildTx',

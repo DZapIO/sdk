@@ -358,6 +358,13 @@ export type SvmTxData = {
   data: string;
   blockhash?: string;
   lastValidBlockHeight?: number;
+  // the tx carries a third party's (e.g. an rfq market maker's) signature, so it is kept as built and broadcast by the backend
+  broadcastViaProvider?: boolean;
+};
+
+export type SuiTxData = {
+  from: string;
+  data: string;
 };
 
 export type BtcTxData = {
@@ -385,7 +392,7 @@ export type HyperLiquidTxData = {
   signTypedData: HyperLiquidSignTypedData[];
 };
 
-export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData | HyperLiquidTxData;
+export type TxData = EvmTxData | SvmTxData | SuiTxData | BtcTxData | BtclnTxData | HyperLiquidTxData;
 
 export type TxRequestData<T> = {
   status: typeof STATUS.success;
@@ -417,6 +424,7 @@ export type TradeBuildTxnResponse = TradeGasBuildTxnResponse & {
     feeRate: number;
   };
   btclnTxData?: BtclnTxData;
+  broadcastViaProvider?: boolean;
   additionalInfo: Record<string, Record<string, unknown>>;
   updatedQuotes: Record<string, string>;
 };
@@ -455,15 +463,30 @@ export type OtherAvailableAbis = (typeof OtherAbis)[keyof typeof OtherAbis];
 
 export type AppEnvType = `${AppEnv}`;
 
+/**
+ * What sending a transaction resolves to. It never throws: a failure comes back with `status` other than
+ * `success`, a {@link StatusCodes} `code` and a readable `errorMsg`.
+ */
 export type DZapTransactionResponse = {
+  /** `success`, `rejected` by the user, `reverted` on chain, or `error` */
   status: TxnStatus;
   errorMsg?: string;
   code: StatusCodes | number;
+  /** what the user can do about a failed simulation */
   action?: keyof typeof contractErrorActions;
+  /** the transaction hash, Solana signature, Sui digest or Bitcoin txid; also set on failures that happened after sending */
   txnHash?: HexString;
+  /** the original error, for debugging */
   error?: unknown;
   additionalInfo?: Record<string, unknown>;
   updatedQuotes?: Record<string, string>;
+};
+
+export type WaitForTxnResponse = {
+  // success and reverted are final; mining means the transaction was not settled before the timeout
+  status: typeof TxnStatus.success | typeof TxnStatus.reverted | typeof TxnStatus.mining | typeof TxnStatus.error;
+  txnHash: string;
+  error?: unknown;
 };
 
 export type SwapInfo = {

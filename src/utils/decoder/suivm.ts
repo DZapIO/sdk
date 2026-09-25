@@ -1,9 +1,7 @@
 import axios from 'axios';
 import { suiNativeToken } from '../../constants/address';
+import { SUI_DEFAULT_RPC } from '../../constants/rpc';
 import { DecodeTransactionParameters, DecodeTransactionReturnType, TokenAmount } from '../../types/decoder';
-
-// sui's own public fullnodes no longer serve json-rpc, so the fallback has to be a provider that does
-const SUI_DEFAULT_RPC = 'https://sui-rpc.publicnode.com';
 
 export const decodeSuivmTransaction = async ({ txHash, rpcUrls }: DecodeTransactionParameters): DecodeTransactionReturnType => {
   const rpcUrl = rpcUrls?.[0] ?? SUI_DEFAULT_RPC;

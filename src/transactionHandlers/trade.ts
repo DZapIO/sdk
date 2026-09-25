@@ -1,122 +1,19 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { executeGaslessTxnData, fetchTradeBuildTxnData } from '../api';
-import { viemChainsById } from '../chains';
-import { exclusiveChainIds } from '../constants/chains';
+import { chainTypes } from '../constants/chains';
 import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
-import {
-  AdditionalInfo,
-  ContractErrorResponse,
-  DZapTransactionResponse,
-  GaslessTradeBuildTxnResponse,
-  HexString,
-  TradeBuildTxnRequest,
-  TradeBuildTxnResponse,
-} from '../types';
-import { isTypeSigner } from '../utils';
-import { generateApprovalBatchCalls } from '../utils/eip-5792/batchApproveTokens';
-import { BatchCallParams, sendBatchCalls } from '../utils/eip-5792/sendBatchCalls';
-import { waitForBatchTransactionReceipt } from '../utils/eip-5792/waitForBatchTransactionReceipt';
-import { handleViemTransactionError, isAxiosError } from '../utils/errors';
-import { HyperLiquidTxHandler } from './hyperliquid';
+import { DZapTransactionResponse, GaslessTradeBuildTxnResponse, HexString, TradeBuildTxnRequest, TradeBuildTxnResponse } from '../types';
+import { DZapSigner } from '../types/signer';
+import { DZapTxnError, toTxnErrorResponse } from '../utils/errors';
+import { getChainAdapterFor } from './adapters';
 import PermitTxnHandler from './permit';
 
 class TradeTxnHandler {
-  private static sendTransaction = async (
-    signer: Signer | WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string; gasLimit?: string },
-    chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-  ): Promise<DZapTransactionResponse> => {
-    let txnHash: HexString;
-
-    if (isTypeSigner(signer)) {
-      const txnRes = await signer.sendTransaction({
-        from: txnParams.from,
-        to: txnParams.to,
-        data: txnParams.data,
-        value: txnParams.value,
-        gasLimit: txnParams.gasLimit,
-      });
-      txnHash = txnRes.hash as HexString;
-    } else {
-      txnHash = await signer.sendTransaction({
-        chain: viemChainsById[chainId],
-        account: txnParams.from as HexString,
-        to: txnParams.to as HexString,
-        data: txnParams.data as HexString,
-        value: BigInt(txnParams.value),
-      });
-    }
-
-    return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      txnHash,
-      additionalInfo,
-      updatedQuotes,
-    };
-  };
-
-  private static sendTxnWithBatch = async (
-    request: TradeBuildTxnRequest,
-    signer: WalletClient,
-    txnParams: { from: string; to: string; data: string; value: string },
-    chainId: number,
-    additionalInfo: AdditionalInfo | undefined,
-    updatedQuotes: Record<string, string>,
-    multicallAddress?: HexString,
-    rpcUrls?: string[],
-  ): Promise<DZapTransactionResponse> => {
-    const approvalBatchCalls = await generateApprovalBatchCalls({
-      tokens: request.data.map((token) => ({
-        address: token.srcToken as HexString,
-        amount: token.amount,
-      })),
-      chainId,
-      multicallAddress,
-      sender: txnParams.from as HexString,
-      spender: txnParams.to as HexString,
-      rpcUrls,
-    });
-
-    const batchCalls: BatchCallParams[] = [
-      ...approvalBatchCalls,
-      {
-        to: txnParams.to as HexString,
-        data: txnParams.data as HexString,
-        value: BigInt(txnParams.value),
-      },
-    ];
-
-    // If no approvals are needed, send regular transaction for efficiency
-    if (approvalBatchCalls.length === 0) {
-      return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-    }
-
-    const batchResult = await sendBatchCalls(signer, batchCalls);
-    if (!batchResult) {
-      return {
-        status: TxnStatus.error,
-        errorMsg: 'Batch call failed',
-        code: StatusCodes.Error,
-      };
-    }
-
-    console.log('Waiting for batch transaction completion...');
-    const receipt = await waitForBatchTransactionReceipt(signer, batchResult.id as HexString);
-    console.log({ receipt });
-    return {
-      status: TxnStatus.success,
-      code: StatusCodes.Success,
-      txnHash: receipt.transactionHash as HexString,
-      additionalInfo,
-      updatedQuotes,
-    };
-  };
-
+  /**
+   * Builds the trade unless `txnData` is given, and sends it with the adapter of the source chain's type.
+   */
   public static buildAndSendTransaction = async ({
     request,
     signer,
@@ -124,67 +21,41 @@ class TradeTxnHandler {
     multicallAddress,
     batchTransaction = false,
     rpcUrls,
+    chainType = chainTypes.evm,
   }: {
     request: TradeBuildTxnRequest;
-    signer: Signer | WalletClient;
+    signer: DZapSigner;
     txnData?: TradeBuildTxnResponse;
     batchTransaction: boolean;
     multicallAddress?: HexString;
     rpcUrls?: string[];
+    chainType?: string;
   }): Promise<DZapTransactionResponse> => {
     try {
-      const chainId = request.fromChain;
-      let buildTxnResponseData: TradeBuildTxnResponse;
-
-      // Build transaction data if not provided
-      if (txnData) {
-        buildTxnResponseData = txnData;
-      } else {
-        buildTxnResponseData = await fetchTradeBuildTxnData(request);
-      }
-
-      const { data, from, to, value, gasLimit, additionalInfo, updatedQuotes } = buildTxnResponseData;
-      const txnParams = { from, to: to as HexString, data, value: value as string, gasLimit: gasLimit as string };
-
-      if (chainId === exclusiveChainIds.hyperLiquid) {
-        return HyperLiquidTxHandler.sendTransaction(
-          signer,
-          txnParams.from as HexString,
-          buildTxnResponseData,
-          chainId,
-          additionalInfo,
-          updatedQuotes,
-        );
-      }
-      // Handle ethers signer (no batching support)
-      if (batchTransaction && !isTypeSigner(signer)) {
-        return this.sendTxnWithBatch(request, signer, txnParams, chainId, additionalInfo, updatedQuotes, multicallAddress, rpcUrls);
-      }
-
-      console.log('Using viem walletClient - sending regular transaction.');
-      return this.sendTransaction(signer, txnParams, chainId, additionalInfo, updatedQuotes);
-    } catch (error: any) {
+      const adapter = getChainAdapterFor(chainType, signer);
+      const build = txnData ?? ((await fetchTradeBuildTxnData(request)) as TradeBuildTxnResponse);
+      const { txnHash } = await adapter.sendTrade({
+        chainId: request.fromChain,
+        signer,
+        request,
+        txnData: build,
+        rpcUrls,
+        batchTransaction,
+        multicallAddress,
+      });
+      return {
+        status: TxnStatus.success,
+        code: StatusCodes.Success,
+        txnHash: txnHash as HexString,
+        additionalInfo: build.additionalInfo,
+        updatedQuotes: build.updatedQuotes,
+      };
+    } catch (error) {
       console.log({ error });
-      if (isAxiosError(error)) {
-        if (error?.response?.status === StatusCodes.SimulationFailure) {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Simulation Failed',
-            error: (error.response?.data as ContractErrorResponse).message,
-            code: (error.response?.data as ContractErrorResponse).code,
-            action: (error.response?.data as ContractErrorResponse).action,
-          };
-        }
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
-          error: error?.response?.data ?? error,
-          code: error?.response?.status ?? StatusCodes.Error,
-        };
-      }
-      return handleViemTransactionError({ error });
+      return toTxnErrorResponse(error);
     }
   };
+
   public static buildGaslessTxAndSignPermit = async ({
     request,
     signer,
@@ -267,7 +138,7 @@ class TradeTxnHandler {
           permit,
         });
         if (gaslessTxResp.status !== TxnStatus.success) {
-          throw new Error('Failed to execute gasless transaction');
+          throw new DZapTxnError(StatusCodes.Error, 'The DZap API failed to execute the gasless transaction');
         }
         return {
           status: TxnStatus.success,
@@ -275,27 +146,16 @@ class TradeTxnHandler {
           txnHash: gaslessTxResp.txnHash as HexString,
         };
       }
-      throw new Error('Gasless Transaction Failed');
-    } catch (error: any) {
+      // the permit signer already mapped the wallet's error to a status and code
+      const rejected = resp.status === TxnStatus.rejected;
+      return {
+        status: rejected ? TxnStatus.rejected : TxnStatus.error,
+        code: resp.code ?? StatusCodes.Error,
+        errorMsg: rejected ? 'Rejected by User' : 'Failed to sign the gasless trade',
+      };
+    } catch (error) {
       console.log({ error });
-      if (isAxiosError(error)) {
-        if (error?.response?.status === StatusCodes.SimulationFailure) {
-          return {
-            status: TxnStatus.error,
-            errorMsg: 'Simulation Failed',
-            error: (error.response?.data as ContractErrorResponse).message,
-            code: (error.response?.data as ContractErrorResponse).code,
-            action: (error.response?.data as ContractErrorResponse).action,
-          };
-        }
-        return {
-          status: TxnStatus.error,
-          errorMsg: 'Params Failed: ' + JSON.stringify((error?.response?.data as any)?.message),
-          error: error?.response?.data ?? error,
-          code: error?.response?.status ?? StatusCodes.Error,
-        };
-      }
-      return handleViemTransactionError({ error });
+      return toTxnErrorResponse(error);
     }
   };
 }

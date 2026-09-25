@@ -31,6 +31,7 @@ import {
   SignatureCallbackParams,
   SignPermitResponse,
   SinglePermitCallbackParams,
+  SuiTxData,
   SvmTxData,
   SwapInfo,
   Token,
@@ -56,8 +57,10 @@ import {
   ProtocolSlippageErrorDetails,
   ProtocolUnknownErrorDetails,
   UnavailableRoutes,
+  WaitForTxnResponse,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
+import { BtcSigner, BtcSignPsbtParams, DZapSigner, EvmSigner, SuiSigner, SvmSigner } from './types/signer';
 import { DecodeTxnDataClientParams, DecodeTxnDataClientParamsWithoutService, DecodeTxnDataResponse, SwapAmountsPatchResult } from './types/decoder';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
@@ -76,6 +79,8 @@ export {
   ApprovalMode,
   ApprovalModes,
   BatchPermitCallbackParams,
+  BtcSigner,
+  BtcSignPsbtParams,
   BtclnTxData,
   BtcTxData,
   Chain,
@@ -89,8 +94,10 @@ export {
   DecodeTxnDataResponse,
   DZapClient,
   DZapPermitMode,
+  DZapSigner,
   DZapTransactionResponse,
   erc20Functions,
+  EvmSigner,
   EvmTxData,
   extendViemChain,
   Fee,
@@ -116,6 +123,9 @@ export {
   SinglePermitCallbackParams,
   STATUS,
   StatusCodes,
+  SuiSigner,
+  SuiTxData,
+  SvmSigner,
   SvmTxData,
   SwapAmountsPatchResult,
   SwapInfo,
@@ -134,6 +144,7 @@ export {
   TradeStatusResponse,
   TradeStep,
   TxnStatus,
+  WaitForTxnResponse,
   patchSwapAmountsFromTx,
   ProtocolErrorInfo,
   ProtocolErrorType,

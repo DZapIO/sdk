@@ -32,7 +32,7 @@ import {
   ZapQuoteRequest,
   ZapStatusRequest,
 } from '../types/zap';
-import { BroadcastZapTxResponse } from '../types/zap/broadcast';
+import { BroadcastZapTxResponse, ExecuteZapSvmBundleParams, ExecuteZapSvmBundleResponse } from '../types/zap/broadcast';
 import { invoke, invokeZap } from '../utils/axios';
 import { ZAP_ENDPOINTS } from '../zap/constants/urls';
 
@@ -68,6 +68,13 @@ export const broadcastTradeTx = (request: BroadcastTxParams): Promise<BroadcastT
 export const broadcastZapTx = (request: BroadcastTxParams): Promise<BroadcastZapTxResponse> =>
   invokeZap({
     endpoint: ZAP_ENDPOINTS.broadcast,
+    data: request,
+    method: POST,
+  });
+
+export const executeZapSvmBundle = (request: ExecuteZapSvmBundleParams): Promise<ExecuteZapSvmBundleResponse> =>
+  invokeZap({
+    endpoint: ZAP_ENDPOINTS.execute,
     data: request,
     method: POST,
   });

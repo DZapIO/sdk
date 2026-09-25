@@ -21,6 +21,7 @@ export const exclusiveChainIds = {
   pushTestnet: 42101,
   astralisTestnet: 71261,
   btc: 1000,
+  btcTestnet: 1001,
   btcln: 1002,
   solana: 7565164,
   tron: 728126428,
@@ -30,6 +31,7 @@ export const exclusiveChainIds = {
 
 export const chainTypes = {
   evm: 'evm',
+  hypevm: 'hypevm',
   bvm: 'bvm',
   svm: 'svm',
   aptosvm: 'aptosvm',

@@ -155,6 +155,11 @@ export const isTypeSigner = (variable: any): variable is Signer => {
   return variable instanceof Signer;
 };
 
+// every viem client, a wagmi connector client included, carries a transport and a request fn
+export const isEvmSigner = (variable: any): variable is Signer | WalletClient => {
+  return isTypeSigner(variable) || (Boolean(variable?.transport) && typeof variable?.request === 'function');
+};
+
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;
 
 export const getDZapAbi = (service: AvailableDZapServices, version: ContractVersion) => {
