@@ -9,6 +9,7 @@ jest.mock('../../../src/api', () => ({ broadcastTradeTx: jest.fn(), executeZapSv
 jest.mock('../../../src/utils/date', () => ({ sleep: jest.fn(() => Promise.resolve()) }));
 
 import { broadcastTradeTx, executeZapSvmBundle } from '../../../src/api';
+import { sleep } from '../../../src/utils/date';
 
 const broadcast = broadcastTradeTx as jest.Mock;
 const executeBundle = executeZapSvmBundle as jest.Mock;
@@ -50,6 +51,8 @@ const mockRpc = ({ statuses, blockHeight = 0 }: { statuses: unknown[]; blockHeig
 
 const finalized = { ...confirmed, confirmationStatus: 'finalized' as const };
 
+const wait = (txnHash: string) => svmAdapter.waitForTransaction({ chainId: exclusiveChainIds.solana, txnHash });
+
 // a trade as the api builds it: svmTxData is only there when the api signed part of the tx
 const send = (build: Partial<TradeBuildTxnResponse> = {}) =>
   svmAdapter.sendTrade({
@@ -68,10 +71,22 @@ describe('solana trade sending', () => {
     signer.signTransaction.mockClear();
   });
 
-  it('signs with a fresh blockhash and resends the tx until it is confirmed', async () => {
+  it('resolves with the signature once sent, before it is confirmed', async () => {
+    const rpc = mockRpc({ statuses: [confirmed] });
+    // the background resend never gets to poll
+    (sleep as jest.Mock).mockImplementationOnce(() => new Promise(() => undefined));
+
+    await expect(send()).resolves.toEqual({ txnHash: SIGNATURE });
+
+    expect(rpc.sendRawTransaction).toHaveBeenCalledTimes(1);
+    expect(rpc.getSignatureStatuses).not.toHaveBeenCalled();
+  });
+
+  it('signs with a fresh blockhash and resends the tx in the background until it is confirmed', async () => {
     const rpc = mockRpc({ statuses: [null, null, confirmed] });
 
     await expect(send()).resolves.toEqual({ txnHash: SIGNATURE });
+    await expect(wait(SIGNATURE)).resolves.toEqual({ status: TxnStatus.success, txnHash: SIGNATURE });
 
     expect(signer.signTransaction.mock.calls[0][0].message.recentBlockhash).toBe(FRESH_BLOCKHASH);
     // the first send, then a resend on each poll that did not find the tx
@@ -82,34 +97,44 @@ describe('solana trade sending', () => {
     const rpc = mockRpc({ statuses: [{ ...confirmed, confirmationStatus: 'processed' }, confirmed] });
 
     await expect(send()).resolves.toEqual({ txnHash: SIGNATURE });
+    await wait(SIGNATURE);
 
     expect(rpc.sendRawTransaction).toHaveBeenCalledTimes(1);
   });
 
-  it('throws a contract execution error carrying the hash for a tx that failed on chain', async () => {
+  it('reports a tx that failed on chain as reverted when waited on', async () => {
     mockRpc({ statuses: [{ ...confirmed, err: { InstructionError: [0, 'Custom'] } }] });
 
-    await expect(send()).rejects.toMatchObject({ code: StatusCodes.ContractExecutionError, txnHash: SIGNATURE });
+    await expect(send()).resolves.toEqual({ txnHash: SIGNATURE });
+    await expect(wait(SIGNATURE)).resolves.toEqual({ status: TxnStatus.reverted, txnHash: SIGNATURE });
   });
 
   it('keeps the blockhash of a tx the api already signed part of', async () => {
     const rpc = mockRpc({ statuses: [confirmed] });
 
     await send({ svmTxData: { blockhash: BUILT_BLOCKHASH, lastValidBlockHeight: 50 } });
+    await wait(SIGNATURE);
 
     expect(rpc.getLatestBlockhash).not.toHaveBeenCalled();
     expect(signer.signTransaction.mock.calls[0][0].message.recentBlockhash).toBe(BUILT_BLOCKHASH);
   });
 
-  it('gives up once the blockhash has expired', async () => {
+  it('gives up resending once the blockhash has expired, which the wait reports as an error', async () => {
     let now = 0;
     jest.spyOn(Date, 'now').mockImplementation(() => (now += 4_000));
-    mockRpc({ statuses: [null], blockHeight: 101 });
+    const rpc = mockRpc({ statuses: [null], blockHeight: 101 });
 
-    await expect(send()).rejects.toMatchObject({ code: StatusCodes.TransactionNotConfirmed, txnHash: SIGNATURE });
+    await expect(send()).resolves.toEqual({ txnHash: SIGNATURE });
+    const result = await wait(SIGNATURE);
+
+    expect(result).toMatchObject({ status: TxnStatus.error, txnHash: SIGNATURE });
+    expect(result.error).toMatchObject({ code: StatusCodes.TransactionNotConfirmed });
+    const sends = rpc.sendRawTransaction.mock.calls.length;
+    await wait(SIGNATURE);
+    expect(rpc.sendRawTransaction).toHaveBeenCalledTimes(sends);
   });
 
-  it('broadcasts a tx carrying a third party signature through the api, as built, and waits for it', async () => {
+  it('broadcasts a tx carrying a third party signature through the api, as built', async () => {
     const rpc = mockRpc({ statuses: [confirmed] });
     broadcast.mockResolvedValue({ status: TxnStatus.success, txnHash: 'broadcastSignature' });
 
@@ -117,8 +142,52 @@ describe('solana trade sending', () => {
 
     expect(signer.signTransaction.mock.calls[0][0].message.recentBlockhash).toBe(BUILT_BLOCKHASH);
     expect(broadcast).toHaveBeenCalledWith({ chainId: exclusiveChainIds.solana, txId: 'txId', txData: expect.any(String) });
-    expect(rpc.getSignatureStatuses).toHaveBeenCalledWith(['broadcastSignature'], { searchTransactionHistory: true });
     expect(rpc.sendRawTransaction).not.toHaveBeenCalled();
+
+    await expect(wait('broadcastSignature')).resolves.toEqual({ status: TxnStatus.success, txnHash: 'broadcastSignature' });
+    expect(rpc.getSignatureStatuses).toHaveBeenCalledWith(['broadcastSignature'], { searchTransactionHistory: true });
+  });
+
+  it('sends a provider broadcast trade made of several txs as a jito bundle', async () => {
+    mockRpc({ statuses: [confirmed] });
+    executeBundle.mockResolvedValue({ status: TxnStatus.success, data: { txnId: '0x01', txHashes: ['first', 'last'] } });
+
+    await expect(send({ broadcastViaProvider: true, data: [buildTx(), buildTx()] as unknown as string })).resolves.toEqual({
+      txnHash: 'last',
+    });
+    expect(broadcast).not.toHaveBeenCalled();
+  });
+
+  it('moves on to the next rpc when one cannot serve the blockhash or the send', async () => {
+    const down = {
+      getLatestBlockhash: jest.fn(async () => {
+        throw new Error('429 Too Many Requests');
+      }),
+      sendRawTransaction: jest.fn(async () => {
+        throw new Error('fetch failed');
+      }),
+      getSignatureStatuses: jest.fn(async () => {
+        throw new Error('fetch failed');
+      }),
+      getBlockHeight: jest.fn(async () => 0),
+    };
+    const up = mockRpc({ statuses: [confirmed] });
+    (Connection as unknown as jest.Mock).mockImplementationOnce(() => down).mockImplementationOnce(() => up);
+
+    await expect(
+      svmAdapter.sendTrade({
+        chainId: exclusiveChainIds.solana,
+        signer,
+        request: {} as TradeBuildTxnRequest,
+        txnData: { txId: 'txId', from: user.publicKey.toBase58(), data: buildTx() } as TradeBuildTxnResponse,
+        rpcUrls: ['https://down.example', 'https://up.example'],
+      }),
+    ).resolves.toEqual({ txnHash: SIGNATURE });
+    await expect(wait(SIGNATURE)).resolves.toEqual({ status: TxnStatus.success, txnHash: SIGNATURE });
+
+    expect(down.getLatestBlockhash).toHaveBeenCalled();
+    expect(up.getLatestBlockhash).toHaveBeenCalled();
+    expect(up.sendRawTransaction).toHaveBeenCalled();
   });
 
   it('sends a trade made of several txs as a jito bundle', async () => {
@@ -151,17 +220,18 @@ describe('solana zap step sending', () => {
     signer.signTransaction.mockClear();
   });
 
-  it('sends a single tx to the rpc with the step blockhash and waits for it to be finalized', async () => {
-    const rpc = mockRpc({ statuses: [confirmed, finalized] });
+  it('sends a single tx to the rpc with the step blockhash', async () => {
+    const rpc = mockRpc({ statuses: [finalized] });
 
     await expect(sendZap([buildTx()], { blockhash: BUILT_BLOCKHASH, lastValidBlockHeight: 50 })).resolves.toEqual({ txnHash: SIGNATURE });
+    await wait(SIGNATURE);
 
     expect(rpc.getLatestBlockhash).not.toHaveBeenCalled();
-    expect(rpc.getSignatureStatuses).toHaveBeenCalledTimes(2);
+    expect(rpc.sendRawTransaction).toHaveBeenCalledTimes(1);
     expect(executeBundle).not.toHaveBeenCalled();
   });
 
-  it('submits a bundle through the zap api and waits on its last tx', async () => {
+  it('submits a bundle through the zap api and resolves with its last tx', async () => {
     const rpc = mockRpc({ statuses: [null, finalized] });
     executeBundle.mockResolvedValue({ status: TxnStatus.success, data: { txnId: '0x01', txHashes: ['first', 'last'] } });
 
@@ -170,7 +240,6 @@ describe('solana zap step sending', () => {
     expect(signer.signTransaction).toHaveBeenCalledTimes(2);
     const [{ txnData }] = executeBundle.mock.calls[0];
     expect(txnData.signedTransactionsBase64).toHaveLength(2);
-    expect(rpc.getSignatureStatuses).toHaveBeenLastCalledWith(['last'], { searchTransactionHistory: true });
     expect(rpc.sendRawTransaction).not.toHaveBeenCalled();
   });
 
@@ -186,8 +255,9 @@ describe('solana transaction waiting', () => {
   it('reports a signature that did not settle in time as mining', async () => {
     mockRpc({ statuses: [null] });
 
-    const result = await svmAdapter.waitForTransaction({ chainId: exclusiveChainIds.solana, txnHash: SIGNATURE, timeoutMs: 0 });
+    // a signature this sdk did not send, as the outcome of a send is kept for waitForTransaction
+    const result = await svmAdapter.waitForTransaction({ chainId: exclusiveChainIds.solana, txnHash: 'unsent', timeoutMs: 0 });
 
-    expect(result).toEqual({ status: TxnStatus.mining, txnHash: SIGNATURE });
+    expect(result).toEqual({ status: TxnStatus.mining, txnHash: 'unsent' });
   });
 });

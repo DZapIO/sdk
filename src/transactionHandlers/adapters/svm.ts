@@ -21,7 +21,40 @@ type Blockhash = { blockhash?: string; lastValidBlockHeight?: number };
 
 type SignatureOutcome = typeof TxnStatus.success | typeof TxnStatus.reverted | undefined;
 
-const getConnection = (rpcUrls?: string[]) => new Connection(rpcUrls?.[0] || clusterApiUrl('mainnet-beta'), 'confirmed');
+const EXPIRED = 'expired';
+
+// what a tx sent to the rpc settled to, or that its blockhash ran out before it landed
+type SendOutcome = SignatureOutcome | typeof EXPIRED;
+
+// how long the outcome of a send is kept for waitForTransaction to pick up
+const SEND_OUTCOME_TTL_MS = 10 * 60_000;
+
+// txs sent to the rpc are resent in the background until they land, and waitForTransaction awaits that
+// rather than polling a second time, so it learns when a blockhash expired
+const rpcSends = new Map<string, Promise<SendOutcome>>();
+
+// web3.js otherwise retries a rate limited rpc for ~15s before failing, which is spent before the wallet even opens;
+// the next rpc is tried instead
+const getConnections = (rpcUrls?: string[]) =>
+  (rpcUrls?.length ? rpcUrls : [clusterApiUrl('mainnet-beta')]).map(
+    (url) => new Connection(url, { commitment: 'confirmed', disableRetryOnRateLimit: true }),
+  );
+
+/**
+ * Makes a call on each rpc in turn until one serves it, and returns the connection that did. Sending the same
+ * signed tx to another rpc is safe, as it lands once under its signature.
+ */
+const withFirstServing = async <T>(connections: Connection[], call: (connection: Connection) => Promise<T>) => {
+  let lastError: unknown;
+  for (const connection of connections) {
+    try {
+      return { result: await call(connection), connection };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+};
 
 const deserialize = (data: string) => VersionedTransaction.deserialize(Buffer.from(data, 'base64'));
 
@@ -39,24 +72,28 @@ const readOutcome = (status: SignatureStatus | null, commitment: Finality): Sign
 };
 
 /**
- * Polls a signature until it settles at the commitment or the timeout runs out. `onPending` runs after
- * every poll that did not settle it, and learns whether the tx has been seen on chain yet.
+ * Polls a signature until it settles at the commitment, the timeout runs out or `shouldStop` says so, moving on
+ * to the next rpc when one fails. `onPending` runs after every poll that did not settle it, and learns whether the
+ * tx has been seen on chain yet.
  */
 const pollSignature = async ({
-  connection,
+  connections,
   signature,
   commitment,
   timeoutMs = CONFIRMATION_TIMEOUT_MS,
   onPending,
+  shouldStop,
 }: {
-  connection: Connection;
+  connections: Connection[];
   signature: string;
   commitment: Finality;
   timeoutMs?: number;
   onPending?: (seen: boolean) => Promise<void>;
+  shouldStop?: () => boolean;
 }): Promise<SignatureOutcome> => {
+  let current = 0;
   const poll = async () => {
-    const { value } = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true });
+    const { value } = await connections[current].getSignatureStatuses([signature], { searchTransactionHistory: true });
     return { outcome: readOutcome(value[0], commitment), seen: value[0] != null };
   };
 
@@ -70,30 +107,24 @@ const pollSignature = async ({
       seen = result.seen;
     } catch (error) {
       console.warn('Failed to get signature status', error);
+      current = (current + 1) % connections.length;
     }
     await onPending?.(seen);
+    if (shouldStop?.()) break;
   }
   // one last look, as the tx may have settled during the final wait
   return (await poll().catch(() => undefined))?.outcome;
-};
-
-const assertSettled = (outcome: SignatureOutcome, txnHash: string) => {
-  if (outcome === TxnStatus.reverted) {
-    throw new DZapTxnError(StatusCodes.ContractExecutionError, 'Transaction failed on chain', { txnHash });
-  }
-  if (outcome !== TxnStatus.success) {
-    throw new DZapTxnError(StatusCodes.TransactionNotConfirmed, 'Transaction was not confirmed in time', { txnHash });
-  }
-  return { txnHash };
 };
 
 /**
  * Sets the blockhash of txs to a fresh one, so that they do not expire while the user signs. A given
  * blockhash is kept, as the api already signed part of the tx over it.
  */
-const withBlockhash = async (connection: Connection, txs: VersionedTransaction[], given?: Blockhash): Promise<number> => {
+const withBlockhash = async (connections: Connection[], txs: VersionedTransaction[], given?: Blockhash): Promise<number> => {
   const { blockhash, lastValidBlockHeight } =
-    given?.blockhash && given.lastValidBlockHeight ? (given as Required<Blockhash>) : await connection.getLatestBlockhash('confirmed');
+    given?.blockhash && given.lastValidBlockHeight
+      ? (given as Required<Blockhash>)
+      : (await withFirstServing(connections, (connection) => connection.getLatestBlockhash('confirmed'))).result;
   txs.forEach((tx) => (tx.message.recentBlockhash = blockhash));
   return lastValidBlockHeight;
 };
@@ -110,30 +141,51 @@ const signAll = async (signer: SvmSigner, txs: VersionedTransaction[]) => {
 };
 
 /**
- * Sends a tx to the rpc and resends it on every poll until it lands, as rpc nodes drop txs that do not
- * land right away. It is given up on once its blockhash expired.
+ * Resends a tx on every poll until it lands, as rpc nodes drop txs that do not land right away. It is given
+ * up on once its blockhash expired.
  */
-const sendToRpc = async (connection: Connection, signedTx: VersionedTransaction, lastValidBlockHeight: number, commitment: Finality) => {
-  const rawTx = signedTx.serialize();
-  const signature = await connection.sendRawTransaction(rawTx, SEND_OPTIONS);
-
+const resendUntilLanded = async (
+  connection: Connection,
+  connections: Connection[],
+  rawTx: Uint8Array,
+  signature: string,
+  lastValidBlockHeight: number,
+): Promise<SendOutcome> => {
   let lastBlockhashCheck = Date.now();
+  let expired = false;
   const outcome = await pollSignature({
-    connection,
+    // polled on the rpc that took the tx first, which sees it land soonest
+    connections: [connection, ...connections.filter((other) => other !== connection)],
     signature,
-    commitment,
+    commitment: 'confirmed',
+    shouldStop: () => expired,
     onPending: async (seen) => {
       if (seen) return;
       connection.sendRawTransaction(rawTx, SEND_OPTIONS).catch((error) => console.warn('Failed to resend transaction', error));
       if (Date.now() - lastBlockhashCheck < BLOCKHASH_CHECK_INTERVAL_MS) return;
       lastBlockhashCheck = Date.now();
       const blockHeight = await connection.getBlockHeight('confirmed').catch(() => undefined);
-      if (blockHeight !== undefined && blockHeight > lastValidBlockHeight) {
-        throw new DZapTxnError(StatusCodes.TransactionNotConfirmed, 'Transaction expired before it landed', { txnHash: signature });
-      }
+      expired = blockHeight !== undefined && blockHeight > lastValidBlockHeight;
     },
   });
-  return assertSettled(outcome, signature);
+  return outcome ?? (expired ? EXPIRED : undefined);
+};
+
+/**
+ * Sends a tx to the rpc and resolves with its signature, while it keeps being resent in the background.
+ */
+const sendToRpc = async (connections: Connection[], signedTx: VersionedTransaction, lastValidBlockHeight: number) => {
+  const rawTx = signedTx.serialize();
+  const { result: signature, connection } = await withFirstServing(connections, (rpc) => rpc.sendRawTransaction(rawTx, SEND_OPTIONS));
+
+  const outcome = resendUntilLanded(connection, connections, rawTx, signature, lastValidBlockHeight).catch(() => undefined);
+  rpcSends.set(signature, outcome);
+  outcome.finally(() => {
+    const timer: { unref?: () => void } | number = setTimeout(() => rpcSends.delete(signature), SEND_OUTCOME_TTL_MS);
+    // so that a pending cleanup does not keep a node process alive
+    if (typeof timer === 'object') timer.unref?.();
+  });
+  return { txnHash: signature };
 };
 
 // a tx a third party (e.g. an rfq market maker) signed too is sent by the api, as built
@@ -165,7 +217,6 @@ const send = async ({
   broadcastViaProvider,
   txId,
   rpcUrls,
-  commitment,
 }: {
   chainId: number;
   signer: SvmSigner;
@@ -174,22 +225,24 @@ const send = async ({
   broadcastViaProvider?: boolean;
   txId?: string;
   rpcUrls?: string[];
-  commitment: Finality;
-}) => {
+}): Promise<{ txnHash: string }> => {
   if (!data.length) {
     throw new DZapTxnError(StatusCodes.InvalidRequest, 'No Solana transaction to send');
   }
-  const connection = getConnection(rpcUrls);
+  const connections = getConnections(rpcUrls);
   const txs = data.map(deserialize);
   // a third party's signature is over the blockhash the tx was built with, so it is left as is
-  const lastValidBlockHeight = broadcastViaProvider ? undefined : await withBlockhash(connection, txs, blockhash);
+  const lastValidBlockHeight = broadcastViaProvider ? undefined : await withBlockhash(connections, txs, blockhash);
   const signedTxs = await signAll(signer, txs);
 
-  if (lastValidBlockHeight !== undefined && signedTxs.length === 1) {
-    return sendToRpc(connection, signedTxs[0], lastValidBlockHeight, commitment);
+  // the api lands what it broadcasts itself: several txs as a jito bundle, a third party signed tx as built
+  if (signedTxs.length > 1) {
+    return { txnHash: await sendJitoBundle(chainId, signedTxs) };
   }
-  const txnHash = broadcastViaProvider ? await sendThroughApi({ chainId, txId, signedTx: signedTxs[0] }) : await sendJitoBundle(chainId, signedTxs);
-  return assertSettled(await pollSignature({ connection, signature: txnHash, commitment }), txnHash);
+  if (lastValidBlockHeight === undefined) {
+    return { txnHash: await sendThroughApi({ chainId, txId, signedTx: signedTxs[0] }) };
+  }
+  return sendToRpc(connections, signedTxs[0], lastValidBlockHeight);
 };
 
 export const svmAdapter: ChainAdapter<SvmSigner> = {
@@ -204,7 +257,6 @@ export const svmAdapter: ChainAdapter<SvmSigner> = {
       broadcastViaProvider: txnData.broadcastViaProvider,
       txId: txnData.txId,
       rpcUrls,
-      commitment: 'confirmed',
     }),
 
   sendTransaction: ({ chainId, signer, txnData, txId, rpcUrls }) => {
@@ -217,18 +269,24 @@ export const svmAdapter: ChainAdapter<SvmSigner> = {
       broadcastViaProvider,
       txId,
       rpcUrls,
-      commitment: 'confirmed',
     });
   },
 
-  // the zap api reads the result of a step once it is final
   sendZapStep: ({ chainId, signer, step, rpcUrls }) => {
     const { data, blockhash } = step as SVMTxnDetails;
-    return send({ chainId, signer, data, blockhash, rpcUrls, commitment: 'finalized' });
+    return send({ chainId, signer, data, blockhash, rpcUrls });
   },
 
+  // a tx this sdk sent to the rpc is awaited as it is resent, which bounds the wait by its blockhash
   waitForTransaction: async ({ txnHash, rpcUrls, timeoutMs }) => {
-    const outcome = await pollSignature({ connection: getConnection(rpcUrls), signature: txnHash, commitment: 'confirmed', timeoutMs });
+    const rpcSend = rpcSends.get(txnHash);
+    const outcome = rpcSend
+      ? await rpcSend
+      : await pollSignature({ connections: getConnections(rpcUrls), signature: txnHash, commitment: 'confirmed', timeoutMs });
+    if (outcome === EXPIRED) {
+      const error = new DZapTxnError(StatusCodes.TransactionNotConfirmed, 'Transaction expired before it landed', { txnHash });
+      return { status: TxnStatus.error, txnHash, error };
+    }
     return { status: outcome ?? TxnStatus.mining, txnHash };
   },
 };

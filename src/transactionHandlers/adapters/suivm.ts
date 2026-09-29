@@ -10,15 +10,37 @@ import { ChainAdapter } from './types';
 
 const POLL_INTERVAL_MS = 1_000;
 const CONFIRMATION_TIMEOUT_MS = 60_000;
+const RPC_TIMEOUT_MS = 15_000;
 
 type SuiEffectsStatus = { status: 'success' | 'failure'; error?: string };
 
+// the given rpcs in order, then a public one, so that a node that is down or refuses the key does not fail the call
+const withFallbackRpc = (rpcUrls?: string[]) => [...new Set([...(rpcUrls ?? []), SUI_DEFAULT_RPC])];
+
+/**
+ * Calls each rpc in turn until one answers. A node that cannot be reached or refuses the request (e.g. a bad key
+ * or a rate limit, which come back as http errors) is skipped; an error the node answers the call itself with is
+ * thrown, as another node would answer it the same. Executing a signed tx again on another node is safe, as it
+ * has the same digest.
+ */
 const callSuiRpc = async <T>(rpcUrls: string[] | undefined, method: string, params: unknown[]): Promise<T> => {
-  const { data } = await axios.post(rpcUrls?.[0] ?? SUI_DEFAULT_RPC, { jsonrpc: '2.0', id: 1, method, params });
-  if (data?.error) {
-    throw new Error(data.error.message ?? `${method} failed`);
+  let lastError: unknown;
+  for (const url of withFallbackRpc(rpcUrls)) {
+    let data: { result?: T; error?: { message?: string } } | undefined;
+    try {
+      ({ data } = await axios.post(url, { jsonrpc: '2.0', id: 1, method, params }, { timeout: RPC_TIMEOUT_MS }));
+    } catch (error) {
+      lastError = error;
+      continue;
+    }
+    if (data?.error) {
+      throw new Error(data.error.message ?? `${method} failed`);
+    }
+    return data?.result as T;
   }
-  return data.result as T;
+  const reason = lastError instanceof Error ? lastError.message : String(lastError);
+  // not left as an axios error, which the error mapper would read as the DZap API failing
+  throw new DZapTxnError(StatusCodes.Error, `No Sui rpc could serve ${method}: ${reason}`, { cause: lastError });
 };
 
 const toWaitResponse = (effects: SuiEffectsStatus, txnHash: string): WaitForTxnResponse =>
@@ -44,24 +66,29 @@ const pollTransaction = async (txnHash: string, rpcUrls?: string[], timeoutMs = 
 
 /**
  * Signs the tx bytes the DZap API built and executes them on the rpc, as the API cannot broadcast sui txs.
+ * Resolves with the digest once executed.
  */
 const send = async ({ signer, data, rpcUrls }: { signer: SuiSigner; data: string; rpcUrls?: string[] }) => {
   const { bytes, signature } = await signer.signTransaction(data);
-  const result = await callSuiRpc<{ digest: string; effects?: { status?: SuiEffectsStatus } }>(rpcUrls, 'sui_executeTransactionBlock', [
-    bytes,
-    [signature],
-    { showEffects: true },
-  ]);
+  const result = await callSuiRpc<{ digest: string; effects?: { status?: SuiEffectsStatus }; rawEffects?: number[] }>(
+    rpcUrls,
+    'sui_executeTransactionBlock',
+    [bytes, [signature], { showEffects: true, showRawEffects: true }],
+  );
   const txnHash = result.digest;
 
-  // the effects are there once a validator quorum executed the tx, which is final on sui
-  const receipt = result.effects?.status ? toWaitResponse(result.effects.status, txnHash) : await pollTransaction(txnHash, rpcUrls);
-  if (receipt.status === TxnStatus.reverted) {
-    const reason = typeof receipt.error === 'string' ? `: ${receipt.error}` : '';
-    throw new DZapTxnError(StatusCodes.ContractExecutionError, `Transaction failed on chain${reason}`, { txnHash });
+  // wallets track the objects they own from the effects of what they signed, and reuse stale versions otherwise
+  if (result.rawEffects && signer.reportTransactionEffects) {
+    await signer
+      .reportTransactionEffects(Buffer.from(result.rawEffects).toString('base64'))
+      .catch((error) => console.warn('Failed to report transaction effects to the wallet', error));
   }
-  if (receipt.status !== TxnStatus.success) {
-    throw new DZapTxnError(StatusCodes.TransactionNotConfirmed, 'Transaction was not confirmed in time', { txnHash });
+
+  // the effects come back once a validator quorum executed the tx, which is final on sui, so a failure is
+  // known right away; without them, waitForTransaction looks the tx up
+  if (result.effects?.status?.status === 'failure') {
+    const reason = result.effects.status.error ? `: ${result.effects.status.error}` : '';
+    throw new DZapTxnError(StatusCodes.ContractExecutionError, `Transaction failed on chain${reason}`, { txnHash });
   }
   return { txnHash };
 };

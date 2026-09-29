@@ -23,6 +23,28 @@ describe('zap dispatch', () => {
     expect(sendZapStep).toHaveBeenCalledWith({ chainId: exclusiveChainIds.btc, signer: btcSigner, step: bvmStep.data, rpcUrls: ['https://rpc'] });
   });
 
+  it('waits for each step to settle before sending the next, and leaves the last to the caller', async () => {
+    const sendZapStep = jest.spyOn(bvmAdapter, 'sendZapStep').mockResolvedValueOnce({ txnHash: 'first' }).mockResolvedValueOnce({ txnHash: 'last' });
+    const waitForTransaction = jest.spyOn(bvmAdapter, 'waitForTransaction').mockResolvedValue({ status: TxnStatus.success, txnHash: 'first' });
+
+    const result = await ZapTxnHandler.zap({ request, steps: [bvmStep, bvmStep], signer: btcSigner });
+
+    expect(result).toMatchObject({ status: TxnStatus.success, txnHash: 'last' });
+    expect(sendZapStep).toHaveBeenCalledTimes(2);
+    expect(waitForTransaction).toHaveBeenCalledTimes(1);
+    expect(waitForTransaction).toHaveBeenCalledWith(expect.objectContaining({ txnHash: 'first' }));
+  });
+
+  it('stops at a step that reverted', async () => {
+    const sendZapStep = jest.spyOn(bvmAdapter, 'sendZapStep').mockResolvedValue({ txnHash: 'first' });
+    jest.spyOn(bvmAdapter, 'waitForTransaction').mockResolvedValue({ status: TxnStatus.reverted, txnHash: 'first' });
+
+    const result = await ZapTxnHandler.zap({ request, steps: [bvmStep, bvmStep], signer: btcSigner });
+
+    expect(result).toMatchObject({ status: TxnStatus.reverted, code: StatusCodes.ContractExecutionError, txnHash: 'first' });
+    expect(sendZapStep).toHaveBeenCalledTimes(1);
+  });
+
   it('takes a step without a chain type to be evm', async () => {
     const sendZapStep = jest.spyOn(evmAdapter, 'sendZapStep').mockResolvedValue({ txnHash: '0xhash' });
     const walletClient = { transport: {}, request: jest.fn() };

@@ -36,8 +36,59 @@ describe('sui trade sending', () => {
     expect(signer.signTransaction).toHaveBeenCalledWith('txBytes');
     expect(post).toHaveBeenCalledWith(
       'https://sui.example',
-      expect.objectContaining({ method: 'sui_executeTransactionBlock', params: ['signedBytes', ['signature'], { showEffects: true }] }),
+      expect.objectContaining({
+        method: 'sui_executeTransactionBlock',
+        params: ['signedBytes', ['signature'], { showEffects: true, showRawEffects: true }],
+      }),
+      expect.anything(),
     );
+  });
+
+  it('falls back to the next rpc when one is down or refuses the request', async () => {
+    post
+      .mockRejectedValueOnce(Object.assign(new Error('Request failed with status code 401'), { isAxiosError: true }))
+      .mockResolvedValueOnce(rpcResult({ digest: 'digest', effects: { status: { status: 'success' } } }));
+
+    await expect(
+      suivmAdapter.sendTrade({
+        chainId: exclusiveChainIds.sui,
+        signer,
+        request: {} as TradeBuildTxnRequest,
+        txnData: { from: '0x1', data: 'txBytes' } as TradeBuildTxnResponse,
+        rpcUrls: ['https://bad.example', 'https://sui.example'],
+      }),
+    ).resolves.toEqual({ txnHash: 'digest' });
+    expect(post.mock.calls.map(([url]) => url)).toEqual(['https://bad.example', 'https://sui.example']);
+  });
+
+  it('reports that no rpc served the call rather than a dzap api failure', async () => {
+    post.mockRejectedValue(Object.assign(new Error('getaddrinfo ENOTFOUND'), { isAxiosError: true }));
+
+    await expect(send()).rejects.toMatchObject({ code: StatusCodes.Error, message: expect.stringContaining('No Sui rpc could serve') });
+    // the given rpc, then the public fallback
+    expect(post).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry a call the node answered with an error', async () => {
+    post.mockResolvedValue({ status: 200, data: { error: { message: 'Transaction is rejected as invalid' } } });
+
+    await expect(send()).rejects.toThrow('Transaction is rejected as invalid');
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports the effects to the wallet', async () => {
+    post.mockResolvedValue(rpcResult({ digest: 'digest', effects: { status: { status: 'success' } }, rawEffects: [1, 2, 3] }));
+    const reportTransactionEffects = jest.fn(async () => undefined);
+
+    await suivmAdapter.sendTrade({
+      chainId: exclusiveChainIds.sui,
+      signer: { ...signer, reportTransactionEffects },
+      request: {} as TradeBuildTxnRequest,
+      txnData: { from: '0x1', data: 'txBytes' } as TradeBuildTxnResponse,
+      rpcUrls: ['https://sui.example'],
+    });
+
+    expect(reportTransactionEffects).toHaveBeenCalledWith(Buffer.from([1, 2, 3]).toString('base64'));
   });
 
   it('throws a contract execution error with the move error for a tx that failed on chain', async () => {
@@ -50,14 +101,22 @@ describe('sui trade sending', () => {
     });
   });
 
-  it('waits for the effects when the execution did not return them', async () => {
+  it('resolves with the digest without waiting when the execution returned no effects', async () => {
+    post.mockResolvedValueOnce(rpcResult({ digest: 'digest' }));
+
+    await expect(send()).resolves.toEqual({ txnHash: 'digest' });
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('looks up a digest that was not indexed yet until it settles', async () => {
     post
-      .mockResolvedValueOnce(rpcResult({ digest: 'digest' }))
       .mockResolvedValueOnce({ status: 200, data: { error: { message: 'Could not find the referenced transaction' } } })
       .mockResolvedValueOnce(rpcResult({ effects: { status: { status: 'success' } } }));
 
-    await expect(send()).resolves.toEqual({ txnHash: 'digest' });
-    expect(post).toHaveBeenLastCalledWith('https://sui.example', expect.objectContaining({ method: 'sui_getTransactionBlock' }));
+    const result = await suivmAdapter.waitForTransaction({ chainId: exclusiveChainIds.sui, txnHash: 'digest', rpcUrls: ['https://sui.example'] });
+
+    expect(result).toEqual({ status: TxnStatus.success, txnHash: 'digest' });
+    expect(post).toHaveBeenLastCalledWith('https://sui.example', expect.objectContaining({ method: 'sui_getTransactionBlock' }), expect.anything());
   });
 
   it('throws the rpc error', async () => {

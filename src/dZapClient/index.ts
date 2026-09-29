@@ -477,8 +477,9 @@ class DZapClient {
    * @param params.txnData - Optional pre-built transaction data. If provided, skips the build step
    * @param params.batchTransaction - Optional flag to enable batch transaction. If true, the transaction will be sent as a batch transaction with EIP-5792.
    * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
-   * @returns Promise resolving to the transaction execution result. EVM and Bitcoin trades resolve once the
-   * transaction is sent, Solana and Sui trades once it is confirmed (Solana transactions are resent until they land).
+   * @returns Promise resolving to the transaction execution result once the transaction is sent, on every chain;
+   * use {@link DZapClient.waitForTransaction} for it to settle. Solana transactions keep being resent in the
+   * background until they land.
    *
    * @example
    * ```typescript
@@ -657,7 +658,9 @@ class DZapClient {
    * @param params.chainId - The chain the transaction was sent on
    * @param params.txnHash - The transaction hash, Solana signature, Sui digest or Bitcoin txid
    * @param params.rpcUrls - Optional custom RPC URLs (not used on Bitcoin, which reads mempool.space)
-   * @param params.timeoutMs - Optional time to wait for. Defaults to 90s on Solana, 60s on Sui and 1h on Bitcoin
+   * @param params.timeoutMs - Optional time to wait for. Defaults to 90s on Solana, 60s on Sui and 1h on Bitcoin.
+   * A Solana transaction this client sent is instead waited on until it lands or its blockhash expires,
+   * which comes back as an `error`
    * @returns `success` or `reverted` once settled, `mining` if the timeout ran out first, or `error` if it could not be read
    *
    * @example
@@ -1017,8 +1020,8 @@ class DZapClient {
    * @param params.signer - The signer of the source chain's type (see {@link DZapClient.trade})
    * @param params.steps - Optional array of pre-built transaction steps (if not provided, will build from request)
    * @param params.rpcUrls - Optional custom RPC URLs for Solana
-   * @returns Promise resolving to zap transaction execution result. Solana steps resolve once confirmed,
-   * EVM and Bitcoin steps once sent.
+   * @returns Promise resolving to zap transaction execution result once its last step is sent; each earlier
+   * step is waited on before the next is sent. Use {@link DZapClient.waitForTransaction} for the last to settle.
    *
    * @example
    * ```typescript

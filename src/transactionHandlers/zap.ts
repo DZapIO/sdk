@@ -7,7 +7,18 @@ import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapBundleRequest } from '../ty
 import { ZapStep } from '../types/zap/step';
 import { DZapTxnError, toTxnErrorResponse } from '../utils/errors';
 import { zapStepAction } from '../zap/constants/step';
-import { getChainAdapterFor } from './adapters';
+import { ChainAdapter, getChainAdapterFor } from './adapters';
+import { WaitForTxnParams } from './adapters/types';
+
+const assertStepSettled = async (adapter: ChainAdapter, params: WaitForTxnParams) => {
+  const { status } = await adapter.waitForTransaction(params);
+  if (status === TxnStatus.reverted) {
+    throw new DZapTxnError(StatusCodes.ContractExecutionError, 'Zap step failed on chain', { txnHash: params.txnHash });
+  }
+  if (status !== TxnStatus.success) {
+    throw new DZapTxnError(StatusCodes.TransactionNotConfirmed, 'Zap step was not confirmed', { txnHash: params.txnHash });
+  }
+};
 
 class ZapTxnHandler {
   /**
@@ -39,9 +50,13 @@ class ZapTxnHandler {
       }
 
       let txnHash = '';
-      for (const step of executeSteps) {
+      for (const [index, step] of executeSteps.entries()) {
         const adapter = getChainAdapterFor(step.data.type ?? chainTypes.evm, signer);
         ({ txnHash } = await adapter.sendZapStep({ chainId, signer, step: step.data, rpcUrls }));
+        // a send resolves once broadcast, so a step settles before the next one; the last is left to waitForTransaction
+        if (index < executeSteps.length - 1) {
+          await assertStepSettled(adapter, { chainId, txnHash, rpcUrls });
+        }
       }
       return { status: TxnStatus.success, code: StatusCodes.Success, txnHash: txnHash as HexString };
     } catch (error) {

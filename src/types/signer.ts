@@ -29,6 +29,12 @@ export type SvmSigner = {
  */
 export type SuiSigner = {
   signTransaction: (transaction: string) => Promise<{ bytes: string; signature: string }>;
+  /**
+   * Hands the wallet the base64 bcs effects of the executed tx, so that it does not reuse the object versions the
+   * tx consumed. `reportTransactionEffects` of `@mysten/dapp-kit` or `@suiet/wallet-kit` fits through
+   * `(effects) => reportTransactionEffects({ effects })`.
+   */
+  reportTransactionEffects?: (effects: string) => Promise<void>;
 };
 
 export type BtcSignPsbtParams = {
