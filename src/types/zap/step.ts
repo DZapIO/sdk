@@ -1,4 +1,4 @@
-import { HexString } from '..';
+import { DZapTransactionResponse, HexString } from '..';
 import { chainTypes } from '../../constants/chains';
 import { zapStepAction } from '../../zap/constants/step';
 
@@ -39,3 +39,12 @@ export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> = {
 };
 
 export type ZapStep = ZapTransactionStep;
+
+/**
+ * What `zap` resolves to. When a step is still pending once its wait times out, `status` is `mining`, `txnHash` is
+ * that step's hash and `remainingSteps` are the steps not sent yet: wait for the hash to settle, then call `zap`
+ * again with `steps: remainingSteps`, so that no step is sent twice.
+ */
+export type ZapTransactionResponse = DZapTransactionResponse & {
+  remainingSteps?: ZapTransactionStep[];
+};

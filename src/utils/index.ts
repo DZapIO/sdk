@@ -129,10 +129,10 @@ export const generateUUID = () => {
   const uuid = 'xxxxxxxx-xxxx-4xxx-yxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxx-xxxxxxxx'.replace(/[xy]/g, (c) => {
     let r = Math.random() * 16;
     if (d > 0) {
-      r = ((d + r) % 16) | 0;
+      r = Math.floor((d + r) % 16);
       d = Math.floor(d / 16);
     } else {
-      r = ((d2 + r) % 16) | 0;
+      r = Math.floor((d2 + r) % 16);
       d2 = Math.floor(d2 / 16);
     }
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
@@ -152,7 +152,52 @@ export const getTrxId = (account: string) => {
 export const estimateGasMultiplier = BigInt(15) / BigInt(10); // .toFixed(0);
 
 export const isTypeSigner = (variable: any): variable is Signer => {
-  return variable instanceof Signer;
+  // checked by marker rather than instanceof, which fails when the app resolves a second copy of ethers' signer
+  return Signer.isSigner(variable);
+};
+
+// every viem client, a wagmi connector client included, carries a transport and a request fn
+export const isEvmSigner = (variable: any): variable is Signer | WalletClient => {
+  return isTypeSigner(variable) || (Boolean(variable?.transport) && typeof variable?.request === 'function');
+};
+
+/**
+ * Sends an evm transaction with an ethers signer or a viem wallet client, from `from` or else the signer's account.
+ */
+export const sendEvmTransaction = async ({
+  chainId,
+  signer,
+  from,
+  to,
+  data,
+  value = '0',
+  gasLimit,
+}: {
+  chainId: number;
+  signer: Signer | WalletClient;
+  from?: string;
+  to: string;
+  data: string;
+  value?: string;
+  gasLimit?: string;
+}): Promise<HexString> => {
+  if (isTypeSigner(signer)) {
+    const txnRes = await signer.sendTransaction({
+      from: from ?? (await signer.getAddress()),
+      to,
+      data,
+      value,
+      gasLimit: gasLimit && BigInt(gasLimit) ? gasLimit : undefined,
+    });
+    return txnRes.hash as HexString;
+  }
+  return signer.sendTransaction({
+    chain: viemChainsById[chainId],
+    account: (from ?? signer.account?.address) as HexString,
+    to: to as HexString,
+    data: data as HexString,
+    value: BigInt(value),
+  });
 };
 
 export const isDZapNativeToken = (srcToken: string) => srcToken === dZapNativeTokenFormat;

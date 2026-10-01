@@ -68,7 +68,7 @@ const readGivenSwapInfo = async ({ params }: { params: DecodeTxnDataClientParams
   if ('txHash' in params && 'eventSwapInfo' in params && typeof params.eventSwapInfo === 'object' && Object.keys(params.eventSwapInfo).length > 0) {
     return { txHash: params.txHash, swapInfo: params.eventSwapInfo };
   }
-  throw new Error('Invalid decode params');
+  throw new Error('txHash and eventSwapInfo are required');
 };
 
 // a swap that gave nothing back failed for its token pair
@@ -96,7 +96,7 @@ const getSwapInfoForEvm = async ({ params, chain, rpcUrls }: DecodeContext): Pro
   if ('eventSwapInfo' in params) {
     return await readGivenSwapInfo({ params });
   }
-  throw new Error('Invalid decode params');
+  throw new Error('receipt or txHash is required');
 };
 
 const chainDecoders: Record<string, (context: DecodeContext) => Promise<SwapInfoReadResult>> = {
@@ -108,6 +108,9 @@ const chainDecoders: Record<string, (context: DecodeContext) => Promise<SwapInfo
 export const decodeTxnData = async (params: DecodeTxnDataClientParams & { chainsConfig: ChainData }): Promise<DecodeTxnDataResponse> => {
   const { chainId, rpcUrls, chainsConfig } = params;
   const chain = chainsConfig[chainId];
+  if (!chain) {
+    throw new Error(`Chain ${chainId} is not supported`);
+  }
   const decoder = chainDecoders[chain.chainType];
   if (!decoder) {
     throw new Error(`No decoder found for chain type ${chain.chainType}`);

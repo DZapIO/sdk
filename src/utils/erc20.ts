@@ -1,6 +1,6 @@
 import { Signer } from 'ethers';
 import { encodeFunctionData, maxUint256, MulticallParameters, WalletClient } from 'viem';
-import { isDZapNativeToken, isTypeSigner, writeContract } from '.';
+import { isDZapNativeToken, isTypeSigner, sendEvmTransaction, writeContract } from '.';
 import { erc20Abi } from '../artifacts';
 import { ApprovalModes } from '../constants/approval';
 import { erc20Functions } from '../constants/erc20';
@@ -50,18 +50,12 @@ export const approveToken = async ({
   for (let dataIdx = 0; dataIdx < tokens.length; dataIdx++) {
     let txnDetails = { status: TxnStatus.success, code: StatusCodes.Success, txnHash: '' };
     if (isTypeSigner(signer)) {
-      const from = await signer.getAddress();
       const callData = encodeFunctionData({
         abi: erc20Abi,
         functionName: erc20Functions.approve,
         args: [spender, BigInt(tokens[dataIdx].amount)],
       });
-      await signer.sendTransaction({
-        from,
-        chainId,
-        to: tokens[dataIdx].address,
-        data: callData,
-      });
+      await sendEvmTransaction({ chainId, signer, to: tokens[dataIdx].address, data: callData });
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,

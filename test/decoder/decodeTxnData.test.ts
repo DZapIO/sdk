@@ -4,7 +4,6 @@ import { solanaNativeToken } from '../../src/constants/address';
 import { exclusiveChainIds } from '../../src/constants/chains';
 import { Chain, HexString, SwapInfo } from '../../src/types';
 import { ChainType } from '../../src/types/chains';
-import { DecodeTxnDataParams } from '../../src/types/decoder';
 import * as utils from '../../src/utils';
 import { decodeTxnData } from '../../src/utils/decoder';
 
@@ -21,11 +20,12 @@ const ARBITRUM = 42161;
 const TX_HASH: HexString = `0x${'ab'.repeat(32)}`;
 const account: HexString = '0x99BCEBf44433E901597D9fCb16E799a4847519f6';
 
-// the chainType is kept as a literal so each chain lands on its own arm of DecodeTxnDataParams
+// the chainType is kept as a literal so each chain lands on its own arm of the decode params
 const chainOf = <T extends ChainType>(chainId: number, chainType: T) =>
   ({ chainId, chainType, nativeToken: { contract: zeroAddress } }) as unknown as Chain & { chainType: T };
 const arbitrum = chainOf(ARBITRUM, 'evm');
 const solana = chainOf(exclusiveChainIds.solana, 'svm');
+const chainsConfig = { [ARBITRUM]: arbitrum, [exclusiveChainIds.solana]: solana };
 
 const quoted = (overrides: Partial<SwapInfo> = {}): SwapInfo => ({
   dex: 'someDex',
@@ -62,7 +62,13 @@ describe('transaction decoding', () => {
       isAmountPatched: true,
     }));
 
-    const result = await decodeTxnData({ service: 'trade', chain: arbitrum, receipt: swapReceipt(emitted()), rpcUrls: ['https://arbitrum.example'] });
+    const result = await decodeTxnData({
+      service: 'trade',
+      chainId: ARBITRUM,
+      chainsConfig,
+      receipt: swapReceipt(emitted()),
+      rpcUrls: ['https://arbitrum.example'],
+    });
 
     expect(patchSwapAmounts).toHaveBeenCalledWith({
       chainType: 'evm',
@@ -83,7 +89,7 @@ describe('transaction decoding', () => {
     const getTransactionReceipt = jest.fn().mockResolvedValue(swapReceipt(emitted()));
     const getPublicClient = jest.spyOn(utils, 'getPublicClient').mockReturnValue({ getTransactionReceipt } as never);
 
-    const result = await decodeTxnData({ service: 'trade', chain: arbitrum, txHash: TX_HASH });
+    const result = await decodeTxnData({ service: 'trade', chainId: ARBITRUM, chainsConfig, txHash: TX_HASH });
 
     expect(getPublicClient).toHaveBeenCalledWith({ chainId: ARBITRUM, rpcUrls: undefined });
     expect(getTransactionReceipt).toHaveBeenCalledWith({ hash: TX_HASH });
@@ -97,7 +103,7 @@ describe('transaction decoding', () => {
       isAmountPatched: true,
     });
 
-    const result = await decodeTxnData({ service: 'trade', chain: solana, txHash: 'signature', eventSwapInfo });
+    const result = await decodeTxnData({ service: 'trade', chainId: exclusiveChainIds.solana, chainsConfig, txHash: 'signature', eventSwapInfo });
 
     expect(patchSwapAmounts).toHaveBeenCalledWith({
       chainType: 'svm',
@@ -117,7 +123,13 @@ describe('transaction decoding', () => {
     const eventSwapInfo = [quoted({ fromToken: SOLANA_USDC, toToken: solanaNativeToken }), quoted()];
     patchSwapAmounts.mockResolvedValue({ swapInfo: [eventSwapInfo[0], { ...eventSwapInfo[1], returnToAmount: BigInt(0) }], isAmountPatched: true });
 
-    const { swapFailPairs } = await decodeTxnData({ service: 'trade', chain: solana, txHash: 'signature', eventSwapInfo });
+    const { swapFailPairs } = await decodeTxnData({
+      service: 'trade',
+      chainId: exclusiveChainIds.solana,
+      chainsConfig,
+      txHash: 'signature',
+      eventSwapInfo,
+    });
 
     expect(swapFailPairs).toEqual([`${exclusiveChainIds.solana}_${USDC}-${exclusiveChainIds.solana}_${WETH}`]);
   });
@@ -126,19 +138,27 @@ describe('transaction decoding', () => {
     const eventSwapInfo = quoted({ fromToken: SOLANA_USDC, toToken: solanaNativeToken, fromAmount: BigInt(0) });
     patchSwapAmounts.mockResolvedValue({ swapInfo: eventSwapInfo, isAmountPatched: true });
 
-    const { swapFailPairs } = await decodeTxnData({ service: 'trade', chain: solana, txHash: 'signature', eventSwapInfo });
+    const { swapFailPairs } = await decodeTxnData({
+      service: 'trade',
+      chainId: exclusiveChainIds.solana,
+      chainsConfig,
+      txHash: 'signature',
+      eventSwapInfo,
+    });
 
     expect(swapFailPairs).toEqual([]);
   });
 
   // the types rule these calls out, so they stand in for a js caller getting it wrong
   it('asks for what it needs to find the swap info', async () => {
-    await expect(decodeTxnData({ service: 'trade', chain: arbitrum } as unknown as DecodeTxnDataParams)).rejects.toThrow(
-      'receipt or txHash is required',
-    );
-    await expect(decodeTxnData({ service: 'trade', chain: solana, txHash: 'signature' } as unknown as DecodeTxnDataParams)).rejects.toThrow(
+    await expect(decodeTxnData({ service: 'trade', chainId: ARBITRUM, chainsConfig } as never)).rejects.toThrow('receipt or txHash is required');
+    await expect(decodeTxnData({ service: 'trade', chainId: exclusiveChainIds.solana, chainsConfig, txHash: 'signature' } as never)).rejects.toThrow(
       'txHash and eventSwapInfo are required',
     );
     expect(patchSwapAmounts).not.toHaveBeenCalled();
+  });
+
+  it('names a chain it has no config for', async () => {
+    await expect(decodeTxnData({ service: 'trade', chainId: 1, chainsConfig, txHash: TX_HASH })).rejects.toThrow('Chain 1 is not supported');
   });
 });
