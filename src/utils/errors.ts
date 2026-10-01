@@ -57,11 +57,19 @@ const isUserRejection = (error: any) =>
 
 const isWalletRpcFailure = (error: any) => error?.code === StatusCodes.WalletRPCFailure || error?.cause?.code === StatusCodes.WalletRPCFailure;
 
+const CONTRACT_REVERT_ERRORS = ['ContractFunctionRevertedError', 'ExecutionRevertedError'];
+
+const isContractRevert = (error: any): boolean => {
+  for (let cause = error; cause; cause = cause.cause) {
+    if (CONTRACT_REVERT_ERRORS.includes(cause.name)) return true;
+  }
+  return false;
+};
+
 // viem names the custom error a contract reverted with in its meta messages
 const getContractErrorMessage = (error: any): string | undefined => {
-  const metaMessages: string[] | undefined = error?.metaMessages;
-  if (!metaMessages?.length) return undefined;
-  const errName = getErrorName(metaMessages[0]);
+  const metaMessages: string[] = error?.metaMessages ?? [];
+  const errName = metaMessages.length ? getErrorName(metaMessages[0]) : null;
   if (errName === BRIDGE_ERRORS.BridgeCallFailed) {
     let msg = metaMessages[1];
     try {
@@ -71,7 +79,9 @@ const getContractErrorMessage = (error: any): string | undefined => {
     }
     return `${BRIDGE_ERRORS.BridgeCallFailed} : ${msg}`;
   }
-  return errName ?? error.shortMessage;
+  if (errName) return errName;
+  // a revert without a custom error, e.g. a require string; any other viem error (an rpc or funds failure) is not one
+  return isContractRevert(error) ? error.shortMessage : undefined;
 };
 
 const fromApiError = (error: AxiosError): DZapTransactionResponse => {
@@ -106,7 +116,7 @@ export const toTxnErrorResponse = (error: unknown): DZapTransactionResponse => {
       status: reverted ? TxnStatus.reverted : TxnStatus.error,
       code: err.code,
       errorMsg: err.message,
-      ...(err.txnHash ? { txnHash: err.txnHash as HexString } : {}),
+      ...(err.txnHash ? { txnHash: err.txnHash } : {}),
       error: err.cause ?? err,
     };
   }

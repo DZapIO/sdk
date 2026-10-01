@@ -31,7 +31,7 @@ import { ApprovalModes } from '../constants/approval';
 import { PermitTypes } from '../constants/permit';
 import { ContractVersion, StatusCodes, TxnStatus } from '../enums';
 import { PriceService } from '../service/price';
-import { resolveChainType } from '../transactionHandlers/adapters';
+import { getChainType, getRpcUrls } from '../transactionHandlers/adapters';
 import GenericTxnHandler from '../transactionHandlers/generic';
 import PermitTxnHandler from '../transactionHandlers/permit';
 import TradeTxnHandler from '../transactionHandlers/trade';
@@ -80,6 +80,7 @@ import {
   ZapQuoteResponse,
   ZapStatusRequest,
   ZapStatusResponse,
+  ZapTransactionResponse,
   ZapTransactionStep,
 } from '../types/zap';
 import { getDZapAbi, getOtherAbis } from '../utils';
@@ -479,7 +480,8 @@ class DZapClient {
    * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to the transaction execution result once the transaction is sent, on every chain;
    * use {@link DZapClient.waitForTransaction} for it to settle. Solana transactions keep being resent in the
-   * background until they land.
+   * background until they land. The exception is an EVM `batchTransaction` that sends token approvals with the
+   * trade: the wallet returns a batch id rather than a hash, so it resolves once the batch receipt is in.
    *
    * @example
    * ```typescript
@@ -515,7 +517,8 @@ class DZapClient {
     batchTransaction?: boolean;
     rpcUrls?: string[];
   }) {
-    const chainConfig = await DZapClient.getChainConfig();
+    // without the chain config the chain type is known for the non-evm chains the sdk supports
+    const chainConfig = await DZapClient.getChainConfig().catch(() => null);
 
     return await TradeTxnHandler.buildAndSendTransaction({
       request,
@@ -523,8 +526,8 @@ class DZapClient {
       txnData,
       batchTransaction,
       multicallAddress: chainConfig?.[request.fromChain]?.multicallAddress,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(request.fromChain),
-      chainType: resolveChainType(request.fromChain, chainConfig),
+      rpcUrls: getRpcUrls(request.fromChain, chainConfig, rpcUrls),
+      chainType: getChainType(request.fromChain, chainConfig),
     });
   }
 
@@ -638,15 +641,15 @@ class DZapClient {
     txId?: string;
     rpcUrls?: string[];
   }): Promise<DZapTransactionResponse> {
-    // without the chain config the chain is taken to be evm, as it was before other chain types were supported
+    // without the chain config the chain type is known for the non-evm chains the sdk supports
     const chainConfig = await DZapClient.getChainConfig().catch(() => null);
     return await GenericTxnHandler.sendTransaction({
-      chainType: resolveChainType(chainId, chainConfig),
+      chainType: getChainType(chainId, chainConfig),
       chainId,
       signer,
       txnData,
       txId,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
+      rpcUrls: getRpcUrls(chainId, chainConfig, rpcUrls),
     });
   }
 
@@ -657,7 +660,8 @@ class DZapClient {
    *
    * @param params.chainId - The chain the transaction was sent on
    * @param params.txnHash - The transaction hash, Solana signature, Sui digest or Bitcoin txid
-   * @param params.rpcUrls - Optional custom RPC URLs (not used on Bitcoin, which reads mempool.space)
+   * @param params.rpcUrls - Optional custom RPC URLs; on Bitcoin, Esplora API URLs (blockstream, mempool.space).
+   * Without them, the ones set with {@link DZapClient.getInstance} or the key-free ones of the chain config are used
    * @param params.timeoutMs - Optional time to wait for. Defaults to 90s on Solana, 60s on Sui and 1h on Bitcoin.
    * A Solana transaction this client sent is instead waited on until it lands or its blockhash expires,
    * which comes back as an `error`
@@ -681,10 +685,10 @@ class DZapClient {
   }): Promise<WaitForTxnResponse> {
     const chainConfig = await DZapClient.getChainConfig().catch(() => null);
     return await GenericTxnHandler.waitForTransaction({
-      chainType: resolveChainType(chainId, chainConfig),
+      chainType: getChainType(chainId, chainConfig),
       chainId,
       txnHash,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
+      rpcUrls: getRpcUrls(chainId, chainConfig, rpcUrls),
       timeoutMs,
     });
   }
@@ -1022,6 +1026,8 @@ class DZapClient {
    * @param params.rpcUrls - Optional custom RPC URLs for Solana
    * @returns Promise resolving to zap transaction execution result once its last step is sent; each earlier
    * step is waited on before the next is sent. Use {@link DZapClient.waitForTransaction} for the last to settle.
+   * When an earlier step is still pending once its wait times out, the result is `mining` with that step's
+   * `txnHash` and the `remainingSteps`: wait for the hash, then call `zap` again with `steps: remainingSteps`.
    *
    * @example
    * ```typescript
@@ -1056,13 +1062,15 @@ class DZapClient {
     signer: DZapSigner;
     steps?: ZapTransactionStep[];
     rpcUrls?: string[];
-  }) {
-    const chainId = 'srcChainId' in request ? request.srcChainId : request.actions[0].srcChainId;
+  }): Promise<ZapTransactionResponse> {
+    // a bundle without actions has no source chain, which ZapTxnHandler.zap reports
+    const chainId = 'srcChainId' in request ? request.srcChainId : request.actions?.[0]?.srcChainId;
+    const chainConfig = await DZapClient.getChainConfig().catch(() => null);
     return await ZapTxnHandler.zap({
       request,
       steps,
       signer,
-      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
+      rpcUrls: chainId === undefined ? rpcUrls : getRpcUrls(chainId, chainConfig, rpcUrls),
     });
   }
 

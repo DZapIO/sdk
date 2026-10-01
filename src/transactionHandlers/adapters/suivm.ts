@@ -1,9 +1,7 @@
 import axios from 'axios';
-import { SUI_DEFAULT_RPC } from '../../constants/rpc';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { WaitForTxnResponse } from '../../types';
 import { SuiSigner } from '../../types/signer';
-import { isEvmSigner } from '../../utils';
 import { sleep } from '../../utils/date';
 import { DZapTxnError } from '../../utils/errors';
 import { ChainAdapter } from './types';
@@ -14,9 +12,6 @@ const RPC_TIMEOUT_MS = 15_000;
 
 type SuiEffectsStatus = { status: 'success' | 'failure'; error?: string };
 
-// the given rpcs in order, then a public one, so that a node that is down or refuses the key does not fail the call
-const withFallbackRpc = (rpcUrls?: string[]) => [...new Set([...(rpcUrls ?? []), SUI_DEFAULT_RPC])];
-
 /**
  * Calls each rpc in turn until one answers. A node that cannot be reached or refuses the request (e.g. a bad key
  * or a rate limit, which come back as http errors) is skipped; an error the node answers the call itself with is
@@ -24,8 +19,12 @@ const withFallbackRpc = (rpcUrls?: string[]) => [...new Set([...(rpcUrls ?? []),
  * has the same digest.
  */
 const callSuiRpc = async <T>(rpcUrls: string[] | undefined, method: string, params: unknown[]): Promise<T> => {
+  if (!rpcUrls?.length) {
+    // the client takes them from the chain config; they are only missing when it cannot be fetched
+    throw new DZapTxnError(StatusCodes.InvalidRequest, 'No Sui rpc to use: pass rpcUrls, or set them with DZapClient.getInstance');
+  }
   let lastError: unknown;
-  for (const url of withFallbackRpc(rpcUrls)) {
+  for (const url of rpcUrls) {
     let data: { result?: T; error?: { message?: string } } | undefined;
     try {
       ({ data } = await axios.post(url, { jsonrpc: '2.0', id: 1, method, params }, { timeout: RPC_TIMEOUT_MS }));
@@ -46,22 +45,28 @@ const callSuiRpc = async <T>(rpcUrls: string[] | undefined, method: string, para
 const toWaitResponse = (effects: SuiEffectsStatus, txnHash: string): WaitForTxnResponse =>
   effects.status === 'success' ? { status: TxnStatus.success, txnHash } : { status: TxnStatus.reverted, txnHash, error: effects.error };
 
+/**
+ * Polls a digest until its effects are known. A node that answers it does not know the digest yet leaves it pending;
+ * when no node could be read at the end, that is an `error` rather than a pending tx.
+ */
 const pollTransaction = async (txnHash: string, rpcUrls?: string[], timeoutMs = CONFIRMATION_TIMEOUT_MS): Promise<WaitForTxnResponse> => {
   const deadline = Date.now() + timeoutMs;
+  let readError: unknown;
   while (Date.now() < deadline) {
     try {
       const result = await callSuiRpc<{ effects?: { status?: SuiEffectsStatus } }>(rpcUrls, 'sui_getTransactionBlock', [
         txnHash,
         { showEffects: true },
       ]);
+      readError = undefined;
       if (result?.effects?.status) return toWaitResponse(result.effects.status, txnHash);
     } catch (error) {
-      // a digest the node has not indexed yet reads as not found
-      console.debug('Failed to get sui transaction', error);
+      // a DZapTxnError is no node being reachable; any other error is a node answering, e.g. that it has not indexed the digest yet
+      readError = error instanceof DZapTxnError ? error : undefined;
     }
     await sleep(POLL_INTERVAL_MS);
   }
-  return { status: TxnStatus.mining, txnHash };
+  return readError ? { status: TxnStatus.error, txnHash, error: readError } : { status: TxnStatus.mining, txnHash };
 };
 
 /**
@@ -69,7 +74,7 @@ const pollTransaction = async (txnHash: string, rpcUrls?: string[], timeoutMs = 
  * Resolves with the digest once executed.
  */
 const send = async ({ signer, data, rpcUrls }: { signer: SuiSigner; data: string; rpcUrls?: string[] }) => {
-  const { bytes, signature } = await signer.signTransaction(data);
+  const { bytes, signature } = await signer.signTransactionBytes(data);
   const result = await callSuiRpc<{ digest: string; effects?: { status?: SuiEffectsStatus }; rawEffects?: number[] }>(
     rpcUrls,
     'sui_executeTransactionBlock',
@@ -94,7 +99,7 @@ const send = async ({ signer, data, rpcUrls }: { signer: SuiSigner; data: string
 };
 
 export const suivmAdapter: ChainAdapter<SuiSigner> = {
-  isSigner: (signer): signer is SuiSigner => !isEvmSigner(signer) && typeof (signer as SuiSigner).signTransaction === 'function',
+  isSigner: (signer): signer is SuiSigner => typeof (signer as SuiSigner).signTransactionBytes === 'function',
 
   sendTrade: ({ signer, txnData, rpcUrls }) => send({ signer, data: txnData.data, rpcUrls }),
 

@@ -1,4 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { networks, payments, Psbt } from 'bitcoinjs-lib';
 import { exclusiveChainIds } from '../../../src/constants/chains';
 import { StatusCodes, TxnStatus } from '../../../src/enums';
@@ -7,6 +8,7 @@ import { TradeBuildTxnRequest, TradeBuildTxnResponse } from '../../../src/types'
 import { BtcSignPsbtParams } from '../../../src/types/signer';
 
 jest.mock('../../../src/api', () => ({ broadcastTradeTx: jest.fn(), broadcastZapTx: jest.fn() }));
+jest.mock('../../../src/utils/date', () => ({ sleep: jest.fn(() => Promise.resolve()) }));
 
 import { broadcastTradeTx, broadcastZapTx } from '../../../src/api';
 
@@ -109,5 +111,55 @@ describe('bitcoin trade sending', () => {
     expect(result).toEqual({ txnHash: 'zapTxid' });
     expect(broadcastZap).toHaveBeenCalledWith(expect.objectContaining({ chainId: exclusiveChainIds.btc, txId: '0x01' }));
     expect(broadcast).not.toHaveBeenCalled();
+  });
+});
+
+describe('bitcoin transaction waiting', () => {
+  const httpError = (status: number) =>
+    new AxiosError('Request failed', 'ERR_BAD_RESPONSE', undefined, undefined, {
+      status,
+      data: '',
+      statusText: '',
+      headers: {},
+      config: { headers: new AxiosHeaders() },
+    });
+  // a single poll: the deadline is read, then the loop check passes once
+  const onePoll = () => {
+    let now = 0;
+    jest.spyOn(Date, 'now').mockImplementation(() => (now += 0.5) - 0.5);
+  };
+  const wait = (rpcUrls?: string[]) => bvmAdapter.waitForTransaction({ chainId: exclusiveChainIds.btc, txnHash: 'txid', rpcUrls, timeoutMs: 1 });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it('reads the status from the given esplora api', async () => {
+    const get = jest.spyOn(axios, 'get').mockResolvedValue({ data: { confirmed: true } });
+
+    await expect(wait(['https://blockstream.info/api/'])).resolves.toEqual({ status: TxnStatus.success, txnHash: 'txid' });
+    expect(get).toHaveBeenCalledWith('https://blockstream.info/api/tx/txid/status', expect.anything());
+  });
+
+  it('falls back to the explorer of the chain definition, and to it when an api fails', async () => {
+    const get = jest
+      .spyOn(axios, 'get')
+      .mockRejectedValueOnce(httpError(500))
+      .mockResolvedValueOnce({ data: { confirmed: true } });
+
+    await expect(wait(['https://blockstream.info/api'])).resolves.toMatchObject({ status: TxnStatus.success });
+    expect(get.mock.calls.map(([url]) => url)).toEqual(['https://blockstream.info/api/tx/txid/status', 'https://mempool.space/api/tx/txid/status']);
+  });
+
+  it('reports a tx the api does not know yet as pending', async () => {
+    onePoll();
+    jest.spyOn(axios, 'get').mockRejectedValue(httpError(404));
+
+    await expect(wait(['https://blockstream.info/api'])).resolves.toEqual({ status: TxnStatus.mining, txnHash: 'txid' });
+  });
+
+  it('reports an api outage as an error, not as a pending tx', async () => {
+    onePoll();
+    jest.spyOn(axios, 'get').mockRejectedValue(httpError(503));
+
+    await expect(wait(['https://blockstream.info/api'])).resolves.toMatchObject({ status: TxnStatus.error, txnHash: 'txid' });
   });
 });

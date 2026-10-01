@@ -474,8 +474,11 @@ export type DZapTransactionResponse = {
   code: StatusCodes | number;
   /** what the user can do about a failed simulation */
   action?: keyof typeof contractErrorActions;
-  /** the transaction hash, Solana signature, Sui digest or Bitcoin txid; also set on failures that happened after sending */
-  txnHash?: HexString;
+  /**
+   * the transaction hash, Solana signature, Sui digest or Bitcoin txid; also set on failures that happened after
+   * sending. On EVM it is a `0x` hash, which viem takes as `txnHash as HexString`.
+   */
+  txnHash?: string;
   /** the original error, for debugging */
   error?: unknown;
   additionalInfo?: Record<string, unknown>;

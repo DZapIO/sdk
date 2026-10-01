@@ -15,20 +15,23 @@ export type SvmSigner = {
 };
 
 /**
- * Signs sui transaction bytes without executing them.
- * @param transaction - the base64 bcs `TransactionData` bytes the dzap api built
- * @returns the signed bytes and the serialized signature, both base64
+ * Signs sui transaction bytes without executing them. The method is named apart from the `signTransaction` of
+ * solana and sui wallets, so that one signer cannot be taken for the other.
  *
  * @example
  * ```typescript
  * // @mysten/sui keypair
- * const signer: SuiSigner = { signTransaction: (tx) => keypair.signTransaction(fromBase64(tx)) };
+ * const signer: SuiSigner = { signTransactionBytes: (tx) => keypair.signTransaction(fromBase64(tx)) };
  * // @mysten/dapp-kit
- * const signer: SuiSigner = { signTransaction: (tx) => signTransaction({ transaction: Transaction.from(tx) }) };
+ * const signer: SuiSigner = { signTransactionBytes: (tx) => signTransaction({ transaction: Transaction.from(tx) }) };
  * ```
  */
 export type SuiSigner = {
-  signTransaction: (transaction: string) => Promise<{ bytes: string; signature: string }>;
+  /**
+   * @param transaction - the base64 bcs `TransactionData` bytes the dzap api built
+   * @returns the signed bytes and the serialized signature, both base64
+   */
+  signTransactionBytes: (transaction: string) => Promise<{ bytes: string; signature: string }>;
   /**
    * Hands the wallet the base64 bcs effects of the executed tx, so that it does not reuse the object versions the
    * tx consumed. `reportTransactionEffects` of `@mysten/dapp-kit` or `@suiet/wallet-kit` fits through

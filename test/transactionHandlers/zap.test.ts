@@ -33,6 +33,29 @@ describe('zap dispatch', () => {
     expect(sendZapStep).toHaveBeenCalledTimes(2);
     expect(waitForTransaction).toHaveBeenCalledTimes(1);
     expect(waitForTransaction).toHaveBeenCalledWith(expect.objectContaining({ txnHash: 'first' }));
+    expect(waitForTransaction.mock.invocationCallOrder[0]).toBeLessThan(sendZapStep.mock.invocationCallOrder[1]);
+  });
+
+  it('leaves a step still pending at the timeout for the caller to wait on, with the steps not sent yet', async () => {
+    const sendZapStep = jest.spyOn(bvmAdapter, 'sendZapStep').mockResolvedValue({ txnHash: 'first' });
+    jest.spyOn(bvmAdapter, 'waitForTransaction').mockResolvedValue({ status: TxnStatus.mining, txnHash: 'first' });
+    const lastStep = { ...bvmStep, data: { ...bvmStep.data, txnId: '0x02' as const } };
+
+    const result = await ZapTxnHandler.zap({ request, steps: [bvmStep, lastStep], signer: btcSigner });
+
+    expect(result).toMatchObject({
+      status: TxnStatus.mining,
+      code: StatusCodes.TransactionNotConfirmed,
+      txnHash: 'first',
+      remainingSteps: [lastStep],
+    });
+    expect(sendZapStep).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a bundle without actions instead of throwing', async () => {
+    const result = await ZapTxnHandler.zap({ request: { actions: [] } as never, steps: [bvmStep], signer: btcSigner });
+
+    expect(result).toMatchObject({ status: TxnStatus.error, code: StatusCodes.InvalidRequest, errorMsg: 'The zap request has no source chain' });
   });
 
   it('stops at a step that reverted', async () => {

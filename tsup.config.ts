@@ -16,7 +16,7 @@ export default defineConfig({
     'viem/utils',
     'viem/actions',
   ],
-  target: 'node16',
+  target: 'node18',
   sourcemap: false,
   clean: true,
   splitting: false,

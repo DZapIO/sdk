@@ -46,7 +46,7 @@ class TradeTxnHandler {
       return {
         status: TxnStatus.success,
         code: StatusCodes.Success,
-        txnHash: txnHash as HexString,
+        txnHash,
         additionalInfo: build.additionalInfo,
         updatedQuotes: build.updatedQuotes,
       };
@@ -143,7 +143,7 @@ class TradeTxnHandler {
         return {
           status: TxnStatus.success,
           code: StatusCodes.Success,
-          txnHash: gaslessTxResp.txnHash as HexString,
+          txnHash: gaslessTxResp.txnHash,
         };
       }
       // the permit signer already mapped the wallet's error to a status and code

@@ -142,7 +142,8 @@ const signAll = async (signer: SvmSigner, txs: VersionedTransaction[]) => {
 
 /**
  * Resends a tx on every poll until it lands, as rpc nodes drop txs that do not land right away. It is given
- * up on once its blockhash expired.
+ * up on once its blockhash expired. Resends start on the rpc that took the tx, and move on to the next rpc
+ * when that one fails.
  */
 const resendUntilLanded = async (
   connection: Connection,
@@ -151,20 +152,29 @@ const resendUntilLanded = async (
   signature: string,
   lastValidBlockHeight: number,
 ): Promise<SendOutcome> => {
+  // the rpc that took the tx first, which sees it land soonest, then the others
+  let ordered = [connection, ...connections.filter((other) => other !== connection)];
+  const stickTo = (served: Connection) => {
+    ordered = [served, ...ordered.filter((other) => other !== served)];
+  };
+
   let lastBlockhashCheck = Date.now();
   let expired = false;
   const outcome = await pollSignature({
-    // polled on the rpc that took the tx first, which sees it land soonest
-    connections: [connection, ...connections.filter((other) => other !== connection)],
+    connections: ordered,
     signature,
     commitment: 'confirmed',
     shouldStop: () => expired,
     onPending: async (seen) => {
       if (seen) return;
-      connection.sendRawTransaction(rawTx, SEND_OPTIONS).catch((error) => console.warn('Failed to resend transaction', error));
+      withFirstServing(ordered, (rpc) => rpc.sendRawTransaction(rawTx, SEND_OPTIONS))
+        .then(({ connection: served }) => stickTo(served))
+        .catch((error) => console.warn('Failed to resend transaction', error));
       if (Date.now() - lastBlockhashCheck < BLOCKHASH_CHECK_INTERVAL_MS) return;
       lastBlockhashCheck = Date.now();
-      const blockHeight = await connection.getBlockHeight('confirmed').catch(() => undefined);
+      const blockHeight = await withFirstServing(ordered, (rpc) => rpc.getBlockHeight('confirmed'))
+        .then(({ result }) => result)
+        .catch(() => undefined);
       expired = blockHeight !== undefined && blockHeight > lastValidBlockHeight;
     },
   });
@@ -246,7 +256,9 @@ const send = async ({
 };
 
 export const svmAdapter: ChainAdapter<SvmSigner> = {
-  isSigner: (signer): signer is SvmSigner => !isEvmSigner(signer) && typeof (signer as SvmSigner).signTransaction === 'function',
+  // a sui signer signs with signTransactionBytes, so a signer that has it is not taken for a solana one
+  isSigner: (signer): signer is SvmSigner =>
+    !isEvmSigner(signer) && typeof (signer as SvmSigner).signTransaction === 'function' && !('signTransactionBytes' in signer),
 
   sendTrade: ({ chainId, signer, txnData, rpcUrls }) =>
     send({

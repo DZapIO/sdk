@@ -9,7 +9,7 @@ jest.mock('../../../src/utils/date', () => ({ sleep: jest.fn(() => Promise.resol
 
 const post = axios.post as jest.Mock;
 
-const signer = { signTransaction: jest.fn(async () => ({ bytes: 'signedBytes', signature: 'signature' })) };
+const signer = { signTransactionBytes: jest.fn(async () => ({ bytes: 'signedBytes', signature: 'signature' })) };
 
 const send = () =>
   suivmAdapter.sendTrade({
@@ -25,7 +25,7 @@ const rpcResult = (result: unknown) => ({ status: 200, data: { result } });
 describe('sui trade sending', () => {
   beforeEach(() => {
     post.mockReset();
-    signer.signTransaction.mockClear();
+    signer.signTransactionBytes.mockClear();
   });
 
   it('signs the api built bytes and executes them', async () => {
@@ -33,7 +33,7 @@ describe('sui trade sending', () => {
 
     await expect(send()).resolves.toEqual({ txnHash: 'digest' });
 
-    expect(signer.signTransaction).toHaveBeenCalledWith('txBytes');
+    expect(signer.signTransactionBytes).toHaveBeenCalledWith('txBytes');
     expect(post).toHaveBeenCalledWith(
       'https://sui.example',
       expect.objectContaining({
@@ -65,8 +65,19 @@ describe('sui trade sending', () => {
     post.mockRejectedValue(Object.assign(new Error('getaddrinfo ENOTFOUND'), { isAxiosError: true }));
 
     await expect(send()).rejects.toMatchObject({ code: StatusCodes.Error, message: expect.stringContaining('No Sui rpc could serve') });
-    // the given rpc, then the public fallback
-    expect(post).toHaveBeenCalledTimes(2);
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for an rpc when it has none, as there is no hardcoded fallback', async () => {
+    await expect(
+      suivmAdapter.sendTrade({
+        chainId: exclusiveChainIds.sui,
+        signer,
+        request: {} as TradeBuildTxnRequest,
+        txnData: { from: '0x1', data: 'txBytes' } as TradeBuildTxnResponse,
+      }),
+    ).rejects.toMatchObject({ code: StatusCodes.InvalidRequest });
+    expect(post).not.toHaveBeenCalled();
   });
 
   it('does not retry a call the node answered with an error', async () => {
@@ -129,6 +140,22 @@ describe('sui trade sending', () => {
     await expect(suivmAdapter.sendZapStep({ chainId: exclusiveChainIds.sui, signer, step: {} as never })).rejects.toMatchObject({
       code: StatusCodes.InvalidRequest,
     });
+  });
+
+  it('reports an rpc outage while waiting as an error, not as a pending tx', async () => {
+    let now = 0;
+    jest.spyOn(Date, 'now').mockImplementation(() => (now += 0.5) - 0.5);
+    post.mockRejectedValue(Object.assign(new Error('getaddrinfo ENOTFOUND'), { isAxiosError: true }));
+
+    const result = await suivmAdapter.waitForTransaction({
+      chainId: exclusiveChainIds.sui,
+      txnHash: 'digest',
+      rpcUrls: ['https://sui.example'],
+      timeoutMs: 1,
+    });
+
+    expect(result).toMatchObject({ status: TxnStatus.error, txnHash: 'digest' });
+    jest.restoreAllMocks();
   });
 
   it('reports a digest that did not settle in time as mining', async () => {

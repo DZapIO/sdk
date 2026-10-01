@@ -3,7 +3,7 @@ import axios from 'axios';
 import { address, Network, networks, payments, Psbt } from 'bitcoinjs-lib';
 import { broadcastTradeTx, broadcastZapTx } from '../../api';
 import { exclusiveChainIds } from '../../constants/chains';
-import { MEMPOOL_API_URL } from '../../constants/rpc';
+import { bitcoin, bitcoinTestnet } from '../../chains';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { BroadcastTxParams } from '../../types';
 import { BtcSigner, BtcSignPsbtParams } from '../../types/signer';
@@ -15,6 +15,7 @@ import { ChainAdapter } from './types';
 const SIGHASH_ALL = 1;
 const POLL_INTERVAL_MS = 10_000;
 const CONFIRMATION_TIMEOUT_MS = 60 * 60_000;
+const API_TIMEOUT_MS = 15_000;
 
 type Broadcast = (params: BroadcastTxParams) => Promise<string>;
 
@@ -84,6 +85,31 @@ const prepareInputsToSign = (psbt: Psbt, network: Network, signer: BtcSigner): B
   });
 
   return Array.from(inputsByAddress.values());
+};
+
+// the given esplora apis, then the explorer api of the chain's definition
+const getStatusApis = (chainId: number, rpcUrls?: string[]) => {
+  const explorer = (isMainnet(chainId) ? bitcoin : bitcoinTestnet).blockExplorers?.default.url;
+  const explorerApi = explorer ? `${explorer.replace(/\/$/, '')}/api` : undefined;
+  return [...new Set([...(rpcUrls ?? []), ...(explorerApi ? [explorerApi] : [])])];
+};
+
+/**
+ * Reads whether a tx is in a block from the first api that answers. Not found means it is not in the mempool yet;
+ * `error` is set only when no api could be read.
+ */
+const readConfirmed = async (apis: string[], txnHash: string): Promise<{ confirmed: boolean; error?: unknown }> => {
+  let error: unknown = new Error('No bitcoin api to read the transaction from');
+  for (const api of apis) {
+    try {
+      const { data } = await axios.get<{ confirmed: boolean }>(`${api.replace(/\/$/, '')}/tx/${txnHash}/status`, { timeout: API_TIMEOUT_MS });
+      return { confirmed: Boolean(data?.confirmed) };
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return { confirmed: false };
+      error = err;
+    }
+  }
+  return { confirmed: false, error };
 };
 
 // the dzap api records the txs it broadcasts, which is how their status can be looked up by hash
@@ -157,20 +183,17 @@ export const bvmAdapter: ChainAdapter<BtcSigner> = {
     return send({ chainId, signer, psbtBase64: data, txId: txnId, broadcast: broadcastZap });
   },
 
-  // polls mempool.space until the tx is in a block
-  waitForTransaction: async ({ chainId, txnHash, timeoutMs = CONFIRMATION_TIMEOUT_MS }) => {
-    const baseUrl = isMainnet(chainId) ? MEMPOOL_API_URL.mainnet : MEMPOOL_API_URL.testnet;
+  // polls an esplora api (blockstream, mempool.space) until the tx is in a block
+  waitForTransaction: async ({ chainId, txnHash, rpcUrls, timeoutMs = CONFIRMATION_TIMEOUT_MS }) => {
     const deadline = Date.now() + timeoutMs;
+    let readError: unknown;
     while (Date.now() < deadline) {
-      try {
-        const { data } = await axios.get<{ confirmed: boolean }>(`${baseUrl}/tx/${txnHash}/status`);
-        if (data?.confirmed) return { status: TxnStatus.success, txnHash };
-      } catch (error) {
-        // a tx that has not reached the mempool yet reads as not found
-        console.debug('Failed to get bitcoin transaction status', error);
-      }
+      const read = await readConfirmed(getStatusApis(chainId, rpcUrls), txnHash);
+      readError = read.error;
+      if (read.confirmed) return { status: TxnStatus.success, txnHash };
       await sleep(POLL_INTERVAL_MS);
     }
-    return { status: TxnStatus.mining, txnHash };
+    // a provider outage is not a tx that is still pending
+    return readError ? { status: TxnStatus.error, txnHash, error: readError } : { status: TxnStatus.mining, txnHash };
   },
 };

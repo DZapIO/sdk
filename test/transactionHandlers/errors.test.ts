@@ -85,6 +85,29 @@ describe('transaction error responses', () => {
     });
   });
 
+  it('names a revert without a custom error by its message', () => {
+    const viemError = Object.assign(new Error('Execution reverted'), {
+      shortMessage: 'Execution reverted with reason: amount too low',
+      metaMessages: ['Contract Call:'],
+      cause: { name: 'ContractFunctionRevertedError' },
+    });
+
+    expect(toTxnErrorResponse(viemError)).toMatchObject({
+      code: StatusCodes.ContractExecutionError,
+      errorMsg: 'Execution reverted with reason: amount too low',
+    });
+  });
+
+  it('does not take an rpc failure that viem describes with meta messages for a contract error', () => {
+    const httpError = Object.assign(new Error('HTTP request failed'), {
+      name: 'HttpRequestError',
+      shortMessage: 'HTTP request failed.',
+      metaMessages: ['Status: 500', 'URL: https://rpc.example'],
+    });
+
+    expect(toTxnErrorResponse(httpError)).toMatchObject({ status: TxnStatus.error, code: StatusCodes.Error, errorMsg: 'HTTP request failed.' });
+  });
+
   it('falls back to the message of any other error', () => {
     expect(toTxnErrorResponse(new Error('socket hang up'))).toMatchObject({
       status: TxnStatus.error,

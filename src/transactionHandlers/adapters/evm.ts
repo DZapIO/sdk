@@ -1,11 +1,9 @@
-import { Signer } from 'ethers';
 import { WaitForTransactionReceiptTimeoutError, WalletClient } from 'viem';
-import { viemChainsById } from '../../chains';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { EvmTxData, HexString } from '../../types';
 import { EvmSigner } from '../../types/signer';
 import { ZapEvmTxnDetails } from '../../types/zap/step';
-import { getPublicClient, isEvmSigner, isTypeSigner } from '../../utils';
+import { getPublicClient, isEvmSigner, isTypeSigner, sendEvmTransaction } from '../../utils';
 import { generateApprovalBatchCalls } from '../../utils/eip-5792/batchApproveTokens';
 import { sendBatchCalls } from '../../utils/eip-5792/sendBatchCalls';
 import { waitForBatchTransactionReceipt } from '../../utils/eip-5792/waitForBatchTransactionReceipt';
@@ -14,28 +12,9 @@ import { ChainAdapter, SendTradeParams } from './types';
 
 type EvmCall = { from?: string; to: string; data: string; value: string; gasLimit?: string };
 
-const sendCall = async (signer: EvmSigner, call: EvmCall, chainId: number): Promise<{ txnHash: string }> => {
-  if (isTypeSigner(signer)) {
-    const txnRes = await (signer as Signer).sendTransaction({
-      from: call.from ?? (await signer.getAddress()),
-      to: call.to,
-      data: call.data,
-      value: call.value,
-      gasLimit: call.gasLimit && BigInt(call.gasLimit) ? call.gasLimit : undefined,
-    });
-    return { txnHash: txnRes.hash };
-  }
-  const walletClient = signer as WalletClient;
-  const account = (call.from ?? walletClient.account?.address) as HexString;
-  const txnHash = await walletClient.sendTransaction({
-    chain: viemChainsById[chainId],
-    account,
-    to: call.to as HexString,
-    data: call.data as HexString,
-    value: BigInt(call.value),
-  });
-  return { txnHash };
-};
+const sendCall = async (signer: EvmSigner, call: EvmCall, chainId: number) => ({
+  txnHash: await sendEvmTransaction({ chainId, signer, ...call }),
+});
 
 // sends the token approvals and the trade as one EIP-5792 batch, or the trade alone when nothing needs approving
 const sendTradeAsBatch = async ({ chainId, signer, request, txnData, rpcUrls, multicallAddress }: SendTradeParams<WalletClient>) => {

@@ -1,5 +1,5 @@
 import { StatusCodes, TxnStatus } from '../enums';
-import { DZapTransactionResponse, HexString, TxData, WaitForTxnResponse } from '../types';
+import { DZapTransactionResponse, TxData, WaitForTxnResponse } from '../types';
 import { DZapSigner } from '../types/signer';
 import { toTxnErrorResponse } from '../utils/errors';
 import { getChainAdapter, getChainAdapterFor } from './adapters';
@@ -25,7 +25,7 @@ class GenericTxnHandler {
   }): Promise<DZapTransactionResponse> => {
     try {
       const { txnHash } = await getChainAdapterFor(chainType, signer).sendTransaction({ chainId, signer, txnData, txId, rpcUrls });
-      return { status: TxnStatus.success, code: StatusCodes.Success, txnHash: txnHash as HexString };
+      return { status: TxnStatus.success, code: StatusCodes.Success, txnHash };
     } catch (error) {
       console.log({ error });
       return toTxnErrorResponse(error);

@@ -190,6 +190,34 @@ describe('solana trade sending', () => {
     expect(up.sendRawTransaction).toHaveBeenCalled();
   });
 
+  it('resends through the next rpc once the one that took the tx stops serving', async () => {
+    const statuses = [null, null, confirmed];
+    const first = {
+      getLatestBlockhash: jest.fn(async () => ({ blockhash: FRESH_BLOCKHASH, lastValidBlockHeight: 100 })),
+      // takes the tx, then goes down
+      sendRawTransaction: jest.fn().mockResolvedValueOnce(SIGNATURE).mockRejectedValue(new Error('fetch failed')),
+      getSignatureStatuses: jest.fn(async () => ({ context: { slot: 1 }, value: [statuses.length ? statuses.shift() : confirmed] })),
+      getBlockHeight: jest.fn(async () => 0),
+    };
+    const second = { ...first, sendRawTransaction: jest.fn(async () => SIGNATURE) };
+    (Connection as unknown as jest.Mock).mockImplementationOnce(() => first).mockImplementationOnce(() => second);
+
+    await svmAdapter.sendTrade({
+      chainId: exclusiveChainIds.solana,
+      signer,
+      request: {} as TradeBuildTxnRequest,
+      txnData: { txId: 'txId', from: user.publicKey.toBase58(), data: buildTx() } as TradeBuildTxnResponse,
+      rpcUrls: ['https://first.example', 'https://second.example'],
+    });
+    await expect(wait(SIGNATURE)).resolves.toEqual({ status: TxnStatus.success, txnHash: SIGNATURE });
+    // resends do not hold up polling, so they are let run out
+    await new Promise((resolve) => setImmediate(resolve));
+
+    // the first send, and one resend that failed; the rpc that took the resend instead takes the next one too
+    expect(first.sendRawTransaction).toHaveBeenCalledTimes(2);
+    expect(second.sendRawTransaction).toHaveBeenCalledTimes(2);
+  });
+
   it('sends a trade made of several txs as a jito bundle', async () => {
     mockRpc({ statuses: [confirmed] });
     executeBundle.mockResolvedValue({ status: TxnStatus.success, data: { txnId: '0x01', txHashes: ['first', 'last'] } });
