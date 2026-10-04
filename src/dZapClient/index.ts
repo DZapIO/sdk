@@ -43,6 +43,7 @@ import {
   CalculatePointsRequest,
   Chain,
   ChainData,
+  SupportedChainsResponse,
   EvmTxData,
   GasSignatureParams,
   GaslessTradeBuildTxnResponse,
@@ -315,7 +316,7 @@ class DZapClient {
    * console.log('Supported chains:', chainIds);
    * ```
    */
-  public getAllSupportedChains(): Promise<ChainData> {
+  public getAllSupportedChains(): Promise<SupportedChainsResponse> {
     return fetchAllSupportedChains();
   }
 
@@ -393,7 +394,7 @@ class DZapClient {
     includeBalance?: boolean,
     includePrice?: boolean,
   ): Promise<TokenInfo> {
-    return await fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice);
+    return (await fetchTokenDetails(tokenAddress, chainId, account, includeBalance, includePrice)) as TokenInfo;
   }
 
   /**
@@ -432,7 +433,7 @@ class DZapClient {
     account?: string,
     includeBalance?: boolean,
     includePrice?: boolean,
-  ): Promise<Record<string, TokenInfo> | TokenInfo> {
+  ): Promise<TokenResponse> {
     return await fetchTokenDetails(tokenAddresses, chainId, account, includeBalance, includePrice);
   }
 

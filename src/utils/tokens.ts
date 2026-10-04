@@ -6,7 +6,7 @@ import { ChainData, HexString, TokenInfo, TokenResponse } from '../types';
 
 export const isNativeCurrency = (address: string, chainConfig: ChainData) => {
   if (!chainConfig) return false;
-  return Object.values(chainConfig).some((chain) => chain.isEnabled && chain.nativeToken.contract === address);
+  return Object.values(chainConfig).some((chain) => chain.isEnabled && chain.nativeToken?.contract === address);
 };
 
 export const sortByBalanceInUsd = (tokenEntries: [string, TokenInfo][]): TokenResponse => {
@@ -35,7 +35,7 @@ export const updateTokenListPrices = async (
 ): Promise<TokenResponse> => {
   try {
     const tokensWithoutPrice = Object.values(tokens)
-      .filter(({ price, balance }) => (!price || price === '0') && balance !== '0')
+      .filter(({ price, balance }) => (!price || price === '0') && Boolean(balance) && balance !== '0')
       .map(({ contract }) => contract);
 
     if (tokensWithoutPrice.length === 0) return tokens;
@@ -50,7 +50,7 @@ export const updateTokenListPrices = async (
     tokensWithoutPrice.forEach((token) => {
       tokens[token].price = fetchedPrices[token] || tokens[token].price;
       tokens[token].balanceInUsd = fetchedPrices[token]
-        ? parseFloat(fetchedPrices[token]) * parseFloat(formatUnits(BigInt(tokens[token].balance), tokens[token].decimals))
+        ? parseFloat(fetchedPrices[token]) * parseFloat(formatUnits(BigInt(tokens[token].balance ?? '0'), tokens[token].decimals))
         : null;
     });
     return sortByBalanceInUsd(Object.entries(tokens));
