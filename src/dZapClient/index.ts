@@ -1019,14 +1019,14 @@ class DZapClient {
    * @example
    * ```typescript
    * const quote = await client.getZapBundleQuote(request);
-   * const preExecutionStepsData = await client.handlePreExecutionSteps({
+   * const preExecutionStepsData = await client.prepareZapPreExecutionData({
    *   preExecutionSteps: quote.preExecutionSteps,
    *   signer: walletClient,
    * });
    * const route = await client.buildZapBundleTx({ ...request, preExecutionStepsData });
    * ```
    */
-  public async handlePreExecutionSteps({
+  public async prepareZapPreExecutionData({
     preExecutionSteps,
     signer,
     account,

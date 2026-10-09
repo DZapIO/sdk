@@ -10,8 +10,7 @@ import { signCustomTypedData } from '../../utils/signIntent/custom';
 import { zapPreExecutionStepType } from '../constants/step';
 
 export type ZapPreExecutionResult =
-  | { status: TxnStatus.success; code: StatusCodes | number; preExecutionStepsData: ZapPreExecutionStepData[] }
-  | DZapTransactionResponse;
+  { status: TxnStatus.success; code: StatusCodes | number; preExecutionStepsData: ZapPreExecutionStepData[] } | DZapTransactionResponse;
 
 class ZapPreExecutionStepHandler {
   private static handleSignStep = async ({
@@ -50,7 +49,7 @@ class ZapPreExecutionStepHandler {
     [zapPreExecutionStepType.sign]: ZapPreExecutionStepHandler.handleSignStep,
   };
 
-  public static handleStep = async ({
+  private static handleStep = async ({
     step,
     signer,
     account,
