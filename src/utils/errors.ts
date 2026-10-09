@@ -42,7 +42,7 @@ export const handleViemTransactionError = ({ error }: { error: any }) => {
       status: TxnStatus.rejected,
     };
   }
-  if (!Array.isArray(error?.metaMessages)) {
+  if (!Array.isArray(error?.metaMessages) || error.metaMessages.length === 0) {
     return {
       status: TxnStatus.error,
       error,
