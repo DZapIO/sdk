@@ -58,10 +58,11 @@ import {
   UnavailableRoutes,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
+import { DecodeTxnDataClientParams, DecodeTxnDataClientParamsWithoutService, DecodeTxnDataResponse, SwapAmountsPatchResult } from './types/decoder';
 import { ZapIntegratorConfig, ZapStatusResponse } from './types/zap';
 import { getTokensPairKey } from './utils';
 import { classifyAddress } from './utils/address';
-import { SwapInputDataDecoder } from './utils/decoder/swap/inputDataDecoder';
+import { patchSwapAmountsFromTx } from './utils/decoder/swap';
 import { checkEIP2612PermitSupport } from './utils/eip-2612/eip2612Permit';
 import { extendViemChain } from './utils/extendViemChain';
 import { formatToken } from './utils/tokens';
@@ -83,6 +84,9 @@ export {
   classifyAddress,
   contractErrorActions,
   ContractErrorResponse,
+  DecodeTxnDataClientParams,
+  DecodeTxnDataClientParamsWithoutService,
+  DecodeTxnDataResponse,
   DZapClient,
   DZapPermitMode,
   DZapTransactionResponse,
@@ -113,8 +117,8 @@ export {
   STATUS,
   StatusCodes,
   SvmTxData,
+  SwapAmountsPatchResult,
   SwapInfo,
-  SwapInputDataDecoder,
   Token,
   TokenInfo,
   TokenPermitData,
@@ -130,6 +134,7 @@ export {
   TradeStatusResponse,
   TradeStep,
   TxnStatus,
+  patchSwapAmountsFromTx,
   ProtocolErrorInfo,
   ProtocolErrorType,
   ProtocolRouteReason,
