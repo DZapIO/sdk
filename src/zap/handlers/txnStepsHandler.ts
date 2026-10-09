@@ -4,7 +4,7 @@ import { chainTypes } from '../../constants/chains';
 import { StatusCodes, TxnStatus } from '../../enums';
 import GenericTxnHandler from '../../transactionHandlers/generic';
 import { DZapTransactionResponse, HexString } from '../../types';
-import { ZapTransactionStep, ZapTxnDetails } from '../../types/zap/step';
+import { StepAction, ZapTransactionStep, ZapTxnDetails } from '../../types/zap/step';
 import { getPublicClient, getSignerAddress } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { zapStepAction } from '../constants/step';
@@ -16,6 +16,13 @@ export type ZapStepsResult =
       txnHash?: string;
     }
   | DZapTransactionResponse;
+
+type TxnStepHandlerParams = {
+  chainId: number;
+  txnData: ZapTxnDetails;
+  signer: Signer | WalletClient;
+  rpcUrls?: string[];
+};
 
 class ZapTxnStepsHandler {
   private static sendTxnStep = async ({
@@ -73,20 +80,24 @@ class ZapTxnStepsHandler {
     return result;
   };
 
+  private static txnStepHandlers: Record<StepAction, (params: TxnStepHandlerParams) => Promise<DZapTransactionResponse>> = {
+    [zapStepAction.approve]: ({ chainId, txnData, signer, rpcUrls }) => ZapTxnStepsHandler.handleApproveStep({ chainId, txnData, signer, rpcUrls }),
+    [zapStepAction.execute]: ({ chainId, txnData, signer }) => ZapTxnStepsHandler.handleExecuteStep({ chainId, txnData, signer }),
+  };
+
   private static processTxnStep = async ({
     step,
-    chainId,
-    signer,
-    rpcUrls,
-  }: {
-    step: ZapTransactionStep;
-    chainId: number;
-    signer: Signer | WalletClient;
-    rpcUrls?: string[];
-  }): Promise<DZapTransactionResponse> => {
-    return step.action === zapStepAction.approve
-      ? ZapTxnStepsHandler.handleApproveStep({ chainId, txnData: step.data, signer, rpcUrls })
-      : ZapTxnStepsHandler.handleExecuteStep({ chainId, txnData: step.data, signer });
+    ...params
+  }: Omit<TxnStepHandlerParams, 'txnData'> & { step: ZapTransactionStep }): Promise<DZapTransactionResponse> => {
+    const handler = ZapTxnStepsHandler.txnStepHandlers[step.action];
+    if (!handler) {
+      return {
+        status: TxnStatus.error,
+        code: StatusCodes.FunctionNotFound,
+        errorMsg: `Unsupported zap step action: ${String(step.action)}`,
+      };
+    }
+    return handler({ ...params, txnData: step.data });
   };
 
   public static handle = async ({

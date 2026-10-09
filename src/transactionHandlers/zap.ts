@@ -2,48 +2,13 @@ import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { fetchZapBuildTxnData, fetchZapBundleBuildTx } from '../api';
 import { StatusCodes, TxnStatus } from '../enums';
-import { DZapTransactionResponse } from '../types';
 import { ZapBuildTxnRequest, ZapBuildTxnResponse, ZapBundleRequest } from '../types/zap';
-import { ZapEvmTxnDetails, ZapPreExecutionStep, ZapStep } from '../types/zap/step';
+import { ZapPreExecutionStep, ZapStep } from '../types/zap/step';
 import { handleViemTransactionError } from '../utils/errors';
 import ZapPreExecutionStepHandler from '../zap/handlers/preExecutionStepHandler';
 import ZapTxnStepsHandler, { ZapStepsResult } from '../zap/handlers/txnStepsHandler';
 
 class ZapTxnHandler {
-  public static execute = async ({
-    chainId,
-    txnData,
-    signer,
-  }: {
-    chainId: number;
-    txnData: ZapEvmTxnDetails;
-    signer: Signer | WalletClient;
-  }): Promise<DZapTransactionResponse> => {
-    try {
-      return await ZapTxnStepsHandler.handleExecuteStep({ chainId, txnData, signer });
-    } catch (error: unknown) {
-      console.log({ error });
-      return handleViemTransactionError({ error });
-    }
-  };
-
-  public static approve = async ({
-    chainId,
-    data,
-    signer,
-  }: {
-    chainId: number;
-    data: ZapEvmTxnDetails;
-    signer: Signer | WalletClient;
-  }): Promise<DZapTransactionResponse> => {
-    try {
-      return await ZapTxnStepsHandler.handleApproveStep({ chainId, txnData: data, signer });
-    } catch (error: unknown) {
-      console.log({ error });
-      return handleViemTransactionError({ error });
-    }
-  };
-
   /**
    * Runs a zap end to end: pre-execution steps, then buildTx, then the steps it returns.
    *

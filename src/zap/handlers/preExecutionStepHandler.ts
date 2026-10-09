@@ -3,25 +3,22 @@ import { WalletClient } from 'viem';
 import { StatusCodes, TxnStatus } from '../../enums';
 import { DZapTransactionResponse, HexString } from '../../types';
 import { ZapPreExecutionStepType } from '../../types/zap';
-import { ZapPreExecutionStep, ZapPreExecutionStepData, ZapSignPreExecutionStep } from '../../types/zap/step';
+import { ZapPreExecutionResult, ZapPreExecutionStep, ZapPreExecutionStepData, ZapSignPreExecutionStep } from '../../types/zap/step';
 import { getSignerAddress } from '../../utils';
 import { handleViemTransactionError } from '../../utils/errors';
 import { signCustomTypedData } from '../../utils/signIntent/custom';
 import { zapPreExecutionStepType } from '../constants/step';
 
-export type ZapPreExecutionResult =
-  { status: TxnStatus.success; code: StatusCodes | number; preExecutionStepsData: ZapPreExecutionStepData[] } | DZapTransactionResponse;
+type StepHandlerParams<T extends ZapPreExecutionStep = ZapPreExecutionStep> = {
+  step: T;
+  signer: Signer | WalletClient;
+  account?: string;
+};
+
+type StepHandlerResult = ZapPreExecutionStepData | DZapTransactionResponse;
 
 class ZapPreExecutionStepHandler {
-  private static handleSignStep = async ({
-    step,
-    signer,
-    account,
-  }: {
-    step: ZapSignPreExecutionStep;
-    signer: Signer | WalletClient;
-    account?: string;
-  }): Promise<ZapPreExecutionStepData> => {
+  private static handleSignStep = async ({ step, signer, account }: StepHandlerParams<ZapSignPreExecutionStep>): Promise<StepHandlerResult> => {
     const { domain, types, message, primaryType } = step.data;
     const result = await signCustomTypedData({
       signer,
@@ -32,7 +29,7 @@ class ZapPreExecutionStepHandler {
       primaryType,
     });
     if (result.status !== TxnStatus.success || !result.data) {
-      throw new Error(`Failed to sign pre-execution step ${step.id}.`);
+      return result;
     }
     return {
       id: step.id,
@@ -42,27 +39,18 @@ class ZapPreExecutionStepHandler {
     };
   };
 
-  private static stepHandler: Record<
-    ZapPreExecutionStepType,
-    ({ step, signer, account }: { step: ZapPreExecutionStep; signer: Signer | WalletClient; account?: string }) => Promise<ZapPreExecutionStepData>
-  > = {
+  private static stepHandler: {
+    [K in ZapPreExecutionStepType]: (params: StepHandlerParams<Extract<ZapPreExecutionStep, { type: K }>>) => Promise<StepHandlerResult>;
+  } = {
     [zapPreExecutionStepType.sign]: ZapPreExecutionStepHandler.handleSignStep,
   };
 
-  private static handleStep = async ({
-    step,
-    signer,
-    account,
-  }: {
-    step: ZapPreExecutionStep;
-    signer: Signer | WalletClient;
-    account?: string;
-  }): Promise<ZapPreExecutionStepData> => {
-    const handler = ZapPreExecutionStepHandler.stepHandler[step.type];
+  private static handleStep = async <T extends ZapPreExecutionStep>(params: StepHandlerParams<T>): Promise<StepHandlerResult> => {
+    const handler = ZapPreExecutionStepHandler.stepHandler[params.step.type];
     if (!handler) {
-      throw new Error(`No handler found for pre-execution step type: ${step.type}`);
+      throw new Error(`No handler found for pre-execution step type: ${params.step.type}`);
     }
-    return handler({ step, signer, account });
+    return handler(params);
   };
 
   public static handle = async ({
@@ -81,7 +69,11 @@ class ZapPreExecutionStepHandler {
     try {
       const preExecutionStepsData: ZapPreExecutionStepData[] = [];
       for (const step of steps) {
-        preExecutionStepsData.push(await ZapPreExecutionStepHandler.handleStep({ step, signer, account }));
+        const result = await ZapPreExecutionStepHandler.handleStep({ step, signer, account });
+        if (!('id' in result)) {
+          return result;
+        }
+        preExecutionStepsData.push(result);
       }
       return { status: TxnStatus.success, code: StatusCodes.Success, preExecutionStepsData };
     } catch (error: unknown) {

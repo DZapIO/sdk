@@ -77,9 +77,9 @@ import {
   ZapQuoteResponse,
   ZapStatusRequest,
   ZapPreExecutionStep,
-  ZapPreExecutionStepData,
   ZapStatusResponse,
   ZapTransactionStep,
+  ZapPreExecutionResult,
 } from '../types/zap';
 import { getDZapAbi, getOtherAbis } from '../utils';
 import { decodeTxnData } from '../utils/decoder';
@@ -1014,16 +1014,18 @@ class DZapClient {
    * @param params.preExecutionSteps - The `preExecutionSteps` from a quote response
    * @param params.signer - The wallet signer asked to sign each step
    * @param params.account - Signing account; resolved from the signer when omitted
-   * @returns The signed step data, to pass as `preExecutionStepsData` on the buildTx request
+   * @returns On success, `preExecutionStepsData` to pass on the buildTx request; otherwise the failure
+   * (including `status: rejected` when the user cancels the signature)
    *
    * @example
    * ```typescript
    * const quote = await client.getZapBundleQuote(request);
-   * const preExecutionStepsData = await client.prepareZapPreExecutionData({
+   * const result = await client.prepareZapPreExecutionData({
    *   preExecutionSteps: quote.preExecutionSteps,
    *   signer: walletClient,
    * });
-   * const route = await client.buildZapBundleTx({ ...request, preExecutionStepsData });
+   * if (result.status !== TxnStatus.success || !('preExecutionStepsData' in result)) return result;
+   * const route = await client.buildZapBundleTx({ ...request, preExecutionStepsData: result.preExecutionStepsData });
    * ```
    */
   public async prepareZapPreExecutionData({
@@ -1034,12 +1036,8 @@ class DZapClient {
     preExecutionSteps?: ZapPreExecutionStep[];
     signer: WalletClient | Signer;
     account?: string;
-  }): Promise<ZapPreExecutionStepData[]> {
-    const result = await ZapPreExecutionStepHandler.handle({ steps: preExecutionSteps, signer, account });
-    if (result.status !== TxnStatus.success || !('preExecutionStepsData' in result)) {
-      throw new Error(('errorMsg' in result && result.errorMsg) || 'Failed to sign the zap pre-execution steps.');
-    }
-    return result.preExecutionStepsData;
+  }): Promise<ZapPreExecutionResult> {
+    return await ZapPreExecutionStepHandler.handle({ steps: preExecutionSteps, signer, account });
   }
 
   /**

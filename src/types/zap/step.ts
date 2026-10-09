@@ -1,6 +1,7 @@
 import { TypedData, TypedDataDomain } from 'viem';
-import { HexString } from '..';
+import { DZapTransactionResponse, HexString } from '..';
 import { chainTypes } from '../../constants/chains';
+import { StatusCodes, TxnStatus } from '../../enums';
 import { zapPreExecutionStepType, zapStepAction } from '../../zap/constants/step';
 
 export type StepAction = keyof typeof zapStepAction;
@@ -61,6 +62,9 @@ export type ZapSignPreExecutionStepData = {
   signature: HexString;
   message: Record<string, unknown>;
 };
+
+export type ZapPreExecutionResult =
+  { status: TxnStatus.success; code: StatusCodes | number; preExecutionStepsData: ZapPreExecutionStepData[] } | DZapTransactionResponse;
 
 export type ZapPreExecutionStepData = ZapSignPreExecutionStepData;
 
