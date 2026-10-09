@@ -35,6 +35,7 @@ import GenericTxnHandler from '../transactionHandlers/generic';
 import PermitTxnHandler from '../transactionHandlers/permit';
 import TradeTxnHandler from '../transactionHandlers/trade';
 import ZapTxnHandler from '../transactionHandlers/zap';
+import ZapPreExecutionStepHandler from '../zap/handlers/preExecutionStepHandler';
 import {
   ApprovalMode,
   AvailableDZapServices,
@@ -75,8 +76,10 @@ import {
   ZapQuoteRequest,
   ZapQuoteResponse,
   ZapStatusRequest,
+  ZapPreExecutionStep,
   ZapStatusResponse,
   ZapTransactionStep,
+  ZapPreExecutionResult,
 } from '../types/zap';
 import { getDZapAbi, getOtherAbis } from '../utils';
 import { decodeTxnData } from '../utils/decoder';
@@ -949,6 +952,9 @@ class DZapClient {
    * @param params.request - The zap build request containing operation parameters
    * @param params.signer - The wallet signer to sign and execute the transaction
    * @param params.steps - Optional array of pre-built transaction steps (if not provided, will build from request)
+   * @param params.preExecutionSteps - Optional steps from a quote that must be signed before the route can be built.
+   *   Their signatures are sent with the buildTx request; routes that ask for them cannot be built without them.
+   * @param params.rpcUrls - Optional custom RPC URLs for blockchain interactions
    * @returns Promise resolving to zap transaction execution result
    *
    * @example
@@ -977,17 +983,61 @@ class DZapClient {
   public async zap({
     request,
     steps,
+    preExecutionSteps,
     signer,
+    rpcUrls,
   }: {
     request: ZapBuildTxnRequest | ZapBundleRequest;
     signer: WalletClient | Signer;
     steps?: ZapTransactionStep[];
+    preExecutionSteps?: ZapPreExecutionStep[];
+    rpcUrls?: string[];
   }) {
+    const chainId = 'srcChainId' in request ? request.srcChainId : request.actions[0].srcChainId;
     return await ZapTxnHandler.zap({
       request,
       steps,
+      preExecutionSteps,
       signer,
+      rpcUrls: rpcUrls || config.getRpcUrlsByChainId(chainId),
     });
+  }
+
+  /**
+   * Signs the pre-execution steps a zap quote asked for and returns the data to send with the
+   * following buildTx request.
+   *
+   * Some routes (Aave borrows, for instance) cannot be built until the account has signed a
+   * typed-data payload the quote hands back — the signature is embedded in the route itself, so it
+   * has to exist before the route does. Building without it fails server-side.
+   *
+   * @param params.preExecutionSteps - The `preExecutionSteps` from a quote response
+   * @param params.signer - The wallet signer asked to sign each step
+   * @param params.account - Signing account; resolved from the signer when omitted
+   * @returns On success, `preExecutionStepsData` to pass on the buildTx request; otherwise the failure
+   * (including `status: rejected` when the user cancels the signature)
+   *
+   * @example
+   * ```typescript
+   * const quote = await client.getZapBundleQuote(request);
+   * const result = await client.prepareZapPreExecutionData({
+   *   preExecutionSteps: quote.preExecutionSteps,
+   *   signer: walletClient,
+   * });
+   * if (result.status !== TxnStatus.success || !('preExecutionStepsData' in result)) return result;
+   * const route = await client.buildZapBundleTx({ ...request, preExecutionStepsData: result.preExecutionStepsData });
+   * ```
+   */
+  public async prepareZapPreExecutionData({
+    preExecutionSteps,
+    signer,
+    account,
+  }: {
+    preExecutionSteps?: ZapPreExecutionStep[];
+    signer: WalletClient | Signer;
+    account?: string;
+  }): Promise<ZapPreExecutionResult> {
+    return await ZapPreExecutionStepHandler.handle({ steps: preExecutionSteps, signer, account });
   }
 
   /**

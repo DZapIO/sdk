@@ -1,8 +1,12 @@
-import { HexString } from '..';
+import { TypedData, TypedDataDomain } from 'viem';
+import { DZapTransactionResponse, HexString } from '..';
 import { chainTypes } from '../../constants/chains';
-import { zapStepAction } from '../../zap/constants/step';
+import { StatusCodes, TxnStatus } from '../../enums';
+import { zapPreExecutionStepType, zapStepAction } from '../../zap/constants/step';
 
 export type StepAction = keyof typeof zapStepAction;
+
+export type ZapPreExecutionStepType = keyof typeof zapPreExecutionStepType;
 
 export type ZapEvmTxnDetails = {
   type: typeof chainTypes.evm;
@@ -32,6 +36,37 @@ export type SVMTxnDetails = {
 };
 
 export type ZapTxnDetails = ZapEvmTxnDetails | ZapBvmTxnDetails | SVMTxnDetails;
+
+export type ZapTypedDataPayload = {
+  domain: TypedDataDomain;
+  types: TypedData;
+  primaryType: string;
+  message: Record<string, unknown>;
+};
+
+/**
+ * A step the caller must complete before the route can be built. The signature is fed back into the
+ * next quote/buildTx request as `preExecutionStepsData`, matched to this step by `id`.
+ */
+export type ZapSignPreExecutionStep = {
+  id: string;
+  type: typeof zapPreExecutionStepType.sign;
+  data: ZapTypedDataPayload;
+};
+
+export type ZapPreExecutionStep = ZapSignPreExecutionStep;
+
+export type ZapSignPreExecutionStepData = {
+  id: string;
+  type: typeof zapPreExecutionStepType.sign;
+  signature: HexString;
+  message: Record<string, unknown>;
+};
+
+export type ZapPreExecutionResult =
+  { status: TxnStatus.success; code: StatusCodes | number; preExecutionStepsData: ZapPreExecutionStepData[] } | DZapTransactionResponse;
+
+export type ZapPreExecutionStepData = ZapSignPreExecutionStepData;
 
 export type ZapTransactionStep<T extends ZapTxnDetails = ZapTxnDetails> = {
   action: StepAction;
