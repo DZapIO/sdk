@@ -1,7 +1,8 @@
 import { Signer } from 'ethers';
 import { WalletClient } from 'viem';
 import { StatusCodes, TxnStatus } from '../../enums';
-import { DZapTransactionResponse, HexString } from '../../types';
+import { HexString } from '../../types';
+import { TransactionError } from '../../types/error';
 import { ZapPreExecutionStepType } from '../../types/zap';
 import { ZapPreExecutionResult, ZapPreExecutionStep, ZapPreExecutionStepData, ZapSignPreExecutionStep } from '../../types/zap/step';
 import { getSignerAddress } from '../../utils';
@@ -15,7 +16,7 @@ type StepHandlerParams<T extends ZapPreExecutionStep = ZapPreExecutionStep> = {
   account?: string;
 };
 
-type StepHandlerResult = ZapPreExecutionStepData | DZapTransactionResponse;
+type StepHandlerResult = ZapPreExecutionStepData | TransactionError;
 
 class ZapPreExecutionStepHandler {
   private static handleSignStep = async ({ step, signer, account }: StepHandlerParams<ZapSignPreExecutionStep>): Promise<StepHandlerResult> => {
@@ -28,7 +29,7 @@ class ZapPreExecutionStepHandler {
       message,
       primaryType,
     });
-    if (result.status !== TxnStatus.success || !result.data) {
+    if (result.status !== TxnStatus.success) {
       return result;
     }
     return {
