@@ -9,6 +9,7 @@ import { classifySuivmAddress } from './suivm';
 import { classifySvmAddress } from './svm';
 import { classifyTonvmAddress } from './tonvm';
 import { classifyTronvmAddress } from './tronvm';
+import { classifyZcashvmAddress } from './zcashvm';
 
 type ResolvedChainType =
   | typeof chainTypes.evm
@@ -17,7 +18,8 @@ type ResolvedChainType =
   | typeof chainTypes.suivm
   | typeof chainTypes.aptosvm
   | typeof chainTypes.tonvm
-  | typeof chainTypes.tronvm;
+  | typeof chainTypes.tronvm
+  | typeof chainTypes.zcashvm;
 
 const classifiers: Record<
   ResolvedChainType,
@@ -30,6 +32,7 @@ const classifiers: Record<
   [chainTypes.aptosvm]: classifyAptosvmAddress,
   [chainTypes.tonvm]: classifyTonvmAddress,
   [chainTypes.tronvm]: classifyTronvmAddress,
+  [chainTypes.zcashvm]: classifyZcashvmAddress,
 };
 
 const getChainType = (chainId: number, chainConfig: ChainData): ResolvedChainType | undefined => {
