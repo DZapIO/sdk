@@ -56,6 +56,7 @@ import {
   ProtocolSlippageErrorDetails,
   ProtocolUnknownErrorDetails,
   UnavailableRoutes,
+  ZcashTxData,
 } from './types';
 import { PsbtInput, PsbtOutput } from './types/btc';
 import { DecodeTxnDataClientParams, DecodeTxnDataClientParamsWithoutService, DecodeTxnDataResponse, SwapAmountsPatchResult } from './types/decoder';
@@ -146,5 +147,6 @@ export {
   UnavailableRoutes,
   ZapIntegratorConfig,
   ZapStatusResponse,
+  ZcashTxData,
   type AllowanceType,
 };
