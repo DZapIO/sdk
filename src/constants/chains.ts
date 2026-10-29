@@ -40,4 +40,5 @@ export const chainTypes = {
   suivm: 'suivm',
   tonvm: 'tonvm',
   tronvm: 'tronvm',
+  zcashvm: 'zcashvm',
 } as const;

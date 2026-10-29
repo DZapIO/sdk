@@ -385,7 +385,14 @@ export type HyperLiquidTxData = {
   signTypedData: HyperLiquidSignTypedData[];
 };
 
-export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData | HyperLiquidTxData;
+export type ZcashTxData = {
+  from: string;
+  data: string;
+  to: string;
+  value: string;
+};
+
+export type TxData = EvmTxData | SvmTxData | BtcTxData | BtclnTxData | HyperLiquidTxData | ZcashTxData;
 
 export type TxRequestData<T> = {
   status: typeof STATUS.success;
