@@ -1,4 +1,4 @@
-import { DZapClient } from '../src';
+import { DZapClient, formatToken } from '../src';
 
 const dZapClient = DZapClient.getInstance();
 
@@ -50,6 +50,28 @@ async function runTokenUtilsExamples() {
     console.log('Token prices:', JSON.stringify(tokenPrices, null, 2));
   } catch (error) {
     console.error('Error fetching token prices:', error);
+  }
+
+  // D. GASLESS SUPPORTED TOKENS
+
+  console.log('\nFetching gasless supported tokens for all chains...');
+  try {
+    const allGaslessTokens = await dZapClient.getAllGaslessTokens();
+    console.log(`Gasless is enabled on ${Object.keys(allGaslessTokens).length} chains.`);
+  } catch (error) {
+    console.error('Error fetching gasless tokens:', error);
+  }
+
+  console.log(`\nFetching gasless supported tokens for chain ${arbitrumChainId}...`);
+  try {
+    const gaslessTokens = await dZapClient.getGaslessTokens(arbitrumChainId);
+    console.log(`Found ${Object.keys(gaslessTokens).length} gasless tokens.`);
+
+    // Check whether a specific token can be traded gaslessly (keys are checksummed)
+    const token = gaslessTokens[formatToken(usdcAddress)];
+    console.log('USDC gasless supported:', !!token, 'eip2612:', token?.permit?.eip2612.supported);
+  } catch (error) {
+    console.error('Error fetching gasless tokens:', error);
   }
 }
 
