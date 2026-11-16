@@ -1,7 +1,7 @@
 import { HexString } from '..';
 import { ZapPreExecutionStep, ZapPreExecutionStepData, ZapStep } from './step';
 import { ZapFee } from './fee';
-import { ZapOutput, ZapPath } from './path';
+import { ZapAsset, ZapOutput, ZapPath } from './path';
 import { ZapRefund } from './refund';
 
 export type ZapRouteRequestPositionDetails = {
@@ -30,6 +30,8 @@ export type ZapBuildTxnResponse = {
   refund: ZapRefund[];
   /** every fee the route charges, across all of its steps */
   fees: ZapFee[];
+  /** what the user spends per src token: the requested amount, or derived from the path when none is given */
+  input: ZapAsset[];
   output: ZapOutput[];
   steps: ZapStep[];
   path: ZapPath[];
