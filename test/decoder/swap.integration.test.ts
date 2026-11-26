@@ -1,12 +1,11 @@
 import { Connection } from '@solana/web3.js';
-import axios from 'axios';
 import { solanaNativeToken, solanaWNativeToken, suiNativeToken } from '../../src/constants/address';
 import { exclusiveChainIds } from '../../src/constants/chains';
 import { decodeSuivmTransaction } from '../../src/utils/decoder/suivm';
 import { decodeSvmTransaction } from '../../src/utils/decoder/svm';
+import { querySuiGraphql } from '../../src/utils/sui/graphql';
 
 const SOLANA_RPC = ['https://api.mainnet-beta.solana.com'];
-const SUI_RPC = ['https://sui-rpc.publicnode.com'];
 
 // public nodes prune old history. only a transaction the chain no longer serves is skipped: a
 // transaction that is still there but decodes to nothing, or an rpc that fails, has to fail rather than quietly pass.
@@ -21,13 +20,11 @@ const served = async (txHash: string, fetched: Promise<unknown>) => {
 const solanaTransaction = (txHash: string) => new Connection(SOLANA_RPC[0]).getParsedTransaction(txHash, { maxSupportedTransactionVersion: 0 });
 
 const suiTransaction = async (txHash: string) => {
-  const response = await axios.post(SUI_RPC[0], {
-    jsonrpc: '2.0',
-    id: 1,
-    method: 'sui_getTransactionBlock',
-    params: [txHash, { showBalanceChanges: true }],
-  });
-  return response.data?.result ?? null;
+  const data = await querySuiGraphql<{ transaction: { digest: string } | null }>(
+    'query ($digest: String!) { transaction(digest: $digest) { digest } }',
+    { digest: txHash },
+  );
+  return data?.transaction ?? null;
 };
 
 describe('swap decoding against mainnet transactions', () => {
@@ -82,7 +79,7 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = 'ENS55GdzTtttNNnDMZ49hx8x6BGhku1Cn2ejtRUYxgV8';
     if (!(await served(txHash, suiTransaction(txHash)))) return;
 
-    const result = await decodeSuivmTransaction({ txHash, chainId: exclusiveChainIds.sui, rpcUrls: SUI_RPC });
+    const result = await decodeSuivmTransaction({ txHash, chainId: exclusiveChainIds.sui });
 
     expect(result?.sent).toEqual([
       { token: '0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC', amount: BigInt(8_050_998) },
@@ -96,7 +93,7 @@ describe('swap decoding against mainnet transactions', () => {
     const txHash = '8SK72NNkb3ektHBvJSsAmuL92aJCsKK7hRp725idZkMX';
     if (!(await served(txHash, suiTransaction(txHash)))) return;
 
-    const result = await decodeSuivmTransaction({ txHash, chainId: exclusiveChainIds.sui, rpcUrls: SUI_RPC });
+    const result = await decodeSuivmTransaction({ txHash, chainId: exclusiveChainIds.sui });
 
     expect(result?.sent).toEqual([
       { token: '0x5ffe80c90a653e3ca056fd3926987bf3e8068ca21528bb4fdbc4d487cc152dad::jackson::JACKSON', amount: BigInt(146_900_000) },
