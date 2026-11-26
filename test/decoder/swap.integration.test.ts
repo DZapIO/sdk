@@ -3,7 +3,8 @@ import { solanaNativeToken, solanaWNativeToken, suiNativeToken } from '../../src
 import { exclusiveChainIds } from '../../src/constants/chains';
 import { decodeSuivmTransaction } from '../../src/utils/decoder/suivm';
 import { decodeSvmTransaction } from '../../src/utils/decoder/svm';
-import { querySuiGraphql } from '../../src/utils/sui/graphql';
+import { SuiGrpcClient } from '@mysten/sui/grpc';
+import { SUI_GRPC_URL } from '../../src/utils/decoder/suivm';
 
 const SOLANA_RPC = ['https://api.mainnet-beta.solana.com'];
 
@@ -19,13 +20,9 @@ const served = async (txHash: string, fetched: Promise<unknown>) => {
 
 const solanaTransaction = (txHash: string) => new Connection(SOLANA_RPC[0]).getParsedTransaction(txHash, { maxSupportedTransactionVersion: 0 });
 
-const suiTransaction = async (txHash: string) => {
-  const data = await querySuiGraphql<{ transaction: { digest: string } | null }>(
-    'query ($digest: String!) { transaction(digest: $digest) { digest } }',
-    { digest: txHash },
-  );
-  return data?.transaction ?? null;
-};
+// fullnodes keep about two weeks of transactions, so older digests read as not served
+const suiTransaction = (txHash: string) =>
+  new SuiGrpcClient({ network: 'mainnet', baseUrl: SUI_GRPC_URL }).getTransaction({ digest: txHash }).catch(() => null);
 
 describe('swap decoding against mainnet transactions', () => {
   it('reads both sides of a solana token to token swap and no sol for the gas it paid', async () => {

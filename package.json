@@ -84,6 +84,7 @@
     "LICENSE"
   ],
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.29.14",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.7",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
@@ -104,6 +105,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@mysten/sui": "^3.0.1",
     "@solana/web3.js": "1.95.8",
     "axios": "^1.2.1",
     "@bigmi/core": "^0.6.0",
