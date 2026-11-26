@@ -12,7 +12,9 @@
     "moduleResolution": "Node",
     "skipLibCheck": true,
     "strict": true,
-    "lib": ["ES2021", "DOM"]
+    "lib": ["ES2021", "DOM"],
+    // @mysten/sui v3 publishes its types only through `exports`, which "moduleResolution": "Node" does not read
+    "paths": { "@mysten/sui/grpc": ["./node_modules/@mysten/sui/dist/grpc/index.d.mts"] }
   },
   "include": ["src/**/*", "examples/**/*", "test/**/*"],
   "exclude": ["node_modules", "lib", "**/*spec.tx"]
