@@ -1,9 +1,11 @@
-import axios from 'axios';
 import { ChainData } from '../../types';
 import { AddressClassifyResult, AddressKind } from '../../types/address';
+import { querySuiGraphql } from '../sui/graphql';
 import { isNativeCurrency } from '../tokens';
 
-const SUI_DEFAULT_RPC = 'https://fullnode.mainnet.sui.io';
+const PACKAGE_QUERY = `query ($address: SuiAddress!) {
+  package(address: $address) { address }
+}`;
 
 const suiAccountRegex = /^0x[a-fA-F0-9]{1,64}$/;
 
@@ -16,7 +18,7 @@ export async function classifySuivmAddress(params: {
   chainConfig: ChainData;
   rpcUrls?: string[];
 }): Promise<AddressClassifyResult | null> {
-  const { address, chainConfig, rpcUrls } = params;
+  const { address, chainConfig } = params;
 
   if (isNativeCurrency(address, chainConfig)) {
     return {
@@ -52,23 +54,15 @@ export async function classifySuivmAddress(params: {
     };
   }
 
-  // On-chain: use sui_getObject to check if this address is a Move package (= contract)
-  const rpcUrl = rpcUrls?.[0] ?? SUI_DEFAULT_RPC;
+  // On-chain: a Move package resolves under `package`, a plain account does not
   try {
-    const response = await axios.post(rpcUrl, {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'sui_getObject',
-      params: [address, { showType: true }],
-    });
+    const data = await querySuiGraphql<{ package: { address: string } | null }>(PACKAGE_QUERY, { address });
 
-    if (response.status !== 200 || response.data?.error) {
+    if (data === undefined) {
       return null;
     }
 
-    const result = response.data?.result;
-
-    if (result?.data?.type === 'package' || result?.data?.dataType === 'package') {
+    if (data.package) {
       return {
         valid: true,
         kind: AddressKind.CONTRACT,
@@ -89,7 +83,7 @@ export async function classifySuivmAddress(params: {
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    console.error(`RPC error (Sui sui_getObject): ${message}`);
+    console.error(`RPC error (Sui package lookup): ${message}`);
     return null;
   }
 }
